@@ -152,10 +152,10 @@ async fn user_connected(ws: WebSocket, games: Games) {
             );
             // send the updated game state to everyone!
             for user in game.users.values() {
-                if let Ok(s) = serde_json::to_string(&GameMessage::State(
-                    game.game.dump_state_for_player(user.player_id),
-                )) {
-                    let _ = user.tx.send(Ok(Message::text(s)));
+                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
+                    if let Ok(s) = serde_json::to_string(&GameMessage::State(state)) {
+                        let _ = user.tx.send(Ok(Message::text(s)));
+                    }
                 }
             }
             player_id
@@ -188,12 +188,14 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                     Ok(()) => {
                                         // send the updated game state to everyone!
                                         for user in game.users.values() {
-                                            if let Ok(s) =
-                                                serde_json::to_string(&GameMessage::State(
-                                                    game.game.dump_state_for_player(user.player_id),
-                                                ))
+                                            if let Ok(state) =
+                                                game.game.dump_state_for_player(user.player_id)
                                             {
-                                                let _ = user.tx.send(Ok(Message::text(s)));
+                                                if let Ok(s) = serde_json::to_string(
+                                                    &GameMessage::State(state),
+                                                ) {
+                                                    let _ = user.tx.send(Ok(Message::text(s)));
+                                                }
                                             }
                                         }
                                     }
@@ -256,10 +258,10 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
                 if let Ok(_) = game.game.kick(player_id) {
                     eprintln!("kicking all players with ID {:?} from {}", player_id, room);
                     for user in game.users.values() {
-                        if let Ok(s) = serde_json::to_string(&GameMessage::State(
-                            game.game.dump_state_for_player(user.player_id),
-                        )) {
-                            let _ = user.tx.send(Ok(Message::text(s)));
+                        if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
+                            if let Ok(s) = serde_json::to_string(&GameMessage::State(state)) {
+                                let _ = user.tx.send(Ok(Message::text(s)));
+                            }
                         }
                     }
                 }
