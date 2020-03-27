@@ -1,0 +1,480 @@
+use std::collections::HashMap;
+
+use anyhow::{bail, Error};
+use rand::{seq::SliceRandom, RngCore};
+use serde::{Deserialize, Serialize};
+
+use crate::hands::Hands;
+use crate::trick::Trick;
+use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Player {
+    pub id: PlayerID,
+    pub name: String,
+    level: Number,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GameState {
+    Initialize(InitializePhase),
+    Draw(DrawPhase),
+    Exchange(ExchangePhase),
+    Play(PlayPhase),
+    Done,
+}
+
+impl GameState {
+    pub fn players(&self) -> Option<&'_ [Player]> {
+        match self {
+            GameState::Initialize(p) => Some(&p.players),
+            GameState::Draw(p) => Some(&p.players),
+            GameState::Exchange(p) => Some(&p.players),
+            GameState::Play(p) => Some(&p.players),
+            GameState::Done => None,
+        }
+    }
+    pub fn for_player(&self, id: PlayerID) -> GameState {
+        let mut s = self.clone();
+        match s {
+            GameState::Done | GameState::Initialize { .. } => (),
+            GameState::Draw(DrawPhase {
+                ref mut hands,
+                ref mut kitty,
+                ref mut deck,
+                ..
+            }) => {
+                hands.drop_other_players(id);
+                kitty.clear();
+                deck.clear();
+            }
+            GameState::Exchange(ExchangePhase {
+                ref mut hands,
+                ref mut kitty,
+                landlord,
+                ..
+            }) => {
+                hands.drop_other_players(id);
+                if id != landlord {
+                    kitty.clear();
+                }
+            }
+            GameState::Play(PlayPhase {
+                ref mut hands,
+                ref mut kitty,
+                landlord,
+                ..
+            }) => {
+                hands.drop_other_players(id);
+                if id != landlord {
+                    kitty.clear();
+                }
+            }
+        }
+        s
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlayPhase {
+    num_decks: usize,
+    hands: Hands,
+    points: HashMap<PlayerID, Vec<Card>>,
+    kitty: Vec<Card>,
+    landlord: PlayerID,
+    landlords_team: Vec<PlayerID>,
+    players: Vec<Player>,
+    trump: Trump,
+    trick: Trick,
+}
+impl PlayPhase {
+    pub fn next_player(&self) -> PlayerID {
+        self.trick.next_player().unwrap()
+    }
+
+    pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
+        Ok(self.trick.can_play_cards(id, &self.hands, cards)?)
+    }
+
+    pub fn play_cards(&mut self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
+        self.trick.play_cards(id, &mut self.hands, cards)?;
+        if self.trick.next_player().is_none() {
+            self.finish_trick()?;
+        }
+        Ok(())
+    }
+
+    pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        Ok(self.trick.take_back(id, &mut self.hands)?)
+    }
+
+    fn finish_trick(&mut self) -> Result<(), Error> {
+        let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
+        let points = self.points.get_mut(&winner).unwrap();
+        if self.hands.is_empty() {
+            for _ in 0..kitty_multipler {
+                new_points.extend(self.kitty.iter().filter(|c| c.points().is_some()).cloned());
+            }
+        }
+        let trump = self.trump;
+        if !new_points.is_empty() {
+            points.extend(new_points);
+            points.sort_by(|a, b| trump.compare(*a, *b));
+        }
+        let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
+        self.trick = Trick::new(
+            self.trump,
+            (0..self.players.len()).map(|offset| {
+                let idx = (winner_idx + offset) % self.players.len();
+                self.players[idx].id
+            }),
+        );
+
+        Ok(())
+    }
+
+    pub fn finish_game(&self) -> Result<InitializePhase, Error> {
+        if !self.hands.is_empty() {
+            bail!("not done playing yet!")
+        }
+
+        let non_landlords_points: usize = self
+            .points
+            .iter()
+            .filter(|(id, _)| !self.landlords_team.contains(id))
+            .flat_map(|(_, cards)| cards)
+            .flat_map(|c| c.points())
+            .sum();
+        let point_segments = self.num_decks * 20;
+        let landlord_won = non_landlords_points < 2 * point_segments;
+        let (landlord_level_bump, non_landlord_level_bump) = if non_landlords_points == 0 {
+            (3, 0)
+        } else if non_landlords_points < point_segments {
+            (2, 0)
+        } else if non_landlords_points < 2 * point_segments {
+            (1, 0)
+        } else if non_landlords_points < 3 * point_segments {
+            (0, 0)
+        } else if non_landlords_points < 4 * point_segments {
+            (0, 1)
+        } else if non_landlords_points < 5 * point_segments {
+            (0, 2)
+        } else {
+            (0, 3)
+        };
+        let mut players = self.players.clone();
+        for player in &mut players {
+            let bump = if self.landlords_team.contains(&player.id) {
+                landlord_level_bump
+            } else {
+                non_landlord_level_bump
+            };
+            for _ in 0..bump {
+                if let Some(next_level) = player.level.successor() {
+                    player.level = next_level;
+                }
+            }
+        }
+
+        let landlord_idx = self
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord)
+            .unwrap();
+        let mut idx = (landlord_idx + 1) % players.len();
+        let next_landlord = loop {
+            if landlord_won == self.landlords_team.contains(&players[idx].id) {
+                break players[idx].id;
+            }
+            idx = (idx + 1) % players.len()
+        };
+
+        Ok(InitializePhase {
+            num_decks: Some(self.num_decks),
+            landlord: Some(next_landlord),
+            max_player_id: players.iter().map(|p| p.id.0).max().unwrap_or(0),
+            players,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExchangePhase {
+    num_decks: usize,
+    hands: Hands,
+    kitty: Vec<Card>,
+    kitty_size: usize,
+    landlord: PlayerID,
+    players: Vec<Player>,
+    trump: Trump,
+}
+
+impl ExchangePhase {
+    pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
+        if self.landlord != id {
+            bail!("not the landlord")
+        }
+        self.hands.remove(self.landlord, Some(card))?;
+        self.kitty.push(card);
+        Ok(())
+    }
+
+    pub fn move_card_to_hand(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
+        if self.landlord != id {
+            bail!("not the landlord")
+        }
+        if let Some(index) = self.kitty.iter().position(|c| *c == card) {
+            self.kitty.swap_remove(index);
+            self.hands.add(self.landlord, Some(card))?;
+            Ok(())
+        } else {
+            bail!("card not in the kitty")
+        }
+    }
+
+    pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
+        if id != self.landlord {
+            bail!("only the landlord can advance the game")
+        }
+        if self.kitty.len() == self.kitty_size {
+            let landlord_position = self
+                .players
+                .iter()
+                .position(|p| p.id == self.landlord)
+                .unwrap();
+            let landlords_team = self
+                .players
+                .iter()
+                .enumerate()
+                .flat_map(|(idx, p)| {
+                    if idx % 2 == landlord_position % 2 {
+                        Some(p.id)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            let landlord_idx = self
+                .players
+                .iter()
+                .position(|p| p.id == self.landlord)
+                .unwrap();
+
+            Ok(PlayPhase {
+                num_decks: self.num_decks,
+                hands: self.hands.clone(),
+                kitty: self.kitty.clone(),
+                trick: Trick::new(
+                    self.trump,
+                    (0..self.players.len()).map(|offset| {
+                        let idx = (landlord_idx + offset) % self.players.len();
+                        self.players[idx].id
+                    }),
+                ),
+                points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
+                players: self.players.clone(),
+                landlord: self.landlord,
+                trump: self.trump,
+                landlords_team,
+            })
+        } else {
+            bail!("incorrect number of cards in the kitty!")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Bid {
+    id: PlayerID,
+    card: Card,
+    count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DrawPhase {
+    num_decks: usize,
+    deck: Vec<Card>,
+    players: Vec<Player>,
+    hands: Hands,
+    bids: Vec<Bid>,
+    position: usize,
+    landlord: Option<PlayerID>,
+    kitty: Vec<Card>,
+    level: Number,
+}
+impl DrawPhase {
+    pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {
+        if id != self.players[self.position].id {
+            bail!("not your turn!");
+        }
+        if let Some(next_card) = self.deck.pop() {
+            self.hands.add(id, Some(next_card))?;
+            self.position = (self.position + 1) % self.players.len();
+            Ok(())
+        } else {
+            bail!("no cards left in deck")
+        }
+    }
+
+    pub fn valid_bids(&self, id: PlayerID) -> Vec<Bid> {
+        // Compute all valid bids.
+        if self.bids.last().map(|b| b.id) == Some(id) {
+            // If we're the current highest bidder, no bids allowed
+            vec![]
+        } else if let Some(counts) = self.hands.counts(id) {
+            // Construct all the valid bids from the player's hand
+            let mut valid_bids = vec![];
+            for (card, count) in counts {
+                if !card.is_joker() && card.number() != Some(self.level) {
+                    continue;
+                }
+                for inner_count in 1..count + 1 {
+                    let new_bid = Bid {
+                        id,
+                        card: *card,
+                        count: inner_count,
+                    };
+                    if let Some(existing_bid) = self.bids.last() {
+                        if new_bid.count > existing_bid.count {
+                            valid_bids.push(new_bid);
+                        } else if new_bid.count == existing_bid.count {
+                            match (new_bid.card, existing_bid.card) {
+                                (Card::BigJoker, Card::SmallJoker)
+                                | (Card::BigJoker, Card::Suited { .. })
+                                | (Card::SmallJoker, Card::Suited { .. }) => {
+                                    valid_bids.push(new_bid);
+                                }
+                                _ => (),
+                            }
+                        }
+                    } else {
+                        valid_bids.push(new_bid);
+                    }
+                }
+            }
+
+            valid_bids
+        } else {
+            vec![]
+        }
+    }
+
+    pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
+        let new_bid = Bid { id, card, count };
+        if self.valid_bids(id).contains(&new_bid) {
+            self.bids.push(new_bid);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {
+        if !self.deck.is_empty() {
+            bail!("deck has cards remaining")
+        } else if self.bids.is_empty() {
+            bail!("nobody has bid yet")
+        } else {
+            let winning_bid = self.bids.last().unwrap();
+            let landlord = self.landlord.unwrap_or(winning_bid.id);
+            if id != landlord {
+                bail!("only the landlord can advance the game");
+            }
+            let trump = match winning_bid.card {
+                Card::SmallJoker | Card::BigJoker => Trump::NoTrump { number: self.level },
+                Card::Suited { suit, .. } => Trump::Standard {
+                    suit,
+                    number: self.level,
+                },
+            };
+            let mut hands = self.hands.clone();
+            hands.set_trump(trump);
+            Ok(ExchangePhase {
+                num_decks: self.num_decks,
+                kitty_size: self.kitty.len(),
+                kitty: self.kitty.clone(),
+                players: self.players.clone(),
+                landlord,
+                hands,
+                trump,
+            })
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InitializePhase {
+    max_player_id: usize,
+    players: Vec<Player>,
+    num_decks: Option<usize>,
+    landlord: Option<PlayerID>,
+}
+impl InitializePhase {
+    pub fn new() -> Self {
+        Self {
+            max_player_id: 0,
+            players: Vec::new(),
+            num_decks: None,
+            landlord: None,
+        }
+    }
+
+    pub fn add_player(&mut self, name: String) -> PlayerID {
+        let id = PlayerID(self.max_player_id);
+        self.max_player_id += 1;
+        self.players.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+        id
+    }
+
+    pub fn remove_player(&mut self, id: PlayerID) {
+        self.players.retain(|p| p.id != id);
+        if self.landlord == Some(id) {
+            self.landlord = None;
+        }
+    }
+
+    pub fn set_num_decks(&mut self, num_decks: usize) {
+        if num_decks > 0 {
+            self.num_decks = Some(num_decks);
+        }
+    }
+
+    pub fn start(&self) -> Result<DrawPhase, Error> {
+        if self.players.len() < 4 {
+            bail!("not enough players")
+        }
+
+        let num_decks = self.num_decks.unwrap_or(self.players.len() / 2);
+        let mut deck = Vec::with_capacity(num_decks * FULL_DECK.len());
+        for _ in 0..num_decks {
+            deck.extend(FULL_DECK.iter());
+        }
+        let mut rng = rand::thread_rng();
+        deck.shuffle(&mut rng);
+        let mut kitty_size = deck.len() % self.players.len();
+        if kitty_size == 0 {
+            kitty_size = self.players.len();
+        }
+        let position = self
+            .landlord
+            .and_then(|landlord| self.players.iter().position(|p| p.id == landlord))
+            .unwrap_or(rng.next_u32() as usize % self.players.len());
+        let level = self.players[position].level;
+
+        Ok(DrawPhase {
+            deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
+            kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
+            hands: Hands::new(self.players.iter().map(|p| p.id)),
+            bids: Vec::new(),
+            players: self.players.clone(),
+            landlord: self.landlord,
+            position,
+            num_decks,
+            level,
+        })
+    }
+}
