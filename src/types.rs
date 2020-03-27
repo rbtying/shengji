@@ -32,6 +32,7 @@ impl Trump {
 
     pub fn effective_suit(self, card: Card) -> EffectiveSuit {
         match (self, card) {
+            (_, Card::Unknown) => EffectiveSuit::Unknown,
             (_, Card::SmallJoker) | (_, Card::BigJoker) => EffectiveSuit::Trump,
 
             (
@@ -79,6 +80,7 @@ impl Trump {
 
     pub fn successor(self, card: Card) -> Vec<Card> {
         match card {
+            Card::Unknown => vec![],
             Card::BigJoker => vec![],
             Card::SmallJoker => vec![Card::BigJoker],
             Card::Suited { suit, number } if number == self.number() => match self {
@@ -149,6 +151,8 @@ impl Trump {
             _ => card1_suit.cmp(&card2_suit),
         }
         .then(match (card1, card2) {
+            (Card::Unknown, _) => Ordering::Less,
+            (_, Card::Unknown) => Ordering::Greater,
             (Card::BigJoker, _) => Ordering::Greater,
             (_, Card::BigJoker) => Ordering::Less,
             (Card::SmallJoker, _) => Ordering::Greater,
@@ -195,6 +199,7 @@ impl Trump {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EffectiveSuit {
+    Unknown,
     Clubs,
     Diamonds,
     Spades,
@@ -204,6 +209,7 @@ pub enum EffectiveSuit {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
 pub enum EffectiveSuitRedTrump {
+    Unknown,
     Diamonds,
     Clubs,
     Hearts,
@@ -213,6 +219,7 @@ pub enum EffectiveSuitRedTrump {
 impl From<EffectiveSuit> for EffectiveSuitRedTrump {
     fn from(other: EffectiveSuit) -> EffectiveSuitRedTrump {
         match other {
+            EffectiveSuit::Unknown => EffectiveSuitRedTrump::Unknown,
             EffectiveSuit::Clubs => EffectiveSuitRedTrump::Clubs,
             EffectiveSuit::Diamonds => EffectiveSuitRedTrump::Diamonds,
             EffectiveSuit::Spades => EffectiveSuitRedTrump::Spades,
@@ -224,6 +231,7 @@ impl From<EffectiveSuit> for EffectiveSuitRedTrump {
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Card {
+    Unknown,
     Suited { suit: Suit, number: Number },
     SmallJoker,
     BigJoker,
@@ -249,47 +257,137 @@ impl Card {
         counts
     }
 
-    pub fn as_char(self) -> char {
+    pub const fn as_char(self) -> char {
         match self {
-            Card::Suited { suit, number } => {
-                std::char::from_u32(suit.unicode_offset() as u32 + number.as_u32()).unwrap()
-            }
+            cards::C_A => '🃑',
+            cards::C_K => '🃞',
+            cards::C_Q => '🃝',
+            cards::C_J => '🃛',
+            cards::C_10 => '🃚',
+            cards::C_9 => '🃙',
+            cards::C_8 => '🃘',
+            cards::C_7 => '🃗',
+            cards::C_6 => '🃖',
+            cards::C_5 => '🃕',
+            cards::C_4 => '🃔',
+            cards::C_3 => '🃓',
+            cards::C_2 => '🃒',
+            cards::D_A => '🃁',
+            cards::D_K => '🃎',
+            cards::D_Q => '🃍',
+            cards::D_J => '🃋',
+            cards::D_10 => '🃊',
+            cards::D_9 => '🃉',
+            cards::D_8 => '🃈',
+            cards::D_7 => '🃇',
+            cards::D_6 => '🃆',
+            cards::D_5 => '🃅',
+            cards::D_4 => '🃄',
+            cards::D_3 => '🃃',
+            cards::D_2 => '🃂',
+            cards::H_A => '🂱',
+            cards::H_K => '🂾',
+            cards::H_Q => '🂽',
+            cards::H_J => '🂻',
+            cards::H_10 => '🂺',
+            cards::H_9 => '🂹',
+            cards::H_8 => '🂸',
+            cards::H_7 => '🂷',
+            cards::H_6 => '🂶',
+            cards::H_5 => '🂵',
+            cards::H_4 => '🂴',
+            cards::H_3 => '🂳',
+            cards::H_2 => '🂲',
+            cards::S_A => '🂡',
+            cards::S_K => '🂮',
+            cards::S_Q => '🂭',
+            cards::S_J => '🂫',
+            cards::S_10 => '🂪',
+            cards::S_9 => '🂩',
+            cards::S_8 => '🂨',
+            cards::S_7 => '🂧',
+            cards::S_6 => '🂦',
+            cards::S_5 => '🂥',
+            cards::S_4 => '🂤',
+            cards::S_3 => '🂣',
+            cards::S_2 => '🂢',
             Card::SmallJoker => '🃟',
             Card::BigJoker => '🃏',
+            Card::Unknown => '🂠',
         }
     }
 
     pub fn from_char(c: char) -> Option<Self> {
-        if c == '🃟' {
-            Some(Card::SmallJoker)
-        } else if c == '🃏' {
-            Some(Card::BigJoker)
-        } else if c > '\u{1f0a0}' && c < '\u{1f0e0}' {
-            for suit in ALL_SUITS.iter() {
-                let offset = c as u32 - (suit.unicode_offset() as u32);
-                if let Some(number) = Number::from_u32(offset) {
-                    return Some(Card::Suited {
-                        suit: *suit,
-                        number,
-                    });
-                }
-            }
-            None
-        } else {
-            None
+        match c {
+            '🃑' => Some(cards::C_A),
+            '🃞' => Some(cards::C_K),
+            '🃝' => Some(cards::C_Q),
+            '🃛' => Some(cards::C_J),
+            '🃚' => Some(cards::C_10),
+            '🃙' => Some(cards::C_9),
+            '🃘' => Some(cards::C_8),
+            '🃗' => Some(cards::C_7),
+            '🃖' => Some(cards::C_6),
+            '🃕' => Some(cards::C_5),
+            '🃔' => Some(cards::C_4),
+            '🃓' => Some(cards::C_3),
+            '🃒' => Some(cards::C_2),
+            '🃁' => Some(cards::D_A),
+            '🃎' => Some(cards::D_K),
+            '🃍' => Some(cards::D_Q),
+            '🃋' => Some(cards::D_J),
+            '🃊' => Some(cards::D_10),
+            '🃉' => Some(cards::D_9),
+            '🃈' => Some(cards::D_8),
+            '🃇' => Some(cards::D_7),
+            '🃆' => Some(cards::D_6),
+            '🃅' => Some(cards::D_5),
+            '🃄' => Some(cards::D_4),
+            '🃃' => Some(cards::D_3),
+            '🃂' => Some(cards::D_2),
+            '🂱' => Some(cards::H_A),
+            '🂾' => Some(cards::H_K),
+            '🂽' => Some(cards::H_Q),
+            '🂻' => Some(cards::H_J),
+            '🂺' => Some(cards::H_10),
+            '🂹' => Some(cards::H_9),
+            '🂸' => Some(cards::H_8),
+            '🂷' => Some(cards::H_7),
+            '🂶' => Some(cards::H_6),
+            '🂵' => Some(cards::H_5),
+            '🂴' => Some(cards::H_4),
+            '🂳' => Some(cards::H_3),
+            '🂲' => Some(cards::H_2),
+            '🂡' => Some(cards::S_A),
+            '🂮' => Some(cards::S_K),
+            '🂭' => Some(cards::S_Q),
+            '🂫' => Some(cards::S_J),
+            '🂪' => Some(cards::S_10),
+            '🂩' => Some(cards::S_9),
+            '🂨' => Some(cards::S_8),
+            '🂧' => Some(cards::S_7),
+            '🂦' => Some(cards::S_6),
+            '🂥' => Some(cards::S_5),
+            '🂤' => Some(cards::S_4),
+            '🂣' => Some(cards::S_3),
+            '🂢' => Some(cards::S_2),
+            '🃟' => Some(Card::SmallJoker),
+            '🃏' => Some(Card::BigJoker),
+            '🂠' => Some(Card::Unknown),
+            _ => None,
         }
     }
 
     pub const fn is_joker(self) -> bool {
         match self {
             Card::SmallJoker | Card::BigJoker => true,
-            Card::Suited { .. } => false,
+            Card::Unknown | Card::Suited { .. } => false,
         }
     }
 
     pub const fn number(self) -> Option<Number> {
         match self {
-            Card::SmallJoker | Card::BigJoker => None,
+            Card::Unknown | Card::SmallJoker | Card::BigJoker => None,
             Card::Suited { number, .. } => Some(number),
         }
     }
@@ -304,7 +402,7 @@ impl Card {
 
     pub const fn suit(self) -> Option<Suit> {
         match self {
-            Card::SmallJoker | Card::BigJoker => None,
+            Card::Unknown | Card::SmallJoker | Card::BigJoker => None,
             Card::Suited { suit, .. } => Some(suit),
         }
     }
@@ -315,6 +413,7 @@ impl fmt::Debug for Card {
             Card::Suited { suit, number } => write!(f, "{}{}", number.as_str(), suit.as_char()),
             Card::SmallJoker => write!(f, "LJ"),
             Card::BigJoker => write!(f, "HJ"),
+            Card::Unknown => write!(f, "[]"),
         }
     }
 }
@@ -524,226 +623,290 @@ impl fmt::Debug for Suit {
 }
 
 pub const FULL_DECK: [Card; 54] = [
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Ace,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::King,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Queen,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Jack,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Ten,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Nine,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Eight,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Seven,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Six,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Five,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Four,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Three,
-    },
-    Card::Suited {
-        suit: Suit::Clubs,
-        number: Number::Two,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Ace,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::King,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Queen,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Jack,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Ten,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Nine,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Eight,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Seven,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Six,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Five,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Four,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Three,
-    },
-    Card::Suited {
-        suit: Suit::Diamonds,
-        number: Number::Two,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Ace,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::King,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Queen,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Jack,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Ten,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Nine,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Eight,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Seven,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Six,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Five,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Four,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Three,
-    },
-    Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Two,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Ace,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::King,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Queen,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Jack,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Ten,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Nine,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Eight,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Seven,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Six,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Five,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Four,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Three,
-    },
-    Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Two,
-    },
+    cards::C_A,
+    cards::C_K,
+    cards::C_Q,
+    cards::C_J,
+    cards::C_10,
+    cards::C_9,
+    cards::C_8,
+    cards::C_7,
+    cards::C_6,
+    cards::C_5,
+    cards::C_4,
+    cards::C_3,
+    cards::C_2,
+    cards::D_A,
+    cards::D_K,
+    cards::D_Q,
+    cards::D_J,
+    cards::D_10,
+    cards::D_9,
+    cards::D_8,
+    cards::D_7,
+    cards::D_6,
+    cards::D_5,
+    cards::D_4,
+    cards::D_3,
+    cards::D_2,
+    cards::H_A,
+    cards::H_K,
+    cards::H_Q,
+    cards::H_J,
+    cards::H_10,
+    cards::H_9,
+    cards::H_8,
+    cards::H_7,
+    cards::H_6,
+    cards::H_5,
+    cards::H_4,
+    cards::H_3,
+    cards::H_2,
+    cards::S_A,
+    cards::S_K,
+    cards::S_Q,
+    cards::S_J,
+    cards::S_10,
+    cards::S_9,
+    cards::S_8,
+    cards::S_7,
+    cards::S_6,
+    cards::S_5,
+    cards::S_4,
+    cards::S_3,
+    cards::S_2,
     Card::SmallJoker,
     Card::BigJoker,
 ];
 
+pub mod cards {
+    use super::{Card, Number, Suit};
+
+    pub const C_A: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Ace,
+    };
+    pub const C_K: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::King,
+    };
+    pub const C_Q: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Queen,
+    };
+    pub const C_J: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Jack,
+    };
+    pub const C_10: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Ten,
+    };
+    pub const C_9: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Nine,
+    };
+    pub const C_8: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Eight,
+    };
+    pub const C_7: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Seven,
+    };
+    pub const C_6: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Six,
+    };
+    pub const C_5: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Five,
+    };
+    pub const C_4: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Four,
+    };
+    pub const C_3: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Three,
+    };
+    pub const C_2: Card = Card::Suited {
+        suit: Suit::Clubs,
+        number: Number::Two,
+    };
+    pub const D_A: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Ace,
+    };
+    pub const D_K: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::King,
+    };
+    pub const D_Q: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Queen,
+    };
+    pub const D_J: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Jack,
+    };
+    pub const D_10: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Ten,
+    };
+    pub const D_9: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Nine,
+    };
+    pub const D_8: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Eight,
+    };
+    pub const D_7: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Seven,
+    };
+    pub const D_6: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Six,
+    };
+    pub const D_5: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Five,
+    };
+    pub const D_4: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Four,
+    };
+    pub const D_3: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Three,
+    };
+    pub const D_2: Card = Card::Suited {
+        suit: Suit::Diamonds,
+        number: Number::Two,
+    };
+    pub const H_A: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Ace,
+    };
+    pub const H_K: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::King,
+    };
+    pub const H_Q: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Queen,
+    };
+    pub const H_J: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Jack,
+    };
+    pub const H_10: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Ten,
+    };
+    pub const H_9: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Nine,
+    };
+    pub const H_8: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Eight,
+    };
+    pub const H_7: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Seven,
+    };
+    pub const H_6: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Six,
+    };
+    pub const H_5: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Five,
+    };
+    pub const H_4: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Four,
+    };
+    pub const H_3: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Three,
+    };
+    pub const H_2: Card = Card::Suited {
+        suit: Suit::Hearts,
+        number: Number::Two,
+    };
+    pub const S_A: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Ace,
+    };
+    pub const S_K: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::King,
+    };
+    pub const S_Q: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Queen,
+    };
+    pub const S_J: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Jack,
+    };
+    pub const S_10: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Ten,
+    };
+    pub const S_9: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Nine,
+    };
+    pub const S_8: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Eight,
+    };
+    pub const S_7: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Seven,
+    };
+    pub const S_6: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Six,
+    };
+    pub const S_5: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Five,
+    };
+    pub const S_4: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Four,
+    };
+    pub const S_3: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Three,
+    };
+    pub const S_2: Card = Card::Suited {
+        suit: Suit::Spades,
+        number: Number::Two,
+    };
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Card, Number, Suit, Trump, FULL_DECK};
+    use super::{cards, Card, Number, Suit, Trump, FULL_DECK};
+
+    #[test]
+    fn test_char_roundtrip() {
+        for card in FULL_DECK.iter() {
+            assert_eq!(*card, Card::from_char(card.as_char()).unwrap());
+        }
+    }
 
     #[test]
     fn test_deck_completeness() {
         assert_eq!(
-            "🃑🃝🃜🃛🃚🃙🃘🃗🃖🃕🃔🃓🃒🃁🃍🃌🃋🃊🃉🃈🃇🃆🃅🃄🃃🃂🂱🂽🂼🂻🂺🂹🂸🂷🂶🂵🂴🂳🂲🂡🂭🂬🂫🂪🂩🂨🂧🂦🂥🂤🂣🂢🃟🃏",
+            "🃑🃞🃝🃛🃚🃙🃘🃗🃖🃕🃔🃓🃒🃁🃎🃍🃋🃊🃉🃈🃇🃆🃅🃄🃃🃂🂱🂾🂽🂻🂺🂹🂸🂷🂶🂵🂴🂳🂲🂡🂮🂭🂫🂪🂩🂨🂧🂦🂥🂤🂣🂢🃟🃏",
             FULL_DECK
                 .iter()
                 .map(|card| card.as_char())
@@ -754,30 +917,12 @@ mod tests {
     #[test]
     fn test_ordering() {
         let mut hand = vec![
-            Card::Suited {
-                suit: Suit::Hearts,
-                number: Number::Six,
-            },
-            Card::Suited {
-                suit: Suit::Hearts,
-                number: Number::Five,
-            },
-            Card::Suited {
-                suit: Suit::Hearts,
-                number: Number::Four,
-            },
-            Card::Suited {
-                suit: Suit::Spades,
-                number: Number::Three,
-            },
-            Card::Suited {
-                suit: Suit::Spades,
-                number: Number::Two,
-            },
-            Card::Suited {
-                suit: Suit::Hearts,
-                number: Number::Two,
-            },
+            cards::H_6,
+            cards::H_5,
+            cards::H_4,
+            cards::S_3,
+            cards::S_2,
+            cards::H_2,
             Card::SmallJoker,
             Card::BigJoker,
         ];
@@ -798,75 +943,38 @@ mod tests {
             number: Number::Four,
             suit: Suit::Spades,
         };
-        let two = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::Two,
-        };
-        let three = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::Three,
-        };
-        let spade_four = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::Four,
-        };
-        let heart_four = Card::Suited {
-            suit: Suit::Hearts,
-            number: Number::Four,
-        };
-        let five = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::Five,
-        };
-        let spade_ace = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::Ace,
-        };
-        let heart_ace = Card::Suited {
-            suit: Suit::Hearts,
-            number: Number::Ace,
-        };
-        let spade_king = Card::Suited {
-            suit: Suit::Spades,
-            number: Number::King,
-        };
-        let heart_king = Card::Suited {
-            suit: Suit::Hearts,
-            number: Number::King,
-        };
-
-        assert_eq!(trump.successor(three), vec![five]);
-        assert_eq!(trump.successor(spade_four), vec![Card::SmallJoker]);
-        assert!(trump.successor(heart_four).contains(&spade_four));
-        assert!(trump.successor(spade_ace).contains(&heart_four));
-        assert!(trump.successor(heart_ace).is_empty());
+        assert_eq!(trump.successor(cards::S_3), vec![cards::S_5]);
+        assert_eq!(trump.successor(cards::S_4), vec![Card::SmallJoker]);
+        assert!(trump.successor(cards::H_4).contains(&cards::S_4));
+        assert!(trump.successor(cards::S_A).contains(&cards::H_4));
+        assert!(trump.successor(cards::H_A).is_empty());
 
         let no_trump = Trump::NoTrump {
             number: Number::Four,
         };
-        assert_eq!(no_trump.successor(three), vec![five]);
-        assert_eq!(no_trump.successor(spade_four), vec![Card::SmallJoker]);
-        assert_eq!(no_trump.successor(heart_four), vec![Card::SmallJoker]);
-        assert!(no_trump.successor(spade_ace).is_empty());
-        assert!(no_trump.successor(heart_ace).is_empty());
+        assert_eq!(no_trump.successor(cards::S_3), vec![cards::S_5]);
+        assert_eq!(no_trump.successor(cards::S_4), vec![Card::SmallJoker]);
+        assert_eq!(no_trump.successor(cards::H_4), vec![Card::SmallJoker]);
+        assert!(no_trump.successor(cards::S_A).is_empty());
+        assert!(no_trump.successor(cards::H_A).is_empty());
 
         let trump_ace = Trump::Standard {
             number: Number::Ace,
             suit: Suit::Spades,
         };
-        assert_eq!(trump_ace.successor(three), vec![spade_four]);
-        assert_eq!(trump_ace.successor(spade_ace), vec![Card::SmallJoker]);
-        assert_eq!(trump_ace.successor(heart_ace), vec![spade_ace]);
-        assert!(trump_ace.successor(spade_king).contains(&heart_ace));
-        assert!(trump_ace.successor(heart_king).is_empty());
+        assert_eq!(trump_ace.successor(cards::S_3), vec![cards::S_4]);
+        assert_eq!(trump_ace.successor(cards::S_A), vec![Card::SmallJoker]);
+        assert_eq!(trump_ace.successor(cards::H_A), vec![cards::S_A]);
+        assert!(trump_ace.successor(cards::S_K).contains(&cards::H_A));
+        assert!(trump_ace.successor(cards::H_K).is_empty());
 
         let no_trump_ace = Trump::NoTrump {
             number: Number::Ace,
         };
-        assert_eq!(no_trump_ace.successor(three), vec![spade_four]);
-        assert_eq!(no_trump_ace.successor(spade_ace), vec![Card::SmallJoker]);
-        assert_eq!(no_trump_ace.successor(heart_ace), vec![Card::SmallJoker]);
-        assert!(no_trump_ace.successor(spade_king).is_empty());
-        assert!(no_trump_ace.successor(heart_king).is_empty());
+        assert_eq!(no_trump_ace.successor(cards::S_3), vec![cards::S_4]);
+        assert_eq!(no_trump_ace.successor(cards::S_A), vec![Card::SmallJoker]);
+        assert_eq!(no_trump_ace.successor(cards::H_A), vec![Card::SmallJoker]);
+        assert!(no_trump_ace.successor(cards::S_K).is_empty());
+        assert!(no_trump_ace.successor(cards::H_K).is_empty());
     }
 }

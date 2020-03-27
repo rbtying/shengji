@@ -12,7 +12,7 @@ use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
-use warp::Filter;
+use warp::{http::Response, Filter};
 
 pub mod game_state;
 pub mod hands;
@@ -49,8 +49,14 @@ pub enum UserMessage {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameMessage {
-    State(game_state::GameState),
-    Message(String),
+    State {
+        state: game_state::GameState,
+        cards: Vec<types::Card>,
+    },
+    Message {
+        from: String,
+        message: String,
+    },
     Error(String),
 }
 
@@ -71,8 +77,12 @@ async fn main() {
 
     // GET / -> index html
     let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
-
-    let routes = index.or(api);
+    let js = warp::path("game.js").map(|| {
+        Response::builder()
+            .header("Content-Type", "text/javascript")
+            .body(JS)
+    });
+    let routes = index.or(js).or(api);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -133,7 +143,7 @@ async fn user_connected(ws: WebSocket, games: Games) {
                 game: interactive::InteractiveGame::new(),
                 users: HashMap::new(),
             });
-            let player_id = match game.game.register(name) {
+            let player_id = match game.game.register(name.clone()) {
                 Ok(player_id) => player_id,
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
@@ -152,8 +162,8 @@ async fn user_connected(ws: WebSocket, games: Games) {
             );
             // send the updated game state to everyone!
             for user in game.users.values() {
-                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                    if let Ok(s) = serde_json::to_string(&GameMessage::State(state)) {
+                if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id) {
+                    if let Ok(s) = serde_json::to_string(&GameMessage::State { state, cards }) {
                         let _ = user.tx.send(Ok(Message::text(s)));
                     }
                 }
@@ -173,9 +183,10 @@ async fn user_connected(ws: WebSocket, games: Games) {
                             let g = games.lock().await;
                             if let Some(game) = g.get(&room) {
                                 for user in game.users.values() {
-                                    if let Ok(s) =
-                                        serde_json::to_string(&GameMessage::Message(m.clone()))
-                                    {
+                                    if let Ok(s) = serde_json::to_string(&GameMessage::Message {
+                                        from: name.clone(),
+                                        message: m.clone(),
+                                    }) {
                                         let _ = user.tx.send(Ok(Message::text(s)));
                                     }
                                 }
@@ -188,12 +199,15 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                     Ok(()) => {
                                         // send the updated game state to everyone!
                                         for user in game.users.values() {
-                                            if let Ok(state) =
+                                            if let Ok((state, cards)) =
                                                 game.game.dump_state_for_player(user.player_id)
                                             {
-                                                if let Ok(s) = serde_json::to_string(
-                                                    &GameMessage::State(state),
-                                                ) {
+                                                if let Ok(s) =
+                                                    serde_json::to_string(&GameMessage::State {
+                                                        state,
+                                                        cards,
+                                                    })
+                                                {
                                                     let _ = user.tx.send(Ok(Message::text(s)));
                                                 }
                                             }
@@ -258,8 +272,11 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
                 if let Ok(_) = game.game.kick(player_id) {
                     eprintln!("kicking all players with ID {:?} from {}", player_id, room);
                     for user in game.users.values() {
-                        if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                            if let Ok(s) = serde_json::to_string(&GameMessage::State(state)) {
+                        if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id)
+                        {
+                            if let Ok(s) =
+                                serde_json::to_string(&GameMessage::State { state, cards })
+                            {
                                 let _ = user.tx.send(Ok(Message::text(s)));
                             }
                         }
@@ -276,3 +293,4 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
 }
 
 static INDEX_HTML: &str = include_str!("index.html");
+static JS: &str = include_str!("game.js");

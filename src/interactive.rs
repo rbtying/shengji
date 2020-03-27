@@ -49,9 +49,9 @@ impl InteractiveGame {
         }
     }
 
-    pub fn dump_state_for_player(&self, id: PlayerID) -> Result<GameState, Error> {
+    pub fn dump_state_for_player(&self, id: PlayerID) -> Result<(GameState, Vec<Card>), Error> {
         if let Ok(s) = self.state.lock() {
-            Ok(s.for_player(id))
+            Ok((s.for_player(id), s.cards(id)))
         } else {
             bail!("lock poisoned")
         }
@@ -84,7 +84,7 @@ impl InteractiveGame {
                     }
                 }
                 (Message::PickUpKitty, GameState::Draw(ref mut state)) => {
-                    state.advance(id)?;
+                    *s = GameState::Exchange(state.advance(id)?);
                     Ok(())
                 }
                 (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {

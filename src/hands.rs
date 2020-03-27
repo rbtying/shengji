@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
+use crate::types::{Card, EffectiveSuit, Number, PlayerID, Trump};
 
 #[derive(Error, Clone, Debug, Serialize, Deserialize)]
 pub enum HandError {
@@ -13,6 +13,8 @@ pub enum HandError {
     CardsNotFound,
     #[error("cards cannot be played")]
     CardsNotPlayable,
+    #[error("unknown cards can't be added to hand")]
+    CardNotKnown,
     #[error("trump not set yet")]
     TrumpNotSet,
 }
@@ -20,19 +22,27 @@ pub enum HandError {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Hands {
     hands: HashMap<PlayerID, HashMap<Card, usize>>,
+    level: Number,
     trump: Option<Trump>,
 }
 
 impl Hands {
-    pub fn new(players: impl IntoIterator<Item = PlayerID>) -> Self {
+    pub fn new(players: impl IntoIterator<Item = PlayerID>, level: Number) -> Self {
         Hands {
             hands: players.into_iter().map(|id| (id, HashMap::new())).collect(),
             trump: None,
+            level,
         }
     }
 
-    pub fn drop_other_players(&mut self, id: PlayerID) {
-        self.hands.retain(|pid, _| *pid == id);
+    pub fn redact_except(&mut self, id: PlayerID) {
+        for (pid, cards) in &mut self.hands {
+            if *pid != id {
+                let count = cards.values().sum();
+                cards.clear();
+                cards.insert(Card::Unknown, count);
+            }
+        }
     }
 
     pub fn get(&self, id: PlayerID) -> Result<&'_ HashMap<Card, usize>, HandError> {
@@ -108,7 +118,7 @@ impl Hands {
         if let Some(trump) = self.trump {
             cards.sort_by(|a, b| trump.compare(*a, *b));
         } else {
-            cards.sort_by_key(|c| c.as_char());
+            cards.sort_by(|a, b| Trump::NoTrump { number: self.level }.compare(*a, *b));
         }
         Ok(cards)
     }
@@ -116,10 +126,15 @@ impl Hands {
     pub fn add(
         &mut self,
         id: PlayerID,
-        cards: impl IntoIterator<Item = Card>,
+        cards: impl IntoIterator<Item = Card> + Clone,
     ) -> Result<(), HandError> {
         self.exists(id)?;
         let hand = self.hands.get_mut(&id).unwrap();
+        for card in cards.clone() {
+            if let Card::Unknown = card {
+                return Err(HandError::CardNotKnown);
+            }
+        }
         for card in cards {
             *hand.entry(card).or_insert(0) += 1;
         }

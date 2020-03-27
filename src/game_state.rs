@@ -34,6 +34,18 @@ impl GameState {
             GameState::Done => None,
         }
     }
+
+    pub fn cards(&self, id: PlayerID) -> Vec<Card> {
+        match self {
+            GameState::Done | GameState::Initialize { .. } => vec![],
+            GameState::Draw(DrawPhase { ref hands, .. })
+            | GameState::Exchange(ExchangePhase { ref hands, .. })
+            | GameState::Play(PlayPhase { ref hands, .. }) => {
+                hands.cards(id).unwrap_or_else(|_| vec![])
+            }
+        }
+    }
+
     pub fn for_player(&self, id: PlayerID) -> GameState {
         let mut s = self.clone();
         match s {
@@ -44,9 +56,13 @@ impl GameState {
                 ref mut deck,
                 ..
             }) => {
-                hands.drop_other_players(id);
-                kitty.clear();
-                deck.clear();
+                hands.redact_except(id);
+                for card in kitty {
+                    *card = Card::Unknown;
+                }
+                for card in deck {
+                    *card = Card::Unknown;
+                }
             }
             GameState::Exchange(ExchangePhase {
                 ref mut hands,
@@ -54,9 +70,11 @@ impl GameState {
                 landlord,
                 ..
             }) => {
-                hands.drop_other_players(id);
+                hands.redact_except(id);
                 if id != landlord {
-                    kitty.clear();
+                    for card in kitty {
+                        *card = Card::Unknown;
+                    }
                 }
             }
             GameState::Play(PlayPhase {
@@ -65,9 +83,11 @@ impl GameState {
                 landlord,
                 ..
             }) => {
-                hands.drop_other_players(id);
+                hands.redact_except(id);
                 if id != landlord {
-                    kitty.clear();
+                    for card in kitty {
+                        *card = Card::Unknown;
+                    }
                 }
             }
         }
@@ -329,6 +349,9 @@ impl DrawPhase {
                     continue;
                 }
                 for inner_count in 1..count + 1 {
+                    if card.is_joker() && inner_count == 1 {
+                        continue
+                    }
                     let new_bid = Bid {
                         id,
                         card: *card,
@@ -381,6 +404,7 @@ impl DrawPhase {
                 bail!("only the landlord can advance the game");
             }
             let trump = match winning_bid.card {
+                Card::Unknown => bail!("can't bid with unknown cards!"),
                 Card::SmallJoker | Card::BigJoker => Trump::NoTrump { number: self.level },
                 Card::Suited { suit, .. } => Trump::Standard {
                     suit,
@@ -459,6 +483,9 @@ impl InitializePhase {
         if kitty_size == 0 {
             kitty_size = self.players.len();
         }
+        if kitty_size < 5 {
+            kitty_size += self.players.len();
+        }
         let position = self
             .landlord
             .and_then(|landlord| self.players.iter().position(|p| p.id == landlord))
@@ -468,7 +495,7 @@ impl InitializePhase {
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
             kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
-            hands: Hands::new(self.players.iter().map(|p| p.id)),
+            hands: Hands::new(self.players.iter().map(|p| p.id), level),
             bids: Vec::new(),
             players: self.players.clone(),
             landlord: self.landlord,

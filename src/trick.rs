@@ -550,69 +550,15 @@ mod tests {
     use super::{Trick, TrickFormat, TrickUnit};
 
     use crate::hands::Hands;
-    use crate::types::{Card, EffectiveSuit, Number, PlayerID, Suit, Trump};
+    use crate::types::{
+        cards::{H_2, H_3, H_7, H_8, S_2, S_3, S_4, S_5, S_6, S_7, S_8},
+        Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
+    };
 
     const TRUMP: Trump = Trump::Standard {
         number: Number::Four,
         suit: Suit::Spades,
     };
-    const TWO: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Two,
-    };
-    const THREE: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Three,
-    };
-    const FOUR: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Four,
-    };
-    const FIVE: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Five,
-    };
-    const SIX: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Six,
-    };
-    const SEVEN: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Seven,
-    };
-    const EIGHT: Card = Card::Suited {
-        suit: Suit::Spades,
-        number: Number::Eight,
-    };
-    const HEARTS_TWO: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Two,
-    };
-    const HEARTS_THREE: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Three,
-    };
-    const HEARTS_FOUR: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Four,
-    };
-    const HEARTS_FIVE: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Five,
-    };
-    const HEARTS_SIX: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Six,
-    };
-    const HEARTS_SEVEN: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Seven,
-    };
-    const HEARTS_EIGHT: Card = Card::Suited {
-        suit: Suit::Hearts,
-        number: Number::Eight,
-    };
-
     const P1: PlayerID = PlayerID(1);
     const P2: PlayerID = PlayerID(2);
     const P3: PlayerID = PlayerID(3);
@@ -620,114 +566,107 @@ mod tests {
 
     #[test]
     fn test_play_singles_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![TWO, THREE, FIVE]);
-        hands.add(P2, vec![TWO, THREE, FIVE]);
-        hands.add(P3, vec![TWO, THREE, FIVE]);
-        hands.add(P4, vec![TWO, THREE, FIVE]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[TWO]).unwrap();
-        trick.play_cards(P2, &mut hands, &[FIVE]).unwrap();
-        trick.play_cards(P3, &mut hands, &[THREE]).unwrap();
-        trick.play_cards(P4, &mut hands, &[FIVE]).unwrap();
+        trick.play_cards(P1, &mut hands, &[S_2]).unwrap();
+        trick.play_cards(P2, &mut hands, &[S_5]).unwrap();
+        trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
+        trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
         assert_eq!(multiplier, 1);
-        assert_eq!(points, vec![FIVE, FIVE]);
+        assert_eq!(points, vec![S_5, S_5]);
     }
 
     #[test]
     fn test_play_trump_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![TWO, THREE, FIVE]);
-        hands.add(P2, vec![HEARTS_TWO, HEARTS_THREE, FOUR]);
-        hands.add(P3, vec![TWO, THREE, FIVE]);
-        hands.add(P4, vec![TWO, THREE, FIVE]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P2, vec![H_2, H_3, S_4]).unwrap();
+        hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[TWO]).unwrap();
-        trick.play_cards(P2, &mut hands, &[FOUR]).unwrap();
-        trick.play_cards(P3, &mut hands, &[THREE]).unwrap();
-        trick.play_cards(P4, &mut hands, &[FIVE]).unwrap();
+        trick.play_cards(P1, &mut hands, &[S_2]).unwrap();
+        trick.play_cards(P2, &mut hands, &[S_4]).unwrap();
+        trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
+        trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
         assert_eq!(multiplier, 1);
-        assert_eq!(points, vec![FIVE]);
+        assert_eq!(points, vec![S_5]);
     }
 
     #[test]
     fn test_play_pairs_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![TWO, TWO, FIVE]);
-        hands.add(P2, vec![HEARTS_TWO, THREE, FOUR]);
-        hands.add(P3, vec![FIVE, FIVE, FIVE]);
-        hands.add(P4, vec![THREE, FOUR, FIVE]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![S_2, S_2, S_5]).unwrap();
+        hands.add(P2, vec![H_2, S_3, S_4]).unwrap();
+        hands.add(P3, vec![S_5, S_5, S_5]).unwrap();
+        hands.add(P4, vec![S_3, S_4, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[TWO, TWO]).unwrap();
-        trick.play_cards(P2, &mut hands, &[THREE, FOUR]).unwrap();
-        trick.play_cards(P3, &mut hands, &[FIVE, FIVE]).unwrap();
-        trick.play_cards(P4, &mut hands, &[THREE, FIVE]).unwrap();
+        trick.play_cards(P1, &mut hands, &[S_2, S_2]).unwrap();
+        trick.play_cards(P2, &mut hands, &[S_3, S_4]).unwrap();
+        trick.play_cards(P3, &mut hands, &[S_5, S_5]).unwrap();
+        trick.play_cards(P4, &mut hands, &[S_3, S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P3);
         assert_eq!(multiplier, 2);
-        assert_eq!(points, vec![FIVE, FIVE, FIVE]);
+        assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
     #[test]
     fn test_play_tractor_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![TWO, TWO, THREE, THREE, FOUR]);
-        hands.add(P2, vec![SIX, SIX, SEVEN, SEVEN, FOUR]);
-        hands.add(P3, vec![TWO, FIVE, FIVE, FIVE, FOUR]);
-        hands.add(P4, vec![SIX, SIX, SIX, SIX, FOUR]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![S_2, S_2, S_3, S_3, S_4]).unwrap();
+        hands.add(P2, vec![S_6, S_6, S_7, S_7, S_4]).unwrap();
+        hands.add(P3, vec![S_2, S_5, S_5, S_5, S_4]).unwrap();
+        hands.add(P4, vec![S_6, S_6, S_6, S_6, S_4]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
         trick
-            .play_cards(P1, &mut hands, &[TWO, TWO, THREE, THREE])
+            .play_cards(P1, &mut hands, &[S_2, S_2, S_3, S_3])
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[SIX, SIX, SEVEN, SEVEN])
+            .play_cards(P2, &mut hands, &[S_6, S_6, S_7, S_7])
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[TWO, FIVE, FIVE, FIVE])
+            .play_cards(P3, &mut hands, &[S_2, S_5, S_5, S_5])
             .unwrap();
         trick
-            .play_cards(P4, &mut hands, &[SIX, SIX, SIX, SIX])
+            .play_cards(P4, &mut hands, &[S_6, S_6, S_6, S_6])
             .unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
         assert_eq!(multiplier, 4);
-        assert_eq!(points, vec![FIVE, FIVE, FIVE]);
+        assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
     #[test]
     fn test_play_throw_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(
-            P1,
-            vec![HEARTS_EIGHT, HEARTS_EIGHT, HEARTS_SEVEN, HEARTS_TWO],
-        );
-        hands.add(P2, vec![HEARTS_TWO, TWO, TWO, TWO]);
-        hands.add(P3, vec![TWO, TWO, THREE, FOUR]);
-        hands.add(P4, vec![FOUR, FOUR, FOUR, FOUR]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![H_8, H_8, H_7, H_2]).unwrap();
+        hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
+        hands.add(P4, vec![S_4, S_4, S_4, S_4]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
         trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[HEARTS_EIGHT, HEARTS_EIGHT, HEARTS_SEVEN, HEARTS_TWO],
-            )
+            .play_cards(P1, &mut hands, &[H_8, H_8, H_7, H_2])
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[HEARTS_TWO, TWO, TWO, TWO])
+            .play_cards(P2, &mut hands, &[H_2, S_2, S_2, S_2])
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[TWO, TWO, THREE, FOUR])
+            .play_cards(P3, &mut hands, &[S_2, S_2, S_3, S_4])
             .unwrap();
         trick
-            .play_cards(P4, &mut hands, &[FOUR, FOUR, FOUR, FOUR])
+            .play_cards(P4, &mut hands, &[S_4, S_4, S_4, S_4])
             .unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(multiplier, 2);
@@ -737,35 +676,28 @@ mod tests {
 
     #[test]
     fn test_play_throw_trick_take_back() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(
-            P1,
-            vec![HEARTS_EIGHT, HEARTS_EIGHT, HEARTS_SEVEN, HEARTS_TWO],
-        );
-        hands.add(P2, vec![HEARTS_TWO, TWO, TWO, TWO]);
-        hands.add(P3, vec![TWO, TWO, THREE, FOUR]);
-        hands.add(P4, vec![FOUR, FOUR, FOUR, HEARTS_THREE]);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        hands.add(P1, vec![H_8, H_8, H_7, H_2]).unwrap();
+        hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
+        hands.add(P4, vec![S_4, S_4, S_4, H_3]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
         trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[HEARTS_EIGHT, HEARTS_EIGHT, HEARTS_SEVEN, HEARTS_TWO],
-            )
+            .play_cards(P1, &mut hands, &[H_8, H_8, H_7, H_2])
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[HEARTS_TWO, TWO, TWO, TWO])
+            .play_cards(P2, &mut hands, &[H_2, S_2, S_2, S_2])
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[TWO, TWO, THREE, FOUR])
+            .play_cards(P3, &mut hands, &[S_2, S_2, S_3, S_4])
             .unwrap();
         trick.take_back(P3, &mut hands).unwrap();
         trick.take_back(P2, &mut hands).unwrap();
         trick.take_back(P1, &mut hands).unwrap();
-        trick.play_cards(P1, &mut hands, &[HEARTS_TWO]).unwrap();
-        trick.play_cards(P2, &mut hands, &[HEARTS_TWO]).unwrap();
-        trick.play_cards(P3, &mut hands, &[THREE]).unwrap();
-        trick.play_cards(P4, &mut hands, &[HEARTS_THREE]).unwrap();
+        trick.play_cards(P1, &mut hands, &[H_2]).unwrap();
+        trick.play_cards(P2, &mut hands, &[H_2]).unwrap();
+        trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
+        trick.play_cards(P4, &mut hands, &[H_3]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(multiplier, 1);
         assert_eq!(winner_id, P3);
@@ -779,17 +711,17 @@ mod tests {
             trump: TRUMP,
             units: vec![TrickUnit::Repeated {
                 count: 3,
-                card: TWO,
+                card: S_2,
             }],
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[TWO, TWO, TWO]).unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2]).unwrap(),
             expected_tf
         );
 
-        assert!(expected_tf.matches(&[TWO, TWO, TWO]).is_ok());
-        assert!(expected_tf.matches(&[TWO, TWO]).is_err());
+        assert!(expected_tf.matches(&[S_2, S_2, S_2]).is_ok());
+        assert!(expected_tf.matches(&[S_2, S_2]).is_err());
     }
 
     #[test]
@@ -799,26 +731,22 @@ mod tests {
             trump: TRUMP,
             units: vec![TrickUnit::Tractor {
                 count: 3,
-                members: vec![TWO, THREE, FIVE],
+                members: vec![S_2, S_3, S_5],
             }],
         };
 
         assert_eq!(
-            TrickFormat::from_cards(
-                TRUMP,
-                &[TWO, TWO, TWO, THREE, THREE, THREE, FIVE, FIVE, FIVE]
-            )
-            .unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5]).unwrap(),
             expected_tf,
         );
         assert!(expected_tf
-            .matches(&[TWO, TWO, TWO, THREE, THREE, THREE, FIVE, FIVE, FIVE])
+            .matches(&[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5])
             .is_ok());
         assert!(expected_tf
-            .matches(&[THREE, THREE, THREE, FIVE, FIVE, FIVE, SIX, SIX, SIX])
+            .matches(&[S_3, S_3, S_3, S_5, S_5, S_5, S_6, S_6, S_6])
             .is_ok());
         assert!(expected_tf
-            .matches(&[TWO, TWO, TWO, THREE, THREE, THREE, SIX, SIX, SIX])
+            .matches(&[S_2, S_2, S_2, S_3, S_3, S_3, S_6, S_6, S_6])
             .is_err());
     }
 
@@ -830,11 +758,11 @@ mod tests {
             units: vec![
                 TrickUnit::Tractor {
                     count: 2,
-                    members: vec![THREE, FIVE],
+                    members: vec![S_3, S_5],
                 },
                 TrickUnit::Repeated {
                     count: 7,
-                    card: TWO,
+                    card: S_2,
                 },
             ],
         };
@@ -842,25 +770,24 @@ mod tests {
         assert_eq!(
             TrickFormat::from_cards(
                 TRUMP,
-                &[TWO, TWO, TWO, TWO, TWO, TWO, TWO, THREE, THREE, FIVE, FIVE]
+                &[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]
             )
             .unwrap(),
             expected_tf
         );
         assert!(expected_tf
-            .matches(&[TWO, TWO, TWO, TWO, TWO, TWO, TWO, THREE, THREE, FIVE, FIVE])
+            .matches(&[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5])
             .is_ok());
         assert!(expected_tf
-            .matches(&[EIGHT, EIGHT, EIGHT, EIGHT, EIGHT, EIGHT, EIGHT, THREE, THREE, FIVE, FIVE])
+            .matches(&[S_8, S_8, S_8, S_8, S_8, S_8, S_8, S_3, S_3, S_5, S_5])
             .is_ok());
 
-        assert!(TrickFormat::from_cards(
-            TRUMP,
-            &[TWO, TWO, THREE, THREE, FIVE, FIVE, EIGHT, EIGHT, EIGHT]
-        )
-        .unwrap()
-        .matches(&[TWO, TWO, TWO, TWO, TWO, THREE, THREE, FIVE, FIVE])
-        .is_ok());
+        assert!(
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_3, S_3, S_5, S_5, S_8, S_8, S_8])
+                .unwrap()
+                .matches(&[S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5])
+                .is_ok()
+        );
     }
 
     #[test]
@@ -871,26 +798,26 @@ mod tests {
             units: vec![
                 TrickUnit::Repeated {
                     count: 1,
-                    card: THREE,
+                    card: S_3,
                 },
                 TrickUnit::Repeated {
                     count: 3,
-                    card: TWO,
+                    card: S_2,
                 },
                 TrickUnit::Repeated {
                     count: 3,
-                    card: FIVE,
+                    card: S_5,
                 },
             ],
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[TWO, TWO, TWO, THREE, FIVE, FIVE, FIVE]).unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_5, S_5, S_5]).unwrap(),
             expected_tf
         );
 
         assert!(expected_tf
-            .matches(&[FIVE, FIVE, FIVE, THREE, THREE, THREE, TWO])
+            .matches(&[S_5, S_5, S_5, S_3, S_3, S_3, S_2])
             .is_ok());
     }
 
@@ -901,43 +828,43 @@ mod tests {
             trump: TRUMP,
             units: vec![TrickUnit::Repeated {
                 count: 2,
-                card: THREE,
+                card: S_3,
             }],
         };
 
-        let hand = Card::count(vec![TWO, TWO, THREE, THREE, FIVE, FIVE]);
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO]));
-        assert!(!tf.is_legal_play(&hand, &[TWO, THREE]));
-        assert!(!tf.is_legal_play(&hand, &[TWO, THREE, THREE]));
+        let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2]));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3]));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3]));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
             units: vec![TrickUnit::Repeated {
                 count: 5,
-                card: THREE,
+                card: S_3,
             }],
         };
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, THREE, THREE, FIVE]));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3, S_5]));
 
-        let hand = Card::count(vec![TWO, TWO, TWO, TWO, THREE, THREE, FIVE, FIVE]);
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, TWO, TWO, FIVE]));
+        let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]);
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2, S_5]));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
             units: vec![TrickUnit::Tractor {
                 count: 2,
-                members: vec![TWO, THREE],
+                members: vec![S_2, S_3],
             }],
         };
-        assert!(!tf.is_legal_play(&hand, &[TWO, TWO, TWO, TWO]));
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, THREE, THREE]));
-        assert!(tf.is_legal_play(&hand, &[THREE, THREE, FIVE, FIVE]));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2]));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3]));
+        assert!(tf.is_legal_play(&hand, &[S_3, S_3, S_5, S_5]));
 
-        let hand = Card::count(vec![TWO, TWO, TWO, TWO, THREE, FIVE, FIVE]);
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, TWO, TWO]));
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, FIVE, FIVE]));
+        let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2]));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5]));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -945,16 +872,16 @@ mod tests {
             units: vec![
                 TrickUnit::Repeated {
                     count: 2,
-                    card: TWO,
+                    card: S_2,
                 },
                 TrickUnit::Repeated {
                     count: 1,
-                    card: THREE,
+                    card: S_3,
                 },
             ],
         };
-        let hand = Card::count(vec![TWO, TWO, TWO, FIVE]);
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, TWO]));
-        assert!(tf.is_legal_play(&hand, &[TWO, TWO, FIVE]));
+        let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2]));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5]));
     }
 }
