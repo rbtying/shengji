@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>升级 / Tractor</title>
+    </head>
+    <body>
+        <h1>升级 / Tractor</h1>
+        <div id="api">
+            <p><em>Connecting...</em></p>
+        </div>
+        <p>room</p>
+        <input type="text" id="room" />
+        <p>name</p>
+        <input type="text" id="username" />
+        <p>message</p>
+        <input type="text" id="text" />
+
+        <button type="button" id="join">Join</button>
+        <button type="button" id="send">Send</button>
+        <button type="button" id="startgame">Start Game</button>
+        <button type="button" id="drawcard">Draw Card</button>
+        <button type="button" id="kitty">Card</button>
+
+        <script type="text/javascript">
+        var uri = 'ws://' + location.host + '/api';
+        var ws = new WebSocket(uri);
+        function message(data) {
+            var line = document.createElement('pre');
+            line.innerText = JSON.stringify(JSON.parse(data), null, 2);
+            api.appendChild(line);
+        }
+        ws.onopen = function() {
+            api.innerHTML = "<p><em>Connected!</em></p>";
+        }
+        ws.onmessage = function(msg) {
+            message(msg.data);
+        };
+        join.onclick = function() {
+            var room_name = room.value;
+            var user_name = username.value;
+            console.log(room_name, user_name);
+            ws.send(JSON.stringify({
+                room_name: room_name,
+                name: user_name
+            }));
+        };
+        send.onclick = function() {
+            var msg = text.value;
+            ws.send(msg);
+            text.value = '';
+        };
+        </script>
+    </body>
+</html>
