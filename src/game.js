@@ -2,7 +2,7 @@
 
 const e = React.createElement;
 
-const uri = 'ws://' + location.host + '/api';
+const uri = (window.location.protocol == 'https:' ? 'wss://' : 'ws://') + location.host + '/api';
 const ws = new WebSocket(uri);
 
 const RED_CARDS = [
