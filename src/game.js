@@ -460,7 +460,6 @@ class Trick extends React.Component {
 
 class Points extends React.Component {
   render() {
-    console.log(this.props);
     return e('div', { className: 'points' },
       this.props.players.map((player) => {
         const className = this.props.landlords_team.includes(player.id) ? 'landlord' : '';
@@ -852,7 +851,6 @@ ws.onclose = (evt) => {
 };
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
-  console.log(msg);
   if (msg.Message) {
     state.messages.push(msg.Message);
     if (state.messages.length >= 100) {
