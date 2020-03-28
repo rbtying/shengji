@@ -5,10 +5,10 @@
         <meta charset="UTF-8">
         <style>
           button { padding: 10px; cursor: pointer; margin: 10px; }
-          .errors { position: absolute; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
+          .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
           .trick { padding: 10px; }
           .points .card { font-size: 5em; cursor: default; }
-          .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; }
+          .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; }
           .card:last-child { margin-right: 0; }
           .red { color: #f00; }
           .hand p { margin: 0; text-align: center; }
@@ -16,10 +16,9 @@
           .hand .selected-cards { padding: 0 10px; }
           .next { color: #00f }
           .landlord { background: #ddd }
-          .players { border: 1px #000 solid; padding: 10px; }
           .player { border: 1px #000 solid; padding: 10px; }
-          .chat { min-width: 200px; width: 30%; padding: 10px; border: 1px #000 solid; float: right; }
-          .game { width: 65%; }
+          .chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
+          .game { min-width: 760px; width: 70%; display: inline-block; }
           .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
           .chat-anchor { overflow-anchor: auto; height: 1px }
           .message { margin: 0; }

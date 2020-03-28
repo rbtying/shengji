@@ -567,10 +567,10 @@ impl fmt::Debug for Number {
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Suit {
-    Hearts,
+    Clubs,
     Diamonds,
     Spades,
-    Clubs,
+    Hearts,
 }
 const ALL_SUITS: [Suit; 4] = [Suit::Spades, Suit::Hearts, Suit::Diamonds, Suit::Clubs];
 

@@ -160,8 +160,9 @@ impl PlayPhase {
         Ok(self.trick.take_back(id, &mut self.hands)?)
     }
 
-    pub fn finish_trick(&mut self) -> Result<String, Error> {
+    pub fn finish_trick(&mut self) -> Result<Vec<String>, Error> {
         let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
+        let mut msgs = vec![];
         if let GameMode::FindingFriends {
             ref mut friends, ..
         } = self.game_mode
@@ -171,9 +172,19 @@ impl PlayPhase {
                     for friend in friends.iter_mut() {
                         if friend.card == *card {
                             if friend.skip == 0 {
-                                friend.player_id = Some(played.id);
-                                if !self.landlords_team.contains(&played.id) {
-                                    self.landlords_team.push(played.id);
+                                if friend.player_id.is_none() {
+                                    friend.player_id = Some(played.id);
+                                    if !self.landlords_team.contains(&played.id) {
+                                        self.landlords_team.push(played.id);
+                                        for player in &self.players {
+                                            if player.id == played.id {
+                                                msgs.push(format!(
+                                                    "{} has joined the team",
+                                                    player.name
+                                                ))
+                                            }
+                                        }
+                                    }
                                 }
                             } else {
                                 friend.skip -= 1;
@@ -190,21 +201,21 @@ impl PlayPhase {
             }
         }
         let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
-        let msg = if !new_points.is_empty() {
+        if !new_points.is_empty() {
             let trump = self.trump;
             let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
             points.extend(new_points);
             points.sort_by(|a, b| trump.compare(*a, *b));
-            format!(
+            msgs.push(format!(
                 "{} wins the trick and gets {} points",
                 self.players[winner_idx].name, num_points
-            )
+            ));
         } else {
-            format!(
+            msgs.push(format!(
                 "{} wins the trick, but gets no points",
                 self.players[winner_idx].name
-            )
-        };
+            ));
+        }
         self.trick = Trick::new(
             self.trump,
             (0..self.players.len()).map(|offset| {
@@ -213,11 +224,11 @@ impl PlayPhase {
             }),
         );
 
-        Ok(msg)
+        Ok(msgs)
     }
 
     pub fn finish_game(&self) -> Result<(InitializePhase, Vec<String>), Error> {
-        if !self.hands.is_empty() {
+        if !self.hands.is_empty() || !self.trick.played_cards().is_empty() {
             bail!("not done playing yet!")
         }
 
@@ -476,8 +487,21 @@ impl DrawPhase {
     pub fn valid_bids(&self, id: PlayerID) -> Vec<Bid> {
         // Compute all valid bids.
         if self.bids.last().map(|b| b.id) == Some(id) {
-            // If we're the current highest bidder, no bids allowed
-            vec![]
+            // If we're the current highest bidder, the only permissible bid is
+            // one which is the same as the previous one, but has more cards
+            let last_bid = self.bids.last().unwrap();
+            let available = self
+                .hands
+                .counts(id)
+                .and_then(|c| c.get(&last_bid.card).cloned())
+                .unwrap_or(0);
+            (last_bid.count + 1..available)
+                .map(|ct| Bid {
+                    id,
+                    card: last_bid.card,
+                    count: ct,
+                })
+                .collect()
         } else if let Some(counts) = self.hands.counts(id) {
             // Construct all the valid bids from the player's hand
             let mut valid_bids = vec![];

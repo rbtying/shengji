@@ -108,7 +108,6 @@ class Initialize extends React.Component {
     const mode_as_string = this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return e('div', null,
       e(GameMode, { game_mode: this.props.state.game_mode }),
-      e('h1', null, 'Initialize'),
       e(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: null, name: this.props.name }),
       e('select', { value: mode_as_string, onChange: this.setGameMode },
         e('option', { value: 'Tractor' }, '升级 / Tractor'),
@@ -203,7 +202,6 @@ class Draw extends React.Component {
 
     return e('div', null,
       e(GameMode, { game_mode: this.props.state.game_mode }),
-      e('h1', null, `Draw (rank ${this.props.state.level})`),
       e(Players, {
         players: this.props.state.players,
         landlord: this.props.state.landlord,
@@ -211,7 +209,7 @@ class Draw extends React.Component {
         name: this.props.name,
       }),
       e('div', null, 
-        e('h2', null, 'bids'),
+        e('h2', null, 'Bids'),
         this.props.state.bids.map((bid, idx) => {
           let name = 'unknown';
           this.props.state.players.forEach((player) => {
@@ -222,7 +220,6 @@ class Draw extends React.Component {
           return e(LabeledPlay, { label: name, key: idx, cards: Array(bid.count).fill(bid.card) });
         }),
       ),
-      e(Cards, { cards: this.props.cards, selected: this.state.selected, setSelected: this.setSelected }),
       e('button', { onClick: (evt) => { evt.preventDefault(); this.drawCard() }, disabled: !can_draw }, 'Draw card'),
       e('label', null, 'autodraw',
         e('input', { name: 'autodraw', type: 'checkbox', checked: this.state.autodraw, onChange: this.onAutodrawClicked })
@@ -232,6 +229,7 @@ class Draw extends React.Component {
         onClick: this.pickUpKitty,
         disabled: this.props.state.deck.length > 0 || this.props.state.bids.length == 0
       }, 'Pick up cards'),
+      e(Cards, { cards: this.props.cards, selected: this.state.selected, setSelected: this.setSelected }),
     );
   }
 }
@@ -316,7 +314,6 @@ class Exchange extends React.Component {
     if (this.props.state.players[landlord_idx].name == this.props.name) {
       return e('div', null,
         e(GameMode, { game_mode: this.props.state.game_mode }),
-        e('h1', null, 'Exchange'),
         e(Players, {players: this.props.state.players, landlord: this.props.state.landlord, next: this.props.state.landlord, name: this.props.name }),
         e(Trump, {trump: this.props.state.trump}),
         this.props.state.game_mode.FindingFriends ? e('div', null,
@@ -350,9 +347,11 @@ class Exchange extends React.Component {
     } else {
       return e('div', null,
         e(GameMode, { game_mode: this.props.state.game_mode }),
-        e('h1', null, 'Exchange'),
         e(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: this.props.state.landlord, name: this.props.name }),
         e(Trump, {trump: this.props.state.trump}),
+        e('div', { className: 'hand' }, this.props.cards.map((c, idx) => 
+          e(Card, { key: idx, card: c })
+        )),
         e('p', null, 'Waiting...'),
       );
     }
@@ -413,7 +412,6 @@ class Play extends React.Component {
     });
     return e('div', null,
       e(GameMode, { game_mode: this.props.state.game_mode }),
-      e('h1', null, 'Play tricks'),
       e(Players, {
         players: this.props.state.players,
         landlord: this.props.state.landlord,
@@ -424,11 +422,11 @@ class Play extends React.Component {
       e(Trump, { trump: this.props.state.trump }),
       e(Friends, { game_mode: this.props.state.game_mode }),
       e(Trick, { trick: this.props.state.trick, players: this.props.state.players }),
-      e(Cards, { cards: this.props.cards, selected: this.state.selected, setSelected: this.setSelected }),
       e('button', { onClick: this.playCards, disabled: !can_play }, 'Play selected cards'),
       e('button', { onClick: this.takeBackCards, disabled: !can_take_back }, 'Take back last play'),
       e('button', { onClick: this.endTrick, disabled: this.props.state.trick.player_queue.length > 0 }, 'Finish trick'),
       this.props.cards.length == 0 ? e('button', { onClick: this.startNewGame }, 'Finish game') : null,
+      e(Cards, { cards: this.props.cards, selected: this.state.selected, setSelected: this.setSelected }),
       e(Points, {
         points: this.props.state.points,
         players: this.props.state.players,
@@ -499,13 +497,19 @@ class Cards extends React.Component {
     });
 
     return e('div', { className: 'hand' },
-      this.props.selected ? e('div', { className: 'selected-cards' }, this.props.selected.map((c, idx) => 
-        e(Card, { key: idx, onClick: () => this.unselectCard(c), card: c })
-      )) : null,
+      e('div', { className: 'selected-cards' },
+        this.props.selected.map((c, idx) => 
+          e(Card, { key: idx, onClick: () => this.unselectCard(c), card: c })
+        ),
+        this.props.selected.length == 0 ? e(Card, { card: '🂠'}) : null,
+      ),
       e('p', null, 'Your hand'),
-      e('div', { className: 'unselected-cards' }, unselected.map((c, idx) => 
-        e(Card, { key: idx, onClick: () => this.selectCard(c), card: c })
-      )),
+      e('div', { className: 'unselected-cards' },
+        unselected.map((c, idx) => 
+          e(Card, { key: idx, onClick: () => this.selectCard(c), card: c })
+        ),
+        unselected.length == 0 ? e(Card, { card: '🂠'}) : null,
+      ),
     );
   }
 }
@@ -821,7 +825,6 @@ function renderUI() {
       ReactDOM.render(
         e('div', null,
           e(Errors, {errors: state.errors}),
-          e(Chat, {messages: state.messages}),
           e('div', {className: 'game'}, 
             state.game_state.Initialize ? e(Initialize, {state: state.game_state.Initialize, cards: state.cards}) : null,
             state.game_state.Draw ? e(Draw, {state: state.game_state.Draw, cards: state.cards, name: state.name}) : null,
@@ -829,6 +832,7 @@ function renderUI() {
             state.game_state.Play ? e(Play, {state: state.game_state.Play, cards: state.cards, name: state.name}) : null,
             state.game_state.Done ? e('p', null, 'Game over') : null,
           ),
+          e(Chat, {messages: state.messages}),
         ),
         document.getElementById('root')
       );

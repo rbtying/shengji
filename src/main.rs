@@ -33,6 +33,14 @@ struct UserState {
     tx: mpsc::UnboundedSender<Result<Message, warp::Error>>,
 }
 
+impl UserState {
+    pub fn send(&self, msg: &GameMessage) {
+        if let Ok(s) = serde_json::to_string(msg) {
+            let _ = self.tx.send(Ok(Message::text(s)));
+        }
+    }
+}
+
 type Games = Arc<Mutex<HashMap<String, GameState>>>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -111,6 +119,16 @@ async fn user_connected(ws: WebSocket, games: Games) {
 
     let mut val = None;
 
+    let tx_ = tx.clone();
+    let send_to_user = move |msg| {
+        if let Ok(msg) = serde_json::to_string(&msg) {
+            if let Err(_) = tx_.send(Ok(Message::text(msg))) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     while let Some(result) = user_ws_rx.next().await {
         if let Ok(msg) = result {
             match serde_json::from_slice::<JoinRoom>(msg.as_bytes()) {
@@ -119,19 +137,14 @@ async fn user_connected(ws: WebSocket, games: Games) {
                     break;
                 }
                 Ok(_) => {
-                    let err = GameMessage::Error("invalid room or name".to_string());
-                    if let Ok(msg) = serde_json::to_string(&err) {
-                        if let Err(_) = tx.send(Ok(Message::text(msg))) {
-                            break;
-                        }
+                    if !send_to_user(GameMessage::Error("invalid room or name".to_string())) {
+                        break;
                     }
                 }
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't deserialize message {:?}", err));
-                    if let Ok(msg) = serde_json::to_string(&err) {
-                        if let Err(_) = tx.send(Ok(Message::text(msg))) {
-                            break;
-                        }
+                    if !send_to_user(err) {
+                        break;
                     }
                 }
             }
@@ -151,25 +164,15 @@ async fn user_connected(ws: WebSocket, games: Games) {
                 Ok(player_id) => player_id,
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
-                    if let Ok(msg) = serde_json::to_string(&err) {
-                        let _ = tx.send(Ok(Message::text(msg)));
-                    }
+                    let _ = send_to_user(err);
                     return;
                 }
             };
-            game.users.insert(
-                ws_id,
-                UserState {
-                    player_id,
-                    tx: tx.clone(),
-                },
-            );
+            game.users.insert(ws_id, UserState { player_id, tx });
             // send the updated game state to everyone!
             for user in game.users.values() {
                 if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id) {
-                    if let Ok(s) = serde_json::to_string(&GameMessage::State { state, cards }) {
-                        let _ = user.tx.send(Ok(Message::text(s)));
-                    }
+                    user.send(&GameMessage::State { state, cards });
                 }
             }
             player_id
@@ -185,12 +188,10 @@ async fn user_connected(ws: WebSocket, games: Games) {
                             let g = games.lock().await;
                             if let Some(game) = g.get(&room) {
                                 for user in game.users.values() {
-                                    if let Ok(s) = serde_json::to_string(&GameMessage::Message {
+                                    user.send(&GameMessage::Message {
                                         from: name.clone(),
                                         message: m.clone(),
-                                    }) {
-                                        let _ = user.tx.send(Ok(Message::text(s)));
-                                    }
+                                    });
                                 }
                             }
                         }
@@ -200,22 +201,14 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                 match game.game.kick(id) {
                                     Ok(()) => {
                                         for user in game.users.values() {
-                                            if user.player_id == id {
-                                                if let Ok(s) =
-                                                    serde_json::to_string(&GameMessage::Kicked)
-                                                {
-                                                    let _ = user.tx.send(Ok(Message::text(s)));
-                                                }
-                                            }
+                                            user.send(&GameMessage::Kicked);
                                         }
                                         game.users.retain(|_, u| u.player_id != id);
                                     }
                                     Err(err) => {
                                         let err = GameMessage::Error(format!("{}", err));
-                                        if let Ok(msg) = serde_json::to_string(&err) {
-                                            if let Err(_) = tx.send(Ok(Message::text(msg))) {
-                                                break;
-                                            }
+                                        if !send_to_user(err) {
+                                            break;
                                         }
                                     }
                                 }
@@ -233,32 +226,18 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                             if let Ok((state, cards)) =
                                                 game.game.dump_state_for_player(user.player_id)
                                             {
-                                                if let Ok(s) =
-                                                    serde_json::to_string(&GameMessage::State {
-                                                        state,
-                                                        cards,
-                                                    })
-                                                {
-                                                    let _ = user.tx.send(Ok(Message::text(s)));
-                                                }
-
                                                 for msg in &msgs {
-                                                    if let Ok(s) = serde_json::to_string(
-                                                        &GameMessage::Broadcast(msg.clone()),
-                                                    ) {
-                                                        let _ = user.tx.send(Ok(Message::text(s)));
-                                                    }
+                                                    user.send(&GameMessage::Broadcast(msg.clone()));
                                                 }
+                                                user.send(&GameMessage::State { state, cards });
                                             }
                                         }
                                     }
                                     Err(err) => {
                                         // send the error back to the requester
                                         let err = GameMessage::Error(format!("{}", err));
-                                        if let Ok(msg) = serde_json::to_string(&err) {
-                                            if let Err(_) = tx.send(Ok(Message::text(msg))) {
-                                                break;
-                                            }
+                                        if !send_to_user(err) {
+                                            break;
                                         }
                                     }
                                 }
@@ -271,10 +250,8 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                 "couldn't deserialize message {:?}",
                                 err
                             ));
-                            if let Ok(msg) = serde_json::to_string(&err) {
-                                if let Err(_) = tx.send(Ok(Message::text(msg))) {
-                                    break;
-                                }
+                            if !send_to_user(err) {
+                                break;
                             }
                         }
                     }

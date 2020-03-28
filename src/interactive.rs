@@ -114,9 +114,7 @@ impl InteractiveGame {
                     let cards_as_str = cards.iter().map(|c| c.as_char()).collect::<String>();
                     Ok(vec![format!("{} played {}", n, cards_as_str)])
                 }
-                (Message::EndTrick, GameState::Play(ref mut state)) => {
-                    Ok(vec![state.finish_trick()?])
-                }
+                (Message::EndTrick, GameState::Play(ref mut state)) => Ok(state.finish_trick()?),
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
                     state.take_back_cards(id)?;
                     let n = s.player_name(id)?;
