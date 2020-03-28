@@ -235,7 +235,7 @@ class Draw extends React.Component {
       e('button', { onClick: this.makeBid, disabled: this.state.selected.length == 0 }, 'Make bid'),
       e('button', {
         onClick: this.pickUpKitty,
-        disabled: this.props.state.deck.length > 0 || this.props.state.bids.length == 0 || this.props.state.players[next_idx].name != this.props.name
+        disabled: this.props.state.deck.length > 0 || this.props.state.bids.length == 0
       }, 'Pick up cards'),
     );
   }
