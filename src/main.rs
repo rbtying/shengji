@@ -45,6 +45,7 @@ pub struct JoinRoom {
 pub enum UserMessage {
     Message(String),
     Action(interactive::Message),
+    Kick(types::PlayerID),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -57,7 +58,9 @@ pub enum GameMessage {
         from: String,
         message: String,
     },
+    Broadcast(String),
     Error(String),
+    Kicked,
 }
 
 #[tokio::main]
@@ -75,14 +78,18 @@ async fn main() {
             ws.on_upgrade(move |socket| user_connected(socket, games))
         });
 
+    #[cfg(not(feature = "dynamic"))]
     let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
+    #[cfg(not(feature = "dynamic"))]
     let js = warp::path("game.js").map(|| {
         warp::http::Response::builder()
             .header("Content-Type", "text/javascript")
             .body(JS)
     });
-    //let index = warp::path::end().and(warp::fs::file("index.html"));
-    //let js = warp::path("game.js").and(warp::fs::file("game.js"));
+    #[cfg(feature = "dynamic")]
+    let index = warp::path::end().and(warp::fs::file("index.html"));
+    #[cfg(feature = "dynamic")]
+    let js = warp::path("game.js").and(warp::fs::file("game.js"));
     let routes = index.or(js).or(api);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
@@ -189,11 +196,40 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                 }
                             }
                         }
+                        Ok(UserMessage::Kick(id)) => {
+                            let mut g = games.lock().await;
+                            if let Some(game) = g.get_mut(&room) {
+                                match game.game.kick(id) {
+                                    Ok(()) => {
+                                        for user in game.users.values() {
+                                            if user.player_id == id {
+                                                if let Ok(s) =
+                                                    serde_json::to_string(&GameMessage::Kicked)
+                                                {
+                                                    let _ = user.tx.send(Ok(Message::text(s)));
+                                                }
+                                            }
+                                        }
+                                        game.users.retain(|_, u| u.player_id != id);
+                                    }
+                                    Err(err) => {
+                                        let err = GameMessage::Error(format!("{}", err));
+                                        if let Ok(msg) = serde_json::to_string(&err) {
+                                            if let Err(_) = tx.send(Ok(Message::text(msg))) {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                break;
+                            }
+                        }
                         Ok(UserMessage::Action(m)) => {
                             let g = games.lock().await;
                             if let Some(game) = g.get(&room) {
                                 match game.game.interact(m, player_id) {
-                                    Ok(()) => {
+                                    Ok(msgs) => {
                                         // send the updated game state to everyone!
                                         for user in game.users.values() {
                                             if let Ok((state, cards)) =
@@ -206,6 +242,14 @@ async fn user_connected(ws: WebSocket, games: Games) {
                                                     })
                                                 {
                                                     let _ = user.tx.send(Ok(Message::text(s)));
+                                                }
+
+                                                for msg in &msgs {
+                                                    if let Ok(s) = serde_json::to_string(
+                                                        &GameMessage::Broadcast(msg.clone()),
+                                                    ) {
+                                                        let _ = user.tx.send(Ok(Message::text(s)));
+                                                    }
                                                 }
                                             }
                                         }
@@ -261,5 +305,7 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
     }
 }
 
+#[cfg(not(feature = "dynamic"))]
 static INDEX_HTML: &str = include_str!("index.html");
+#[cfg(not(feature = "dynamic"))]
 static JS: &str = include_str!("game.js");

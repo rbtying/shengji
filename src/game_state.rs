@@ -51,6 +51,17 @@ impl GameState {
         }
     }
 
+    pub fn player_name(&self, id: PlayerID) -> Result<&'_ str, Error> {
+        if let Some(players) = self.players() {
+            for p in players {
+                if p.id == id {
+                    return Ok(&p.name);
+                }
+            }
+        }
+        bail!("Couldn't find player name")
+    }
+
     pub fn cards(&self, id: PlayerID) -> Vec<Card> {
         match self {
             GameState::Done | GameState::Initialize { .. } => vec![],
@@ -149,7 +160,7 @@ impl PlayPhase {
         Ok(self.trick.take_back(id, &mut self.hands)?)
     }
 
-    pub fn finish_trick(&mut self) -> Result<(), Error> {
+    pub fn finish_trick(&mut self) -> Result<String, Error> {
         let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
         if let GameMode::FindingFriends {
             ref mut friends, ..
@@ -178,12 +189,22 @@ impl PlayPhase {
                 new_points.extend(self.kitty.iter().filter(|c| c.points().is_some()).cloned());
             }
         }
-        let trump = self.trump;
-        if !new_points.is_empty() {
+        let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
+        let msg = if !new_points.is_empty() {
+            let trump = self.trump;
+            let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
             points.extend(new_points);
             points.sort_by(|a, b| trump.compare(*a, *b));
-        }
-        let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
+            format!(
+                "{} wins the trick and gets {} points",
+                self.players[winner_idx].name, num_points
+            )
+        } else {
+            format!(
+                "{} wins the trick, but gets no points",
+                self.players[winner_idx].name
+            )
+        };
         self.trick = Trick::new(
             self.trump,
             (0..self.players.len()).map(|offset| {
@@ -192,13 +213,15 @@ impl PlayPhase {
             }),
         );
 
-        Ok(())
+        Ok(msg)
     }
 
-    pub fn finish_game(&self) -> Result<InitializePhase, Error> {
+    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<String>), Error> {
         if !self.hands.is_empty() {
             bail!("not done playing yet!")
         }
+
+        let mut msgs = vec![];
 
         let non_landlords_points: usize = self
             .points
@@ -236,6 +259,9 @@ impl PlayPhase {
                     player.level = next_level;
                 }
             }
+            if bump > 0 {
+                msgs.push(format!("{} has advanced to rank {}", player.name, bump));
+            }
         }
 
         let landlord_idx = self
@@ -244,26 +270,34 @@ impl PlayPhase {
             .position(|p| p.id == self.landlord)
             .unwrap();
         let mut idx = (landlord_idx + 1) % players.len();
-        let next_landlord = loop {
+        let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&players[idx].id) {
-                break players[idx].id;
+                break (players[idx].id, idx);
             }
             idx = (idx + 1) % players.len()
         };
+        msgs.push(format!(
+            "{} will start the next game",
+            self.players[next_landlord_idx].name
+        ));
 
-        Ok(InitializePhase {
-            game_mode: match self.game_mode {
-                GameMode::Tractor => GameMode::Tractor,
-                GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
-                    num_friends,
-                    friends: vec![],
+        Ok((
+            InitializePhase {
+                game_mode: match self.game_mode {
+                    GameMode::Tractor => GameMode::Tractor,
+                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
+                        num_friends,
+                        friends: vec![],
+                    },
                 },
+                kitty_size: Some(self.kitty.len()),
+                num_decks: Some(self.num_decks),
+                landlord: Some(next_landlord),
+                max_player_id: players.iter().map(|p| p.id.0).max().unwrap_or(0),
+                players,
             },
-            num_decks: Some(self.num_decks),
-            landlord: Some(next_landlord),
-            max_player_id: players.iter().map(|p| p.id.0).max().unwrap_or(0),
-            players,
-        })
+            msgs,
+        ))
     }
 }
 
@@ -535,6 +569,7 @@ pub struct InitializePhase {
     max_player_id: usize,
     players: Vec<Player>,
     num_decks: Option<usize>,
+    kitty_size: Option<usize>,
     game_mode: GameMode,
     landlord: Option<PlayerID>,
 }
@@ -543,6 +578,7 @@ impl InitializePhase {
         Self {
             max_player_id: 0,
             players: Vec::new(),
+            kitty_size: None,
             num_decks: None,
             game_mode: GameMode::Tractor,
             landlord: None,
@@ -557,6 +593,7 @@ impl InitializePhase {
             name,
             level: Number::Two,
         });
+        self.kitty_size = None;
         id
     }
 
@@ -572,6 +609,21 @@ impl InitializePhase {
             self.num_decks = Some(num_decks);
         }
     }
+    pub fn set_kitty_size(&mut self, size: usize) -> Result<(), Error> {
+        if self.players.is_empty() {
+            bail!("no players")
+        }
+        let deck_len = self.players.len() * FULL_DECK.len();
+        if size >= deck_len {
+            bail!("kitty size too large")
+        }
+
+        if deck_len % self.players.len() != size % self.players.len() {
+            bail!("kitty must be a multiple of the remaining cards")
+        }
+        self.kitty_size = Some(size);
+        Ok(())
+    }
 
     pub fn set_game_mode(&mut self, game_mode: GameMode) {
         self.game_mode = game_mode;
@@ -582,6 +634,23 @@ impl InitializePhase {
             bail!("not enough players")
         }
 
+        let game_mode = match self.game_mode {
+            GameMode::FindingFriends { num_friends, .. }
+                if num_friends > 0 && num_friends <= self.players.len() - 1 =>
+            {
+                GameMode::FindingFriends {
+                    num_friends,
+                    friends: vec![],
+                }
+            }
+            GameMode::FindingFriends { .. } => GameMode::FindingFriends {
+                num_friends: (self.players.len() / 2) - 1,
+                friends: vec![],
+            },
+            GameMode::Tractor if self.players.len() % 2 == 0 => GameMode::Tractor,
+            GameMode::Tractor => bail!("can only play tractor with an even number of players"),
+        };
+
         let num_decks = self.num_decks.unwrap_or(self.players.len() / 2);
         let mut deck = Vec::with_capacity(num_decks * FULL_DECK.len());
         for _ in 0..num_decks {
@@ -589,30 +658,27 @@ impl InitializePhase {
         }
         let mut rng = rand::thread_rng();
         deck.shuffle(&mut rng);
-        let mut kitty_size = deck.len() % self.players.len();
-        if kitty_size == 0 {
-            kitty_size = self.players.len();
-        }
-        if kitty_size < 5 {
-            kitty_size += self.players.len();
-        }
+
+        let kitty_size = match self.kitty_size {
+            Some(size) if deck.len() % self.players.len() == size % self.players.len() => size,
+            Some(_) => bail!("kitty size doesn't match player count"),
+            None => {
+                let mut kitty_size = deck.len() % self.players.len();
+                if kitty_size == 0 {
+                    kitty_size = self.players.len();
+                }
+                if kitty_size < 5 {
+                    kitty_size += self.players.len();
+                }
+                kitty_size
+            }
+        };
+
         let position = self
             .landlord
             .and_then(|landlord| self.players.iter().position(|p| p.id == landlord))
             .unwrap_or(rng.next_u32() as usize % self.players.len());
         let level = self.players[position].level;
-
-        let mut game_mode = self.game_mode.clone();
-        if let GameMode::FindingFriends {
-            ref mut num_friends,
-            ref mut friends,
-        } = game_mode
-        {
-            friends.clear();
-            if *num_friends == 0 || *num_friends >= self.players.len() - 1 {
-                *num_friends = (self.players.len() / 2) - 1;
-            }
-        }
 
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),

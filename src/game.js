@@ -2,38 +2,10 @@
 
 const e = React.createElement;
 
-const uri = (location.protocol == 'https:' ? 'wss://' : 'ws://') + location.host + location.pathname + '/api';
+const uri = (location.protocol == 'https:' ? 'wss://' : 'ws://') + location.host + location.pathname + (location.pathname.endsWith('/') ? 'api' : '/api');
 const ws = new WebSocket(uri);
 
-const RED_CARDS = [
-  '🃁',
-  '🃎',
-  '🃍',
-  '🃋',
-  '🃊',
-  '🃉',
-  '🃈',
-  '🃇',
-  '🃆',
-  '🃅',
-  '🃄',
-  '🃃',
-  '🃂',
-  '🂱',
-  '🂾',
-  '🂽',
-  '🂻',
-  '🂺',
-  '🂹',
-  '🂸',
-  '🂷',
-  '🂶',
-  '🂵',
-  '🂴',
-  '🂳',
-  '🂲',
-  '🃏'
-];
+const RED_CARDS = [ '🃁', '🃎', '🃍', '🃋', '🃊', '🃉', '🃈', '🃇', '🃆', '🃅', '🃄', '🃃', '🃂', '🂱', '🂾', '🂽', '🂻', '🂺', '🂹', '🂸', '🂷', '🂶', '🂵', '🂴', '🂳', '🂲', '🃏' ];
 const ALL_STANDARD_CARDS = [
   { suit: '♧', number: 'A', value: '🃑' },
   { suit: '♧', number: 'K', value: '🃞' },
@@ -94,6 +66,7 @@ class Initialize extends React.Component {
     super(props);
     this.setGameMode = this.setGameMode.bind(this);
     this.startGame = this.startGame.bind(this);
+    this.setKittySize = this.setKittySize.bind(this);
   }
 
   setGameMode(evt) {
@@ -101,14 +74,28 @@ class Initialize extends React.Component {
     if (evt.target.value == 'Tractor') {
       send({Action: { SetGameMode: 'Tractor' }});
     } else {
-      send({Action: {
-        SetGameMode: {
-          FindingFriends: {
-            num_friends: 0,
-            friends: [],
+      send({
+        Action: {
+          SetGameMode: {
+            FindingFriends: {
+              num_friends: 0,
+              friends: [],
+            }
           }
         }
-      }});
+      });
+    }
+  }
+
+  setKittySize(evt) {
+    evt.preventDefault();
+    if (evt.target.value != '') {
+      const size = parseInt(evt.target.value, 10);
+      send({ 
+        Action: {
+          SetKittySize: size
+        }
+      });
     }
   }
 
@@ -127,8 +114,8 @@ class Initialize extends React.Component {
         e('option', { value: 'Tractor' }, '升级 / Tractor'),
         e('option', { value: 'FindingFriends' }, '找朋友 / Finding Friends'),
       ),
-      this.props.state.players.length >= 4 ? 
-        e('button', { onClick: this.startGame }, 'Start game') : e('p', null, 'Waiting for players...'),
+      this.props.state.players.length >= 4 ?  e('button', { onClick: this.startGame }, 'Start game') : e('p', null, 'Waiting for players...'),
+      e(Kicker, { players: this.props.state.players })
     );
   }
 }
@@ -183,6 +170,14 @@ class Draw extends React.Component {
     this.setState({
       autodraw: evt.target.checked
     });
+    if (evt.target.checked) {
+      this.drawCard()
+    } else {
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+        this.timeout = null;
+      }
+    }
   }
 
   render() {
@@ -585,6 +580,36 @@ class Trump extends React.Component {
   }
 }
 
+class Kicker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      to_kick: '',
+    };
+    this.onChange = this.onChange.bind(this);
+    this.kick = this.kick.bind(this);
+  }
+
+  onChange(evt) {
+    evt.preventDefault();
+    this.setState({ to_kick: evt.target.value });
+  }
+  kick(evt) {
+    evt.preventDefault();
+    send({ Kick: parseInt(this.state.to_kick, 10) });
+  }
+
+  render() {
+    return e('div', { className: 'kicker' },
+      e('select', { value: this.state.value, onChange: this.onChange },
+        e('option', { value: '' }, ''),
+        this.props.players.map((player) => e('option', { value: player.id, key: player.id }, player.name)),
+      ),
+      e('button', { onClick: this.kick, disabled: this.state.to_kick == '' }, 'kick'),
+    );
+  }
+}
+
 class Players extends React.Component {
   render() {
     return e('table', { className: 'players' },
@@ -654,7 +679,13 @@ class Chat extends React.Component {
     return e('div', { className: 'chat' },
       e('div', { className: 'messages' },
         this.props.messages.map(
-          (m, idx) => e('p', { key: idx, className: 'message' }, `${m.from}: ${m.message}`)
+          (m, idx) => {
+            let className = 'message';
+            if (m.from_game) {
+              className = className + ' game-message';
+            }
+            return e('p', { key: idx, className: className }, `${m.from}: ${m.message}`);
+          }
         ),
         e('div', { className: 'chat-anchor', ref: (el) => { this.anchor = el; } }),
       ),
@@ -821,8 +852,19 @@ ws.onclose = (evt) => {
 };
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
+  console.log(msg);
   if (msg.Message) {
     state.messages.push(msg.Message);
+    if (state.messages.length >= 100) {
+      state.message.shift();
+    }
+  }
+  if (msg.Broadcast) {
+    state.messages.push({
+      from: 'GAME',
+      message: msg.Broadcast,
+      from_game: true
+    });
     if (state.messages.length >= 100) {
       state.message.shift();
     }
@@ -839,6 +881,10 @@ ws.onmessage = (event) => {
   if (msg.State) {
     state.game_state = msg.State.state;
     state.cards = msg.State.cards;
+  }
+
+  if (msg == 'Kicked') {
+    ws.close();
   }
 
   renderUI()
