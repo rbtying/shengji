@@ -1,16 +1,37 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>升级 / Tractor</title>
+        <title>升级 / 找朋友</title>
+        <meta charset="UTF-8">
         <style>
-          .card { font-size: 6em; }
+          button { padding: 10px; cursor: pointer; margin: 10px; }
+          .errors { position: absolute; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
+          .trick { padding: 10px; }
+          .points .card { font-size: 5em; cursor: default; }
+          .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; }
+          .card:last-child { margin-right: 0; }
           .red { color: #f00; }
-          .selected-cards { display: block }
-          .unselected-cards { display: block }
+          .hand p { margin: 0; text-align: center; }
+          .hand .unselected-cards { padding: 0 10px; }
+          .hand .selected-cards { padding: 0 10px; }
+          .next { color: #00f }
+          .landlord { background: #ddd }
+          .players { border: 1px #000 solid; padding: 10px; }
+          .player { border: 1px #000 solid; padding: 10px; }
+          .chat { min-width: 200px; width: 30%; padding: 10px; border: 1px #000 solid; float: right; }
+          .game { width: 65%; }
+          .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
+          .chat-anchor { overflow-anchor: auto; height: 1px }
+          .message { margin: 0; }
+          .labeled-play { display: inline-block; padding: 10px; border: 1px solid #000; }
+          .labeled-play .label { text-align: center }
+          .labeled-play .card { cursor: default; }
+          .trump { margin: 10px 0; }
+          .pending-friends p { margin: 0; }
+          .pending-friends { margin: 10px; }
         </style>
     </head>
     <body>
-        <h1>升级 / Tractor</h1>
         <div id="root"></div>
         <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
         <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>

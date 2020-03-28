@@ -190,7 +190,7 @@ impl Trump {
                 } else if number_2 == trump_number {
                     Ordering::Less
                 } else {
-                    number_1.as_u32().cmp(&number_2.as_u32())
+                    number_1.cmp(&number_2)
                 }
             }
         })

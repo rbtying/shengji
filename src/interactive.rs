@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{GameState, InitializePhase};
+use crate::game_state::{Friend, GameMode, GameState, InitializePhase};
 use crate::types::{Card, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -72,6 +72,10 @@ impl InteractiveGame {
                     state.set_num_decks(num_decks);
                     Ok(())
                 }
+                (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
+                    state.set_game_mode(game_mode.clone());
+                    Ok(())
+                }
                 (Message::DrawCard, GameState::Draw(ref mut state)) => {
                     state.draw_card(id)?;
                     Ok(())
@@ -95,12 +99,20 @@ impl InteractiveGame {
                     state.move_card_to_hand(id, card)?;
                     Ok(())
                 }
+                (Message::SetFriends(ref friends), GameState::Exchange(ref mut state)) => {
+                    state.set_friends(id, friends.iter().cloned())?;
+                    Ok(())
+                }
                 (Message::BeginPlay, GameState::Exchange(ref mut state)) => {
                     *s = GameState::Play(state.advance(id)?);
                     Ok(())
                 }
                 (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
                     state.play_cards(id, cards)?;
+                    Ok(())
+                }
+                (Message::EndTrick, GameState::Play(ref mut state)) => {
+                    state.finish_trick()?;
                     Ok(())
                 }
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
@@ -123,14 +135,17 @@ impl InteractiveGame {
 pub enum Message {
     EndGame,
     SetNumDecks(usize),
+    SetGameMode(GameMode),
     StartGame,
     DrawCard,
     Bid(Card, usize),
     PickUpKitty,
     MoveCardToKitty(Card),
     MoveCardToHand(Card),
+    SetFriends(Vec<Friend>),
     BeginPlay,
     PlayCards(Vec<Card>),
+    EndTrick,
     TakeBackCards,
     StartNewGame,
 }

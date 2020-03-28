@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{bail, Error};
 use rand::{seq::SliceRandom, RngCore};
@@ -13,6 +13,22 @@ pub struct Player {
     pub id: PlayerID,
     pub name: String,
     level: Number,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GameMode {
+    Tractor,
+    FindingFriends {
+        num_friends: usize,
+        friends: Vec<Friend>,
+    },
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+pub struct Friend {
+    card: Card,
+    skip: usize,
+    player_id: Option<PlayerID>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,6 +83,7 @@ impl GameState {
             GameState::Exchange(ExchangePhase {
                 ref mut hands,
                 ref mut kitty,
+                ref mut game_mode,
                 landlord,
                 ..
             }) => {
@@ -74,6 +91,12 @@ impl GameState {
                 if id != landlord {
                     for card in kitty {
                         *card = Card::Unknown;
+                    }
+                    if let GameMode::FindingFriends {
+                        ref mut friends, ..
+                    } = game_mode
+                    {
+                        friends.clear();
                     }
                 }
             }
@@ -98,6 +121,7 @@ impl GameState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayPhase {
     num_decks: usize,
+    game_mode: GameMode,
     hands: Hands,
     points: HashMap<PlayerID, Vec<Card>>,
     kitty: Vec<Card>,
@@ -118,9 +142,6 @@ impl PlayPhase {
 
     pub fn play_cards(&mut self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
         self.trick.play_cards(id, &mut self.hands, cards)?;
-        if self.trick.next_player().is_none() {
-            self.finish_trick()?;
-        }
         Ok(())
     }
 
@@ -128,8 +149,29 @@ impl PlayPhase {
         Ok(self.trick.take_back(id, &mut self.hands)?)
     }
 
-    fn finish_trick(&mut self) -> Result<(), Error> {
+    pub fn finish_trick(&mut self) -> Result<(), Error> {
         let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
+        if let GameMode::FindingFriends {
+            ref mut friends, ..
+        } = self.game_mode
+        {
+            for played in self.trick.played_cards() {
+                for card in played.cards.iter() {
+                    for friend in friends.iter_mut() {
+                        if friend.card == *card {
+                            if friend.skip == 0 {
+                                friend.player_id = Some(played.id);
+                                if !self.landlords_team.contains(&played.id) {
+                                    self.landlords_team.push(played.id);
+                                }
+                            } else {
+                                friend.skip -= 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         let points = self.points.get_mut(&winner).unwrap();
         if self.hands.is_empty() {
             for _ in 0..kitty_multipler {
@@ -210,6 +252,13 @@ impl PlayPhase {
         };
 
         Ok(InitializePhase {
+            game_mode: match self.game_mode {
+                GameMode::Tractor => GameMode::Tractor,
+                GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
+                    num_friends,
+                    friends: vec![],
+                },
+            },
             num_decks: Some(self.num_decks),
             landlord: Some(next_landlord),
             max_player_id: players.iter().map(|p| p.id.0).max().unwrap_or(0),
@@ -221,6 +270,7 @@ impl PlayPhase {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangePhase {
     num_decks: usize,
+    game_mode: GameMode,
     hands: Hands,
     kitty: Vec<Card>,
     kitty_size: usize,
@@ -252,17 +302,69 @@ impl ExchangePhase {
         }
     }
 
+    pub fn set_friends(
+        &mut self,
+        id: PlayerID,
+        iter: impl IntoIterator<Item = Friend>,
+    ) -> Result<(), Error> {
+        if self.landlord != id {
+            bail!("not the landlord")
+        }
+        if let GameMode::FindingFriends {
+            num_friends,
+            ref mut friends,
+        } = self.game_mode
+        {
+            let friend_set = iter.into_iter().collect::<HashSet<_>>();
+            if num_friends != friend_set.len() {
+                bail!("incorrect number of friends")
+            }
+            for friend in friend_set.iter() {
+                if friend.player_id.is_some() {
+                    bail!("you can't pick your friend on purpose")
+                }
+                if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
+                    bail!(
+                        "you can't pick a joker or a {} as your friend",
+                        self.trump.number().as_str()
+                    )
+                }
+                if friend.skip >= self.num_decks {
+                    bail!("need to pick a card that exists!")
+                }
+            }
+            friends.clear();
+            friends.extend(friend_set);
+            Ok(())
+        } else {
+            bail!("not playing finding friends")
+        }
+    }
+
     pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
         if id != self.landlord {
             bail!("only the landlord can advance the game")
         }
-        if self.kitty.len() == self.kitty_size {
-            let landlord_position = self
-                .players
-                .iter()
-                .position(|p| p.id == self.landlord)
-                .unwrap();
-            let landlords_team = self
+        if self.kitty.len() != self.kitty_size {
+            bail!("incorrect number of cards in the kitty")
+        }
+        if let GameMode::FindingFriends {
+            num_friends,
+            ref friends,
+        } = self.game_mode
+        {
+            if friends.len() != num_friends {
+                bail!("need to pick friends")
+            }
+        }
+
+        let landlord_position = self
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord)
+            .unwrap();
+        let landlords_team = match self.game_mode {
+            GameMode::Tractor => self
                 .players
                 .iter()
                 .enumerate()
@@ -273,33 +375,33 @@ impl ExchangePhase {
                         None
                     }
                 })
-                .collect();
-            let landlord_idx = self
-                .players
-                .iter()
-                .position(|p| p.id == self.landlord)
-                .unwrap();
+                .collect(),
+            GameMode::FindingFriends { .. } => vec![self.landlord],
+        };
+        let landlord_idx = self
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord)
+            .unwrap();
 
-            Ok(PlayPhase {
-                num_decks: self.num_decks,
-                hands: self.hands.clone(),
-                kitty: self.kitty.clone(),
-                trick: Trick::new(
-                    self.trump,
-                    (0..self.players.len()).map(|offset| {
-                        let idx = (landlord_idx + offset) % self.players.len();
-                        self.players[idx].id
-                    }),
-                ),
-                points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
-                players: self.players.clone(),
-                landlord: self.landlord,
-                trump: self.trump,
-                landlords_team,
-            })
-        } else {
-            bail!("incorrect number of cards in the kitty!")
-        }
+        Ok(PlayPhase {
+            num_decks: self.num_decks,
+            game_mode: self.game_mode.clone(),
+            hands: self.hands.clone(),
+            kitty: self.kitty.clone(),
+            trick: Trick::new(
+                self.trump,
+                (0..self.players.len()).map(|offset| {
+                    let idx = (landlord_idx + offset) % self.players.len();
+                    self.players[idx].id
+                }),
+            ),
+            points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
+            players: self.players.clone(),
+            landlord: self.landlord,
+            trump: self.trump,
+            landlords_team,
+        })
     }
 }
 
@@ -313,6 +415,7 @@ pub struct Bid {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DrawPhase {
     num_decks: usize,
+    game_mode: GameMode,
     deck: Vec<Card>,
     players: Vec<Player>,
     hands: Hands,
@@ -350,7 +453,7 @@ impl DrawPhase {
                 }
                 for inner_count in 1..count + 1 {
                     if card.is_joker() && inner_count == 1 {
-                        continue
+                        continue;
                     }
                     let new_bid = Bid {
                         id,
@@ -415,6 +518,7 @@ impl DrawPhase {
             hands.set_trump(trump);
             Ok(ExchangePhase {
                 num_decks: self.num_decks,
+                game_mode: self.game_mode.clone(),
                 kitty_size: self.kitty.len(),
                 kitty: self.kitty.clone(),
                 players: self.players.clone(),
@@ -431,6 +535,7 @@ pub struct InitializePhase {
     max_player_id: usize,
     players: Vec<Player>,
     num_decks: Option<usize>,
+    game_mode: GameMode,
     landlord: Option<PlayerID>,
 }
 impl InitializePhase {
@@ -439,6 +544,7 @@ impl InitializePhase {
             max_player_id: 0,
             players: Vec::new(),
             num_decks: None,
+            game_mode: GameMode::Tractor,
             landlord: None,
         }
     }
@@ -467,6 +573,10 @@ impl InitializePhase {
         }
     }
 
+    pub fn set_game_mode(&mut self, game_mode: GameMode) {
+        self.game_mode = game_mode;
+    }
+
     pub fn start(&self) -> Result<DrawPhase, Error> {
         if self.players.len() < 4 {
             bail!("not enough players")
@@ -492,6 +602,18 @@ impl InitializePhase {
             .unwrap_or(rng.next_u32() as usize % self.players.len());
         let level = self.players[position].level;
 
+        let mut game_mode = self.game_mode.clone();
+        if let GameMode::FindingFriends {
+            ref mut num_friends,
+            ref mut friends,
+        } = game_mode
+        {
+            friends.clear();
+            if *num_friends == 0 || *num_friends >= self.players.len() - 1 {
+                *num_friends = (self.players.len() / 2) - 1;
+            }
+        }
+
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
             kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
@@ -501,6 +623,7 @@ impl InitializePhase {
             landlord: self.landlord,
             position,
             num_decks,
+            game_mode,
             level,
         })
     }

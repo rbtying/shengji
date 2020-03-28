@@ -12,7 +12,7 @@ use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
-use warp::{http::Response, Filter};
+use warp::Filter;
 
 pub mod game_state;
 pub mod hands;
@@ -75,13 +75,14 @@ async fn main() {
             ws.on_upgrade(move |socket| user_connected(socket, games))
         });
 
-    // GET / -> index html
     let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
     let js = warp::path("game.js").map(|| {
-        Response::builder()
+        warp::http::Response::builder()
             .header("Content-Type", "text/javascript")
             .body(JS)
     });
+    //let index = warp::path::end().and(warp::fs::file("index.html"));
+    //let js = warp::path("game.js").and(warp::fs::file("game.js"));
     let routes = index.or(js).or(api);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
@@ -91,8 +92,6 @@ async fn user_connected(ws: WebSocket, games: Games) {
     // Use a counter to assign a new unique ID for this user.
     let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
 
-    eprintln!("new api user: {}", ws_id);
-
     // Split the socket into a sender and receive of messages.
     let (user_ws_tx, mut user_ws_rx) = ws.split();
 
@@ -100,9 +99,7 @@ async fn user_connected(ws: WebSocket, games: Games) {
     // to the websocket...
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::task::spawn(rx.forward(user_ws_tx).map(|result| {
-        if let Err(e) = result {
-            eprintln!("websocket send error: {}", e);
-        }
+        let _ = result;
     }));
 
     let mut val = None;
@@ -240,8 +237,7 @@ async fn user_connected(ws: WebSocket, games: Games) {
                         }
                     }
                 }
-                Err(e) => {
-                    eprintln!("websocket error(uid={}): {}", ws_id, e);
+                Err(_) => {
                     break;
                 }
             };
@@ -254,39 +250,12 @@ async fn user_connected(ws: WebSocket, games: Games) {
 }
 
 async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
-    eprintln!("good bye user: {}, {}", room, ws_id);
-
     // Stream closed up, so remove from the user list
     let mut g = games.lock().await;
     if let Some(game) = g.get_mut(&room) {
-        if let Some(UserState { player_id, .. }) = game.users.remove(&ws_id) {
-            // If there are no other connections with this user id, try to kick the player out of
-            // the room.
-            if game
-                .users
-                .values()
-                .filter(|k| k.player_id == player_id)
-                .next()
-                .is_none()
-            {
-                if let Ok(_) = game.game.kick(player_id) {
-                    eprintln!("kicking all players with ID {:?} from {}", player_id, room);
-                    for user in game.users.values() {
-                        if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id)
-                        {
-                            if let Ok(s) =
-                                serde_json::to_string(&GameMessage::State { state, cards })
-                            {
-                                let _ = user.tx.send(Ok(Message::text(s)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        game.users.remove(&ws_id);
         // If there is nobody connected anymore, drop the game entirely.
         if game.users.is_empty() {
-            eprintln!("deleting room {}", room);
             g.remove(&room);
         }
     }

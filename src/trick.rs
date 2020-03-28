@@ -260,8 +260,8 @@ impl TrickFormat {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlayedCards {
-    id: PlayerID,
-    cards: Vec<Card>,
+    pub id: PlayerID,
+    pub cards: Vec<Card>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -280,6 +280,10 @@ impl Trick {
             trick_format: None,
             trump,
         }
+    }
+
+    pub fn played_cards(&self) -> &'_ [PlayedCards] {
+        &self.played_cards
     }
 
     pub fn next_player(&self) -> Option<PlayerID> {
