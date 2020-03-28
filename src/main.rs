@@ -176,8 +176,6 @@ async fn user_connected(ws: WebSocket, games: Games) {
         };
         let games2 = games.clone();
 
-        // Every time the user sends a message, broadcast it to
-        // all other users...
         while let Some(result) = user_ws_rx.next().await {
             match result {
                 Ok(msg) => {
