@@ -51,13 +51,6 @@ impl Trump {
             ) if number == card_number => EffectiveSuit::Trump,
 
             (
-                Trump::Standard { suit, .. },
-                Card::Suited {
-                    suit: card_suit, ..
-                },
-            ) if suit == card_suit => EffectiveSuit::Trump,
-
-            (
                 Trump::Standard {
                     suit: trump_suit, ..
                 },
@@ -74,6 +67,61 @@ impl Trump {
                 Suit::Diamonds => EffectiveSuit::Diamonds,
                 Suit::Spades => EffectiveSuit::Spades,
                 Suit::Hearts => EffectiveSuit::Hearts,
+            },
+        }
+    }
+
+    pub fn suit_ordinal(self, card: Card) -> impl Ord {
+        let effective_suit = self.effective_suit(card);
+        match self {
+            Trump::Standard {
+                suit: Suit::Clubs, ..
+            } => match effective_suit {
+                EffectiveSuit::Unknown => 0,
+                EffectiveSuit::Diamonds => 1,
+                EffectiveSuit::Spades => 2,
+                EffectiveSuit::Hearts => 3,
+                EffectiveSuit::Clubs => 4,
+                EffectiveSuit::Trump => 5,
+            },
+            Trump::Standard {
+                suit: Suit::Diamonds,
+                ..
+            } => match effective_suit {
+                EffectiveSuit::Unknown => 0,
+                EffectiveSuit::Spades => 1,
+                EffectiveSuit::Hearts => 2,
+                EffectiveSuit::Clubs => 3,
+                EffectiveSuit::Diamonds => 4,
+                EffectiveSuit::Trump => 5,
+            },
+            Trump::Standard {
+                suit: Suit::Spades, ..
+            } => match effective_suit {
+                EffectiveSuit::Unknown => 0,
+                EffectiveSuit::Hearts => 1,
+                EffectiveSuit::Clubs => 2,
+                EffectiveSuit::Diamonds => 3,
+                EffectiveSuit::Spades => 4,
+                EffectiveSuit::Trump => 5,
+            },
+            Trump::Standard {
+                suit: Suit::Hearts, ..
+            } => match effective_suit {
+                EffectiveSuit::Unknown => 0,
+                EffectiveSuit::Clubs => 1,
+                EffectiveSuit::Diamonds => 2,
+                EffectiveSuit::Spades => 3,
+                EffectiveSuit::Hearts => 4,
+                EffectiveSuit::Trump => 5,
+            },
+            Trump::NoTrump { .. } => match effective_suit {
+                EffectiveSuit::Unknown => 0,
+                EffectiveSuit::Clubs => 1,
+                EffectiveSuit::Diamonds => 2,
+                EffectiveSuit::Spades => 3,
+                EffectiveSuit::Hearts => 4,
+                EffectiveSuit::Trump => 5,
             },
         }
     }
@@ -143,57 +191,52 @@ impl Trump {
             return Ordering::Equal;
         }
 
-        let card1_suit = self.effective_suit(card1);
-        let card2_suit = self.effective_suit(card2);
-        match self.suit() {
-            Some(Suit::Hearts) | Some(Suit::Diamonds) => EffectiveSuitRedTrump::from(card1_suit)
-                .cmp(&EffectiveSuitRedTrump::from(card2_suit)),
-            _ => card1_suit.cmp(&card2_suit),
-        }
-        .then(match (card1, card2) {
-            (Card::Unknown, _) => Ordering::Less,
-            (_, Card::Unknown) => Ordering::Greater,
-            (Card::BigJoker, _) => Ordering::Greater,
-            (_, Card::BigJoker) => Ordering::Less,
-            (Card::SmallJoker, _) => Ordering::Greater,
-            (_, Card::SmallJoker) => Ordering::Less,
-            (
-                Card::Suited {
-                    number: number_1,
-                    suit: suit_1,
-                },
-                Card::Suited {
-                    number: number_2,
-                    suit: suit_2,
-                },
-            ) => {
-                let trump_number = self.number();
-                if number_1 == trump_number && number_2 == trump_number {
-                    if let Trump::Standard {
-                        suit: trump_suit, ..
-                    } = self
-                    {
-                        if suit_1 == trump_suit && suit_2 == trump_suit {
-                            Ordering::Equal
-                        } else if suit_1 == trump_suit {
-                            Ordering::Greater
-                        } else if suit_2 == trump_suit {
-                            Ordering::Less
+        self.suit_ordinal(card1)
+            .cmp(&self.suit_ordinal(card2))
+            .then(match (card1, card2) {
+                (Card::Unknown, _) => Ordering::Less,
+                (_, Card::Unknown) => Ordering::Greater,
+                (Card::BigJoker, _) => Ordering::Greater,
+                (_, Card::BigJoker) => Ordering::Less,
+                (Card::SmallJoker, _) => Ordering::Greater,
+                (_, Card::SmallJoker) => Ordering::Less,
+                (
+                    Card::Suited {
+                        number: number_1,
+                        suit: suit_1,
+                    },
+                    Card::Suited {
+                        number: number_2,
+                        suit: suit_2,
+                    },
+                ) => {
+                    let trump_number = self.number();
+                    if number_1 == trump_number && number_2 == trump_number {
+                        if let Trump::Standard {
+                            suit: trump_suit, ..
+                        } = self
+                        {
+                            if suit_1 == trump_suit && suit_2 == trump_suit {
+                                Ordering::Equal
+                            } else if suit_1 == trump_suit {
+                                Ordering::Greater
+                            } else if suit_2 == trump_suit {
+                                Ordering::Less
+                            } else {
+                                Ordering::Equal
+                            }
                         } else {
                             Ordering::Equal
                         }
+                    } else if number_1 == trump_number {
+                        Ordering::Greater
+                    } else if number_2 == trump_number {
+                        Ordering::Less
                     } else {
-                        Ordering::Equal
+                        number_1.cmp(&number_2)
                     }
-                } else if number_1 == trump_number {
-                    Ordering::Greater
-                } else if number_2 == trump_number {
-                    Ordering::Less
-                } else {
-                    number_1.cmp(&number_2)
                 }
-            }
-        })
+            })
     }
 }
 
@@ -205,28 +248,6 @@ pub enum EffectiveSuit {
     Spades,
     Hearts,
     Trump,
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
-pub enum EffectiveSuitRedTrump {
-    Unknown,
-    Diamonds,
-    Clubs,
-    Hearts,
-    Spades,
-    Trump,
-}
-impl From<EffectiveSuit> for EffectiveSuitRedTrump {
-    fn from(other: EffectiveSuit) -> EffectiveSuitRedTrump {
-        match other {
-            EffectiveSuit::Unknown => EffectiveSuitRedTrump::Unknown,
-            EffectiveSuit::Clubs => EffectiveSuitRedTrump::Clubs,
-            EffectiveSuit::Diamonds => EffectiveSuitRedTrump::Diamonds,
-            EffectiveSuit::Spades => EffectiveSuitRedTrump::Spades,
-            EffectiveSuit::Hearts => EffectiveSuitRedTrump::Hearts,
-            EffectiveSuit::Trump => EffectiveSuitRedTrump::Trump,
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -922,7 +943,9 @@ mod tests {
             cards::H_4,
             cards::S_3,
             cards::S_2,
+            cards::C_4,
             cards::H_2,
+            cards::D_3,
             Card::SmallJoker,
             Card::BigJoker,
         ];
@@ -933,7 +956,7 @@ mod tests {
         hand.sort_by(|a, b| trump.compare(*a, *b));
         assert_eq!(
             hand.iter().map(|c| format!("{:?}", c)).collect::<String>(),
-            "4♡5♡6♡3♤2♡2♤LJHJ"
+            "4♡5♡6♡4♧3♢3♤2♡2♤LJHJ"
         );
     }
 

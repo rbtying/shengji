@@ -34,6 +34,6 @@ no compile toolchain set up for the JS code.
 - No player limit per game
 - No overall player limit
 
-# Demo:
+# Demo
 
 [https://robertying.com/shengji/](https://robertying.com/shengji/)
