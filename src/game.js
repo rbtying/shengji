@@ -60,6 +60,10 @@ const ALL_STANDARD_CARDS = [
   { suit: '♤', number: '3', value: '🂣' },
   { suit: '♤', number: '2', value: '🂢' }
 ];
+const CARD_LUT = {};
+ALL_STANDARD_CARDS.forEach((c) => {
+  CARD_LUT[c.value] = c;
+});
 
 class Initialize extends React.Component {
   constructor(props) {
@@ -460,9 +464,21 @@ class Points extends React.Component {
   render() {
     return e('div', { className: 'points' },
       this.props.players.map((player) => {
+        let total_points = 0;
+        this.props.points[player.id].forEach((c) => {
+          if (CARD_LUT[c]) {
+            const x = CARD_LUT[c].number;
+            if (x == '5') {
+              total_points += 5;
+            }
+            if (x == '10' || x == 'K') {
+              total_points += 10;
+            }
+          }
+        });
         const className = this.props.landlords_team.includes(player.id) ? 'landlord' : '';
         const cards = this.props.points[player.id].length > 0 ? this.props.points[player.id] : ['🂠'];
-        return e(LabeledPlay, { key: player.id, className: className, label: `${player.name} 分`, cards: cards });
+        return e(LabeledPlay, { key: player.id, className: className, label: `${player.name}: ${total_points}分`, cards: cards });
       }),
     );
   }
@@ -533,8 +549,14 @@ class Card extends React.Component {
 
 class LabeledPlay extends React.Component {
   render() {
-    return e('div', { className: 'labeled-play' },
-      e('div', { className: 'play' }, this.props.cards.map((card, idx) => e(Card, { card: card, key: idx }))),
+    let className = 'labeled-play';
+    if (this.props.className) {
+      className = className + ' ' + this.props.className;
+    }
+    return e('div', { className: className },
+      e('div', { className: 'play' }, this.props.cards.map((card, idx) =>
+        e(Card, { card: card, key: idx }))
+      ),
       e('div', { className: 'label' }, this.props.label),
     );
   }
@@ -715,15 +737,15 @@ class Friends extends React.Component {
     if (this.props.game_mode.FindingFriends) {
       return e('div', { className: 'pending-friends' },
         this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
-          let card = friend.card;
-          ALL_STANDARD_CARDS.forEach((c) => {
-            if (c.value == friend.card) {
-              card = `${c.number}${c.suit}`;
-            }
-          });
           if (friend.player_id != null) {
             return null;
           }
+
+          const c = CARD_LUT[friend.card];
+          if (!c) {
+            return null;
+          }
+          const card = `${c.number}${c.suit}`;
           if (friend.skip == 0) {
               return e('p', { key: idx }, `The next person to play ${card} is a friend`);
           } else {
