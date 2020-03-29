@@ -271,7 +271,11 @@ impl PlayPhase {
                 }
             }
             if bump > 0 {
-                msgs.push(format!("{} has advanced to rank {}", player.name, bump));
+                msgs.push(format!(
+                    "{} has advanced to rank {}",
+                    player.name,
+                    player.level.as_str()
+                ));
             }
         }
 
