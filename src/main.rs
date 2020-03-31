@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![feature(async_closure)]
 #![feature(const_fn)]
 #![feature(const_if_match)]
 
@@ -22,6 +23,28 @@ pub mod types;
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
+
+lazy_static::lazy_static! {
+    static ref CARDS_JS: String = {
+        let cards = types::FULL_DECK
+            .iter()
+            .flat_map(|c| serde_json::to_string(&c.as_info()).ok())
+            .collect::<Vec<_>>().join(",");
+        format!("const CARDS = [{}];", cards)
+    };
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+struct InMemoryStats {
+    num_games_created: usize,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+struct GameStats {
+    num_games_created: usize,
+    num_active_games: usize,
+    num_players_online_now: usize,
+}
 
 struct GameState {
     game: interactive::InteractiveGame,
@@ -74,36 +97,58 @@ pub enum GameMessage {
 #[tokio::main]
 async fn main() {
     let games = Arc::new(Mutex::new(HashMap::new()));
-    let games = warp::any().map(move || games.clone());
+    let stats = Arc::new(Mutex::new(InMemoryStats::default()));
 
-    // GET /api -> websocket upgrade
-    let api = warp::path("api")
-        // The `ws()` filter will prepare Websocket handshake...
-        .and(warp::ws())
-        .and(games)
-        .map(|ws: warp::ws::Ws, games| {
-            // This will call our function if the handshake succeeds.
-            ws.on_upgrade(move |socket| user_connected(socket, games))
-        });
+    let games = warp::any().map(move || (games.clone(), stats.clone()));
+
+    let api = warp::path("api").and(warp::ws()).and(games.clone()).map(
+        |ws: warp::ws::Ws, (games, stats)| {
+            ws.on_upgrade(move |socket| user_connected(socket, games, stats))
+        },
+    );
 
     #[cfg(not(feature = "dynamic"))]
     let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
     #[cfg(not(feature = "dynamic"))]
     let js = warp::path("game.js").map(|| {
         warp::http::Response::builder()
-            .header("Content-Type", "text/javascript")
+            .header("Content-Type", "text/javascript; charset=utf-8")
             .body(JS)
     });
     #[cfg(feature = "dynamic")]
     let index = warp::path::end().and(warp::fs::file("index.html"));
     #[cfg(feature = "dynamic")]
     let js = warp::path("game.js").and(warp::fs::file("game.js"));
-    let routes = index.or(js).or(api);
+
+    let cards = warp::path("cards.js").map(|| {
+        warp::http::Response::builder()
+            .header("Content-Type", "text/javascript; charset=utf-8")
+            .body(CARDS_JS.as_str())
+    });
+    let game_stats = warp::path("stats")
+        .and(games)
+        .and_then(|(game, stats)| get_stats(game, stats));
+    let routes = index.or(js).or(cards).or(game_stats).or(api);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
-async fn user_connected(ws: WebSocket, games: Games) {
+async fn get_stats(
+    games: Games,
+    stats: Arc<Mutex<InMemoryStats>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let games = games.lock().await;
+    let stats = stats.lock().await;
+    let InMemoryStats { num_games_created } = *stats;
+    let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
+    Ok(warp::reply::json(&GameStats {
+        num_games_created,
+        num_players_online_now,
+        num_active_games: games.len(),
+    }))
+}
+
+async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemoryStats>>) {
     // Use a counter to assign a new unique ID for this user.
     let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
 
@@ -160,6 +205,10 @@ async fn user_connected(ws: WebSocket, games: Games) {
                 game: interactive::InteractiveGame::new(),
                 users: HashMap::new(),
             });
+            if game.users.is_empty() {
+                let mut stats = stats.lock().await;
+                stats.num_games_created += 1;
+            }
             let player_id = match game.game.register(name.clone()) {
                 Ok(player_id) => player_id,
                 Err(err) => {

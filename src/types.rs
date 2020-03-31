@@ -250,6 +250,15 @@ pub enum EffectiveSuit {
     Trump,
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub struct CardInfo {
+    value: char,
+    display_value: char,
+    typ: char,
+    number: Option<&'static str>,
+    points: usize,
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Card {
     Unknown,
@@ -257,11 +266,13 @@ pub enum Card {
     SmallJoker,
     BigJoker,
 }
+
 impl Serialize for Card {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_char(self.as_char())
     }
 }
+
 impl<'d> Deserialize<'d> for Card {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let c = char::deserialize(deserializer)?;
@@ -276,6 +287,21 @@ impl Card {
             *counts.entry(card).or_insert(0) += 1
         }
         counts
+    }
+
+    pub fn as_info(self) -> CardInfo {
+        let value = self.as_char();
+        CardInfo {
+            value,
+            display_value: if self == Card::BigJoker {
+                Card::SmallJoker.as_char()
+            } else {
+                value
+            },
+            number: self.number().map(|n| n.as_str()),
+            typ: self.suit().map(|s| s.as_char()).unwrap_or(value),
+            points: self.points().unwrap_or(0),
+        }
     }
 
     pub const fn as_char(self) -> char {

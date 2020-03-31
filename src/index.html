@@ -9,8 +9,20 @@
           .trick { padding: 10px; }
           .points .card { font-size: 5em; cursor: default; }
           .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; }
+          .card.unknown { cursor: default; }
           .card:last-child { margin-right: 0; }
-          .red { color: #f00; }
+          .♢ { color: #bb0313; }
+          .♡ { color: #bb0313; }
+          .♤ { color: #000; }
+          .♧ { color: #000; }
+          .🃟 { color: #000; }
+          .🃏 { color: #bb0313; }
+          .four-color .♢ { color: #1933f9; }
+          .four-color .♡ { color: #bb0313; }
+          .four-color .♤ { color: #000; }
+          .four-color .♧ { color: #477e1b; }
+          .four-color .🃟 { color: #000; }
+          .four-color .🃏 { color: #bb0313; }
           .hand p { margin: 0; text-align: center; }
           .hand .unselected-cards { padding: 0 10px; }
           .hand .selected-cards { padding: 0 10px; }
@@ -40,7 +52,7 @@
         -->
         <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
         <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
-        <script type="text/javascript" src="game.js">
-        </script>
+        <script type="text/javascript" src="cards.js"></script>
+        <script type="text/javascript" src="game.js"></script>
     </body>
 </html>
