@@ -499,11 +499,11 @@ impl DrawPhase {
                 .counts(id)
                 .and_then(|c| c.get(&last_bid.card).cloned())
                 .unwrap_or(0);
-            ((last_bid.count + 1)..(available + 1))
-                .map(|ct| Bid {
-                    id,
+            (last_bid.count + 1..available + 1)
+                .map(|count| Bid {
                     card: last_bid.card,
-                    count: ct,
+                    count,
+                    id,
                 })
                 .collect()
         } else if let Some(counts) = self.hands.counts(id) {
@@ -737,5 +737,46 @@ impl InitializePhase {
             game_mode,
             level,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::InitializePhase;
+
+    use crate::types::cards;
+
+    #[test]
+    fn reinforce_bid() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into());
+        let p2 = init.add_player("p2".into());
+        let p3 = init.add_player("p3".into());
+        let p4 = init.add_player("p4".into());
+        let mut draw = init.start().unwrap();
+        // Hackily ensure that everyone can bid.
+        draw.deck = vec![
+            cards::S_2,
+            cards::D_2,
+            cards::C_2,
+            cards::H_2,
+            cards::S_2,
+            cards::D_2,
+            cards::C_2,
+            cards::H_2,
+        ];
+        draw.position = 0;
+
+        draw.draw_card(p1).unwrap();
+        draw.draw_card(p2).unwrap();
+        draw.draw_card(p3).unwrap();
+        draw.draw_card(p4).unwrap();
+        draw.draw_card(p1).unwrap();
+        draw.draw_card(p2).unwrap();
+        draw.draw_card(p3).unwrap();
+        draw.draw_card(p4).unwrap();
+
+        assert!(draw.bid(p1, cards::H_2, 1));
+        assert!(draw.bid(p1, cards::H_2, 2));
     }
 }
