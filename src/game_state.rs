@@ -499,7 +499,7 @@ impl DrawPhase {
                 .counts(id)
                 .and_then(|c| c.get(&last_bid.card).cloned())
                 .unwrap_or(0);
-            (last_bid.count + 1..available)
+            ((last_bid.count + 1)..(available + 1))
                 .map(|ct| Bid {
                     id,
                     card: last_bid.card,

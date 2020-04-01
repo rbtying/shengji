@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>升级 / 找朋友 Rules</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript" src="cards.js"></script>
+    </head>
+    <body id="body">
+      <h1>Rules for 升级 and 找朋友 (under construction)</h1>
+
+      <label>
+        Show cards with a four-color deck
+        <input type="checkbox" id="four-color-toggle" />
+      </label>
+
+      <p>
+        升级 is a family of trick-taking card games popular in China. It's also
+        known as tractor (拖拉机), 40 points (四十分), 80 points (八十分),
+        playing for 100 points (打百分), finding friends (找朋友), among
+        others.
+      <p>
+        This online 升级 and 找朋友 implementation uses a fairly standard rule
+        set. There are a wide variety of house rules that aren't implemented;
+        but could be -- feel free to propose new functionality on
+        <a target="_blank" href="https://github.com/rbtying/shengji">GitHub</a>.
+      </p>
+
+      <h2>Deck</h2>
+      <p>
+        There are 54 cards per deck (13 cards per suit, plus a <span class="🃟">small joker</span> and
+        a <span class="🃏">big joker</span>). Aces (A) are treated as
+        higher-valued than Kings (K). Usually, a deck is added for every two
+        players in the game (so 4 players and 5 players play with 2 decks, but
+        6 players play with 3).
+      </p>
+      <div class="labeled-play">
+        <div class="play" id="spades"></div>
+        <div class="label">
+          Spades
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="hearts"></div>
+        <div class="label">
+          Hearts
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="diamonds"></div>
+        <div class="label">
+          Diamonds
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="clubs"></div>
+        <div class="label">
+          Clubs
+        </div>
+      </div>
+      <p>
+        The two jokers are ordered, with the uncolored joker having a lower
+        value than the colored joker.
+      </p>
+      <div class="labeled-play">
+        <div class="play" id="jokers"></div>
+        <div class="label">
+          Jokers
+        </div>
+      </div>
+
+      <h2>Trumps and Suits</h2>
+      <p>
+        In each round, there is a trump specification which determines what
+        cards are part of the trump suit. The trump specification always
+        includes a trump rank, but doesn't necessarily include a specific suit.
+        Jokers are always a part of the trump suit.
+      </p>
+      <h3>Trump with a specified suit</h3>
+      <p>
+        For example, if the trump rank is 4 and the specified suit is spades
+        (<span class="♤">♤</span>), the trump suit consists of all 4s, all
+        jokers, and all spades. A card can only be a part of one suit, so the
+        <span class="♡">4♡</span> is no longer considered to be a members of
+        the hearts (<span class="♡">♡</span>) suit.
+      </p>
+      <div class="labeled-play">
+        <div class="play" id="trump-4s"></div>
+        <div class="label">
+          Trump suit when specification is <span class="♤">4♤</span>
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="trump-4s-hearts"></div>
+        <div class="label">
+          Hearts suit when specification is <span class="♤">4♤</span>
+        </div>
+      </div>
+      <p>In all suits, the 3 and the 5 are now considered to be adjacent.</p>
+      <p>
+        The order of the trump suit is as follows:
+      </p>
+      <ul>
+        <li>All non-trump-rank numbered cards of the specified suit, in their
+          normal order</li>
+        <li>Cards of the trump rank, but not of the specified suit. Note:
+          these are considered to have equal value to one another</li>
+        <li>Cards of the trump rank in the specified suit</li>
+        <li>All jokers, in their normal order</li>
+      </ul>
+      <p>
+        In the case of the trump specification of <span class="♤">4♤</span>,
+        the ordering from highest to lowest is
+        <span class="🃏">big joker</span> &gt;
+        <span class="🃟">small joker</span> &gt;
+        <span class="♤">4♤</span> &gt; 
+        [
+          <span class="♡">4♡</span> =
+          <span class="♢">4♢</span> =
+          <span class="♧">4♧</span>
+        ] &gt; 
+        <span class="♤">A♤</span> &gt; 
+        <span class="♤">K♤</span> &gt; 
+        <span class="♤">Q♤</span> &gt; 
+        <span class="♤">J♤</span> &gt; 
+        <span class="♤">10♤</span> &gt; 
+        <span class="♤">9♤</span> &gt; 
+        <span class="♤">8♤</span> &gt; 
+        <span class="♤">7♤</span> &gt; 
+        <span class="♤">6♤</span> &gt; 
+        <span class="♤">5♤</span> &gt; 
+        <span class="♤">3♤</span> &gt; 
+        <span class="♤">2♤</span>.
+      </p>
+
+      <h3>Trump with no specified suit</h3>
+      <p>
+        If only a trump rank is specified (and no suit), the only trumps are
+        cards of the trump rank, and jokers. This is referred to as "no trump",
+        and there are five distinct suits (as opposed to the usual four).
+      </p>
+      <div class="labeled-play">
+        <div class="play" id="trump-4nt"></div>
+        <div class="label">
+          Trump suit when specification is 4NT
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="trump-4nt-hearts"></div>
+        <div class="label">
+          Hearts suit when specification is 4NT
+        </div>
+      </div>
+      <p>In all suits, the 3 and the 5 are now considered to be adjacent.</p>
+      <p>
+        The order of the trump suit is as follows:
+      </p>
+      <ul>
+        <li>Cards of the trump rank. Note: these are considered to have equal
+          value to one another</li>
+        <li>All jokers, in their normal order</li>
+      </ul>
+      <p>
+        In the case of the trump specification of 4NT,
+        the ordering from highest to lowest is
+        <span class="🃏">big joker</span> &gt;
+        <span class="🃟">small joker</span> &gt;
+        [
+          <span class="♤">4♤</span> =
+          <span class="♡">4♡</span> =
+          <span class="♢">4♢</span> =
+          <span class="♧">4♧</span>
+        ].
+      </p>
+
+      <h2>Teams</h2>
+      <p>
+        There are two fundamental teams in the game: one team is trying to
+        acquire points, while the other team is trying to discard them.
+        Colloquially, the team trying to acquiring points is "attacking", and
+        the other team is "defending".
+      </p>
+      <p>
+        The defending team is determined by a designated leader of the team
+        (当庄). In 升级, the teams are fixed and the leader rotates among the
+        winning team. In 找朋友, the leader rotates among the team that won the
+        previous round, but the teams are fluid and change from round-to-round.
+      </p>
+      <p>
+        The leader (whomever is 当庄) of the team gets an additional advantage
+        at the beginning of the game: they can see the extra "bottom cards"
+        (底牌) and exchange them for cards in their hand. Otherwise, all
+        players are the same, and teams only matter for scoring.
+      </p>
+
+      <h2>Scoring</h2>
+      <p>
+        Scoring in the game is determined by "point" cards. Only 5s, 10s, and
+        Ks have points&mdash; all other cards do not count for scoring. Point
+        scores are pooled within a team.
+      </p>
+      <table border="1">
+        <thead>
+          <tr><td>Card number</td><td>Point value</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>5</td><td>5</td></tr>
+          <tr><td>10</td><td>10</td></tr>
+          <tr><td>K</td><td>10</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Each deck has a total of 100 points (25 per suit).
+      </p>
+
+      <h2>Gameplay</h2>
+      <h3>Bidding for trump</h3>
+      <p>
+        The game begins by players drawing cards one at a time. Like most
+        Chinese card games, cards are drawn in counter-clockwise order.
+      </p>
+      <p>
+        At any point, a player may "bid" for the trump by showing valid bids
+        out of their hand. The highest bid determines the trump specification
+        for the game. However, once a player has made a bid, they can only
+        "reinforce" it by adding more of the same card, or wait for another
+        player to displace them as the highest bidder.
+      </p>
+      <p>
+        Valid bids must be made up of identical cards (i.e. same card-face).
+        The bids can be either cards of the current trump rank, or jokers.
+        Joker bids represent "no trump" bids. A single joker cannot be used as
+        a bid.
+      </p>
+      <p>
+        Each bid made must be greater than all of the previous bids. This is
+        determined first by the number of cards (more is higher), and then by
+        card values (following the "no trump" ordering of card values).
+      </p>
+      <p>
+        The final trump specification is determined by the winning bid. If the
+        winning bid is made up of jokers, the trump specification is "no
+        trump"; otherwise, it is the suit of the winning bid.
+      </p>
+
+      <p>Example with trump rank of 2:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+        </div>
+        <div class="label">
+          Player 1's bid
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♢">🃂</span>
+          <span class="card ♢">🃂</span>
+        </div>
+        <div class="label">
+          Player 3's bid
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card 🃟">🃟</span>
+          <span class="card 🃟">🃟</span>
+        </div>
+        <div class="label">
+          Player 1's second bid
+        </div>
+      </div>
+      <p>Result: 2NT trump specification, player 1 wins the bid.</p>
+
+      <p>
+        If this is the first round being played, the winner of the bid is also
+        the leader of the defending team (当庄). Otherwise, the only
+        consequence of the bidding process is setting the trump specification.
+      </p>
+
+
+      <h3>Exchanging cards with the bottom (底牌)</h3>
+      <p>
+        After the drawing phase is completed, 4 to 8 cards are left in the
+        bottom of the draw pile and become the 底牌. For example, in a
+        four-player game, there will be 8 cards left; in a five-player game,
+        there will be 6. These cards are made available for the leader of the
+        defending team (当庄) to pick up.
+      </p>
+      <p>
+        The leader may choose to swap some, all, or none of the cards in the
+        bottom for cards in their hand. The number of cards in the bottom must
+        remain constant.
+      </p>
+      <p>
+        There is a potential penalty for hiding points in the bottom, since
+        other players can't see them. This is surfaced as a multiplier on the
+        number of points left in the bottom, which are treated as if they are
+        attached to the last trick in the game.
+      </p>
+      <table border="1">
+        <thead>
+          <tr><td>Length of the last trick-format</td><td>Point multiplier</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>2</td></tr>
+          <tr><td>2 (e.g. pair)</td><td>4</td></tr>
+          <tr><td>3 (e.g. triple)</td><td>6</td></tr>
+          <tr><td>4 (e.g. tractor)</td><td>8</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The multiplier can be generalized to arbitrarily large trick-formats.
+        In the case of the last trick-format being a "throw", or a set of the
+        highest possible individual trick-formats, the length of the longest
+        trick-format within the group should be used for the multiplier.
+      </p>
+
+      <h4>Declaring friends in 找朋友</h4>
+      <p>
+        In addition to exchanging cards with the bottom of the deck, in games
+        of 找朋友, the leader also specifies which cards identify their
+        "friends" (i.e. members of the defending team). These must be committed
+        to at the beginning of the game, and the leader is allowed to become
+        their own friend (intentionally or unintentionally).
+      </p>
+      <p>
+        The number of friends is determined by the number of players&mdash; the
+        defending team should never be larger than the attacking team.
+      </p>
+      <p>
+        A friend is declared as a combination of a specific card (suit/number)
+        and an ordinal. For example, one could declare that the "first person
+        to play an <span class="♤">A♤</span>" is their friend. They could also
+        declare that the third person to play the card is their friend.
+      </p>
+      <p>
+        Cards above the value of A cannot be declared as friends. That is,
+        cards of the trump rank and jokers are not legal friend cards.
+      </p>
+      <p>
+        In many cases, this results in the leader and the other players not
+        knowing who the friends are. Once a trick has been completed in which a
+        person has played the friend card, they join the defending team and
+        bring their points with them.
+      </p>
+
+      <h3>Playing tricks</h3>
+
+      <h4>Trick formats</h4>
+      <p>
+        All cards in a trick format must be in the same suit.
+      </p>
+
+      <h5>Single cards</h5>
+      <p>
+        Any single card can always lead a trick. Other players are required to
+        play a card in the same suit if they have one; otherwise, any card can be
+        played.
+      </p>
+      <p>
+        If a trump card is played, the highest trump card wins the trick.
+        Otherwise, the highest card in the original suit wins the trick. If the
+        same card is played by multiple players, the first one to play has
+        precedence.
+      </p>
+      <p>Example:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂭</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 3 wins this trick, because they played the highest card in the
+        same suit (<span class="♤">A♤</span>) first.
+      </p>
+      <p>Example 2:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card 🃏">🃟</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♢">🃇</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 2 wins this trick, because they played the highest trump card
+        (<span class="🃏">big joker</span>). Note that Player 3 is also void in
+        spades (<span class="♤">♤</span>), but did not play a trump card
+        and so cannot win the trick.
+      </p>
+
+      <h5>Identical cards (doubles, triples, four-of-a-kind, ...)</h5>
+      <p>
+        Sets of identical cards can always lead a trick. Other players are
+        required to play sets of identical cards within the same suit, if they
+        have them; otherwise, they are required to play cards in the same suit;
+        otherwise, they can play anything.
+      </p>
+      <p>
+        Note: cards of equal value are not necessarily identical; they have to
+        have the exact same card face.
+      </p>
+      <p>WIP</p>
+
+      <h5>Tractors (consecutive groups of identical cards)</h5>
+      <h5>Throws (sets of the highest possible individual trick-formats within a suit)</h5>
+      <p>
+        In cases of ambiguity between components (e.g. five-of-a-kind vs.
+        tractor), the interpretation with the longest single component is
+        chosen. If there are multiple ambiguous components of the same length,
+        tractors are preferred over identical cards.
+      </p>
+
+      <h4>Trick structure</h4>
+      <p>
+        In each trick, the first cards (also known as the lead cards) denote
+        the format of the trick. Only plays which match the trick's format are
+        eligible to win the trick.
+      </p>
+      <p>
+        Every player contributes the same number of cards to each trick.
+        Therefore, every player runs out of cards at the same time.
+      </p>
+      <p>
+        Players are also obligated to match the trick format to the fullest
+        extent possible: if they are able to match the format within trick's
+        suit, they must play those cards. If they can't match the format but
+        can match a looser variant of the format (e.g. they have a pair in the
+        suit, but the format requires a triple), they are also obligated to
+        play those cards.
+      </p>
+      <p>
+        This implies that a player can only play cards of a different suit than
+        the leading play in a trick if they have no cards in that suit (i.e.
+        they are void in the suit).
+      </p>
+
+      <h3>Leveling up</h3>
+      <p>WIP</p>
+
+      <script type="text/javascript">
+        const body = document.getElementById("body");
+        function toggleFourColor(evt) {
+          if (evt.target.checked) {
+            body.className = "four-color";
+          } else {
+            body.className = "";
+          }
+        }
+        document.getElementById("four-color-toggle").addEventListener("change", toggleFourColor);
+
+        function addCards(id, cards) {
+          const el = document.getElementById(id);
+          cards.forEach((c) => {
+            const span = document.createElement("span");
+            span.className = `card ${c.typ}`;
+            span.innerText = c.display_value;
+            el.appendChild(span);
+          });
+        }
+
+        const REVERSED_CARDS = [...CARDS];
+        REVERSED_CARDS.reverse();
+
+        addCards("spades", REVERSED_CARDS.filter((c) => c.typ == '♤'));
+        addCards("hearts", REVERSED_CARDS.filter((c) => c.typ == '♡'));
+        addCards("diamonds", REVERSED_CARDS.filter((c) => c.typ == '♢'));
+        addCards("clubs", REVERSED_CARDS.filter((c) => c.typ == '♧'));
+        addCards("jokers", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+
+        addCards("trump-4s", REVERSED_CARDS.filter((c) => c.typ == '♤' && c.number != '4'));
+        addCards("trump-4s", CARDS.filter((c) => c.typ != '♤' && c.number == '4'));
+        addCards("trump-4s", CARDS.filter((c) => c.typ == '♤' && c.number == '4'));
+        addCards("trump-4s", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+        addCards("trump-4s-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
+
+        addCards("trump-4nt", CARDS.filter((c) => c.number == '4'));
+        addCards("trump-4nt", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+        addCards("trump-4nt-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
+      </script>
+    </body>
+</html>

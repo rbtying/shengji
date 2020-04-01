@@ -1,14 +1,6 @@
 "use strict";
 
 const e = React.createElement;
-
-const uri =
-  (location.protocol == "https:" ? "wss://" : "ws://") +
-  location.host +
-  location.pathname +
-  (location.pathname.endsWith("/") ? "api" : "/api");
-const ws = new WebSocket(uri);
-
 const CARD_LUT = {};
 CARDS.forEach((c) => {
   CARD_LUT[c.value] = c;
@@ -70,6 +62,16 @@ class Initialize extends React.Component {
         next: null,
         name: this.props.name,
       }),
+      e(
+        "p",
+        null,
+        "Send the link to other players to allow them to join the game: ",
+        e(
+          "a",
+          { href: window.location.href, target: "_blank" },
+          e("code", null, window.location.href)
+        )
+      ),
       e(
         "select",
         { value: mode_as_string, onChange: this.setGameMode },
@@ -1022,13 +1024,6 @@ class Errors extends React.Component {
   }
 }
 
-if (window.location.hash.length != 17) {
-  var arr = new Uint8Array(8);
-  window.crypto.getRandomValues(arr);
-  const r = Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join("");
-  window.location.hash = r;
-}
-
 let state = {
   connected: false,
   room_name: window.location.hash.slice(1),
@@ -1139,6 +1134,20 @@ function renderUI() {
     );
   }
 }
+
+if (window.location.hash.length != 17) {
+  var arr = new Uint8Array(8);
+  window.crypto.getRandomValues(arr);
+  const r = Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join("");
+  window.location.hash = r;
+}
+
+const uri =
+  (location.protocol == "https:" ? "wss://" : "ws://") +
+  location.host +
+  location.pathname +
+  (location.pathname.endsWith("/") ? "api" : "/api");
+const ws = new WebSocket(uri);
 
 ws.onopen = () => {
   state.connected = true;

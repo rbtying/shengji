@@ -110,15 +110,28 @@ async fn main() {
     #[cfg(not(feature = "dynamic"))]
     let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
     #[cfg(not(feature = "dynamic"))]
+    let rules = warp::path("rules").map(|| warp::reply::html(RULES_HTML));
+    #[cfg(not(feature = "dynamic"))]
     let js = warp::path("game.js").map(|| {
         warp::http::Response::builder()
             .header("Content-Type", "text/javascript; charset=utf-8")
             .body(JS)
     });
+    #[cfg(not(feature = "dynamic"))]
+    let css = warp::path("style.css").map(|| {
+        warp::http::Response::builder()
+            .header("Content-Type", "text/css; charset=utf-8")
+            .body(CSS)
+    });
+
     #[cfg(feature = "dynamic")]
     let index = warp::path::end().and(warp::fs::file("index.html"));
     #[cfg(feature = "dynamic")]
+    let rules = warp::path("rules").and(warp::fs::file("rules.html"));
+    #[cfg(feature = "dynamic")]
     let js = warp::path("game.js").and(warp::fs::file("game.js"));
+    #[cfg(feature = "dynamic")]
+    let css = warp::path("style.css").and(warp::fs::file("style.css"));
 
     let cards = warp::path("cards.js").map(|| {
         warp::http::Response::builder()
@@ -128,7 +141,13 @@ async fn main() {
     let game_stats = warp::path("stats")
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
-    let routes = index.or(js).or(cards).or(game_stats).or(api);
+    let routes = index
+        .or(js)
+        .or(css)
+        .or(cards)
+        .or(api)
+        .or(rules)
+        .or(game_stats);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -332,4 +351,8 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
 #[cfg(not(feature = "dynamic"))]
 static INDEX_HTML: &str = include_str!("index.html");
 #[cfg(not(feature = "dynamic"))]
+static RULES_HTML: &str = include_str!("rules.html");
+#[cfg(not(feature = "dynamic"))]
 static JS: &str = include_str!("game.js");
+#[cfg(not(feature = "dynamic"))]
+static CSS: &str = include_str!("style.css");
