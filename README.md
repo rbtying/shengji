@@ -33,6 +33,7 @@ no compile toolchain set up for the JS code.
 - Incomplete validity checking for forced-plays
 - No player limit per game
 - No overall player limit
+- Reinforcing bids doesn't work
 
 # Demo
 
