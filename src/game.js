@@ -82,7 +82,15 @@ class Initialize extends React.Component {
       this.props.state.players.length >= 4
         ? e("button", { onClick: this.startGame }, "Start game")
         : e("p", null, "Waiting for players..."),
-      e(Kicker, { players: this.props.state.players })
+      e(Kicker, { players: this.props.state.players }),
+      e(LandlordSelector, {
+        players: this.props.state.players,
+        landlord: this.props.state.landlord,
+      }),
+      e(RankSelector, {
+        players: this.props.state.players,
+        name: this.props.name,
+      })
     );
   }
 }
@@ -803,6 +811,98 @@ class Kicker extends React.Component {
         "button",
         { onClick: this.kick, disabled: this.state.to_kick == "" },
         "kick"
+      )
+    );
+  }
+}
+
+class LandlordSelector extends React.Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(evt) {
+    evt.preventDefault();
+
+    if (evt.target.value != "") {
+      send({ Action: { SetLandlord: parseInt(evt.target.value, 10) } });
+    } else {
+      send({ Action: { SetLandlord: null } });
+    }
+  }
+
+  render() {
+    return e(
+      "div",
+      { className: "landlord-picker" },
+      e(
+        "label",
+        null,
+        "leader: ",
+        e(
+          "select",
+          {
+            value: this.props.landlord != null ? this.props.landlord : "",
+            onChange: this.onChange,
+          },
+          e("option", { value: "" }, "winner of the bid"),
+          this.props.players.map((player) =>
+            e("option", { value: player.id, key: player.id }, player.name)
+          )
+        )
+      )
+    );
+  }
+}
+
+class RankSelector extends React.Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(evt) {
+    evt.preventDefault();
+
+    if (evt.target.value != "") {
+      send({ Action: { SetRank: evt.target.value } });
+    }
+  }
+
+  render() {
+    let rank = "";
+    this.props.players.forEach((p) => {
+      if (p.name == this.props.name) {
+        rank = p.rank;
+      }
+    });
+    return e(
+      "div",
+      { className: "landlord-picker" },
+      e(
+        "label",
+        null,
+        "rank: ",
+        e(
+          "select",
+          { value: rank, onChange: this.onChange },
+          [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "J",
+            "K",
+            "Q",
+            "A",
+          ].map((rank) => e("option", { value: rank }, rank))
+        )
       )
     );
   }

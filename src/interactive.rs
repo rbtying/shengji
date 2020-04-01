@@ -64,7 +64,7 @@ impl InteractiveGame {
                 (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
                     state.set_rank(id, rank)?;
                     let n = s.player_name(id)?;
-                    Ok(vec![format!("{} set their level to {}", n, rank.as_str())])
+                    Ok(vec![format!("{} set their rank to {}", n, rank.as_str())])
                 }
                 (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                     state.set_landlord(landlord)?;
