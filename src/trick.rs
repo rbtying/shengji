@@ -268,6 +268,7 @@ pub struct PlayedCards {
 pub struct Trick {
     player_queue: VecDeque<PlayerID>,
     played_cards: Vec<PlayedCards>,
+    current_winner: Option<PlayerID>,
     trick_format: Option<TrickFormat>,
     trump: Trump,
 }
@@ -277,6 +278,7 @@ impl Trick {
         Trick {
             player_queue: players.into_iter().collect(),
             played_cards: vec![],
+            current_winner: None,
             trick_format: None,
             trump,
         }
@@ -353,6 +355,9 @@ impl Trick {
             cards: cards.iter().cloned().collect(),
         });
         hands.remove(id, cards.iter().cloned())?;
+
+        self.current_winner =
+            Self::winner(self.trick_format.as_ref(), &self.played_cards, self.trump);
         Ok(())
     }
 
@@ -367,6 +372,8 @@ impl Trick {
             if self.played_cards.is_empty() {
                 self.trick_format = None;
             }
+            self.current_winner =
+                Self::winner(self.trick_format.as_ref(), &self.played_cards, self.trump);
             Ok(())
         } else {
             Err(TrickError::OutOfOrder)
@@ -387,25 +394,37 @@ impl Trick {
                 .flat_map(|pc| pc.cards.iter().filter(|c| c.points().is_some()).map(|c| *c))
                 .collect::<Vec<Card>>();
 
-            let mut winner = (0, tf.units.clone());
-
-            for idx in 1..self.played_cards.len() {
-                if let Ok(m) = tf.matches(&self.played_cards[idx].cards) {
-                    if m.iter().zip(winner.1.iter()).all(|(n, w)| {
-                        self.trump.compare(n.first_card(), w.first_card()) == Ordering::Greater
-                    }) {
-                        winner = (idx, m);
-                    }
-                }
-            }
-
             Ok((
-                self.played_cards[winner.0].id,
+                self.current_winner.ok_or(TrickError::OutOfOrder)?,
                 all_card_points,
                 tf.units.iter().map(|u| u.size()).max().unwrap_or(0),
             ))
         } else {
             Err(TrickError::OutOfOrder)
+        }
+    }
+
+    fn winner(
+        trick_format: Option<&'_ TrickFormat>,
+        played_cards: &'_ [PlayedCards],
+        trump: Trump,
+    ) -> Option<PlayerID> {
+        match trick_format {
+            Some(tf) => {
+                let mut winner = (0, tf.units.clone());
+
+                for idx in 1..played_cards.len() {
+                    if let Ok(m) = tf.matches(&played_cards[idx].cards) {
+                        if m.iter().zip(winner.1.iter()).all(|(n, w)| {
+                            trump.compare(n.first_card(), w.first_card()) == Ordering::Greater
+                        }) {
+                            winner = (idx, m);
+                        }
+                    }
+                }
+                Some(played_cards[winner.0].id)
+            }
+            None => None,
         }
     }
 }

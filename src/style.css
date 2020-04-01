@@ -34,6 +34,8 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .labeled-play { display: inline-block; padding: 10px; border: 1px solid #000; }
 .labeled-play .label { text-align: center }
 .labeled-play .card { cursor: default; }
+.labeled-play.winning { background: #efefef; }
+.labeled-play.winning .card { background: #efefef; }
 .trump { margin: 10px 0; }
 .pending-friends p { margin: 0; }
 .pending-friends { margin: 10px; }

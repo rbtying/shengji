@@ -141,6 +141,7 @@ pub struct PlayPhase {
     players: Vec<Player>,
     trump: Trump,
     trick: Trick,
+    last_trick: Option<Trick>,
 }
 impl PlayPhase {
     pub fn next_player(&self) -> PlayerID {
@@ -212,17 +213,18 @@ impl PlayPhase {
             ));
         } else {
             msgs.push(format!(
-                "{} wins the trick, but gets no points",
+                "{} wins the trick, but gets no points :(",
                 self.players[winner_idx].name
             ));
         }
-        self.trick = Trick::new(
+        let new_trick = Trick::new(
             self.trump,
             (0..self.players.len()).map(|offset| {
                 let idx = (winner_idx + offset) % self.players.len();
                 self.players[idx].id
             }),
         );
+        self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
 
         Ok(msgs)
     }
@@ -445,6 +447,7 @@ impl ExchangePhase {
                     self.players[idx].id
                 }),
             ),
+            last_trick: None,
             points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
             players: self.players.clone(),
             landlord: self.landlord,
@@ -652,6 +655,36 @@ impl InitializePhase {
         if num_decks > 0 {
             self.num_decks = Some(num_decks);
         }
+    }
+
+    pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
+        match landlord {
+            Some(landlord) => {
+                if self
+                    .players
+                    .iter()
+                    .filter(|p| p.id == landlord)
+                    .next()
+                    .is_some()
+                {
+                    self.landlord = Some(landlord)
+                } else {
+                    bail!("player ID not found")
+                }
+            }
+            None => self.landlord = None,
+        }
+        Ok(())
+    }
+
+    pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
+        match self.players.iter_mut().filter(|p| p.id == player_id).next() {
+            Some(ref mut player) => {
+                player.level = level;
+            }
+            None => bail!("player ID not found"),
+        }
+        Ok(())
     }
 
     pub fn set_kitty_size(&mut self, size: usize) -> Result<(), Error> {

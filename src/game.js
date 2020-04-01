@@ -236,7 +236,7 @@ class Draw extends React.Component {
             this.props.state.deck.length > 0 ||
             this.props.state.bids.length == 0,
         },
-        "Pick up cards"
+        "Pick up cards from the bottom"
       ),
       e(Cards, {
         cards: this.props.cards,
@@ -437,6 +437,7 @@ class Play extends React.Component {
     this.playCards = this.playCards.bind(this);
     this.takeBackCards = this.takeBackCards.bind(this);
     this.endTrick = this.endTrick.bind(this);
+    this.was_my_turn = false;
   }
 
   playCards(evt) {
@@ -464,12 +465,14 @@ class Play extends React.Component {
     const next = this.props.state.trick.player_queue[0];
     let can_take_back = false;
     let can_play = false;
+    let is_my_turn = false;
     this.props.state.players.forEach((p) => {
       if (p.name == this.props.name) {
         const last_play = this.props.state.trick.played_cards[
           this.props.state.trick.played_cards.length - 1
         ];
         if (p.id == next) {
+          is_my_turn = true;
           if (last_play) {
             can_play = this.state.selected.length == last_play.cards.length;
           } else {
@@ -481,6 +484,11 @@ class Play extends React.Component {
         }
       }
     });
+    if (this.props.beep_on_turn && is_my_turn && !this.was_my_turn) {
+      beep(100, 520, 200);
+    }
+    this.was_my_turn = is_my_turn;
+
     return e(
       "div",
       null,
@@ -524,6 +532,17 @@ class Play extends React.Component {
         selected: this.state.selected,
         setSelected: this.setSelected,
       }),
+      this.props.state.last_trick && this.props.show_last_trick
+        ? e(
+            "div",
+            null,
+            e("p", null, "Previous trick"),
+            e(Trick, {
+              trick: this.props.state.last_trick,
+              players: this.props.state.players,
+            })
+          )
+        : null,
       e(Points, {
         points: this.props.state.points,
         players: this.props.state.players,
@@ -549,9 +568,13 @@ class Trick extends React.Component {
       "div",
       { className: "trick" },
       this.props.trick.played_cards.map((played, idx) => {
+        const winning = this.props.trick.current_winner == played.id;
         return e(LabeledPlay, {
           key: idx,
-          label: names_by_id[played.id],
+          label: winning
+            ? `${names_by_id[played.id]} (!)`
+            : names_by_id[played.id],
+          className: winning ? "winning" : "",
           cards: played.cards,
         });
       }),
@@ -1091,6 +1114,9 @@ let state = {
   name: window.localStorage.getItem("name") || "",
   game_state: null,
   four_color: window.localStorage.getItem("four_color") == "on" || false,
+  beep_on_turn: window.localStorage.getItem("beep_on_turn") == "on" || false,
+  show_last_trick:
+    window.localStorage.getItem("show_last_trick") == "on" || false,
   cards: [],
   errors: [],
   messages: [],
@@ -1156,6 +1182,8 @@ function renderUI() {
                   state: state.game_state.Play,
                   cards: state.cards,
                   name: state.name,
+                  show_last_trick: state.show_last_trick,
+                  beep_on_turn: state.beep_on_turn,
                 })
               : null,
             state.game_state.Done ? e("p", null, "Game over") : null
@@ -1179,6 +1207,44 @@ function renderUI() {
                     window.localStorage.setItem("four_color", "on");
                   } else {
                     window.localStorage.setItem("four_color", "off");
+                  }
+                  renderUI();
+                },
+              })
+            ),
+            e(
+              "label",
+              null,
+              "show last trick",
+              e("input", {
+                name: "show-last-trick",
+                type: "checkbox",
+                checked: state.show_last_trick,
+                onChange: (evt) => {
+                  state.show_last_trick = evt.target.checked;
+                  if (state.show_last_trick) {
+                    window.localStorage.setItem("show_last_trick", "on");
+                  } else {
+                    window.localStorage.setItem("show_last_trick", "off");
+                  }
+                  renderUI();
+                },
+              })
+            ),
+            e(
+              "label",
+              null,
+              "beep on turn",
+              e("input", {
+                name: "show-last-trick",
+                type: "checkbox",
+                checked: state.beep_on_turn,
+                onChange: (evt) => {
+                  state.beep_on_turn = evt.target.checked;
+                  if (state.beep_on_turn) {
+                    window.localStorage.setItem("beep_on_turn", "on");
+                  } else {
+                    window.localStorage.setItem("beep_on_turn", "off");
                   }
                   renderUI();
                 },
@@ -1243,3 +1309,17 @@ ws.onmessage = (event) => {
 
   renderUI();
 };
+
+const beepContext = new AudioContext();
+
+function beep(vol, freq, duration) {
+  const v = beepContext.createOscillator();
+  const u = beepContext.createGain();
+  v.connect(u);
+  v.frequency.value = freq;
+  v.type = "square";
+  u.connect(beepContext.destination);
+  u.gain.value = vol * 0.01;
+  v.start(beepContext.currentTime);
+  v.stop(beepContext.currentTime + duration * 0.001);
+}
