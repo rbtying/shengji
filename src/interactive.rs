@@ -72,6 +72,10 @@ impl InteractiveGame {
                     state.set_num_decks(num_decks);
                     Ok(vec![])
                 }
+                (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
+                    state.reorder_players(&players)?;
+                    Ok(vec![])
+                }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone());
                     Ok(vec![])
@@ -138,6 +142,7 @@ pub enum Message {
     EndGame,
     SetNumDecks(usize),
     SetKittySize(usize),
+    ReorderPlayers(Vec<PlayerID>),
     SetGameMode(GameMode),
     StartGame,
     DrawCard,

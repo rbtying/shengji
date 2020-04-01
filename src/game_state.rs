@@ -632,11 +632,27 @@ impl InitializePhase {
         }
     }
 
+    pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
+        if order.len() != self.players.len() {
+            bail!("Incorrect number of players");
+        }
+        let mut new_players = Vec::with_capacity(self.players.len());
+        for id in order {
+            match self.players.iter().filter(|p| p.id == *id).next() {
+                Some(player) => new_players.push(player.clone()),
+                None => bail!("player ID not found"),
+            }
+        }
+        self.players = new_players;
+        Ok(())
+    }
+
     pub fn set_num_decks(&mut self, num_decks: usize) {
         if num_decks > 0 {
             self.num_decks = Some(num_decks);
         }
     }
+
     pub fn set_kitty_size(&mut self, size: usize) -> Result<(), Error> {
         if self.players.is_empty() {
             bail!("no players")

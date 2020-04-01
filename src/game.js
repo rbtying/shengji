@@ -60,6 +60,7 @@ class Initialize extends React.Component {
         players: this.props.state.players,
         landlord: this.props.state.landlord,
         next: null,
+        movable: true,
         name: this.props.name,
       }),
       e(
@@ -785,6 +786,38 @@ class Kicker extends React.Component {
 }
 
 class Players extends React.Component {
+  movePlayerLeft(evt, player_id) {
+    evt.preventDefault();
+    const player_ids = this.props.players.map((p) => p.id);
+    const index = player_ids.indexOf(player_id);
+    if (index > 0) {
+      const p = player_ids[index];
+      player_ids[index] = player_ids[index - 1];
+      player_ids[index - 1] = p;
+    } else {
+      const p = player_ids[index];
+      player_ids[index] = player_ids[player_ids.length - 1];
+      player_ids[player_ids.length - 1] = p;
+    }
+    send({ Action: { ReorderPlayers: player_ids } });
+  }
+
+  movePlayerRight(evt, player_id) {
+    evt.preventDefault();
+    const player_ids = this.props.players.map((p) => p.id);
+    const index = player_ids.indexOf(player_id);
+    if (index < player_ids.length - 1) {
+      const p = player_ids[index];
+      player_ids[index] = player_ids[index + 1];
+      player_ids[index + 1] = p;
+    } else {
+      const p = player_ids[index];
+      player_ids[index] = player_ids[0];
+      player_ids[0] = p;
+    }
+    send({ Action: { ReorderPlayers: player_ids } });
+  }
+
   render() {
     return e(
       "table",
@@ -819,7 +852,21 @@ class Players extends React.Component {
             return e(
               "td",
               { key: player.id, className: className },
-              descriptor
+              this.props.movable
+                ? e(
+                    "button",
+                    { onClick: (evt) => this.movePlayerLeft(evt, player.id) },
+                    "<"
+                  )
+                : null,
+              descriptor,
+              this.props.movable
+                ? e(
+                    "button",
+                    { onClick: (evt) => this.movePlayerRight(evt, player.id) },
+                    ">"
+                  )
+                : null
             );
           })
         )
@@ -1073,6 +1120,7 @@ function renderUI() {
               ? e(Initialize, {
                   state: state.game_state.Initialize,
                   cards: state.cards,
+                  name: state.name,
                 })
               : null,
             state.game_state.Draw
