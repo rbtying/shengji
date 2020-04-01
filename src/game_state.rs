@@ -633,7 +633,8 @@ impl InitializePhase {
     }
 
     pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
-        if order.len() != self.players.len() {
+        let uniq = order.iter().cloned().collect::<HashSet<PlayerID>>();
+        if uniq.len() != self.players.len() {
             bail!("Incorrect number of players");
         }
         let mut new_players = Vec::with_capacity(self.players.len());
