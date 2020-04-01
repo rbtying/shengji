@@ -269,7 +269,13 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                 match game.game.kick(id) {
                                     Ok(()) => {
                                         for user in game.users.values() {
-                                            user.send(&GameMessage::Kicked);
+                                            if user.player_id == id {
+                                                user.send(&GameMessage::Kicked);
+                                            } else if let Ok((state, cards)) =
+                                                game.game.dump_state_for_player(user.player_id)
+                                            {
+                                                user.send(&GameMessage::State { state, cards });
+                                            }
                                         }
                                         game.users.retain(|_, u| u.player_id != id);
                                     }

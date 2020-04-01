@@ -485,7 +485,7 @@ class Play extends React.Component {
       }
     });
     if (this.props.beep_on_turn && is_my_turn && !this.was_my_turn) {
-      beep(100, 520, 200);
+      beep(3, 440, 200);
     }
     this.was_my_turn = is_my_turn;
 

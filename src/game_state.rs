@@ -51,6 +51,21 @@ impl GameState {
         }
     }
 
+    pub fn observers(&self) -> Option<&'_ [Player]> {
+        match self {
+            GameState::Draw(p) => Some(&p.observers),
+            GameState::Exchange(p) => Some(&p.observers),
+            GameState::Play(p) => Some(&p.observers),
+            GameState::Initialize(_) | GameState::Done => None,
+        }
+    }
+
+    pub fn is_player(&self, id: PlayerID) -> bool {
+        self.players()
+            .map(|p| p.iter().any(|pp| pp.id == id))
+            .unwrap_or(false)
+    }
+
     pub fn player_name(&self, id: PlayerID) -> Result<&'_ str, Error> {
         if let Some(players) = self.players() {
             for p in players {
@@ -59,7 +74,32 @@ impl GameState {
                 }
             }
         }
+        if let Some(observers) = self.observers() {
+            for p in observers {
+                if p.id == id {
+                    return Ok(&p.name);
+                }
+            }
+        }
         bail!("Couldn't find player name")
+    }
+
+    pub fn player_id(&self, name: &str) -> Result<PlayerID, Error> {
+        if let Some(players) = self.players() {
+            for p in players {
+                if p.name == name {
+                    return Ok(p.id);
+                }
+            }
+        }
+        if let Some(observers) = self.observers() {
+            for p in observers {
+                if p.name == name {
+                    return Ok(p.id);
+                }
+            }
+        }
+        bail!("Couldn't find player id")
     }
 
     pub fn cards(&self, id: PlayerID) -> Vec<Card> {
@@ -70,6 +110,29 @@ impl GameState {
             | GameState::Play(PlayPhase { ref hands, .. }) => {
                 hands.cards(id).unwrap_or_else(|_| vec![])
             }
+        }
+    }
+
+    pub fn register(&mut self, name: String) -> Result<PlayerID, Error> {
+        if let Ok(pid) = self.player_id(&name) {
+            return Ok(pid);
+        }
+        match self {
+            GameState::Initialize(ref mut p) => p.add_player(name),
+            GameState::Draw(ref mut p) => p.add_observer(name),
+            GameState::Exchange(ref mut p) => p.add_observer(name),
+            GameState::Play(ref mut p) => p.add_observer(name),
+            GameState::Done => bail!("Game is done"),
+        }
+    }
+
+    pub fn kick(&mut self, id: PlayerID) -> Result<(), Error> {
+        match self {
+            GameState::Initialize(ref mut p) => Ok(p.remove_player(id)),
+            GameState::Draw(ref mut p) => Ok(p.remove_observer(id)),
+            GameState::Exchange(ref mut p) => Ok(p.remove_observer(id)),
+            GameState::Play(ref mut p) => Ok(p.remove_observer(id)),
+            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -131,6 +194,7 @@ impl GameState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayPhase {
+    max_player_id: usize,
     num_decks: usize,
     game_mode: GameMode,
     hands: Hands,
@@ -139,11 +203,32 @@ pub struct PlayPhase {
     landlord: PlayerID,
     landlords_team: Vec<PlayerID>,
     players: Vec<Player>,
+    observers: Vec<Player>,
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
 }
 impl PlayPhase {
+    pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
+        let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name)
+            || self.observers.iter().any(|p| p.name == name)
+        {
+            bail!("player with name already exists!")
+        }
+        self.max_player_id += 1;
+        self.observers.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+        Ok(id)
+    }
+
+    pub fn remove_observer(&mut self, id: PlayerID) {
+        self.observers.retain(|p| p.id != id);
+    }
+
     pub fn next_player(&self) -> PlayerID {
         self.trick.next_player().unwrap()
     }
@@ -298,6 +383,11 @@ impl PlayPhase {
             self.players[next_landlord_idx].name
         ));
 
+        for observer in &self.observers {
+            msgs.push(format!("{} is joining the game", observer.name));
+            players.push(observer.clone());
+        }
+
         Ok((
             InitializePhase {
                 game_mode: match self.game_mode {
@@ -310,7 +400,7 @@ impl PlayPhase {
                 kitty_size: Some(self.kitty.len()),
                 num_decks: Some(self.num_decks),
                 landlord: Some(next_landlord),
-                max_player_id: players.iter().map(|p| p.id.0).max().unwrap_or(0),
+                max_player_id: self.max_player_id,
                 players,
             },
             msgs,
@@ -320,6 +410,7 @@ impl PlayPhase {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangePhase {
+    max_player_id: usize,
     num_decks: usize,
     game_mode: GameMode,
     hands: Hands,
@@ -327,10 +418,31 @@ pub struct ExchangePhase {
     kitty_size: usize,
     landlord: PlayerID,
     players: Vec<Player>,
+    observers: Vec<Player>,
     trump: Trump,
 }
 
 impl ExchangePhase {
+    pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
+        let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name)
+            || self.observers.iter().any(|p| p.name == name)
+        {
+            bail!("player with name already exists!")
+        }
+        self.max_player_id += 1;
+        self.observers.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+        Ok(id)
+    }
+
+    pub fn remove_observer(&mut self, id: PlayerID) {
+        self.observers.retain(|p| p.id != id);
+    }
+
     pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
         if self.landlord != id {
             bail!("not the landlord")
@@ -450,6 +562,8 @@ impl ExchangePhase {
             last_trick: None,
             points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
             players: self.players.clone(),
+            observers: self.observers.clone(),
+            max_player_id: self.max_player_id,
             landlord: self.landlord,
             trump: self.trump,
             landlords_team,
@@ -466,10 +580,12 @@ pub struct Bid {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DrawPhase {
+    max_player_id: usize,
     num_decks: usize,
     game_mode: GameMode,
     deck: Vec<Card>,
     players: Vec<Player>,
+    observers: Vec<Player>,
     hands: Hands,
     bids: Vec<Bid>,
     position: usize,
@@ -478,6 +594,26 @@ pub struct DrawPhase {
     level: Number,
 }
 impl DrawPhase {
+    pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
+        let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name)
+            || self.observers.iter().any(|p| p.name == name)
+        {
+            bail!("player with name already exists!")
+        }
+        self.max_player_id += 1;
+        self.observers.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+        Ok(id)
+    }
+
+    pub fn remove_observer(&mut self, id: PlayerID) {
+        self.observers.retain(|p| p.id != id);
+    }
+
     pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {
         if id != self.players[self.position].id {
             bail!("not your turn!");
@@ -587,6 +723,8 @@ impl DrawPhase {
                 kitty_size: self.kitty.len(),
                 kitty: self.kitty.clone(),
                 players: self.players.clone(),
+                observers: self.observers.clone(),
+                max_player_id: self.max_player_id,
                 landlord,
                 hands,
                 trump,
@@ -604,6 +742,7 @@ pub struct InitializePhase {
     game_mode: GameMode,
     landlord: Option<PlayerID>,
 }
+
 impl InitializePhase {
     pub fn new() -> Self {
         Self {
@@ -616,8 +755,12 @@ impl InitializePhase {
         }
     }
 
-    pub fn add_player(&mut self, name: String) -> PlayerID {
+    pub fn add_player(&mut self, name: String) -> Result<PlayerID, Error> {
         let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name) {
+            bail!("player with name already exists!")
+        }
+
         self.max_player_id += 1;
         self.players.push(Player {
             id,
@@ -625,7 +768,7 @@ impl InitializePhase {
             level: Number::Two,
         });
         self.kitty_size = None;
-        id
+        Ok(id)
     }
 
     pub fn remove_player(&mut self, id: PlayerID) {
@@ -764,7 +907,9 @@ impl InitializePhase {
             hands: Hands::new(self.players.iter().map(|p| p.id), level),
             bids: Vec::new(),
             players: self.players.clone(),
+            observers: vec![],
             landlord: self.landlord,
+            max_player_id: self.max_player_id,
             position,
             num_decks,
             game_mode,

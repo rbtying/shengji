@@ -4,7 +4,7 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::game_state::{Friend, GameMode, GameState, InitializePhase};
-use crate::types::{Card, PlayerID};
+use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
 pub struct InteractiveGame {
@@ -20,18 +20,7 @@ impl InteractiveGame {
 
     pub fn register(&self, name: String) -> Result<PlayerID, Error> {
         if let Ok(mut s) = self.state.lock() {
-            if let Some(players) = s.players() {
-                for p in players {
-                    if p.name == name {
-                        return Ok(p.id);
-                    }
-                }
-            }
-            if let GameState::Initialize(ref mut phase) = *s {
-                Ok(phase.add_player(name))
-            } else {
-                bail!("game already started")
-            }
+            s.register(name)
         } else {
             bail!("lock poisoned")
         }
@@ -39,11 +28,7 @@ impl InteractiveGame {
 
     pub fn kick(&self, id: PlayerID) -> Result<(), Error> {
         if let Ok(mut s) = self.state.lock() {
-            if let GameState::Initialize(ref mut phase) = *s {
-                Ok(phase.remove_player(id))
-            } else {
-                bail!("game already started")
-            }
+            s.kick(id)
         } else {
             bail!("lock poisoned")
         }
@@ -75,6 +60,25 @@ impl InteractiveGame {
                 (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                     state.reorder_players(&players)?;
                     Ok(vec![])
+                }
+                (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
+                    state.set_rank(id, rank)?;
+                    let n = s.player_name(id)?;
+                    Ok(vec![format!("{} set their level to {}", n, rank.as_str())])
+                }
+                (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
+                    state.set_landlord(landlord)?;
+                    let n = s.player_name(id)?;
+                    match landlord {
+                        Some(ll) => {
+                            let ll_n = s.player_name(ll)?;
+                            Ok(vec![format!("{} set the leader to {}", n, ll_n)])
+                        }
+                        None => Ok(vec![format!(
+                            "{} set the leader to the winner of the bid",
+                            n
+                        )]),
+                    }
                 }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone());
@@ -143,6 +147,8 @@ pub enum Message {
     SetNumDecks(usize),
     SetKittySize(usize),
     ReorderPlayers(Vec<PlayerID>),
+    SetRank(Number),
+    SetLandlord(Option<PlayerID>),
     SetGameMode(GameMode),
     StartGame,
     DrawCard,
