@@ -1,4 +1,5 @@
 button { padding: 10px; cursor: pointer; margin: 10px; }
+.players button { padding: 2.5px; margin: 0 5px; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
 .trick { padding: 10px; }
 .points .card { font-size: 5em; cursor: default; }
