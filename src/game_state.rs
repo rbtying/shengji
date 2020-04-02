@@ -177,13 +177,17 @@ impl GameState {
             GameState::Play(PlayPhase {
                 ref mut hands,
                 ref mut kitty,
+                ref trick,
                 landlord,
                 ..
             }) => {
                 hands.redact_except(id);
-                if id != landlord {
-                    for card in kitty {
-                        *card = Card::Unknown;
+                // Don't redact at the end of the game.
+                if !hands.is_empty() || !trick.played_cards().is_empty() {
+                    if id != landlord {
+                        for card in kitty {
+                            *card = Card::Unknown;
+                        }
                     }
                 }
             }
@@ -285,6 +289,11 @@ impl PlayPhase {
             for _ in 0..kitty_multipler {
                 new_points.extend(self.kitty.iter().filter(|c| c.points().is_some()).cloned());
             }
+            if !points.is_empty() && kitty_multipler > 0 {
+                msgs.push(
+                    format!("{} points were buried and are attached to the last trick, with a multiplier of {}",
+                        self.kitty.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler));
+            }
         }
         let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
         if !new_points.is_empty() {
@@ -314,8 +323,12 @@ impl PlayPhase {
         Ok(msgs)
     }
 
+    pub fn game_finished(&self) -> bool {
+        self.hands.is_empty() && self.trick.played_cards().is_empty()
+    }
+
     pub fn finish_game(&self) -> Result<(InitializePhase, Vec<String>), Error> {
-        if !self.hands.is_empty() || !self.trick.played_cards().is_empty() {
+        if !self.game_finished() {
             bail!("not done playing yet!")
         }
 

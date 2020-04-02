@@ -79,7 +79,10 @@ class Initialize extends React.Component {
         e("option", { value: "Tractor" }, "升级 / Tractor"),
         e("option", { value: "FindingFriends" }, "找朋友 / Finding Friends")
       ),
-      e(NumDecksSelector, { num_decks: this.props.state.num_decks, players: this.props.state.players }),
+      e(NumDecksSelector, {
+        num_decks: this.props.state.num_decks,
+        players: this.props.state.players,
+      }),
       this.props.state.players.length >= 4
         ? e("button", { onClick: this.startGame }, "Start game")
         : e("p", null, "Waiting for players..."),
@@ -91,7 +94,7 @@ class Initialize extends React.Component {
       e(RankSelector, {
         players: this.props.state.players,
         name: this.props.name,
-      }),
+      })
     );
   }
 }
@@ -191,14 +194,21 @@ class Draw extends React.Component {
       });
     }
 
-    let cards_not_bid = [...this.props.cards];
+    const my_bids = {};
     this.props.state.bids.forEach((bid) => {
       if (this.props.state.players[bid.id].name == this.props.name) {
-        for (let i = 0; i < bid.count; i = i + 1) {
-          const card_idx = cards_not_bid.indexOf(bid.card);
-          if (card_idx >= 0) {
-            cards_not_bid.splice(card_idx, 1);
-          }
+        const existing_bid = my_bids[bid.card] || 0;
+        my_bids[bid.card] = existing_bid < bid.count ? bid.count : existing_bid;
+      }
+    });
+    let cards_not_bid = [...this.props.cards];
+
+    Object.keys(my_bids).forEach((card) => {
+      const count = my_bids[card] || 0;
+      for (let i = 0; i < count; i = i + 1) {
+        const card_idx = cards_not_bid.indexOf(card);
+        if (card_idx >= 0) {
+          cards_not_bid.splice(card_idx, 1);
         }
       }
     });
@@ -909,10 +919,12 @@ class NumDecksSelector extends React.Component {
             onChange: this.onChange,
           },
           e("option", { value: "" }, "default"),
-          Array(this.props.players.length).fill(0).map((_, idx) => {
-            const val = idx + 1;
-            return e("option", { value: val, key: idx }, val);
-          })
+          Array(this.props.players.length)
+            .fill(0)
+            .map((_, idx) => {
+              const val = idx + 1;
+              return e("option", { value: val, key: idx }, val);
+            })
         )
       )
     );
