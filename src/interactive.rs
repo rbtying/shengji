@@ -144,7 +144,7 @@ impl InteractiveGame {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
     EndGame,
-    SetNumDecks(usize),
+    SetNumDecks(Option<usize>),
     SetKittySize(usize),
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Number),

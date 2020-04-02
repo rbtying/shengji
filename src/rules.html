@@ -34,6 +34,10 @@
         players in the game (so 4 players and 5 players play with 2 decks, but
         6 players play with 3).
       </p>
+      <p>
+        Kings, tens, and fives are valuable cards and have point values. Kings
+        and tens are worth ten points each. Fives are worth five points each.
+      </p>
       <div class="labeled-play">
         <div class="play" id="spades"></div>
         <div class="label">
@@ -68,6 +72,42 @@
           Jokers
         </div>
       </div>
+
+      <h2>Scoring</h2>
+      <p>
+        Scoring in each round of the game is determined by "point" cards. Only
+        fives, tens, and kings have points&mdash; all other cards do not count
+        for scoring.  Point scores are pooled within a team.
+      </p>
+      <table border="1">
+        <thead>
+          <tr><td>Card number</td><td>Point value</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>5</td><td>5</td></tr>
+          <tr><td>10</td><td>10</td></tr>
+          <tr><td>K</td><td>10</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Each deck has a total of 100 points (25 per suit).
+      </p>
+      <div class="labeled-play">
+        <div class="play" id="points"></div>
+        <div class="label">
+          All possible point cards in a single deck
+        </div>
+      </div>
+      <h3>Player ranks</h3>
+      <p>
+        Each player in the game has a rank, starting at 2 and going to A. If
+        they win rounds, their rank may increase. The rank of the leading
+        player for a round determines the trump rank for that round.
+      </p>
+      <p>
+        The game ends when a player successfully defends a round at the A
+        rank.
+      </p>
 
       <h2>Trumps and Suits</h2>
       <p>
@@ -193,26 +233,6 @@
         players are the same, and teams only matter for scoring.
       </p>
 
-      <h2>Scoring</h2>
-      <p>
-        Scoring in the game is determined by "point" cards. Only 5s, 10s, and
-        Ks have points&mdash; all other cards do not count for scoring. Point
-        scores are pooled within a team.
-      </p>
-      <table border="1">
-        <thead>
-          <tr><td>Card number</td><td>Point value</td></tr>
-        </thead>
-        <tbody>
-          <tr><td>5</td><td>5</td></tr>
-          <tr><td>10</td><td>10</td></tr>
-          <tr><td>K</td><td>10</td></tr>
-        </tbody>
-      </table>
-      <p>
-        Each deck has a total of 100 points (25 per suit).
-      </p>
-
       <h2>Gameplay</h2>
       <h3>Bidding for trump</h3>
       <p>
@@ -228,9 +248,10 @@
       </p>
       <p>
         Valid bids must be made up of identical cards (i.e. same card-face).
-        The bids can be either cards of the current trump rank, or jokers.
-        Joker bids represent "no trump" bids. A single joker cannot be used as
-        a bid.
+        The bids can be either cards of the current trump rank or jokers. The
+        current trump rank corresponds to the rank of the leader of the
+        defending team. Each game starts with all players at rank 2. Joker bids
+        represent "no trump" bids. A single joker cannot be used as a bid.
       </p>
       <p>
         Each bid made must be greater than all of the previous bids. This is
@@ -240,7 +261,8 @@
       <p>
         The final trump specification is determined by the winning bid. If the
         winning bid is made up of jokers, the trump specification is "no
-        trump"; otherwise, it is the suit of the winning bid.
+        trump"; otherwise, it is the suit of the winning bid. All cards in this
+        suit and jokers are considered trumps..
       </p>
 
       <p>Example with trump rank of 2:</p>
@@ -287,6 +309,7 @@
         there will be 6. These cards are made available for the leader of the
         defending team (当庄) to pick up.
       </p>
+      <p>
       <p>
         The leader may choose to swap some, all, or none of the cards in the
         bottom for cards in their hand. The number of cards in the bottom must
@@ -444,24 +467,105 @@
       <h5>Identical cards (doubles, triples, four-of-a-kind, ...)</h5>
       <p>
         Sets of identical cards can always lead a trick. Other players are
-        required to play sets of identical cards within the same suit, if they
-        have them; otherwise, they are required to play cards in the same suit;
-        otherwise, they can play anything.
+        obligated to match the set as best they can.
       </p>
       <p>
         Note: cards of equal value are not necessarily identical; they have to
         have the exact same card face.
       </p>
+      <p>
+        For example, if the trick-format is triples, the ordering of required plays is:
+      </p>
+      <ol>
+        <li>Triples in the same suit (note: triples which are part of a four-of-a-kind or other type of play are not special or protected)</li>
+        <li>Doubles in the same suit, along with another card in the same suit</li>
+        <li>Three cards in the same suit</li>
+        <li>Two cards in the same suit, along with a card in any other suit</li>
+        <li>One card in the same suit, along with two cards in any other suit</li>
+        <li>Any three cards</li>
+      </ol>
+      <p>
+        Only plays which match the trick-format (either in the original suit,
+        or in trump) are eligible to win the trick. As with the single-card
+        format, the first player to play an identical play has precedence.
+      </p>
       <p>WIP</p>
 
       <h5>Tractors (consecutive groups of identical cards)</h5>
+      <p>
+        Consecutive sequences of at least two identical cards of the same size
+        and in the same suit are called tractors, and are a special play-type
+        in and of themselves. They are parameterized by their length and the
+        number of identical cards, both of which are at required to be at least
+        two (the smallest tractor is four cards).
+      </p>
+      <p>
+        For example, if the trick-format is tractors made up of three
+        consecutive pairs, the ordering of required plays is:
+      </p>
+      <ol>
+        <li>Three consecutive pairs in the same suit</li>
+        <li>Two consecutive pairs in the same suit, along with another pair in the same suit</li>
+        <li>Three pairs in the same suit</li>
+        <li>Two consecutive pairs in the same suit, along with two other cards in the same suit</li>
+        <li>Two pairs in the same suit, along with two other cards in the same suit</li>
+        <li>One pair in the same suit, along with four other cards in the same suit</li>
+        <li>Six cards in the same suit</li>
+        <li>Five cards in the same suit, along with another card in any other suit</li>
+        <li>Four cards in the same suit, along with two cards in any other suit</li>
+        <li>Three cards in the same suit, along with three cards in any other suit</li>
+        <li>Two cards in the same suit, along with four cards in any other suit</li>
+        <li>One card in the same suit, along five cards in any other suit</li>
+        <li>Any six cards</li>
+      </ol>
+      <p>
+        Only plays which match the trick-format (either in the original suit,
+        or in trump) are eligible to win the trick. As with the single-card and
+        identical-card formats, the first player to play an identical play has
+        precedence.
+      </p>
+      <p>WIP</p>
+
       <h5>Throws (sets of the highest possible individual trick-formats within a suit)</h5>
+      <p>
+        Any set of the highest possible trick-formats in a given suit can be
+        played simultaneously as a "throw". It is expected that the player
+        initiating a throw believes that their play is valid, i.e. that no
+        other player can defeat any component of the throw using cards in the
+        same suit.
+      </p>
+      <p>
+        Once a throw has been played, each player should (in counter-clockwise
+        order) affirm that the throw is valid and that it cannot be defeated
+        within the same suit. If the throw is determined to be invalid, the
+        player which initiated the throw is obligated to lead with the
+        component that can be defeated. In this implementation, no additional
+        penalties are imposed on incorrect throws.
+      </p>
       <p>
         In cases of ambiguity between components (e.g. five-of-a-kind vs.
         tractor), the interpretation with the longest single component is
         chosen. If there are multiple ambiguous components of the same length,
         tractors are preferred over identical cards.
       </p>
+      <p>
+        Other players are not obligated to ensure that their plays are the
+        highest possible plays within their own suits, though they still need
+        to match each component's trick-format as best they can.
+      </p>
+      <p>
+        Only plays which match the trick-format (either in the original suit,
+        or in trump) are eligible to win the trick. As with the other formats,
+        the first player to play an identical play has precedence.
+      </p>
+      <p>
+        Note: in order to defeat a throw, every component of the throw must be
+        individually defeated. Since a throw is only valid if it cannot be
+        defeated within its own suit, this means that a throw can only be
+        defeated by the same pattern of cards in the trump suit.
+      </p>
+
+      <p>WIP</p>
 
       <h4>Trick structure</h4>
       <p>
@@ -486,9 +590,75 @@
         the leading play in a trick if they have no cards in that suit (i.e.
         they are void in the suit).
       </p>
+      <p>
+        The winner of the current trick will play the first cards (and set the
+        trick format) for the next trick.
+      </p>
 
-      <h3>Leveling up</h3>
-      <p>WIP</p>
+      <h3>Winning the round and leveling up</h3>
+      <p>
+        The winning team for each round is determined by the number of points
+        the opposing team earned from tricks. If the opposing team won the last
+        trick, the cards hidden in the bottom are revealed. The point value of
+        any valuable cards at the bottom are multipled by the number of cards
+        used to lead the last trick and awarded to the opposing team. 
+      </p>
+
+      <p>There are five possible outcomes, as detailed in the following tables:</p>
+
+      <p>Two decks:</p>
+      <table border="1">
+        <thead>
+          <tr><td>Opposing team's points</td><td>Result</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
+          <tr><td>5 to 35</td><td>Defending team wins and goes up two levels</td></tr>
+          <tr><td>4 to 75</td><td>Defending team wins and goes up one level</td></tr>
+          <tr><td>80 to 115</td><td>Opposing team wins, but keeps the same level</td></tr>
+          <tr><td>120 to 155</td><td>Opposing team wins and goes up one level</td></tr>
+          <tr><td>160 to 195</td><td>Opposing team wins and goes up two levels</td></tr>
+          <tr><td>200 and above</td><td>Opposing team wins and goes up three levels</td></tr>
+        </tbody>
+      </table>
+
+      <p>Three decks:</p>
+      <table border="1">
+        <thead>
+          <tr><td>Opposing team's points</td><td>Result</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
+          <tr><td>5 to 55</td><td>Defending team wins and goes up two levels</td></tr>
+          <tr><td>60 to 115</td><td>Defending team wins and goes up one level</td></tr>
+          <tr><td>120 to 175</td><td>Opposing team wins, but keeps the same level</td></tr>
+          <tr><td>180 to 235</td><td>Opposing team wins and goes up one level</td></tr>
+          <tr><td>240 to 295</td><td>Opposing team wins and goes up two levels</td></tr>
+          <tr><td>300 and above</td><td>Opposing team wins and goes up three levels</td></tr>
+        </tbody>
+      </table>
+
+      <p>n decks:</p>
+      <table border="1">
+        <thead>
+          <tr><td>Opposing team's points</td><td>Result</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
+          <tr><td>5 to n-5</td><td>Defending team wins and goes up two levels</td></tr>
+          <tr><td>n to 2n-5</td><td>Defending team wins and goes up one level</td></tr>
+          <tr><td>2n to 3n-5</td><td>Opposing team wins, but keeps the same level</td></tr>
+          <tr><td>3n to 4n-5</td><td>Opposing team wins and goes up one level</td></tr>
+          <tr><td>4n to 5n-5</td><td>Opposing team wins and goes up two levels</td></tr>
+          <tr><td>5n and above</td><td>Opposing team wins and goes up three levels</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        The winning team becomes the defending team in the next round, and the
+        next person counter-clockwise from the current leader is the leader for
+        the next round.
+      </p>
 
       <script type="text/javascript">
         const body = document.getElementById("body");
@@ -519,6 +689,8 @@
         addCards("diamonds", REVERSED_CARDS.filter((c) => c.typ == '♢'));
         addCards("clubs", REVERSED_CARDS.filter((c) => c.typ == '♧'));
         addCards("jokers", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+
+        addCards("points", REVERSED_CARDS.filter((c) => c.points > 0));
 
         addCards("trump-4s", REVERSED_CARDS.filter((c) => c.typ == '♤' && c.number != '4'));
         addCards("trump-4s", CARDS.filter((c) => c.typ != '♤' && c.number == '4'));

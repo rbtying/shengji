@@ -79,6 +79,7 @@ class Initialize extends React.Component {
         e("option", { value: "Tractor" }, "升级 / Tractor"),
         e("option", { value: "FindingFriends" }, "找朋友 / Finding Friends")
       ),
+      e(NumDecksSelector, { num_decks: this.props.state.num_decks, players: this.props.state.players }),
       this.props.state.players.length >= 4
         ? e("button", { onClick: this.startGame }, "Start game")
         : e("p", null, "Waiting for players..."),
@@ -90,7 +91,7 @@ class Initialize extends React.Component {
       e(RankSelector, {
         players: this.props.state.players,
         name: this.props.name,
-      })
+      }),
     );
   }
 }
@@ -115,13 +116,22 @@ class Draw extends React.Component {
     evt.preventDefault();
     const counts = {};
     this.state.selected.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
-
     if (Object.keys(counts).length != 1) {
       return;
     }
 
     for (const c in counts) {
-      send({ Action: { Bid: [c, counts[c]] } });
+      let already_bid = 0;
+      this.props.state.bids.forEach((bid) => {
+        if (
+          this.props.state.players[bid.id].name == this.props.name &&
+          bid.card == c
+        ) {
+          already_bid = already_bid < bid.count ? bid.count : already_bid;
+        }
+      });
+
+      send({ Action: { Bid: [c, counts[c] + already_bid] } });
       this.setSelected([]);
     }
   }
@@ -180,6 +190,18 @@ class Draw extends React.Component {
         }
       });
     }
+
+    let cards_not_bid = [...this.props.cards];
+    this.props.state.bids.forEach((bid) => {
+      if (this.props.state.players[bid.id].name == this.props.name) {
+        for (let i = 0; i < bid.count; i = i + 1) {
+          const card_idx = cards_not_bid.indexOf(bid.card);
+          if (card_idx >= 0) {
+            cards_not_bid.splice(card_idx, 1);
+          }
+        }
+      }
+    });
 
     return e(
       "div",
@@ -247,7 +269,7 @@ class Draw extends React.Component {
         "Pick up cards from the bottom"
       ),
       e(Cards, {
-        cards: this.props.cards,
+        cards: cards_not_bid,
         selected: this.state.selected,
         setSelected: this.setSelected,
       })
@@ -850,6 +872,47 @@ class LandlordSelector extends React.Component {
           this.props.players.map((player) =>
             e("option", { value: player.id, key: player.id }, player.name)
           )
+        )
+      )
+    );
+  }
+}
+
+class NumDecksSelector extends React.Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(evt) {
+    evt.preventDefault();
+
+    if (evt.target.value != "") {
+      send({ Action: { SetNumDecks: parseInt(evt.target.value, 10) } });
+    } else {
+      send({ Action: { SetNumDecks: null } });
+    }
+  }
+
+  render() {
+    return e(
+      "div",
+      { className: "num-decks-picker" },
+      e(
+        "label",
+        null,
+        "number of decks: ",
+        e(
+          "select",
+          {
+            value: this.props.num_decks != null ? this.props.num_decks : "",
+            onChange: this.onChange,
+          },
+          e("option", { value: "" }, "default"),
+          Array(this.props.players.length).fill(0).map((_, idx) => {
+            const val = idx + 1;
+            return e("option", { value: val, key: idx }, val);
+          })
         )
       )
     );

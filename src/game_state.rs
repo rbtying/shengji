@@ -794,10 +794,8 @@ impl InitializePhase {
         Ok(())
     }
 
-    pub fn set_num_decks(&mut self, num_decks: usize) {
-        if num_decks > 0 {
-            self.num_decks = Some(num_decks);
-        }
+    pub fn set_num_decks(&mut self, num_decks: Option<usize>) {
+        self.num_decks = num_decks;
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
