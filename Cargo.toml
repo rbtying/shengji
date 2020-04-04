@@ -3,11 +3,15 @@ name = "shengji"
 version = "0.1.0"
 authors = ["Robert Ying <rbtying@aeturnalus.com>"]
 edition = "2018"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = []
 dynamic = []
+
+[build-dependencies]
+vergen = "3"
 
 [dependencies]
 anyhow = "1.0"
