@@ -66,6 +66,11 @@ impl InteractiveGame {
                     let n = s.player_name(id)?;
                     Ok(vec![format!("{} set their rank to {}", n, rank.as_str())])
                 }
+                (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
+                    state.set_kitty_size(size)?;
+                    let n = s.player_name(id)?;
+                    Ok(vec![format!("{} set the kitty to {}", n, size)])
+                }
                 (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                     state.set_landlord(landlord)?;
                     let n = s.player_name(id)?;

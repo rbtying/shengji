@@ -809,6 +809,7 @@ impl InitializePhase {
 
     pub fn set_num_decks(&mut self, num_decks: Option<usize>) {
         self.num_decks = num_decks;
+        self.kitty_size = None;
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
