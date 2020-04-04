@@ -114,6 +114,12 @@ async fn main() {
             .body(JS)
     });
     #[cfg(not(feature = "dynamic"))]
+    let js_map = warp::path("main.js.map").map(|| {
+        warp::http::Response::builder()
+            .header("Content-Type", "text/javascript; charset=utf-8")
+            .body(JS_MAP)
+    });
+    #[cfg(not(feature = "dynamic"))]
     let css = warp::path("style.css").map(|| {
         warp::http::Response::builder()
             .header("Content-Type", "text/css; charset=utf-8")
@@ -127,6 +133,8 @@ async fn main() {
     #[cfg(feature = "dynamic")]
     let js = warp::path("main.js").and(warp::fs::file("../frontend/dist/main.js"));
     #[cfg(feature = "dynamic")]
+    let js_map = warp::path("main.js.map").and(warp::fs::file("../frontend/dist/main.js.map"));
+    #[cfg(feature = "dynamic")]
     let css = warp::path("style.css").and(warp::fs::file("../frontend/static/style.css"));
 
     let cards = warp::path("cards.js").map(|| {
@@ -139,6 +147,7 @@ async fn main() {
         .and_then(|(game, stats)| get_stats(game, stats));
     let routes = index
         .or(js)
+        .or(js_map)
         .or(css)
         .or(cards)
         .or(api)
@@ -356,5 +365,7 @@ static INDEX_HTML: &str = include_str!("../../frontend/static/index.html");
 static RULES_HTML: &str = include_str!("../../frontend/static/rules.html");
 #[cfg(not(feature = "dynamic"))]
 static JS: &str = include_str!("../../frontend/dist/main.js");
+#[cfg(not(feature = "dynamic"))]
+static JS_MAP: &str = include_str!("../../frontend/dist/main.js.map");
 #[cfg(not(feature = "dynamic"))]
 static CSS: &str = include_str!("../../frontend/static/style.css");

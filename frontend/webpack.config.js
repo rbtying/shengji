@@ -1,6 +1,6 @@
 module.exports = {
   mode: "production",
-  devtool: "inline-source-map",
+  devtool: "source-map",
   resolve: {
     extensions: [".ts", ".tsx"]
   },
