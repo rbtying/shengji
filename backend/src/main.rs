@@ -108,7 +108,7 @@ async fn main() {
     #[cfg(not(feature = "dynamic"))]
     let rules = warp::path("rules").map(|| warp::reply::html(RULES_HTML));
     #[cfg(not(feature = "dynamic"))]
-    let js = warp::path("game.js").map(|| {
+    let js = warp::path("main.js").map(|| {
         warp::http::Response::builder()
             .header("Content-Type", "text/javascript; charset=utf-8")
             .body(JS)
@@ -121,13 +121,13 @@ async fn main() {
     });
 
     #[cfg(feature = "dynamic")]
-    let index = warp::path::end().and(warp::fs::file("static/index.html"));
+    let index = warp::path::end().and(warp::fs::file("../frontend/static/index.html"));
     #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("static/rules.html"));
+    let rules = warp::path("rules").and(warp::fs::file("../frontend/static/rules.html"));
     #[cfg(feature = "dynamic")]
-    let js = warp::path("game.js").and(warp::fs::file("generated/game.js"));
+    let js = warp::path("main.js").and(warp::fs::file("../frontend/dist/main.js"));
     #[cfg(feature = "dynamic")]
-    let css = warp::path("style.css").and(warp::fs::file("static/style.css"));
+    let css = warp::path("style.css").and(warp::fs::file("../frontend/static/style.css"));
 
     let cards = warp::path("cards.js").map(|| {
         warp::http::Response::builder()
@@ -351,10 +351,10 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
 }
 
 #[cfg(not(feature = "dynamic"))]
-static INDEX_HTML: &str = include_str!("../static/index.html");
+static INDEX_HTML: &str = include_str!("../../frontend/static/index.html");
 #[cfg(not(feature = "dynamic"))]
-static RULES_HTML: &str = include_str!("../static/rules.html");
+static RULES_HTML: &str = include_str!("../../frontend/static/rules.html");
 #[cfg(not(feature = "dynamic"))]
-static JS: &str = include_str!("../generated/game.js");
+static JS: &str = include_str!("../../frontend/dist/main.js");
 #[cfg(not(feature = "dynamic"))]
-static CSS: &str = include_str!("../static/style.css");
+static CSS: &str = include_str!("../../frontend/static/style.css");

@@ -839,7 +839,6 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
             onChange={this.handleChange}
             autoFocus={true}
           />
-          ,
           <input type="submit" value="join" />
         </form>
       </div>
