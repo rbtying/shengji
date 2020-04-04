@@ -217,13 +217,17 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     }
 
     const players: { [player_id: number]: IPlayer } = {};
+    let player_id = -1;
     this.props.state.players.forEach((p) => {
       players[p.id] = p;
+      if (p.name == this.props.name) {
+        player_id = p.id;
+      }
     });
 
     const my_bids: { [card: string]: number } = {};
     this.props.state.bids.forEach((bid) => {
-      if (players[bid.id].name == this.props.name) {
+      if (player_id == bid.id) {
         const existing_bid = my_bids[bid.card] || 0;
         my_bids[bid.card] = existing_bid < bid.count ? bid.count : existing_bid;
       }
@@ -250,14 +254,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           name={this.props.name}
         />
         <div>
-          <h2>Bids</h2>
+          <h2>
+            Bids ({this.props.state.deck.length} cards remaining in the deck)
+          </h2>
           {this.props.state.bids.map((bid, idx) => {
-            let name = "unknown";
-            this.props.state.players.forEach((player) => {
-              if (player.id == bid.id) {
-                name = player.name;
-              }
-            });
+            let name = players[player_id].name;
             return (
               <LabeledPlay
                 label={name}
@@ -294,7 +295,12 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           onClick={this.pickUpKitty}
           disabled={
             this.props.state.deck.length > 0 ||
-            this.props.state.bids.length == 0
+            this.props.state.bids.length == 0 ||
+            (this.props.state.landlord != null &&
+              this.props.state.landlord != player_id) ||
+            (this.props.state.landlord == null &&
+              this.props.state.bids[this.props.state.bids.length - 1].id !=
+                player_id)
           }
         >
           Pick up cards from the bottom
@@ -448,8 +454,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             ))}
           </div>
           <h2>
-            Discarded cards{" "}
-            {this.props.state.kitty.length / this.props.state.kitty_size}
+            Discarded cards {this.props.state.kitty.length} /{" "}
+            {this.props.state.kitty_size}
           </h2>
           <div className="kitty">
             {this.props.state.kitty.map((c, idx) => (
@@ -566,6 +572,13 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     }
     this.was_my_turn = is_my_turn;
 
+    let remaining_cards_to_play = 0;
+    Object.values(this.props.state.hands.hands).forEach((h) => {
+      Object.values(h).forEach((c) => {
+        remaining_cards_to_play += c;
+      });
+    });
+
     return (
       <div>
         <GameMode game_mode={this.props.state.game_mode} />
@@ -594,12 +607,13 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         >
           Finish trick
         </button>
-        {this.props.cards.length == 0 ? (
+        {remaining_cards_to_play == 0 &&
+        this.props.state.trick.played_cards.length == 0 ? (
           <button onClick={this.startNewGame}>Finish game</button>
         ) : null}
-        ,
         <Cards
           cards={this.props.cards}
+          notify_empty={is_my_turn}
           selected={this.state.selected}
           setSelected={this.setSelected}
         />
@@ -616,6 +630,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
           points={this.props.state.points}
           players={this.props.state.players}
           landlords_team={this.props.state.landlords_team}
+          landlord={this.props.state.landlord}
         />
         <LabeledPlay cards={this.props.state.kitty} label="底牌" />
       </div>
@@ -669,33 +684,52 @@ interface IPointsProps {
   players: IPlayer[];
   points: { [player_id: number]: string[] };
   landlords_team: number[];
+  landlord: number;
 }
 class Points extends React.Component<IPointsProps, {}> {
   render() {
-    return e(
-      "div",
-      { className: "points" },
-      this.props.players.map((player) => {
-        let total_points = 0;
-        this.props.points[player.id].forEach((c) => {
-          total_points += CARD_LUT[c].points;
-        });
-        const className = this.props.landlords_team.includes(player.id)
-          ? "landlord"
-          : "";
-        const cards =
-          this.props.points[player.id].length > 0
-            ? this.props.points[player.id]
-            : ["🂠"];
-        return (
-          <LabeledPlay
-            key={player.id}
-            className={className}
-            label={`${player.name}: ${total_points}分`}
-            cards={cards}
-          />
-        );
-      })
+    let total_points_played = 0;
+    let non_landlords_points = 0;
+    let landlord = "";
+
+    const player_point_elements = this.props.players.map((player) => {
+      if (player.id == this.props.landlord) {
+        landlord = player.name;
+      }
+
+      let player_points = 0;
+      this.props.points[player.id].forEach((c) => {
+        player_points += CARD_LUT[c].points;
+      });
+      total_points_played += player_points;
+
+      const on_landlords_team = this.props.landlords_team.includes(player.id);
+      const className = on_landlords_team ? "landlord" : "";
+      if (!on_landlords_team) {
+        non_landlords_points += player_points;
+      }
+      const cards =
+        this.props.points[player.id].length > 0
+          ? this.props.points[player.id]
+          : ["🂠"];
+      return (
+        <LabeledPlay
+          key={player.id}
+          className={className}
+          label={`${player.name}: ${player_points}分`}
+          cards={cards}
+        />
+      );
+    });
+
+    return (
+      <div className="points">
+        <h2>Points</h2>
+        <p>
+          {non_landlords_points}分 / {total_points_played}分 stolen from {landlord}'s team
+        </p>
+        {player_point_elements}
+      </div>
     );
   }
 }
@@ -703,6 +737,7 @@ class Points extends React.Component<IPointsProps, {}> {
 interface ICardsProps {
   selected: string[];
   cards: string[];
+  notify_empty?: boolean;
   setSelected(new_selected: string[]): void;
 }
 class Cards extends React.Component<ICardsProps, {}> {
@@ -733,43 +768,54 @@ class Cards extends React.Component<ICardsProps, {}> {
       unselected.splice(unselected.indexOf(card), 1);
     });
 
-    return e(
-      "div",
-      { className: "hand" },
-      e(
-        "div",
-        { className: "selected-cards" },
-        this.props.selected.map((c, idx) =>
-          e(Card, { key: idx, onClick: () => this.unselectCard(c), card: c })
-        ),
-        this.props.selected.length == 0 ? e(Card, { card: "🂠" }) : null
-      ),
-      e("p", null, "Your hand"),
-      e(
-        "div",
-        { className: "unselected-cards" },
-        unselected.map((c, idx) =>
-          e(Card, { key: idx, onClick: () => this.selectCard(c), card: c })
-        ),
-        unselected.length == 0 ? e(Card, { card: "🂠" }) : null
-      )
+    return (
+      <div className="hand">
+        <div className="selected-cards">
+          {this.props.selected.map((c, idx) => (
+            <Card key={idx} onClick={() => this.unselectCard(c)} card={c} />
+          ))}
+          {this.props.selected.length == 0 ? (
+            <Card
+              card="🂠"
+              className={this.props.notify_empty ? "notify" : ""}
+            />
+          ) : null}
+        </div>
+        <div className="unselected-cards">
+          {unselected.map((c, idx) => (
+            <Card key={idx} onClick={() => this.selectCard(c)} card={c} />
+          ))}
+          {unselected.length == 0 ? <Card card="🂠" /> : null}
+        </div>
+      </div>
     );
   }
 }
 
 interface ICardProps {
   card: string;
+  className?: string;
   onClick?(evt: any): any;
 }
 class Card extends React.Component<ICardProps, {}> {
   render() {
     const c = CARD_LUT[this.props.card];
     if (!c) {
-      return e("span", { className: "card unknown" }, this.props.card);
+      return e(
+        "span",
+        {
+          className: this.props.className
+            ? `card unknown ${this.props.className}`
+            : "card unknown",
+        },
+        this.props.card
+      );
     }
 
     const props: { onClick?(evt: any): any; className: string } = {
-      className: `card ${c.typ}`,
+      className: this.props.className
+        ? `card ${c.typ} ${this.props.className}`
+        : `card ${c.typ}`,
     };
     if (this.props.onClick) {
       props.onClick = this.props.onClick;
@@ -796,7 +842,7 @@ class LabeledPlay extends React.Component<ILabeledPlayProps, {}> {
             <Card card={card} key={idx} />
           ))}
         </div>
-        <div className="label">this.props.label</div>
+        <div className="label">{this.props.label}</div>
       </div>
     );
   }
@@ -1406,6 +1452,9 @@ let state: State = {
   messages: [],
 };
 
+(window as any).state = state;
+(window as any).send = send;
+
 function send(value: any) {
   ws.send(JSON.stringify(value));
 }
@@ -1433,59 +1482,51 @@ function renderUI() {
       );
     } else {
       ReactDOM.render(
-        e(
-          "div",
-          { className: state.four_color ? "four-color" : "" },
-          e(Errors, { errors: state.errors }),
-          e(
-            "div",
-            { className: "game" },
-            state.game_state.Initialize
-              ? e(Initialize, {
-                  state: state.game_state.Initialize,
-                  cards: state.cards,
-                  name: state.name,
-                })
-              : null,
-            state.game_state.Draw
-              ? e(Draw, {
-                  state: state.game_state.Draw,
-                  cards: state.cards,
-                  name: state.name,
-                })
-              : null,
-            state.game_state.Exchange
-              ? e(Exchange, {
-                  state: state.game_state.Exchange,
-                  cards: state.cards,
-                  name: state.name,
-                })
-              : null,
-            state.game_state.Play
-              ? e(Play, {
-                  state: state.game_state.Play,
-                  cards: state.cards,
-                  name: state.name,
-                  show_last_trick: state.show_last_trick,
-                  beep_on_turn: state.beep_on_turn,
-                })
-              : null,
-            state.game_state.Done ? e("p", null, "Game over") : null
-          ),
-          e(Chat, { messages: state.messages }),
-          e("hr", null),
-          e(
-            "div",
-            { className: "settings" },
-            e(
-              "label",
-              null,
-              "four-color mode",
-              e("input", {
-                name: "four-color",
-                type: "checkbox",
-                checked: state.four_color,
-                onChange: (evt) => {
+        <div className={state.four_color ? "four-color" : ""}>
+          <Errors errors={state.errors} />
+          <div className="game">
+            {state.game_state.Initialize ? (
+              <Initialize
+                state={state.game_state.Initialize}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Draw ? (
+              <Draw
+                state={state.game_state.Draw}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Exchange ? (
+              <Exchange
+                state={state.game_state.Exchange}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Play ? (
+              <Play
+                state={state.game_state.Play}
+                cards={state.cards}
+                name={state.name}
+                show_last_trick={state.show_last_trick}
+                beep_on_turn={state.beep_on_turn}
+              />
+            ) : null}
+            {state.game_state.Done ? <p>Game Over</p> : null}
+          </div>
+          <Chat messages={state.messages} />
+          <hr />
+          <div className="settings">
+            <label>
+              four-color mode
+              <input
+                name="four-color-mode"
+                type="checkbox"
+                checked={state.four_color}
+                onChange={(evt) => {
                   state.four_color = evt.target.checked;
                   if (state.four_color) {
                     window.localStorage.setItem("four_color", "on");
@@ -1493,18 +1534,16 @@ function renderUI() {
                     window.localStorage.setItem("four_color", "off");
                   }
                   renderUI();
-                },
-              })
-            ),
-            e(
-              "label",
-              null,
-              "show last trick",
-              e("input", {
-                name: "show-last-trick",
-                type: "checkbox",
-                checked: state.show_last_trick,
-                onChange: (evt) => {
+                }}
+              />
+            </label>
+            <label>
+              show last trick
+              <input
+                name="show-last-trick"
+                type="checkbox"
+                checked={state.show_last_trick}
+                onChange={(evt) => {
                   state.show_last_trick = evt.target.checked;
                   if (state.show_last_trick) {
                     window.localStorage.setItem("show_last_trick", "on");
@@ -1512,18 +1551,16 @@ function renderUI() {
                     window.localStorage.setItem("show_last_trick", "off");
                   }
                   renderUI();
-                },
-              })
-            ),
-            e(
-              "label",
-              null,
-              "beep on turn",
-              e("input", {
-                name: "show-last-trick",
-                type: "checkbox",
-                checked: state.beep_on_turn,
-                onChange: (evt) => {
+                }}
+              />
+            </label>
+            <label>
+              beep on turn
+              <input
+                name="beep-on-turn"
+                type="checkbox"
+                checked={state.beep_on_turn}
+                onChange={(evt) => {
                   state.beep_on_turn = evt.target.checked;
                   if (state.beep_on_turn) {
                     window.localStorage.setItem("beep_on_turn", "on");
@@ -1531,11 +1568,11 @@ function renderUI() {
                     window.localStorage.setItem("beep_on_turn", "off");
                   }
                   renderUI();
-                },
-              })
-            )
-          )
-        ),
+                }}
+              />
+            </label>
+          </div>
+        </div>,
         document.getElementById("root")
       );
     }

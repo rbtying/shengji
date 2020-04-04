@@ -4,7 +4,13 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .trick { padding: 10px; }
 .points .card { font-size: 5em; cursor: default; }
 .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; }
-.card.unknown { cursor: default; }
+.card.unknown { cursor: default; color: #aaa; }
+.card.notify { animation:blinkingText 1.5s infinite; }
+@keyframes blinkingText {
+  0% {color: #000; }
+  50% { color: #aaa; }
+  100% {color: #000; }
+}
 .card:last-child { margin-right: 0; }
 .♢ { color: #bb0313; }
 .♡ { color: #bb0313; }
@@ -26,7 +32,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
 .chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
-.game { min-width: 760px; width: 70%; display: inline-block; }
+.game { min-width: 700px; width: 70%; display: inline-block; }
 .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
 .chat-anchor { overflow-anchor: auto; height: 1px }
 .message { margin: 0; }
