@@ -57,50 +57,46 @@ class Initialize extends React.Component<IInitializeProps, {}> {
   render() {
     const mode_as_string =
       this.props.state.game_mode == "Tractor" ? "Tractor" : "FindingFriends";
-    return e(
-      "div",
-      null,
-      e(GameMode, { game_mode: this.props.state.game_mode }),
-      e(Players, {
-        players: this.props.state.players,
-        landlord: this.props.state.landlord,
-        next: null,
-        movable: true,
-        name: this.props.name,
-      }),
-      e(
-        "p",
-        null,
-        "Send the link to other players to allow them to join the game: ",
-        e(
-          "a",
-          { href: window.location.href, target: "_blank" },
-          e("code", null, window.location.href)
-        )
-      ),
-      e(
-        "select",
-        { value: mode_as_string, onChange: this.setGameMode },
-        e("option", { value: "Tractor" }, "升级 / Tractor"),
-        e("option", { value: "FindingFriends" }, "找朋友 / Finding Friends")
-      ),
-      e(NumDecksSelector, {
-        num_decks: this.props.state.num_decks,
-        players: this.props.state.players,
-      }),
-      this.props.state.players.length >= 4
-        ? e("button", { onClick: this.startGame }, "Start game")
-        : e("p", null, "Waiting for players..."),
-      e(Kicker, { players: this.props.state.players }),
-      e(LandlordSelector, {
-        players: this.props.state.players,
-        landlord: this.props.state.landlord,
-      }),
-      e(RankSelector, {
-        players: this.props.state.players,
-        name: this.props.name,
-        num_decks: this.props.state.num_decks,
-      })
+    return (
+      <div>
+        <GameMode game_mode={this.props.state.game_mode} />
+        <Players
+          players={this.props.state.players}
+          landlord={this.props.state.landlord}
+          next={null}
+          movable={true}
+          name={this.props.name}
+        />
+        <p>
+          Send the link to other players to allow them to join the game:{" "}
+          <a href={window.location.href} target="_blank">
+            <code>{window.location.href}</code>
+          </a>
+        </p>
+        <select value={mode_as_string} onChange={this.setGameMode}>
+          <option value="Tractor">升级 / Tractor</option>
+          <option value="FindingFriends">找朋友 / Finding Friends</option>
+        </select>
+        <NumDecksSelector
+          num_decks={this.props.state.num_decks}
+          players={this.props.state.players}
+        />
+        {this.props.state.players.length >= 4 ? (
+          <button onClick={this.startGame}>Start game</button>
+        ) : (
+          <p>Waiting for players...</p>
+        )}
+        <Kicker players={this.props.state.players} />
+        <LandlordSelector
+          players={this.props.state.players}
+          landlord={this.props.state.landlord}
+        />
+        <RankSelector
+          players={this.props.state.players}
+          name={this.props.name}
+          num_decks={this.props.state.num_decks}
+        />
+      </div>
     );
   }
 }
@@ -244,76 +240,71 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       }
     });
 
-    return e(
-      "div",
-      null,
-      e(GameMode, { game_mode: this.props.state.game_mode }),
-      e(Players, {
-        players: this.props.state.players,
-        landlord: this.props.state.landlord,
-        next: next,
-        name: this.props.name,
-      }),
-      e(
-        "div",
-        null,
-        e("h2", null, "Bids"),
-        this.props.state.bids.map((bid, idx) => {
-          let name = "unknown";
-          this.props.state.players.forEach((player) => {
-            if (player.id == bid.id) {
-              name = player.name;
-            }
-          });
-          return e(LabeledPlay, {
-            label: name,
-            key: idx,
-            cards: Array(bid.count).fill(bid.card),
-          });
-        })
-      ),
-      e(
-        "button",
-        {
-          onClick: (evt: any) => {
+    return (
+      <div>
+        <GameMode game_mode={this.props.state.game_mode} />
+        <Players
+          players={this.props.state.players}
+          landlord={this.props.state.landlord}
+          next={next}
+          name={this.props.name}
+        />
+        <div>
+          <h2>Bids</h2>
+          {this.props.state.bids.map((bid, idx) => {
+            let name = "unknown";
+            this.props.state.players.forEach((player) => {
+              if (player.id == bid.id) {
+                name = player.name;
+              }
+            });
+            return (
+              <LabeledPlay
+                label={name}
+                key={idx}
+                cards={Array(bid.count).fill(bid.card)}
+              />
+            );
+          })}
+        </div>
+        <button
+          onClick={(evt: any) => {
             evt.preventDefault();
             this.drawCard();
-          },
-          disabled: !can_draw,
-        },
-        "Draw card"
-      ),
-      e(
-        "label",
-        null,
-        "autodraw",
-        e("input", {
-          name: "autodraw",
-          type: "checkbox",
-          checked: this.state.autodraw,
-          onChange: this.onAutodrawClicked,
-        })
-      ),
-      e(
-        "button",
-        { onClick: this.makeBid, disabled: this.state.selected.length == 0 },
-        "Make bid"
-      ),
-      e(
-        "button",
-        {
-          onClick: this.pickUpKitty,
-          disabled:
+          }}
+          disabled={!can_draw}
+        >
+          Draw card
+        </button>
+        <label>
+          <input
+            type="checkbox"
+            name="autodraw"
+            checked={this.state.autodraw}
+            onChange={this.onAutodrawClicked}
+          />
+        </label>
+        <button
+          onClick={this.makeBid}
+          disabled={this.state.selected.length == 0}
+        >
+          Make bid
+        </button>
+        <button
+          onClick={this.pickUpKitty}
+          disabled={
             this.props.state.deck.length > 0 ||
-            this.props.state.bids.length == 0,
-        },
-        "Pick up cards from the bottom"
-      ),
-      e(Cards, {
-        cards: cards_not_bid,
-        selected: this.state.selected,
-        setSelected: this.setSelected,
-      })
+            this.props.state.bids.length == 0
+          }
+        >
+          Pick up cards from the bottom
+        </button>
+        <Cards
+          cards={cards_not_bid}
+          selected={this.state.selected}
+          setSelected={this.setSelected}
+        />
+      </div>
     );
   }
 }
@@ -414,95 +405,85 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       }
     });
     if (this.props.state.players[landlord_idx].name == this.props.name) {
-      return e(
-        "div",
-        null,
-        e(GameMode, { game_mode: this.props.state.game_mode }),
-        e(Players, {
-          players: this.props.state.players,
-          landlord: this.props.state.landlord,
-          next: this.props.state.landlord,
-          name: this.props.name,
-        }),
-        e(Trump, { trump: this.props.state.trump }),
-        this.props.state.game_mode != "Tractor"
-          ? e(
-              "div",
-              null,
-              e(Friends, { game_mode: this.props.state.game_mode }),
-              this.state.friends.map((friend, idx) => {
+      return (
+        <div>
+          <GameMode game_mode={this.props.state.game_mode} />
+          <Players
+            players={this.props.state.players}
+            landlord={this.props.state.landlord}
+            next={this.props.state.landlord}
+            name={this.props.name}
+          />
+          <Trump trump={this.props.state.trump} />
+          {this.props.state.game_mode != "Tractor" ? (
+            <div>
+              <Friends game_mode={this.props.state.game_mode} />
+              {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
                   new_friends[idx] = x;
                   this.setState({ friends: new_friends });
                 };
-                return e(FriendSelect, {
-                  onChange: onChange,
-                  key: idx,
-                  friend: friend,
-                  trump: this.props.state.trump,
-                  num_decks: this.props.state.num_decks,
-                });
-              }),
-              e("button", { onClick: this.pickFriends }, "Pick friends")
-            )
-          : null,
-        e("h2", null, "Your hand"),
-        e(
-          "div",
-          { className: "hand" },
-          this.props.cards.map((c, idx) =>
-            e(Card, {
-              key: idx,
-              onClick: () => this.moveCardToKitty(c),
-              card: c,
-            })
-          )
-        ),
-        e(
-          "h2",
-          null,
-          `Discarded cards (${this.props.state.kitty.length} / ${this.props.state.kitty_size})`
-        ),
-        e(
-          "div",
-          { className: "kitty" },
-          this.props.state.kitty.map((c, idx) =>
-            e(Card, {
-              key: idx,
-              onClick: () => this.moveCardToHand(c),
-              card: c,
-            })
-          )
-        ),
-        e(
-          "button",
-          {
-            onClick: this.startGame,
-            disabled:
-              this.props.state.kitty.length != this.props.state.kitty_size,
-          },
-          "Start game"
-        )
+                return (
+                  <FriendSelect
+                    onChange={onChange}
+                    key={idx}
+                    friend={friend}
+                    trump={this.props.state.trump}
+                    num_decks={this.props.state.num_decks}
+                  />
+                );
+              })}
+              <button onClick={this.pickFriends}>Pick friends</button>
+            </div>
+          ) : null}
+          <h2>Your hand</h2>
+          <div className="hand">
+            {this.props.cards.map((c, idx) => (
+              <Card
+                key={idx}
+                onClick={() => this.moveCardToKitty(c)}
+                card={c}
+              />
+            ))}
+          </div>
+          <h2>
+            Discarded cards{" "}
+            {this.props.state.kitty.length / this.props.state.kitty_size}
+          </h2>
+          <div className="kitty">
+            {this.props.state.kitty.map((c, idx) => (
+              <Card key={idx} onClick={() => this.moveCardToHand(c)} card={c} />
+            ))}
+          </div>
+          <button
+            onClick={this.startGame}
+            disabled={
+              this.props.state.kitty.length != this.props.state.kitty_size
+            }
+          >
+            Start game
+          </button>
+        </div>
       );
     } else {
-      return e(
-        "div",
-        null,
-        e(GameMode, { game_mode: this.props.state.game_mode }),
-        e(Players, {
-          players: this.props.state.players,
-          landlord: this.props.state.landlord,
-          next: this.props.state.landlord,
-          name: this.props.name,
-        }),
-        e(Trump, { trump: this.props.state.trump }),
-        e(
-          "div",
-          { className: "hand" },
-          this.props.cards.map((c, idx) => e(Card, { key: idx, card: c }))
-        ),
-        e("p", null, "Waiting...")
+      return (
+        <div>
+          <GameMode game_mode={this.props.state.game_mode} />
+          <Players
+            players={this.props.state.players}
+            landlord={this.props.state.landlord}
+            next={this.props.state.landlord}
+            name={this.props.name}
+          />
+          <Trump trump={this.props.state.trump} />
+          <div className="hand">
+            {this.props.cards.map((c, idx) => (
+              <Card key={idx} card={c} />
+            ))}
+          </div>
+          <p>Waiting...</p>
+        </div>
       );
     }
   }
@@ -585,66 +566,59 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     }
     this.was_my_turn = is_my_turn;
 
-    return e(
-      "div",
-      null,
-      e(GameMode, { game_mode: this.props.state.game_mode }),
-      e(Players, {
-        players: this.props.state.players,
-        landlord: this.props.state.landlord,
-        landlords_team: this.props.state.landlords_team,
-        name: this.props.name,
-        next: next,
-      }),
-      e(Trump, { trump: this.props.state.trump }),
-      e(Friends, { game_mode: this.props.state.game_mode }),
-      e(Trick, {
-        trick: this.props.state.trick,
-        players: this.props.state.players,
-      }),
-      e(
-        "button",
-        { onClick: this.playCards, disabled: !can_play },
-        "Play selected cards"
-      ),
-      e(
-        "button",
-        { onClick: this.takeBackCards, disabled: !can_take_back },
-        "Take back last play"
-      ),
-      e(
-        "button",
-        {
-          onClick: this.endTrick,
-          disabled: this.props.state.trick.player_queue.length > 0,
-        },
-        "Finish trick"
-      ),
-      this.props.cards.length == 0
-        ? e("button", { onClick: this.startNewGame }, "Finish game")
-        : null,
-      e(Cards, {
-        cards: this.props.cards,
-        selected: this.state.selected,
-        setSelected: this.setSelected,
-      }),
-      this.props.state.last_trick && this.props.show_last_trick
-        ? e(
-            "div",
-            null,
-            e("p", null, "Previous trick"),
-            e(Trick, {
-              trick: this.props.state.last_trick,
-              players: this.props.state.players,
-            })
-          )
-        : null,
-      e(Points, {
-        points: this.props.state.points,
-        players: this.props.state.players,
-        landlords_team: this.props.state.landlords_team,
-      }),
-      e(LabeledPlay, { cards: this.props.state.kitty, label: "底牌" })
+    return (
+      <div>
+        <GameMode game_mode={this.props.state.game_mode} />
+        <Players
+          players={this.props.state.players}
+          landlord={this.props.state.landlord}
+          landlords_team={this.props.state.landlords_team}
+          name={this.props.name}
+          next={next}
+        />
+        <Trump trump={this.props.state.trump} />
+        <Friends game_mode={this.props.state.game_mode} />
+        <Trick
+          trick={this.props.state.trick}
+          players={this.props.state.players}
+        />
+        <button onClick={this.playCards} disabled={!can_play}>
+          Play selected cards
+        </button>
+        <button onClick={this.takeBackCards} disabled={!can_take_back}>
+          Take back last play
+        </button>
+        <button
+          onClick={this.endTrick}
+          disabled={this.props.state.trick.player_queue.length > 0}
+        >
+          Finish trick
+        </button>
+        {this.props.cards.length == 0 ? (
+          <button onClick={this.startNewGame}>Finish game</button>
+        ) : null}
+        ,
+        <Cards
+          cards={this.props.cards}
+          selected={this.state.selected}
+          setSelected={this.setSelected}
+        />
+        {this.props.state.last_trick && this.props.show_last_trick ? (
+          <div>
+            <p>Previous trick</p>
+            <Trick
+              trick={this.props.state.last_trick}
+              players={this.props.state.players}
+            />
+          </div>
+        ) : null}
+        <Points
+          points={this.props.state.points}
+          players={this.props.state.players}
+          landlords_team={this.props.state.landlords_team}
+        />
+        <LabeledPlay cards={this.props.state.kitty} label="底牌" />
+      </div>
     );
   }
 }
@@ -660,27 +634,33 @@ class Trick extends React.Component<{ players: IPlayer[]; trick: ITrick }, {}> {
         ? Array(this.props.trick.played_cards[0].cards.length).fill("🂠")
         : ["🂠"];
 
-    return e(
-      "div",
-      { className: "trick" },
-      this.props.trick.played_cards.map((played, idx) => {
-        const winning = this.props.trick.current_winner == played.id;
-        return e(LabeledPlay, {
-          key: idx,
-          label: winning
-            ? `${names_by_id[played.id]} (!)`
-            : names_by_id[played.id],
-          className: winning ? "winning" : "",
-          cards: played.cards,
-        });
-      }),
-      this.props.trick.player_queue.map((id, idx) => {
-        return e(LabeledPlay, {
-          key: idx + this.props.trick.played_cards.length,
-          label: names_by_id[id],
-          cards: blank_cards,
-        });
-      })
+    return (
+      <div className="trick">
+        {this.props.trick.played_cards.map((played, idx) => {
+          const winning = this.props.trick.current_winner == played.id;
+          return (
+            <LabeledPlay
+              key={idx}
+              label={
+                winning
+                  ? `${names_by_id[played.id]} (!)`
+                  : names_by_id[played.id]
+              }
+              className={winning ? "winning" : ""}
+              cards={played.cards}
+            />
+          );
+        })}
+        {this.props.trick.player_queue.map((id, idx) => {
+          return (
+            <LabeledPlay
+              key={idx + this.props.trick.played_cards.length}
+              label={names_by_id[id]}
+              cards={blank_cards}
+            />
+          );
+        })}
+      </div>
     );
   }
 }
@@ -707,12 +687,14 @@ class Points extends React.Component<IPointsProps, {}> {
           this.props.points[player.id].length > 0
             ? this.props.points[player.id]
             : ["🂠"];
-        return e(LabeledPlay, {
-          key: player.id,
-          className: className,
-          label: `${player.name}: ${total_points}分`,
-          cards: cards,
-        });
+        return (
+          <LabeledPlay
+            key={player.id}
+            className={className}
+            label={`${player.name}: ${total_points}分`}
+            cards={cards}
+          />
+        );
       })
     );
   }
@@ -807,15 +789,15 @@ class LabeledPlay extends React.Component<ILabeledPlayProps, {}> {
     if (this.props.className) {
       className = className + " " + this.props.className;
     }
-    return e(
-      "div",
-      { className: className },
-      e(
-        "div",
-        { className: "play" },
-        this.props.cards.map((card, idx) => e(Card, { card: card, key: idx }))
-      ),
-      e("div", { className: "label" }, this.props.label)
+    return (
+      <div className={className}>
+        <div className="play">
+          {this.props.cards.map((card, idx) => (
+            <Card card={card} key={idx} />
+          ))}
+        </div>
+        <div className="label">this.props.label</div>
+      </div>
     );
   }
 }
@@ -847,21 +829,20 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
   }
 
   render() {
-    return e(
-      "div",
-      null,
-      e(
-        "form",
-        { onSubmit: this.handleSubmit },
-        e("input", {
-          type: "text",
-          placeholder: "name",
-          value: this.props.name,
-          onChange: this.handleChange,
-          autoFocus: true,
-        }),
-        e("input", { type: "submit", value: "join" })
-      )
+    return (
+      <div>
+        <form onSubmit={this.handleSubmit}>
+          <input
+            type={"text"}
+            placeholder={"name"}
+            value={this.props.name}
+            onChange={this.handleChange}
+            autoFocus={true}
+          />
+          ,
+          <input type="submit" value="join" />
+        </form>
+      </div>
     );
   }
 }
@@ -869,22 +850,20 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
 class Trump extends React.Component<{ trump: ITrump }, {}> {
   render() {
     if (this.props.trump.Standard) {
-      return e(
-        "div",
-        { className: "trump" },
-        "The trump suit is ",
-        e(
-          "span",
-          { className: this.props.trump.Standard.suit },
-          this.props.trump.Standard.suit
-        ),
-        `, rank ${this.props.trump.Standard.number}`
+      return (
+        <div className="trump">
+          The trump suit is{" "}
+          <span className={this.props.trump.Standard.suit}>
+            {this.props.trump.Standard.suit}
+          </span>
+          , rank {this.props.trump.Standard.number}
+        </div>
       );
     } else if (this.props.trump.NoTrump) {
-      return e(
-        "div",
-        { className: "trump" },
-        `No trump, rank ${this.props.trump.NoTrump.number}`
+      return (
+        <div className="trump">
+          No trump, rank {this.props.trump.NoTrump.number}
+        </div>
       );
     } else {
       return null;
@@ -1000,28 +979,28 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
   }
 
   render() {
-    return e(
-      "div",
-      { className: "num-decks-picker" },
-      e(
-        "label",
-        null,
-        "number of decks: ",
-        e(
-          "select",
-          {
-            value: this.props.num_decks != null ? this.props.num_decks : "",
-            onChange: this.onChange,
-          },
-          e("option", { value: "" }, "default"),
-          Array(this.props.players.length)
-            .fill(0)
-            .map((_, idx) => {
-              const val = idx + 1;
-              return e("option", { value: val, key: idx }, val);
-            })
-        )
-      )
+    return (
+      <div className="num-decks-picker">
+        <label>
+          number of decks:{" "}
+          <select
+            value={this.props.num_decks != null ? this.props.num_decks : ""}
+            onChange={this.onChange}
+          >
+            <option value="">default</option>
+            {Array(this.props.players.length)
+              .fill(0)
+              .map((_, idx) => {
+                const val = idx + 1;
+                return (
+                  <option value={val} key={idx}>
+                    {val}
+                  </option>
+                );
+              })}
+          </select>
+        </label>
+      </div>
     );
   }
 }
@@ -1052,33 +1031,33 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
         rank = p.level;
       }
     });
-    return e(
-      "div",
-      { className: "landlord-picker" },
-      e(
-        "label",
-        null,
-        "rank: ",
-        e(
-          "select",
-          { value: rank, onChange: this.onChange },
-          [
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "J",
-            "K",
-            "Q",
-            "A",
-          ].map((rank) => e("option", { value: rank, key: rank }, rank))
-        )
-      )
+    return (
+      <div className="landlord-picker">
+        <label>
+          rank:{" "}
+          <select value={rank} onChange={this.onChange}>
+            {[
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "J",
+              "K",
+              "Q",
+              "A",
+            ].map((rank) => (
+              <option value={rank} key={rank}>
+                {rank}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     );
   }
 }
@@ -1230,36 +1209,32 @@ class Chat extends React.Component<IChatProps, IChatState> {
   }
 
   render() {
-    return e(
-      "div",
-      { className: "chat" },
-      e(
-        "div",
-        { className: "messages" },
-        this.props.messages.map((m, idx) => {
-          let className = "message";
-          if (m.from_game) {
-            className = className + " game-message";
-          }
-          return e(
-            "p",
-            { key: idx, className: className },
-            `${m.from}: ${m.message}`
-          );
-        }),
-        <div className="chat-anchor" ref={this.anchor} />
-      ),
-      e(
-        "form",
-        { onSubmit: this.handleSubmit },
-        e("input", {
-          type: "text",
-          placeholder: "type message here",
-          value: this.state.message,
-          onChange: this.handleChange,
-        }),
-        e("input", { type: "submit", value: "submit" })
-      )
+    return (
+      <div className="chat">
+        <div className="messages">
+          {this.props.messages.map((m, idx) => {
+            let className = "message";
+            if (m.from_game) {
+              className = className + " game-message";
+            }
+            return (
+              <p key={idx} className={className}>
+                {m.from}: {m.message}
+              </p>
+            );
+          })}
+          <div className="chat-anchor" ref={this.anchor} />
+        </div>
+        <form onSubmit={this.handleSubmit}>
+          <input
+            type="text"
+            placeholder="type message here"
+            value={this.state.message}
+            onChange={this.handleChange}
+          />
+          <input type="submit" value="submit" />
+        </form>
+      </div>
     );
   }
 }
@@ -1267,9 +1242,9 @@ class Chat extends React.Component<IChatProps, IChatState> {
 class GameMode extends React.Component<{ game_mode: IGameMode }, {}> {
   render() {
     if (this.props.game_mode == "Tractor") {
-      return e("h1", null, "升级 / Tractor");
+      return <h1>升级 / Tractor</h1>;
     } else {
-      return e("h1", null, "找朋友 / Finding Friends");
+      return <h1>找朋友 / Finding Friends</h1>;
     }
   }
 }

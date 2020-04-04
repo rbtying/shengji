@@ -68,25 +68,22 @@ var Initialize = /** @class */ (function (_super) {
     };
     Initialize.prototype.render = function () {
         var mode_as_string = this.props.state.game_mode == "Tractor" ? "Tractor" : "FindingFriends";
-        return e("div", null, e(GameMode, { game_mode: this.props.state.game_mode }), e(Players, {
-            players: this.props.state.players,
-            landlord: this.props.state.landlord,
-            next: null,
-            movable: true,
-            name: this.props.name,
-        }), e("p", null, "Send the link to other players to allow them to join the game: ", e("a", { href: window.location.href, target: "_blank" }, e("code", null, window.location.href))), e("select", { value: mode_as_string, onChange: this.setGameMode }, e("option", { value: "Tractor" }, "升级 / Tractor"), e("option", { value: "FindingFriends" }, "找朋友 / Finding Friends")), e(NumDecksSelector, {
-            num_decks: this.props.state.num_decks,
-            players: this.props.state.players,
-        }), this.props.state.players.length >= 4
-            ? e("button", { onClick: this.startGame }, "Start game")
-            : e("p", null, "Waiting for players..."), e(Kicker, { players: this.props.state.players }), e(LandlordSelector, {
-            players: this.props.state.players,
-            landlord: this.props.state.landlord,
-        }), e(RankSelector, {
-            players: this.props.state.players,
-            name: this.props.name,
-            num_decks: this.props.state.num_decks,
-        }));
+        return (React.createElement("div", null,
+            React.createElement(GameMode, { game_mode: this.props.state.game_mode }),
+            React.createElement(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: null, movable: true, name: this.props.name }),
+            React.createElement("p", null,
+                "Send the link to other players to allow them to join the game:",
+                " ",
+                React.createElement("a", { href: window.location.href, target: "_blank" },
+                    React.createElement("code", null, window.location.href))),
+            React.createElement("select", { value: mode_as_string, onChange: this.setGameMode },
+                React.createElement("option", { value: "Tractor" }, "\u5347\u7EA7 / Tractor"),
+                React.createElement("option", { value: "FindingFriends" }, "\u627E\u670B\u53CB / Finding Friends")),
+            React.createElement(NumDecksSelector, { num_decks: this.props.state.num_decks, players: this.props.state.players }),
+            this.props.state.players.length >= 4 ? (React.createElement("button", { onClick: this.startGame }, "Start game")) : (React.createElement("p", null, "Waiting for players...")),
+            React.createElement(Kicker, { players: this.props.state.players }),
+            React.createElement(LandlordSelector, { players: this.props.state.players, landlord: this.props.state.landlord }),
+            React.createElement(RankSelector, { players: this.props.state.players, name: this.props.name, num_decks: this.props.state.num_decks })));
     };
     return Initialize;
 }(React.Component));
@@ -209,43 +206,30 @@ var Draw = /** @class */ (function (_super) {
                 }
             }
         });
-        return e("div", null, e(GameMode, { game_mode: this.props.state.game_mode }), e(Players, {
-            players: this.props.state.players,
-            landlord: this.props.state.landlord,
-            next: next,
-            name: this.props.name,
-        }), e("div", null, e("h2", null, "Bids"), this.props.state.bids.map(function (bid, idx) {
-            var name = "unknown";
-            _this.props.state.players.forEach(function (player) {
-                if (player.id == bid.id) {
-                    name = player.name;
-                }
-            });
-            return e(LabeledPlay, {
-                label: name,
-                key: idx,
-                cards: Array(bid.count).fill(bid.card),
-            });
-        })), e("button", {
-            onClick: function (evt) {
-                evt.preventDefault();
-                _this.drawCard();
-            },
-            disabled: !can_draw,
-        }, "Draw card"), e("label", null, "autodraw", e("input", {
-            name: "autodraw",
-            type: "checkbox",
-            checked: this.state.autodraw,
-            onChange: this.onAutodrawClicked,
-        })), e("button", { onClick: this.makeBid, disabled: this.state.selected.length == 0 }, "Make bid"), e("button", {
-            onClick: this.pickUpKitty,
-            disabled: this.props.state.deck.length > 0 ||
-                this.props.state.bids.length == 0,
-        }, "Pick up cards from the bottom"), e(Cards, {
-            cards: cards_not_bid,
-            selected: this.state.selected,
-            setSelected: this.setSelected,
-        }));
+        return (React.createElement("div", null,
+            React.createElement(GameMode, { game_mode: this.props.state.game_mode }),
+            React.createElement(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: next, name: this.props.name }),
+            React.createElement("div", null,
+                React.createElement("h2", null, "Bids"),
+                this.props.state.bids.map(function (bid, idx) {
+                    var name = "unknown";
+                    _this.props.state.players.forEach(function (player) {
+                        if (player.id == bid.id) {
+                            name = player.name;
+                        }
+                    });
+                    return (React.createElement(LabeledPlay, { label: name, key: idx, cards: Array(bid.count).fill(bid.card) }));
+                })),
+            React.createElement("button", { onClick: function (evt) {
+                    evt.preventDefault();
+                    _this.drawCard();
+                }, disabled: !can_draw }, "Draw card"),
+            React.createElement("label", null,
+                React.createElement("input", { type: "checkbox", name: "autodraw", checked: this.state.autodraw, onChange: this.onAutodrawClicked })),
+            React.createElement("button", { onClick: this.makeBid, disabled: this.state.selected.length == 0 }, "Make bid"),
+            React.createElement("button", { onClick: this.pickUpKitty, disabled: this.props.state.deck.length > 0 ||
+                    this.props.state.bids.length == 0 }, "Pick up cards from the bottom"),
+            React.createElement(Cards, { cards: cards_not_bid, selected: this.state.selected, setSelected: this.setSelected })));
     };
     return Draw;
 }(React.Component));
@@ -331,50 +315,37 @@ var Exchange = /** @class */ (function (_super) {
             }
         });
         if (this.props.state.players[landlord_idx].name == this.props.name) {
-            return e("div", null, e(GameMode, { game_mode: this.props.state.game_mode }), e(Players, {
-                players: this.props.state.players,
-                landlord: this.props.state.landlord,
-                next: this.props.state.landlord,
-                name: this.props.name,
-            }), e(Trump, { trump: this.props.state.trump }), this.props.state.game_mode != "Tractor"
-                ? e("div", null, e(Friends, { game_mode: this.props.state.game_mode }), this.state.friends.map(function (friend, idx) {
-                    var onChange = function (x) {
-                        var new_friends = __spreadArrays(_this.state.friends);
-                        new_friends[idx] = x;
-                        _this.setState({ friends: new_friends });
-                    };
-                    return e(FriendSelect, {
-                        onChange: onChange,
-                        key: idx,
-                        friend: friend,
-                        trump: _this.props.state.trump,
-                        num_decks: _this.props.state.num_decks,
-                    });
-                }), e("button", { onClick: this.pickFriends }, "Pick friends"))
-                : null, e("h2", null, "Your hand"), e("div", { className: "hand" }, this.props.cards.map(function (c, idx) {
-                return e(Card, {
-                    key: idx,
-                    onClick: function () { return _this.moveCardToKitty(c); },
-                    card: c,
-                });
-            })), e("h2", null, "Discarded cards (" + this.props.state.kitty.length + " / " + this.props.state.kitty_size + ")"), e("div", { className: "kitty" }, this.props.state.kitty.map(function (c, idx) {
-                return e(Card, {
-                    key: idx,
-                    onClick: function () { return _this.moveCardToHand(c); },
-                    card: c,
-                });
-            })), e("button", {
-                onClick: this.startGame,
-                disabled: this.props.state.kitty.length != this.props.state.kitty_size,
-            }, "Start game"));
+            return (React.createElement("div", null,
+                React.createElement(GameMode, { game_mode: this.props.state.game_mode }),
+                React.createElement(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: this.props.state.landlord, name: this.props.name }),
+                React.createElement(Trump, { trump: this.props.state.trump }),
+                this.props.state.game_mode != "Tractor" ? (React.createElement("div", null,
+                    React.createElement(Friends, { game_mode: this.props.state.game_mode }),
+                    this.state.friends.map(function (friend, idx) {
+                        var onChange = function (x) {
+                            var new_friends = __spreadArrays(_this.state.friends);
+                            new_friends[idx] = x;
+                            _this.setState({ friends: new_friends });
+                        };
+                        return (React.createElement(FriendSelect, { onChange: onChange, key: idx, friend: friend, trump: _this.props.state.trump, num_decks: _this.props.state.num_decks }));
+                    }),
+                    React.createElement("button", { onClick: this.pickFriends }, "Pick friends"))) : null,
+                React.createElement("h2", null, "Your hand"),
+                React.createElement("div", { className: "hand" }, this.props.cards.map(function (c, idx) { return (React.createElement(Card, { key: idx, onClick: function () { return _this.moveCardToKitty(c); }, card: c })); })),
+                React.createElement("h2", null,
+                    "Discarded cards",
+                    " ",
+                    this.props.state.kitty.length / this.props.state.kitty_size),
+                React.createElement("div", { className: "kitty" }, this.props.state.kitty.map(function (c, idx) { return (React.createElement(Card, { key: idx, onClick: function () { return _this.moveCardToHand(c); }, card: c })); })),
+                React.createElement("button", { onClick: this.startGame, disabled: this.props.state.kitty.length != this.props.state.kitty_size }, "Start game")));
         }
         else {
-            return e("div", null, e(GameMode, { game_mode: this.props.state.game_mode }), e(Players, {
-                players: this.props.state.players,
-                landlord: this.props.state.landlord,
-                next: this.props.state.landlord,
-                name: this.props.name,
-            }), e(Trump, { trump: this.props.state.trump }), e("div", { className: "hand" }, this.props.cards.map(function (c, idx) { return e(Card, { key: idx, card: c }); })), e("p", null, "Waiting..."));
+            return (React.createElement("div", null,
+                React.createElement(GameMode, { game_mode: this.props.state.game_mode }),
+                React.createElement(Players, { players: this.props.state.players, landlord: this.props.state.landlord, next: this.props.state.landlord, name: this.props.name }),
+                React.createElement(Trump, { trump: this.props.state.trump }),
+                React.createElement("div", { className: "hand" }, this.props.cards.map(function (c, idx) { return (React.createElement(Card, { key: idx, card: c })); })),
+                React.createElement("p", null, "Waiting...")));
         }
     };
     return Exchange;
@@ -440,34 +411,23 @@ var Play = /** @class */ (function (_super) {
             beep(3, 440, 200);
         }
         this.was_my_turn = is_my_turn;
-        return e("div", null, e(GameMode, { game_mode: this.props.state.game_mode }), e(Players, {
-            players: this.props.state.players,
-            landlord: this.props.state.landlord,
-            landlords_team: this.props.state.landlords_team,
-            name: this.props.name,
-            next: next,
-        }), e(Trump, { trump: this.props.state.trump }), e(Friends, { game_mode: this.props.state.game_mode }), e(Trick, {
-            trick: this.props.state.trick,
-            players: this.props.state.players,
-        }), e("button", { onClick: this.playCards, disabled: !can_play }, "Play selected cards"), e("button", { onClick: this.takeBackCards, disabled: !can_take_back }, "Take back last play"), e("button", {
-            onClick: this.endTrick,
-            disabled: this.props.state.trick.player_queue.length > 0,
-        }, "Finish trick"), this.props.cards.length == 0
-            ? e("button", { onClick: this.startNewGame }, "Finish game")
-            : null, e(Cards, {
-            cards: this.props.cards,
-            selected: this.state.selected,
-            setSelected: this.setSelected,
-        }), this.props.state.last_trick && this.props.show_last_trick
-            ? e("div", null, e("p", null, "Previous trick"), e(Trick, {
-                trick: this.props.state.last_trick,
-                players: this.props.state.players,
-            }))
-            : null, e(Points, {
-            points: this.props.state.points,
-            players: this.props.state.players,
-            landlords_team: this.props.state.landlords_team,
-        }), e(LabeledPlay, { cards: this.props.state.kitty, label: "底牌" }));
+        return (React.createElement("div", null,
+            React.createElement(GameMode, { game_mode: this.props.state.game_mode }),
+            React.createElement(Players, { players: this.props.state.players, landlord: this.props.state.landlord, landlords_team: this.props.state.landlords_team, name: this.props.name, next: next }),
+            React.createElement(Trump, { trump: this.props.state.trump }),
+            React.createElement(Friends, { game_mode: this.props.state.game_mode }),
+            React.createElement(Trick, { trick: this.props.state.trick, players: this.props.state.players }),
+            React.createElement("button", { onClick: this.playCards, disabled: !can_play }, "Play selected cards"),
+            React.createElement("button", { onClick: this.takeBackCards, disabled: !can_take_back }, "Take back last play"),
+            React.createElement("button", { onClick: this.endTrick, disabled: this.props.state.trick.player_queue.length > 0 }, "Finish trick"),
+            this.props.cards.length == 0 ? (React.createElement("button", { onClick: this.startNewGame }, "Finish game")) : null,
+            ",",
+            React.createElement(Cards, { cards: this.props.cards, selected: this.state.selected, setSelected: this.setSelected }),
+            this.props.state.last_trick && this.props.show_last_trick ? (React.createElement("div", null,
+                React.createElement("p", null, "Previous trick"),
+                React.createElement(Trick, { trick: this.props.state.last_trick, players: this.props.state.players }))) : null,
+            React.createElement(Points, { points: this.props.state.points, players: this.props.state.players, landlords_team: this.props.state.landlords_team }),
+            React.createElement(LabeledPlay, { cards: this.props.state.kitty, label: "\u5E95\u724C" })));
     };
     return Play;
 }(React.Component));
@@ -485,23 +445,16 @@ var Trick = /** @class */ (function (_super) {
         var blank_cards = this.props.trick.played_cards.length > 0
             ? Array(this.props.trick.played_cards[0].cards.length).fill("🂠")
             : ["🂠"];
-        return e("div", { className: "trick" }, this.props.trick.played_cards.map(function (played, idx) {
-            var winning = _this.props.trick.current_winner == played.id;
-            return e(LabeledPlay, {
-                key: idx,
-                label: winning
-                    ? names_by_id[played.id] + " (!)"
-                    : names_by_id[played.id],
-                className: winning ? "winning" : "",
-                cards: played.cards,
-            });
-        }), this.props.trick.player_queue.map(function (id, idx) {
-            return e(LabeledPlay, {
-                key: idx + _this.props.trick.played_cards.length,
-                label: names_by_id[id],
-                cards: blank_cards,
-            });
-        }));
+        return (React.createElement("div", { className: "trick" },
+            this.props.trick.played_cards.map(function (played, idx) {
+                var winning = _this.props.trick.current_winner == played.id;
+                return (React.createElement(LabeledPlay, { key: idx, label: winning
+                        ? names_by_id[played.id] + " (!)"
+                        : names_by_id[played.id], className: winning ? "winning" : "", cards: played.cards }));
+            }),
+            this.props.trick.player_queue.map(function (id, idx) {
+                return (React.createElement(LabeledPlay, { key: idx + _this.props.trick.played_cards.length, label: names_by_id[id], cards: blank_cards }));
+            })));
     };
     return Trick;
 }(React.Component));
@@ -523,12 +476,7 @@ var Points = /** @class */ (function (_super) {
             var cards = _this.props.points[player.id].length > 0
                 ? _this.props.points[player.id]
                 : ["🂠"];
-            return e(LabeledPlay, {
-                key: player.id,
-                className: className,
-                label: player.name + ": " + total_points + "\u5206",
-                cards: cards,
-            });
+            return (React.createElement(LabeledPlay, { key: player.id, className: className, label: player.name + ": " + total_points + "\u5206", cards: cards }));
         }));
     };
     return Points;
@@ -598,7 +546,9 @@ var LabeledPlay = /** @class */ (function (_super) {
         if (this.props.className) {
             className = className + " " + this.props.className;
         }
-        return e("div", { className: className }, e("div", { className: "play" }, this.props.cards.map(function (card, idx) { return e(Card, { card: card, key: idx }); })), e("div", { className: "label" }, this.props.label));
+        return (React.createElement("div", { className: className },
+            React.createElement("div", { className: "play" }, this.props.cards.map(function (card, idx) { return (React.createElement(Card, { card: card, key: idx })); })),
+            React.createElement("div", { className: "label" }, "this.props.label")));
     };
     return LabeledPlay;
 }(React.Component));
@@ -623,13 +573,11 @@ var JoinRoom = /** @class */ (function (_super) {
         }
     };
     JoinRoom.prototype.render = function () {
-        return e("div", null, e("form", { onSubmit: this.handleSubmit }, e("input", {
-            type: "text",
-            placeholder: "name",
-            value: this.props.name,
-            onChange: this.handleChange,
-            autoFocus: true,
-        }), e("input", { type: "submit", value: "join" })));
+        return (React.createElement("div", null,
+            React.createElement("form", { onSubmit: this.handleSubmit },
+                React.createElement("input", { type: "text", placeholder: "name", value: this.props.name, onChange: this.handleChange, autoFocus: true }),
+                ",",
+                React.createElement("input", { type: "submit", value: "join" }))));
     };
     return JoinRoom;
 }(React.Component));
@@ -640,10 +588,17 @@ var Trump = /** @class */ (function (_super) {
     }
     Trump.prototype.render = function () {
         if (this.props.trump.Standard) {
-            return e("div", { className: "trump" }, "The trump suit is ", e("span", { className: this.props.trump.Standard.suit }, this.props.trump.Standard.suit), ", rank " + this.props.trump.Standard.number);
+            return (React.createElement("div", { className: "trump" },
+                "The trump suit is",
+                " ",
+                React.createElement("span", { className: this.props.trump.Standard.suit }, this.props.trump.Standard.suit),
+                ", rank ",
+                this.props.trump.Standard.number));
         }
         else if (this.props.trump.NoTrump) {
-            return e("div", { className: "trump" }, "No trump, rank " + this.props.trump.NoTrump.number);
+            return (React.createElement("div", { className: "trump" },
+                "No trump, rank ",
+                this.props.trump.NoTrump.number));
         }
         else {
             return null;
@@ -720,15 +675,18 @@ var NumDecksSelector = /** @class */ (function (_super) {
         }
     };
     NumDecksSelector.prototype.render = function () {
-        return e("div", { className: "num-decks-picker" }, e("label", null, "number of decks: ", e("select", {
-            value: this.props.num_decks != null ? this.props.num_decks : "",
-            onChange: this.onChange,
-        }, e("option", { value: "" }, "default"), Array(this.props.players.length)
-            .fill(0)
-            .map(function (_, idx) {
-            var val = idx + 1;
-            return e("option", { value: val, key: idx }, val);
-        }))));
+        return (React.createElement("div", { className: "num-decks-picker" },
+            React.createElement("label", null,
+                "number of decks:",
+                " ",
+                React.createElement("select", { value: this.props.num_decks != null ? this.props.num_decks : "", onChange: this.onChange },
+                    React.createElement("option", { value: "" }, "default"),
+                    Array(this.props.players.length)
+                        .fill(0)
+                        .map(function (_, idx) {
+                        var val = idx + 1;
+                        return (React.createElement("option", { value: val, key: idx }, val));
+                    })))));
     };
     return NumDecksSelector;
 }(React.Component));
@@ -753,21 +711,25 @@ var RankSelector = /** @class */ (function (_super) {
                 rank = p.level;
             }
         });
-        return e("div", { className: "landlord-picker" }, e("label", null, "rank: ", e("select", { value: rank, onChange: this.onChange }, [
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "J",
-            "K",
-            "Q",
-            "A",
-        ].map(function (rank) { return e("option", { value: rank, key: rank }, rank); }))));
+        return (React.createElement("div", { className: "landlord-picker" },
+            React.createElement("label", null,
+                "rank:",
+                " ",
+                React.createElement("select", { value: rank, onChange: this.onChange }, [
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "J",
+                    "K",
+                    "Q",
+                    "A",
+                ].map(function (rank) { return (React.createElement("option", { value: rank, key: rank }, rank)); })))));
     };
     return RankSelector;
 }(React.Component));
@@ -877,18 +839,22 @@ var Chat = /** @class */ (function (_super) {
         this.setState({ message: "" });
     };
     Chat.prototype.render = function () {
-        return e("div", { className: "chat" }, e("div", { className: "messages" }, this.props.messages.map(function (m, idx) {
-            var className = "message";
-            if (m.from_game) {
-                className = className + " game-message";
-            }
-            return e("p", { key: idx, className: className }, m.from + ": " + m.message);
-        }), React.createElement("div", { className: "chat-anchor", ref: this.anchor })), e("form", { onSubmit: this.handleSubmit }, e("input", {
-            type: "text",
-            placeholder: "type message here",
-            value: this.state.message,
-            onChange: this.handleChange,
-        }), e("input", { type: "submit", value: "submit" })));
+        return (React.createElement("div", { className: "chat" },
+            React.createElement("div", { className: "messages" },
+                this.props.messages.map(function (m, idx) {
+                    var className = "message";
+                    if (m.from_game) {
+                        className = className + " game-message";
+                    }
+                    return (React.createElement("p", { key: idx, className: className },
+                        m.from,
+                        ": ",
+                        m.message));
+                }),
+                React.createElement("div", { className: "chat-anchor", ref: this.anchor })),
+            React.createElement("form", { onSubmit: this.handleSubmit },
+                React.createElement("input", { type: "text", placeholder: "type message here", value: this.state.message, onChange: this.handleChange }),
+                React.createElement("input", { type: "submit", value: "submit" }))));
     };
     return Chat;
 }(React.Component));
@@ -899,10 +865,10 @@ var GameMode = /** @class */ (function (_super) {
     }
     GameMode.prototype.render = function () {
         if (this.props.game_mode == "Tractor") {
-            return e("h1", null, "升级 / Tractor");
+            return React.createElement("h1", null, "\u5347\u7EA7 / Tractor");
         }
         else {
-            return e("h1", null, "找朋友 / Finding Friends");
+            return React.createElement("h1", null, "\u627E\u670B\u53CB / Finding Friends");
         }
     };
     return GameMode;
