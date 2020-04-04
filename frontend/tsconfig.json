@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "jsx": "react",
     "isolatedModules": false,
-    "outFile": "../src/game.js"
+    "outFile": "../backend/generated/game.js"
   },
   "include": ["src"],
   "exclude": ["node_modules"]

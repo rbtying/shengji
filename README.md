@@ -20,7 +20,7 @@ with `nginx`).
 
 ```
 cd frontend && yarn build
-cargo run --features dynamic
+cd backend && cargo run --features dynamic
 ```
 
 # Technical details

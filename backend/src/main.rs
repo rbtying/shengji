@@ -15,11 +15,7 @@ use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
-pub mod game_state;
-pub mod hands;
-pub mod interactive;
-pub mod trick;
-pub mod types;
+use shengji_core::{game_state, interactive, types};
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -125,13 +121,13 @@ async fn main() {
     });
 
     #[cfg(feature = "dynamic")]
-    let index = warp::path::end().and(warp::fs::file("index.html"));
+    let index = warp::path::end().and(warp::fs::file("static/index.html"));
     #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("rules.html"));
+    let rules = warp::path("rules").and(warp::fs::file("static/rules.html"));
     #[cfg(feature = "dynamic")]
-    let js = warp::path("game.js").and(warp::fs::file("game.js"));
+    let js = warp::path("game.js").and(warp::fs::file("generated/game.js"));
     #[cfg(feature = "dynamic")]
-    let css = warp::path("style.css").and(warp::fs::file("style.css"));
+    let css = warp::path("style.css").and(warp::fs::file("static/style.css"));
 
     let cards = warp::path("cards.js").map(|| {
         warp::http::Response::builder()
@@ -355,10 +351,10 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
 }
 
 #[cfg(not(feature = "dynamic"))]
-static INDEX_HTML: &str = include_str!("index.html");
+static INDEX_HTML: &str = include_str!("../static/index.html");
 #[cfg(not(feature = "dynamic"))]
-static RULES_HTML: &str = include_str!("rules.html");
+static RULES_HTML: &str = include_str!("../static/rules.html");
 #[cfg(not(feature = "dynamic"))]
-static JS: &str = include_str!("game.js");
+static JS: &str = include_str!("../generated/game.js");
 #[cfg(not(feature = "dynamic"))]
-static CSS: &str = include_str!("style.css");
+static CSS: &str = include_str!("../static/style.css");

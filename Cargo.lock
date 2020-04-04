@@ -921,6 +921,19 @@ dependencies = [
 name = "shengji"
 version = "0.1.0"
 dependencies = [
+ "futures",
+ "lazy_static",
+ "serde",
+ "serde_json",
+ "shengji-core",
+ "tokio",
+ "warp",
+]
+
+[[package]]
+name = "shengji-core"
+version = "0.1.0"
+dependencies = [
  "anyhow",
  "futures",
  "lazy_static",
@@ -928,8 +941,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "tokio",
- "warp",
 ]
 
 [[package]]
