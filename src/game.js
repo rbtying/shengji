@@ -1466,7 +1466,7 @@ ws.onmessage = (event) => {
       from_game: true,
     });
     if (state.messages.length >= 100) {
-      state.message.shift();
+      state.messages.shift();
     }
   }
 
