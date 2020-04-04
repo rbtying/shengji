@@ -123,11 +123,16 @@ class Draw extends React.Component {
       return;
     }
 
+    const players = {};
+    this.props.state.players.forEach((p) => {
+      players[p.id] = p;
+    });
+
     for (const c in counts) {
       let already_bid = 0;
       this.props.state.bids.forEach((bid) => {
         if (
-          this.props.state.players[bid.id].name == this.props.name &&
+          players[bid.id].name == this.props.name &&
           bid.card == c
         ) {
           already_bid = already_bid < bid.count ? bid.count : already_bid;
