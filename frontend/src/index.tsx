@@ -1594,9 +1594,12 @@ ws.onmessage = (event) => {
   renderUI();
 };
 
-const beepContext = new AudioContext();
+let beepContext: AudioContext | null = null;
 
 function beep(vol: number, freq: number, duration: number) {
+  if (!beepContext) {
+    beepContext = new AudioContext();
+  }
   const v = beepContext.createOscillator();
   const u = beepContext.createGain();
   v.connect(u);
