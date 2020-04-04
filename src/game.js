@@ -1456,7 +1456,7 @@ ws.onmessage = (event) => {
   if (msg.Message) {
     state.messages.push(msg.Message);
     if (state.messages.length >= 100) {
-      state.message.shift();
+      state.messages.shift();
     }
   }
   if (msg.Broadcast) {
