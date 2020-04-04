@@ -1,0 +1,17 @@
+{
+  "name": "shengji",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "repository": "https://github.com/rbtying/shengji.git",
+  "license": "MIT",
+  "dependencies": {
+    "@types/react": "^16.9.32",
+    "@types/react-dom": "^16.9.6",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "build": "tsc -p ."
+  }
+}
