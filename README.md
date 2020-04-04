@@ -16,6 +16,15 @@ listens on 127.0.0.1:3030, and should only be exposed to an external network
 behind a proxy that supports both HTTP and WebSocket protocols (only tested
 with `nginx`).
 
+# Building frontend assets
+
+```
+cd frontend
+yarn build
+```
+
+This writes the compiled JS file to `src/game.js`.
+
 # Technical details
 The entire state of each game is stored in the memory of the server process.
 Restarting the game kicks all players, and games are automatically closed when
