@@ -11,7 +11,7 @@
     "module": "amd",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "preserve",
+    "jsx": "react",
     "isolatedModules": false,
     "outFile": "../src/game.js"
   },

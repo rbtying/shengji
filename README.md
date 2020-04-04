@@ -31,8 +31,7 @@ server, but players are expected to keep each other in check -- the server does
 not validate moves in their entirety.
 
 For simplicity, the game is written in Rust and Javascript, linking in Warp as
-the WebSocket/HTTP server implementation and using React from a CDN. There is
-no compile toolchain set up for the JS code.
+the WebSocket/HTTP server implementation and using React from a CDN.
 
 # Known issues
 - No implementation of throw penalties

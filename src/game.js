@@ -85,6 +85,7 @@ var Initialize = /** @class */ (function (_super) {
         }), e(RankSelector, {
             players: this.props.state.players,
             name: this.props.name,
+            num_decks: this.props.state.num_decks,
         }));
     };
     return Initialize;
@@ -93,20 +94,21 @@ var Draw = /** @class */ (function (_super) {
     __extends(Draw, _super);
     function Draw(props) {
         var _this = _super.call(this, props) || this;
+        _this.could_draw = false;
+        _this.timeout = null;
         _this.state = {
             selected: [],
             autodraw: true,
         };
-        _this.could_draw = false;
-        _this.timeout = null;
-        _this.setSelected = (function (new_selected) {
-            return _this.setState({ selected: new_selected });
-        }).bind(_this);
+        _this.setSelected = _this.setSelected.bind(_this);
         _this.makeBid = _this.makeBid.bind(_this);
         _this.drawCard = _this.drawCard.bind(_this);
         _this.onAutodrawClicked = _this.onAutodrawClicked.bind(_this);
         return _this;
     }
+    Draw.prototype.setSelected = function (new_selected) {
+        this.setState({ selected: new_selected });
+    };
     Draw.prototype.makeBid = function (evt) {
         var _this = this;
         evt.preventDefault();
@@ -122,8 +124,7 @@ var Draw = /** @class */ (function (_super) {
         var _loop_1 = function (c) {
             var already_bid = 0;
             this_1.props.state.bids.forEach(function (bid) {
-                if (players[bid.id].name == _this.props.name &&
-                    bid.card == c) {
+                if (players[bid.id].name == _this.props.name && bid.card == c) {
                     already_bid = already_bid < bid.count ? bid.count : already_bid;
                 }
             });
@@ -168,10 +169,13 @@ var Draw = /** @class */ (function (_super) {
         var _this = this;
         var can_draw = this.props.state.players[this.props.state.position].name ==
             this.props.name && this.props.state.deck.length > 0;
-        if (can_draw && !this.could_draw && !this.timeout && this.state.autodraw) {
+        if (can_draw &&
+            !this.could_draw &&
+            this.timeout == null &&
+            this.state.autodraw) {
             this.timeout = setTimeout(function () {
                 _this.drawCard();
-            }, 100);
+            }, 250);
         }
         this.could_draw = can_draw;
         var next = this.props.state.players[this.props.state.position].id;
@@ -256,38 +260,40 @@ var Exchange = /** @class */ (function (_super) {
         _this.state = {
             friends: [],
         };
-        _this.fixFriends = (function () {
-            if (_this.props.state.game_mode.FindingFriends) {
-                var num_friends = _this.props.state.game_mode.FindingFriends
-                    .num_friends;
-                var prop_friends = _this.props.state.game_mode.FindingFriends.friends;
-                if (num_friends != _this.state.friends.length) {
-                    if (prop_friends.length != num_friends) {
-                        var friends = __spreadArrays(_this.state.friends);
-                        while (friends.length < num_friends) {
-                            friends.push({
-                                card: "",
-                                skip: 0,
-                            });
-                        }
-                        while (friends.length > num_friends) {
-                            friends.pop();
-                        }
-                        _this.setState({ friends: friends });
-                    }
-                    else {
-                        _this.setState({ friends: prop_friends });
-                    }
-                }
-            }
-            else {
-                if (_this.state.friends.length != 0) {
-                    _this.setState({ friends: [] });
-                }
-            }
-        }).bind(_this);
+        _this.fixFriends = _this.fixFriends.bind(_this);
         return _this;
     }
+    Exchange.prototype.fixFriends = function () {
+        if (this.props.state.game_mode != "Tractor") {
+            var game_mode = this.props.state.game_mode.FindingFriends;
+            var num_friends = game_mode.num_friends;
+            var prop_friends = game_mode.friends;
+            if (num_friends != this.state.friends.length) {
+                if (prop_friends.length != num_friends) {
+                    var friends = __spreadArrays(this.state.friends);
+                    while (friends.length < num_friends) {
+                        friends.push({
+                            card: "",
+                            skip: 0,
+                            player_id: null,
+                        });
+                    }
+                    while (friends.length > num_friends) {
+                        friends.pop();
+                    }
+                    this.setState({ friends: friends });
+                }
+                else {
+                    this.setState({ friends: prop_friends });
+                }
+            }
+        }
+        else {
+            if (this.state.friends.length != 0) {
+                this.setState({ friends: [] });
+            }
+        }
+    };
     Exchange.prototype.componentDidMount = function () {
         this.fixFriends();
     };
@@ -306,7 +312,7 @@ var Exchange = /** @class */ (function (_super) {
     };
     Exchange.prototype.pickFriends = function (evt) {
         evt.preventDefault();
-        if (this.props.state.game_mode.FindingFriends &&
+        if (this.props.state.game_mode != "Tractor" &&
             this.props.state.game_mode.FindingFriends.num_friends ==
                 this.state.friends.length) {
             send({
@@ -330,7 +336,7 @@ var Exchange = /** @class */ (function (_super) {
                 landlord: this.props.state.landlord,
                 next: this.props.state.landlord,
                 name: this.props.name,
-            }), e(Trump, { trump: this.props.state.trump }), this.props.state.game_mode.FindingFriends
+            }), e(Trump, { trump: this.props.state.trump }), this.props.state.game_mode != "Tractor"
                 ? e("div", null, e(Friends, { game_mode: this.props.state.game_mode }), this.state.friends.map(function (friend, idx) {
                     var onChange = function (x) {
                         var new_friends = __spreadArrays(_this.state.friends);
@@ -377,18 +383,19 @@ var Play = /** @class */ (function (_super) {
     __extends(Play, _super);
     function Play(props) {
         var _this = _super.call(this, props) || this;
+        _this.was_my_turn = false;
         _this.state = {
             selected: [],
         };
-        _this.setSelected = (function (new_selected) {
-            return _this.setState({ selected: new_selected });
-        }).bind(_this);
+        _this.setSelected = _this.setSelected.bind(_this);
         _this.playCards = _this.playCards.bind(_this);
         _this.takeBackCards = _this.takeBackCards.bind(_this);
         _this.endTrick = _this.endTrick.bind(_this);
-        _this.was_my_turn = false;
         return _this;
     }
+    Play.prototype.setSelected = function (new_selected) {
+        this.setState({ selected: new_selected });
+    };
     Play.prototype.playCards = function (evt) {
         evt.preventDefault();
         send({ Action: { PlayCards: this.state.selected } });
@@ -571,7 +578,9 @@ var Card = /** @class */ (function (_super) {
         if (!c) {
             return e("span", { className: "card unknown" }, this.props.card);
         }
-        var props = { className: "card " + c.typ };
+        var props = {
+            className: "card " + c.typ,
+        };
         if (this.props.onClick) {
             props.onClick = this.props.onClick;
         }
@@ -633,8 +642,11 @@ var Trump = /** @class */ (function (_super) {
         if (this.props.trump.Standard) {
             return e("div", { className: "trump" }, "The trump suit is ", e("span", { className: this.props.trump.Standard.suit }, this.props.trump.Standard.suit), ", rank " + this.props.trump.Standard.number);
         }
-        else {
+        else if (this.props.trump.NoTrump) {
             return e("div", { className: "trump" }, "No trump, rank " + this.props.trump.NoTrump.number);
+        }
+        else {
+            return null;
         }
     };
     return Trump;
@@ -659,7 +671,7 @@ var Kicker = /** @class */ (function (_super) {
         send({ Kick: parseInt(this.state.to_kick, 10) });
     };
     Kicker.prototype.render = function () {
-        return e("div", { className: "kicker" }, e("select", { value: this.state.value, onChange: this.onChange }, e("option", { value: "" }, ""), this.props.players.map(function (player) {
+        return e("div", { className: "kicker" }, e("select", { value: this.state.to_kick, onChange: this.onChange }, e("option", { value: "" }, ""), this.props.players.map(function (player) {
             return e("option", { value: player.id, key: player.id }, player.name);
         })), e("button", { onClick: this.kick, disabled: this.state.to_kick == "" }, "kick"));
     };
@@ -738,7 +750,7 @@ var RankSelector = /** @class */ (function (_super) {
         var rank = "";
         this.props.players.forEach(function (p) {
             if (p.name == _this.props.name) {
-                rank = p.rank;
+                rank = p.level;
             }
         });
         return e("div", { className: "landlord-picker" }, e("label", null, "rank: ", e("select", { value: rank, onChange: this.onChange }, [
@@ -755,7 +767,7 @@ var RankSelector = /** @class */ (function (_super) {
             "K",
             "Q",
             "A",
-        ].map(function (rank) { return e("option", { value: rank }, rank); }))));
+        ].map(function (rank) { return e("option", { value: rank, key: rank }, rank); }))));
     };
     return RankSelector;
 }(React.Component));
@@ -816,9 +828,17 @@ var Players = /** @class */ (function (_super) {
                 className = className + " next";
             }
             return e("td", { key: player.id, className: className }, _this.props.movable
-                ? e("button", { onClick: function (evt) { return _this.movePlayerLeft(evt, player.id); } }, "<")
+                ? e("button", {
+                    onClick: function (evt) {
+                        return _this.movePlayerLeft(evt, player.id);
+                    },
+                }, "<")
                 : null, descriptor, _this.props.movable
-                ? e("button", { onClick: function (evt) { return _this.movePlayerRight(evt, player.id); } }, ">")
+                ? e("button", {
+                    onClick: function (evt) {
+                        return _this.movePlayerRight(evt, player.id);
+                    },
+                }, ">")
                 : null);
         }))));
     };
@@ -828,20 +848,20 @@ var Chat = /** @class */ (function (_super) {
     __extends(Chat, _super);
     function Chat(props) {
         var _this = _super.call(this, props) || this;
+        _this.anchor = React.createRef();
         _this.state = { message: "" };
         _this.handleChange = _this.handleChange.bind(_this);
         _this.handleSubmit = _this.handleSubmit.bind(_this);
-        _this.anchor = null;
         return _this;
     }
     Chat.prototype.componentDidMount = function () {
-        if (this.anchor) {
-            this.anchor.scrollIntoView({ block: "nearest", inline: "start" });
+        if (this.anchor.current) {
+            this.anchor.current.scrollIntoView({ block: "nearest", inline: "start" });
         }
     };
     Chat.prototype.componentDidUpdate = function () {
-        if (this.anchor) {
-            this.anchor.scrollIntoView({ block: "nearest", inline: "start" });
+        if (this.anchor.current) {
+            this.anchor.current.scrollIntoView({ block: "nearest", inline: "start" });
         }
     };
     Chat.prototype.handleChange = function (event) {
@@ -857,19 +877,13 @@ var Chat = /** @class */ (function (_super) {
         this.setState({ message: "" });
     };
     Chat.prototype.render = function () {
-        var _this = this;
         return e("div", { className: "chat" }, e("div", { className: "messages" }, this.props.messages.map(function (m, idx) {
             var className = "message";
             if (m.from_game) {
                 className = className + " game-message";
             }
             return e("p", { key: idx, className: className }, m.from + ": " + m.message);
-        }), e("div", {
-            className: "chat-anchor",
-            ref: function (el) {
-                _this.anchor = el;
-            },
-        })), e("form", { onSubmit: this.handleSubmit }, e("input", {
+        }), React.createElement("div", { className: "chat-anchor", ref: this.anchor })), e("form", { onSubmit: this.handleSubmit }, e("input", {
             type: "text",
             placeholder: "type message here",
             value: this.state.message,
@@ -899,7 +913,7 @@ var Friends = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     Friends.prototype.render = function () {
-        if (this.props.game_mode.FindingFriends) {
+        if (this.props.game_mode != "Tractor") {
             return e("div", { className: "pending-friends" }, this.props.game_mode.FindingFriends.friends.map(function (friend, idx) {
                 if (friend.player_id != null) {
                     return null;
@@ -946,9 +960,10 @@ var FriendSelect = /** @class */ (function (_super) {
         });
     };
     FriendSelect.prototype.render = function () {
+        var _a;
         var number = this.props.trump.Standard
             ? this.props.trump.Standard.number
-            : this.props.trump.NoTrump.number;
+            : (_a = this.props.trump.NoTrump) === null || _a === void 0 ? void 0 : _a.number;
         return e("div", { className: "friend-select" }, e("select", { value: this.props.friend.card, onChange: this.onCardChange }, e("option", { value: "" }, " "), CARDS.map(function (c) {
             return c.number != null && c.number != number
                 ? e("option", { key: c.value, value: c.value }, "" + c.number + c.typ)
@@ -1085,7 +1100,7 @@ function renderUI() {
         }
     }
     else {
-        ReactDOM.render(e("p", null, "disconnected from server, please refresh"), document.getElementById("root"));
+        ReactDOM.render(React.createElement("p", null, "disconnected from server, please refresh"), document.getElementById("root"));
     }
 }
 ws.onopen = function () {
