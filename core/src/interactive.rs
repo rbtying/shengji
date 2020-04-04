@@ -13,8 +13,12 @@ pub struct InteractiveGame {
 
 impl InteractiveGame {
     pub fn new() -> Self {
+        Self::new_from_state(GameState::Initialize(InitializePhase::new()))
+    }
+
+    pub fn new_from_state(state: GameState) -> Self {
         Self {
-            state: Arc::new(Mutex::new(GameState::Initialize(InitializePhase::new()))),
+            state: Arc::new(Mutex::new(state)),
         }
     }
 
@@ -29,6 +33,14 @@ impl InteractiveGame {
     pub fn kick(&self, id: PlayerID) -> Result<(), Error> {
         if let Ok(mut s) = self.state.lock() {
             s.kick(id)
+        } else {
+            bail!("lock poisoned")
+        }
+    }
+
+    pub fn dump_state(&self) -> Result<GameState, Error> {
+        if let Ok(s) = self.state.lock() {
+            Ok(s.clone())
         } else {
             bail!("lock poisoned")
         }

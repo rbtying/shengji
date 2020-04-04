@@ -11,6 +11,7 @@ use std::sync::{
 
 use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use tokio::prelude::*;
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
@@ -90,9 +91,49 @@ pub enum GameMessage {
     Kicked,
 }
 
+const DUMP_PATH: &str = "/tmp/shengji_state.json";
+
 #[tokio::main]
 async fn main() {
-    let games = Arc::new(Mutex::new(HashMap::new()));
+    let mut game_state = HashMap::new();
+
+    match tokio::fs::File::open(DUMP_PATH).await {
+        Ok(mut f) => {
+            let mut data = vec![];
+            match f.read_to_end(&mut data).await {
+                Ok(n) => {
+                    eprintln!("Read {} bytes off disk", n);
+                    match serde_json::from_slice::<HashMap<String, game_state::GameState>>(&data) {
+                        Ok(dump) => {
+                            for (room_name, game_dump) in dump {
+                                game_state.insert(
+                                    room_name,
+                                    GameState {
+                                        game: interactive::InteractiveGame::new_from_state(
+                                            game_dump,
+                                        ),
+                                        users: HashMap::new(),
+                                    },
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to deserialize file {} {:?}", DUMP_PATH, e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to read file {} {:?}", DUMP_PATH, e);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to open dump {} {:?}", DUMP_PATH, e);
+        }
+    }
+    eprintln!("Loaded {} games from state dump", game_state.len());
+
+    let games = Arc::new(Mutex::new(game_state));
     let stats = Arc::new(Mutex::new(InMemoryStats::default()));
 
     let games = warp::any().map(move || (games.clone(), stats.clone()));
@@ -142,6 +183,10 @@ async fn main() {
             .header("Content-Type", "text/javascript; charset=utf-8")
             .body(CARDS_JS.as_str())
     });
+
+    let dump_state = warp::path("full_state.json")
+        .and(games.clone())
+        .and_then(|(game, _)| dump_state(game));
     let game_stats = warp::path("stats")
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
@@ -152,9 +197,30 @@ async fn main() {
         .or(cards)
         .or(api)
         .or(rules)
+        .or(dump_state)
         .or(game_stats);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+}
+
+async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
+    let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
+    let games = games.lock().await;
+    for (room_name, game_state) in games.iter() {
+        if let Ok(snapshot) = game_state.game.dump_state() {
+            state_dump.insert(room_name.clone(), snapshot);
+        }
+    }
+
+    // Best-effort attempt to write the full state to disk, for fun.
+    if let Ok(mut f) = tokio::fs::File::create(DUMP_PATH).await {
+        if let Ok(json) = serde_json::to_vec(&state_dump) {
+            let _ = f.write_all(&json).await;
+            let _ = f.sync_all().await;
+        }
+    }
+
+    Ok(warp::reply::json(&state_dump))
 }
 
 async fn get_stats(
