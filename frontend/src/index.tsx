@@ -258,7 +258,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             Bids ({this.props.state.deck.length} cards remaining in the deck)
           </h2>
           {this.props.state.bids.map((bid, idx) => {
-            let name = players[player_id].name;
+            let name = players[bid.id].name;
             return (
               <LabeledPlay
                 label={name}
