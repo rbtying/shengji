@@ -8,6 +8,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
 };
+use std::time::{Duration, Instant};
 
 use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -46,6 +47,7 @@ struct GameStats {
 struct GameState {
     game: interactive::InteractiveGame,
     users: HashMap<usize, UserState>,
+    last_updated: Instant,
 }
 
 struct UserState {
@@ -113,6 +115,7 @@ async fn main() {
                                             game_dump,
                                         ),
                                         users: HashMap::new(),
+                                        last_updated: Instant::now(),
                                     },
                                 );
                             }
@@ -207,7 +210,9 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
     let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
     let mut games = games.lock().await;
     // Drop all games where everyone is disconnected.
-    games.retain(|_, game| !game.users.is_empty());
+    games.retain(|_, game| {
+        !game.users.is_empty() && game.last_updated.elapsed() >= Duration::from_secs(3600)
+    });
 
     for (room_name, game_state) in games.iter() {
         if let Ok(snapshot) = game_state.game.dump_state() {
@@ -297,7 +302,9 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             let game = g.entry(room.clone()).or_insert_with(|| GameState {
                 game: interactive::InteractiveGame::new(),
                 users: HashMap::new(),
+                last_updated: Instant::now(),
             });
+            game.last_updated = Instant::now();
             if game.users.is_empty() {
                 let mut stats = stats.lock().await;
                 stats.num_games_created += 1;
