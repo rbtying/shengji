@@ -423,6 +423,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           SetFriends: this.state.friends,
         },
       });
+    } else {
+      this.fixFriends();
     }
   }
 
@@ -452,6 +454,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                   const new_friends = [...this.state.friends];
                   new_friends[idx] = x;
                   this.setState({friends: new_friends});
+                  this.fixFriends();
                 };
                 return (
                   <FriendSelect
