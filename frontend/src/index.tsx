@@ -17,6 +17,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
     this.setGameMode = this.setGameMode.bind(this);
     this.startGame = this.startGame.bind(this);
     this.setKittySize = this.setKittySize.bind(this);
+    this.setHideLandlordsPoints = this.setHideLandlordsPoints.bind(this);
   }
 
   setGameMode(evt: any) {
@@ -47,6 +48,11 @@ class Initialize extends React.Component<IInitializeProps, {}> {
         },
       });
     }
+  }
+
+  setHideLandlordsPoints(evt: any) {
+    evt.preventDefault();
+    send({ Action: { SetHideLandlordsPoints: evt.target.value == "hide" } });
   }
 
   startGame(evt: any) {
@@ -81,6 +87,13 @@ class Initialize extends React.Component<IInitializeProps, {}> {
           num_decks={this.props.state.num_decks}
           players={this.props.state.players}
         />
+        <select
+          value={this.props.state.hide_landlord_points ? "hide" : "show"}
+          onChange={this.setHideLandlordsPoints}
+        >
+          <option value="show">Show all players' points</option>
+          <option value="hide">Hide defending team's points</option>
+        </select>
         {this.props.state.players.length >= 4 ? (
           <button onClick={this.startGame}>Start game</button>
         ) : (
@@ -628,9 +641,11 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         ) : null}
         <Points
           points={this.props.state.points}
+          num_decks={this.props.state.num_decks}
           players={this.props.state.players}
           landlords_team={this.props.state.landlords_team}
           landlord={this.props.state.landlord}
+          hide_landlord_points={this.props.state.hide_landlord_points}
         />
         <LabeledPlay cards={this.props.state.kitty} label="底牌" />
       </div>
@@ -682,9 +697,11 @@ class Trick extends React.Component<{ players: IPlayer[]; trick: ITrick }, {}> {
 
 interface IPointsProps {
   players: IPlayer[];
+  num_decks: number;
   points: { [player_id: number]: string[] };
   landlords_team: number[];
   landlord: number;
+  hide_landlord_points: boolean | null;
 }
 class Points extends React.Component<IPointsProps, {}> {
   render() {
@@ -712,6 +729,11 @@ class Points extends React.Component<IPointsProps, {}> {
         this.props.points[player.id].length > 0
           ? this.props.points[player.id]
           : ["🂠"];
+
+      if (this.props.hide_landlord_points && on_landlords_team) {
+        return null;
+      }
+
       return (
         <LabeledPlay
           key={player.id}
@@ -722,11 +744,42 @@ class Points extends React.Component<IPointsProps, {}> {
       );
     });
 
+    const segment = this.props.num_decks * 20;
+    let threshold_str = "";
+
+    if (non_landlords_points == 0) {
+      threshold_str = `${landlord}'s team will go up 3 levels (next threshold: 5分)`;
+    } else if (non_landlords_points < segment) {
+      threshold_str = `${landlord}'s team will go up 2 levels (next threshold: ${segment}分)`;
+    } else if (non_landlords_points < 2 * segment) {
+      threshold_str = `${landlord}'s team will go up 1 level (next threshold: ${
+        2 * segment
+      }分)`;
+    } else if (non_landlords_points < 3 * segment) {
+      threshold_str = `Neither team will go up a level (next threshold: ${
+        3 * segment
+      }分)`;
+    } else if (non_landlords_points < 4 * segment) {
+      threshold_str = `The attacking team will go up 1 level (next threshold: ${
+        4 * segment
+      }分)`;
+    } else if (non_landlords_points < 5 * segment) {
+      threshold_str = `The attacking team will go up 2 levels (next threshold: ${
+        5 * segment
+      }分)`;
+    } else {
+      threshold_str = "The attacking team will go up 3 levels.";
+    }
+
     return (
       <div className="points">
         <h2>Points</h2>
         <p>
-          {non_landlords_points}分 / {total_points_played}分 stolen from {landlord}'s team
+          {non_landlords_points}分
+          {this.props.hide_landlord_points
+            ? null
+            : ` / ${total_points_played}分`}{" "}
+          stolen from {landlord}'s team. {threshold_str}
         </p>
         {player_point_elements}
       </div>
@@ -1287,9 +1340,25 @@ class Chat extends React.Component<IChatProps, IChatState> {
 class GameMode extends React.Component<{ game_mode: IGameMode }, {}> {
   render() {
     if (this.props.game_mode == "Tractor") {
-      return <h1>升级 / Tractor (<a href="rules" target="_blank">rules</a>)</h1>;
+      return (
+        <h1>
+          升级 / Tractor (
+          <a href="rules" target="_blank">
+            rules
+          </a>
+          )
+        </h1>
+      );
     } else {
-      return <h1>找朋友 / Finding Friends (<a href="rules" target="_blank">rules</a>)</h1>;
+      return (
+        <h1>
+          找朋友 / Finding Friends (
+          <a href="rules" target="_blank">
+            rules
+          </a>
+          )
+        </h1>
+      );
     }
   }
 }
@@ -1464,18 +1533,31 @@ function renderUI() {
     if (state.game_state == null) {
       ReactDOM.render(
         <div>
-        <h2>Room Name: {state.room_name} (<a href="rules" target="_blank">rules</a>)</h2>
-        <Errors errors={state.errors} />
-        <JoinRoom name={state.name} room_name={state.room_name} setName={(name: string) => {
-          state.name = name;
-          window.localStorage.setItem("name", name);
-          renderUI();
-        }} />
-        <hr />
-        <p>
-          Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo at
-          @Robert-Ying, or contributing on <a href="https://github.com/rbtying/shengji" target="_blank">GitHub</a>
-        </p>
+          <h2>
+            Room Name: {state.room_name} (
+            <a href="rules" target="_blank">
+              rules
+            </a>
+            )
+          </h2>
+          <Errors errors={state.errors} />
+          <JoinRoom
+            name={state.name}
+            room_name={state.room_name}
+            setName={(name: string) => {
+              state.name = name;
+              window.localStorage.setItem("name", name);
+              renderUI();
+            }}
+          />
+          <hr />
+          <p>
+            Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo
+            at @Robert-Ying, or contributing on{" "}
+            <a href="https://github.com/rbtying/shengji" target="_blank">
+              GitHub
+            </a>
+          </p>
         </div>,
         document.getElementById("root")
       );
@@ -1569,11 +1651,14 @@ function renderUI() {
                   renderUI();
                 }}
               />
-              </label>
+            </label>
             <hr />
             <p>
-              Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo at
-              @Robert-Ying, or contributing on <a href="https://github.com/rbtying/shengji" target="_blank">GitHub</a>
+              Made by Robert Ying and Abra Shen. Consider buying us boba via
+              Venmo at @Robert-Ying, or contributing on{" "}
+              <a href="https://github.com/rbtying/shengji" target="_blank">
+                GitHub
+              </a>
             </p>
           </div>
         </div>,
@@ -1695,6 +1780,7 @@ interface IInitializePhase {
   kitty_size: number | null;
   game_mode: IGameMode;
   landlord: number | null;
+  hide_landlord_points: boolean | null;
 }
 
 interface IBid {
@@ -1716,6 +1802,7 @@ interface IDrawPhase {
   landlord: number | null;
   kitty: string[];
   level: number;
+  hide_landlord_points: boolean | null;
 }
 
 interface IExchangePhase {
@@ -1729,6 +1816,7 @@ interface IExchangePhase {
   players: IPlayer[];
   observers: IPlayer[];
   trump: ITrump;
+  hide_landlord_points: boolean | null;
 }
 
 interface IPlayPhase {
@@ -1745,6 +1833,7 @@ interface IPlayPhase {
   trump: ITrump;
   trick: ITrick;
   last_trick: ITrick | null;
+  hide_landlord_points: boolean | null;
 }
 
 interface ITrickUnit {

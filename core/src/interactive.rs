@@ -97,6 +97,21 @@ impl InteractiveGame {
                         )]),
                     }
                 }
+                (
+                    Message::SetHideLandlordsPoints(hide_landlord_points),
+                    GameState::Initialize(ref mut state),
+                ) => {
+                    state.hide_landlord_points(hide_landlord_points);
+                    let n = s.player_name(id)?;
+                    if hide_landlord_points {
+                        Ok(vec![format!("{} hid the defending team's points", n)])
+                    } else {
+                        Ok(vec![format!(
+                            "{} made the defending team's points visible",
+                            n
+                        )])
+                    }
+                }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone());
                     Ok(vec![])
@@ -163,6 +178,7 @@ pub enum Message {
     EndGame,
     SetNumDecks(Option<usize>),
     SetKittySize(usize),
+    SetHideLandlordsPoints(bool),
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Number),
     SetLandlord(Option<PlayerID>),

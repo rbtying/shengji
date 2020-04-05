@@ -177,10 +177,20 @@ impl GameState {
             GameState::Play(PlayPhase {
                 ref mut hands,
                 ref mut kitty,
+                ref mut points,
                 ref trick,
+                ref landlords_team,
+                hide_landlord_points,
                 landlord,
                 ..
             }) => {
+                if hide_landlord_points.unwrap_or(false) {
+                    for (k, v) in points.iter_mut() {
+                        if landlords_team.contains(&k) {
+                            v.clear();
+                        }
+                    }
+                }
                 hands.redact_except(id);
                 // Don't redact at the end of the game.
                 if !hands.is_empty() || !trick.played_cards().is_empty() {
@@ -211,6 +221,7 @@ pub struct PlayPhase {
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
+    hide_landlord_points: Option<bool>,
 }
 impl PlayPhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
@@ -414,6 +425,7 @@ impl PlayPhase {
                 num_decks: Some(self.num_decks),
                 landlord: Some(next_landlord),
                 max_player_id: self.max_player_id,
+                hide_landlord_points: self.hide_landlord_points,
                 players,
             },
             msgs,
@@ -433,6 +445,7 @@ pub struct ExchangePhase {
     players: Vec<Player>,
     observers: Vec<Player>,
     trump: Trump,
+    hide_landlord_points: Option<bool>,
 }
 
 impl ExchangePhase {
@@ -562,6 +575,7 @@ impl ExchangePhase {
 
         Ok(PlayPhase {
             num_decks: self.num_decks,
+            hide_landlord_points: self.hide_landlord_points,
             game_mode: self.game_mode.clone(),
             hands: self.hands.clone(),
             kitty: self.kitty.clone(),
@@ -605,6 +619,7 @@ pub struct DrawPhase {
     landlord: Option<PlayerID>,
     kitty: Vec<Card>,
     level: Number,
+    hide_landlord_points: Option<bool>,
 }
 impl DrawPhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
@@ -738,6 +753,7 @@ impl DrawPhase {
                 players: self.players.clone(),
                 observers: self.observers.clone(),
                 max_player_id: self.max_player_id,
+                hide_landlord_points: self.hide_landlord_points,
                 landlord,
                 hands,
                 trump,
@@ -754,6 +770,7 @@ pub struct InitializePhase {
     kitty_size: Option<usize>,
     game_mode: GameMode,
     landlord: Option<PlayerID>,
+    hide_landlord_points: Option<bool>,
 }
 
 impl InitializePhase {
@@ -765,6 +782,7 @@ impl InitializePhase {
             num_decks: None,
             game_mode: GameMode::Tractor,
             landlord: None,
+            hide_landlord_points: None,
         }
     }
 
@@ -810,6 +828,14 @@ impl InitializePhase {
     pub fn set_num_decks(&mut self, num_decks: Option<usize>) {
         self.num_decks = num_decks;
         self.kitty_size = None;
+    }
+
+    pub fn hide_landlord_points(&mut self, should_hide: bool) {
+        if should_hide {
+            self.hide_landlord_points = Some(true);
+        } else {
+            self.hide_landlord_points = None;
+        }
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -916,6 +942,7 @@ impl InitializePhase {
             observers: vec![],
             landlord: self.landlord,
             max_player_id: self.max_player_id,
+            hide_landlord_points: self.hide_landlord_points,
             position,
             num_decks,
             game_mode,
