@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import beep from './beep';
 import Errors from './Errors';
+import Trump from './Trump';
+import {ITrump} from './types';
 
 const e = React.createElement;
 const CARD_LUT: {[details: string]: ICardInfo} = {};
@@ -948,30 +950,6 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
   }
 }
 
-class Trump extends React.Component<{trump: ITrump}, {}> {
-  render() {
-    if (this.props.trump.Standard) {
-      return (
-        <div className="trump">
-          The trump suit is{' '}
-          <span className={this.props.trump.Standard.suit}>
-            {this.props.trump.Standard.suit}
-          </span>
-          , rank {this.props.trump.Standard.number}
-        </div>
-      );
-    } else if (this.props.trump.NoTrump) {
-      return (
-        <div className="trump">
-          No trump, rank {this.props.trump.NoTrump.number}
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
-}
-
 interface IKickerProps {
   players: IPlayer[];
 }
@@ -1829,9 +1807,4 @@ interface IHands {
   hands: {[player_id: number]: {[card: string]: number}};
   level: number;
   trump: ITrump | null;
-}
-
-interface ITrump {
-  Standard: {suit: string; number: string} | null;
-  NoTrump: {number: string} | null;
 }
