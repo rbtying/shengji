@@ -211,7 +211,7 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
     let mut games = games.lock().await;
     // Drop all games where everyone is disconnected.
     games.retain(|_, game| {
-        !game.users.is_empty() && game.last_updated.elapsed() >= Duration::from_secs(3600)
+        !game.users.is_empty() || game.last_updated.elapsed() <= Duration::from_secs(3600)
     });
 
     for (room_name, game_state) in games.iter() {
