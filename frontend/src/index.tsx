@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import beep from './beep';
+import Beeper from './Beeper';
 import Errors from './Errors';
 import Trump from './Trump';
 import FriendSelect from './FriendSelect';
@@ -586,9 +586,8 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         }
       }
     });
-    if (this.props.beep_on_turn && is_my_turn && !this.was_my_turn) {
-      beep(3, 440, 200);
-    }
+    const shouldBeBeeping =
+      this.props.beep_on_turn && is_my_turn && !this.was_my_turn;
     this.was_my_turn = is_my_turn;
 
     let remaining_cards_to_play = 0;
@@ -600,6 +599,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
 
     return (
       <div>
+        {shouldBeBeeping ? <Beeper /> : null}
         <GameMode game_mode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
