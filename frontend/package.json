@@ -7,16 +7,30 @@
   "dependencies": {
     "@types/react": "^16.9.32",
     "@types/react-dom": "^16.9.6",
+    "prettier": "^2.0.2",
     "react": "^16.13.1",
+    "react-app-rewired": "^2.1.5",
     "react-dom": "^16.13.1",
-    "ts-loader": "^6.2.2",
+    "react-scripts": "^3.4.1",
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "build": "./node_modules/.bin/webpack"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "lint": "eslint --ext js,ts,tsx src",
+    "prettier": "prettier src"
   },
-  "devDependencies": {
-    "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.11"
+  "devDependencies": {},
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

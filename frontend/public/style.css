@@ -1,0 +1,47 @@
+button { padding: 10px; cursor: pointer; margin: 10px; }
+.players button { padding: 2.5px; margin: 0 5px; }
+.errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
+.trick { padding: 10px; }
+.points .card { font-size: 5em; cursor: default; }
+.card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; }
+.card.unknown { cursor: default; color: #aaa; }
+.card.notify { animation:blinkingText 1.5s infinite; }
+@keyframes blinkingText {
+  0% {color: #000; }
+  50% { color: #aaa; }
+  100% {color: #000; }
+}
+.card:last-child { margin-right: 0; }
+.♢ { color: #bb0313; }
+.♡ { color: #bb0313; }
+.♤ { color: #000; }
+.♧ { color: #000; }
+.🃟 { color: #000; }
+.🃏 { color: #bb0313; }
+.four-color .♢ { color: #1933f9; }
+.four-color .♡ { color: #bb0313; }
+.four-color .♤ { color: #000; }
+.four-color .♧ { color: #477e1b; }
+.four-color .🃟 { color: #000; }
+.four-color .🃏 { color: #bb0313; }
+.hand p { margin: 0; text-align: center; }
+.hand .unselected-cards { padding: 0 10px; }
+.hand .selected-cards { padding: 0 10px; }
+.next { color: #00f }
+.landlord { background: #ddd }
+.landlord .card { background: #ddd }
+.player { border: 1px #000 solid; padding: 10px; }
+.chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
+.game { min-width: 700px; width: 70%; display: inline-block; }
+.messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
+.chat-anchor { overflow-anchor: auto; height: 1px }
+.message { margin: 0; }
+.game-message { color: #00f; }
+.labeled-play { display: inline-block; padding: 10px; border: 1px solid #000; }
+.labeled-play .label { text-align: center }
+.labeled-play .card { cursor: default; }
+.labeled-play.winning { background: #efefef; }
+.labeled-play.winning .card { background: #efefef; }
+.trump { margin: 10px 0; }
+.pending-friends p { margin: 0; }
+.pending-friends { margin: 10px; }

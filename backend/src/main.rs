@@ -171,15 +171,15 @@ async fn main() {
     });
 
     #[cfg(feature = "dynamic")]
-    let index = warp::path::end().and(warp::fs::file("../frontend/static/index.html"));
+    let index = warp::path::end().and(warp::fs::file("../frontend/public/index.html"));
     #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("../frontend/static/rules.html"));
+    let rules = warp::path("rules").and(warp::fs::file("../frontend/public/rules.html"));
     #[cfg(feature = "dynamic")]
-    let js = warp::path("main.js").and(warp::fs::file("../frontend/dist/main.js"));
+    let js = warp::path("main.js").and(warp::fs::file("../frontend/build/main.js"));
     #[cfg(feature = "dynamic")]
-    let js_map = warp::path("main.js.map").and(warp::fs::file("../frontend/dist/main.js.map"));
+    let js_map = warp::path("main.js.map").and(warp::fs::file("../frontend/build/main.js.map"));
     #[cfg(feature = "dynamic")]
-    let css = warp::path("style.css").and(warp::fs::file("../frontend/static/style.css"));
+    let css = warp::path("style.css").and(warp::fs::file("../frontend/public/style.css"));
 
     let cards = warp::path("cards.js").map(|| {
         warp::http::Response::builder()
@@ -436,12 +436,12 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
 }
 
 #[cfg(not(feature = "dynamic"))]
-static INDEX_HTML: &str = include_str!("../../frontend/static/index.html");
+static INDEX_HTML: &str = include_str!("../../frontend/public/index.html");
 #[cfg(not(feature = "dynamic"))]
-static RULES_HTML: &str = include_str!("../../frontend/static/rules.html");
+static RULES_HTML: &str = include_str!("../../frontend/public/rules.html");
 #[cfg(not(feature = "dynamic"))]
-static JS: &str = include_str!("../../frontend/dist/main.js");
+static JS: &str = include_str!("../../frontend/build/main.js");
 #[cfg(not(feature = "dynamic"))]
-static JS_MAP: &str = include_str!("../../frontend/dist/main.js.map");
+static JS_MAP: &str = include_str!("../../frontend/build/main.js.map");
 #[cfg(not(feature = "dynamic"))]
-static CSS: &str = include_str!("../../frontend/static/style.css");
+static CSS: &str = include_str!("../../frontend/public/style.css");
