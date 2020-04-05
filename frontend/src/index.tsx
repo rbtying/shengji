@@ -879,13 +879,13 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
       <div>
         <form onSubmit={this.handleSubmit}>
           <input
-            type={"text"}
-            placeholder={"name"}
+            type="text"
+            placeholder="Enter your name here"
             value={this.props.name}
             onChange={this.handleChange}
             autoFocus={true}
           />
-          <input type="submit" value="join" />
+          <input type="submit" value="Join the game!" />
         </form>
       </div>
     );
@@ -1287,9 +1287,9 @@ class Chat extends React.Component<IChatProps, IChatState> {
 class GameMode extends React.Component<{ game_mode: IGameMode }, {}> {
   render() {
     if (this.props.game_mode == "Tractor") {
-      return <h1>升级 / Tractor</h1>;
+      return <h1>升级 / Tractor (<a href="rules" target="_blank">rules</a>)</h1>;
     } else {
-      return <h1>找朋友 / Finding Friends</h1>;
+      return <h1>找朋友 / Finding Friends (<a href="rules" target="_blank">rules</a>)</h1>;
     }
   }
 }
@@ -1463,21 +1463,20 @@ function renderUI() {
   if (state.connected) {
     if (state.game_state == null) {
       ReactDOM.render(
-        e(
-          "div",
-          null,
-          e("h2", null, `Room Name: ${state.room_name}`),
-          e(Errors, { errors: state.errors }),
-          e(JoinRoom, {
-            name: state.name,
-            room_name: state.room_name,
-            setName: (name: string) => {
-              state.name = name;
-              window.localStorage.setItem("name", name);
-              renderUI();
-            },
-          })
-        ),
+        <div>
+        <h2>Room Name: {state.room_name} (<a href="rules" target="_blank">rules</a>)</h2>
+        <Errors errors={state.errors} />
+        <JoinRoom name={state.name} room_name={state.room_name} setName={(name: string) => {
+          state.name = name;
+          window.localStorage.setItem("name", name);
+          renderUI();
+        }} />
+        <hr />
+        <p>
+          Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo at
+          @Robert-Ying, or contributing on <a href="https://github.com/rbtying/shengji" target="_blank">GitHub</a>
+        </p>
+        </div>,
         document.getElementById("root")
       );
     } else {
@@ -1570,7 +1569,12 @@ function renderUI() {
                   renderUI();
                 }}
               />
-            </label>
+              </label>
+            <hr />
+            <p>
+              Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo at
+              @Robert-Ying, or contributing on <a href="https://github.com/rbtying/shengji" target="_blank">GitHub</a>
+            </p>
           </div>
         </div>,
         document.getElementById("root")

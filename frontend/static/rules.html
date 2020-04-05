@@ -90,7 +90,10 @@
         </tbody>
       </table>
       <p>
-        Each deck has a total of 100 points (25 per suit).
+        Each deck has a total of 100 points (25 per suit). However, as cards of
+        the trump rank are part of the trump suit, the trump suit will have a
+        disproportionately large number of points when the trump rank is 5,
+        10, or K.
       </p>
       <div class="labeled-play">
         <div class="play" id="points"></div>
@@ -372,7 +375,22 @@
 
       <h4>Trick formats</h4>
       <p>
-        All cards in a trick format must be in the same suit.
+        All cards in a trick format must be in the same suit. Any winning play
+        (whether it is setting the format or not) must be made up of a single
+        suit; that suit will match either the initial format or be made up of
+        trumps.
+      </p>
+      <p>
+        There are three basic trick formats in the game: single cards,
+        identical cards, and sequences of identical cards. A set of the highest
+        possible plays in a single suit can be played simultaneously as a
+        "throw", which makes it potentially harder to trump.
+      </p>
+      <p>
+        In general, players must attempt to match the format to the best of
+        their ability using cards in the same suit. If the player has no
+        remaining cards in the suit (i.e. they are void in the suit), there are
+        no requirements on what cards they can play.
       </p>
 
       <h5>Single cards</h5>
@@ -467,12 +485,47 @@
       <h5>Identical cards (doubles, triples, four-of-a-kind, ...)</h5>
       <p>
         Sets of identical cards can always lead a trick. Other players are
-        obligated to match the set as best they can.
+        obligated to match the set as best they can within the suit.
       </p>
       <p>
         Note: cards of equal value are not necessarily identical; they have to
         have the exact same card face.
       </p>
+      <p>Examples:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂡</span>
+        </div>
+        <div class="label">
+          A pair
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♢">🃇</span>
+          <span class="card ♢">🃇</span>
+          <span class="card ♢">🃇</span>
+        </div>
+        <div class="label">
+          A triple
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="jokers2"></div>
+        <div class="label">
+          Not identical / not a pair
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card 🃟">🃟</span>
+          <span class="card 🃟">🃟</span>
+        </div>
+        <div class="label">
+          A pair
+        </div>
+      </div>
       <p>
         For example, if the trick-format is triples, the ordering of required plays is:
       </p>
@@ -489,7 +542,92 @@
         or in trump) are eligible to win the trick. As with the single-card
         format, the first player to play an identical play has precedence.
       </p>
-      <p>WIP</p>
+      <p>Example:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂭</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂦</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 4 wins this trick, because they played the highest pair in the same suit
+        same suit (<span class="♤">3♤3♤</span>). Player 2 and Player 3 did not
+        play a pair; therefore, they cannot win this trick, and (by inference)
+        cannot have any <span class="♤">spade</span> pairs remaining in their
+        hands.
+      </p>
+      <p>Example 2:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂭</span>
+          <span class="card ♢">🃃</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card 🃟">🃟</span>
+          <span class="card 🃟">🃟</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 3 wins this trick, because they played a trump pair. Because
+        both Player 2 and Player 3 played non-<span class="♤">spade</span>
+        cards, they must be void in <span class="♤">spades</span>.
+      </p>
 
       <h5>Tractors (consecutive groups of identical cards)</h5>
       <p>
@@ -498,6 +636,81 @@
         in and of themselves. They are parameterized by their length and the
         number of identical cards, both of which are at required to be at least
         two (the smallest tractor is four cards).
+      </p>
+      <p>Examples:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Tractor of two pairs
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Tractor of three pairs
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Tractor of two triples
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Not a tractor&mdash; there is an extra <span class="♤">2♤</span>.
+        </div>
+      </div>
+      <p>
+        Whether pairs are sequential depends on the current trump: since cards
+        with the trump rank are some of the highest trumps, right below the
+        jokers, their positioning in the overall order has changed.
+      </p>
+      <p>Example of sequential pairs due to trump-number reordering:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Tractor if 3 is the trump rank
+        </div>
+      </div>
+      <p>
+        Additionally, pairs of equal cards don't make tractors.
+      </p>
+      <p>
+        Tractors are relatively uncommon, and tend to win tricks. They are also
+        strategically good, because matching the tractor format is at least as
+        difficult as matching the equivalent number of identical cards.
       </p>
       <p>
         For example, if the trick-format is tractors made up of three
@@ -524,7 +737,59 @@
         identical-card formats, the first player to play an identical play has
         precedence.
       </p>
-      <p>WIP</p>
+      <p>Example:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂡</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂧</span>
+          <span class="card ♡">🂸</span>
+          <span class="card ♡">🂸</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 1 wins this trick, because they are the only player to meet the
+        format. Player 2 and Player 3 played non-consecutive pairs, while
+        Player 4 played cards in a different suit. Since this trick is led with
+        a tractor, all players had to play two pairs in <span
+        class="♤">spades</span> if they had them.
+      </p>
+
 
       <h5>Throws (sets of the highest possible individual trick-formats within a suit)</h5>
       <p>
@@ -543,15 +808,79 @@
         penalties are imposed on incorrect throws.
       </p>
       <p>
+        Other players are not obligated to ensure that their plays are the
+        highest possible plays within their own suits, though they still need
+        to match each component's trick-format as best they can within the
+        suit.
+      </p>
+      <p>Examples for two decks:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂮</span>
+        </div>
+        <div class="label">
+          Valid throw
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂮</span>
+          <span class="card ♤">🂮</span>
+        </div>
+        <div class="label">
+          Valid throw
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂭</span>
+          <span class="card ♤">🂭</span>
+        </div>
+        <div class="label">
+          Valid if <span class="♤">K♤K♤</span> is unplayable
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Valid if there are no higher <span class="♤">spade</span> pairs
+        </div>
+      </div>
+      <p>
         In cases of ambiguity between components (e.g. five-of-a-kind vs.
         tractor), the interpretation with the longest single component is
         chosen. If there are multiple ambiguous components of the same length,
         tractors are preferred over identical cards.
       </p>
+      <p>Example of a throw ambiguity:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂢</span>
+          <span class="card ♤">🂣</span>
+          <span class="card ♤">🂣</span>
+        </div>
+        <div class="label">
+          Tractor with an extra card
+        </div>
+      </div>
       <p>
-        Other players are not obligated to ensure that their plays are the
-        highest possible plays within their own suits, though they still need
-        to match each component's trick-format as best they can.
+      The above play can be interpreted as either a tractor and a single card
+      ([<span class="♤">2♤2♤3♤3♤</span>] + <span class="♤">2♤</span>), or as a
+      triple and a pair ([<span class="♤">2♤2♤2♤</span>] + [<span class="♤">3♤3♤</span>]).
+      Since the former interpretation has a maximum component length of 4
+      cards, greater than the latter's 3 cards, we interpret this as a tractor
+      and a single card.
       </p>
       <p>
         Only plays which match the trick-format (either in the original suit,
@@ -565,7 +894,113 @@
         defeated by the same pattern of cards in the trump suit.
       </p>
 
-      <p>WIP</p>
+      <p>Example:</p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂭</span>
+          <span class="card ♤">🂭</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂭</span>
+          <span class="card ♤">🂭</span>
+          <span class="card ♤">🂤</span>
+          <span class="card ♤">🂤</span>
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂧</span>
+          <span class="card ♤">🂧</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂧</span>
+          <span class="card ♡">🂸</span>
+          <span class="card ♡">🂸</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 1 wins this trick, because they are the only player to meet the
+        format. Note: though there exists another pair of <span
+          class="♤">Q♤Q♤</span> played by Player 2, this is a valid throw
+        because no player can show that they have <span class="♤">K♤K♤</span>
+        or <span class="♤">A♤A♤</span>, which are the only two higher pairs.
+        Player 3 is particularly upset, here, because they had a tractor in
+        spades, but it can't win in a trick with a two-pair-throw format.
+        Since this trick is led with a throw of two pairs, all players had to
+        play two pairs in <span class="♤">spades</span> if they had them.
+      </p>
+
+      <p>Example 2: trump is <span class="♢">2♢</span></p>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂡</span>
+          <span class="card ♤">🂮</span>
+        </div>
+        <div class="label">
+          Player 1
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♢">🃃</span>
+          <span class="card ♢">🃃</span>
+          <span class="card ♢">🃈</span>
+          
+        </div>
+        <div class="label">
+          Player 2
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♢">🃄</span>
+          <span class="card ♢">🃄</span>
+          <span class="card ♢">🃆</span>
+        </div>
+        <div class="label">
+          Player 3
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play">
+          <span class="card ♤">🂦</span>
+          <span class="card ♤">🂧</span>
+          <span class="card ♡">🂸</span>
+        </div>
+        <div class="label">
+          Player 4
+        </div>
+      </div>
+      <p>
+        Player 2 wins this trick (admittedly contrived): both Player 2 and
+        Player 3 played trump cards in the appropriate format. However, though
+        Player 3's pair of <span class="♢">4♢4♢</span> is higher than Player
+        2's <span class="♢">3♢3♢</span>, their <span class="♢">6♢</span> is not
+        higher than Player 2's <span class="♢">8♢</span>, so Player 2 takes
+        precedence.
+      </p>
 
       <h4>Trick structure</h4>
       <p>
@@ -600,57 +1035,35 @@
         The winning team for each round is determined by the number of points
         the opposing team earned from tricks. If the opposing team won the last
         trick, the cards hidden in the bottom are revealed. The point value of
-        any valuable cards at the bottom are multipled by the number of cards
-        used to lead the last trick and awarded to the opposing team. 
+        any valuable cards at the bottom are multiplied by twice the number of
+        cards in the largest component of the last trick's format and awarded
+        to the opposing team. 
       </p>
 
-      <p>There are five possible outcomes, as detailed in the following tables:</p>
-
-      <p>Two decks:</p>
+      <p>
+        There are five possible outcomes depending on the number of decks, as
+        detailed in the following table:
+      </p>
+      <select value="n" id="n-select">
+        <option value="n">n decks</option>
+        <option value="2">2 decks</option>
+        <option value="3">3 decks</option>
+        <option value="4">4 decks</option>
+        <option value="5">5 decks</option>
+        <option value="6">6 decks</option>
+      </select>
       <table border="1">
         <thead>
           <tr><td>Opposing team's points</td><td>Result</td></tr>
         </thead>
         <tbody>
           <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
-          <tr><td>5 to 35</td><td>Defending team wins and goes up two levels</td></tr>
-          <tr><td>4 to 75</td><td>Defending team wins and goes up one level</td></tr>
-          <tr><td>80 to 115</td><td>Opposing team wins, but keeps the same level</td></tr>
-          <tr><td>120 to 155</td><td>Opposing team wins and goes up one level</td></tr>
-          <tr><td>160 to 195</td><td>Opposing team wins and goes up two levels</td></tr>
-          <tr><td>200 and above</td><td>Opposing team wins and goes up three levels</td></tr>
-        </tbody>
-      </table>
-
-      <p>Three decks:</p>
-      <table border="1">
-        <thead>
-          <tr><td>Opposing team's points</td><td>Result</td></tr>
-        </thead>
-        <tbody>
-          <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
-          <tr><td>5 to 55</td><td>Defending team wins and goes up two levels</td></tr>
-          <tr><td>60 to 115</td><td>Defending team wins and goes up one level</td></tr>
-          <tr><td>120 to 175</td><td>Opposing team wins, but keeps the same level</td></tr>
-          <tr><td>180 to 235</td><td>Opposing team wins and goes up one level</td></tr>
-          <tr><td>240 to 295</td><td>Opposing team wins and goes up two levels</td></tr>
-          <tr><td>300 and above</td><td>Opposing team wins and goes up three levels</td></tr>
-        </tbody>
-      </table>
-
-      <p>n decks:</p>
-      <table border="1">
-        <thead>
-          <tr><td>Opposing team's points</td><td>Result</td></tr>
-        </thead>
-        <tbody>
-          <tr><td>0</td><td>Defending team wins and goes up three levels</td></tr>
-          <tr><td>5 to n-5</td><td>Defending team wins and goes up two levels</td></tr>
-          <tr><td>n to 2n-5</td><td>Defending team wins and goes up one level</td></tr>
-          <tr><td>2n to 3n-5</td><td>Opposing team wins, but keeps the same level</td></tr>
-          <tr><td>3n to 4n-5</td><td>Opposing team wins and goes up one level</td></tr>
-          <tr><td>4n to 5n-5</td><td>Opposing team wins and goes up two levels</td></tr>
-          <tr><td>5n and above</td><td>Opposing team wins and goes up three levels</td></tr>
+          <tr><td id="n-1">5 to n-5</td><td>Defending team wins and goes up two levels</td></tr>
+          <tr><td id="n-2">n to 2n-5</td><td>Defending team wins and goes up one level</td></tr>
+          <tr><td id="n-3">2n to 3n-5</td><td>Opposing team wins, but keeps the same level</td></tr>
+          <tr><td id="n-4">3n to 4n-5</td><td>Opposing team wins and goes up one level</td></tr>
+          <tr><td id="n-5">4n to 5n-5</td><td>Opposing team wins and goes up two levels</td></tr>
+          <tr><td id="n-6">5n and above</td><td>Opposing team wins and goes up three levels</td></tr>
         </tbody>
       </table>
 
@@ -658,6 +1071,11 @@
         The winning team becomes the defending team in the next round, and the
         next person counter-clockwise from the current leader is the leader for
         the next round.
+      </p>
+      <p>
+        The winner of the game is the person who gets to the highest possible
+        rank and successfully defends it first. In this implementation, this
+        is A.
       </p>
 
       <script type="text/javascript">
@@ -701,6 +1119,29 @@
         addCards("trump-4nt", CARDS.filter((c) => c.number == '4'));
         addCards("trump-4nt", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
         addCards("trump-4nt-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
+
+        addCards("jokers2", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+
+        function setPointThresholds(evt) {
+          if (evt.target.value == "n") {
+            document.getElementById("n-1").innerText = "5 to n-5";
+            document.getElementById("n-2").innerText = "n to 2n-5";
+            document.getElementById("n-3").innerText = "2n to 3n-5";
+            document.getElementById("n-4").innerText = "3n to 4n-5";
+            document.getElementById("n-5").innerText = "4n to 5n-5";
+            document.getElementById("n-6").innerText = "5n and above";
+          } else {
+            const n = parseInt(evt.target.value, 10) * 20;
+            document.getElementById("n-1").innerText = `5 to ${n - 5}`;
+            document.getElementById("n-2").innerText = `${n} to ${2 * n - 5}`;
+            document.getElementById("n-3").innerText = `${2 * n} to ${3 * n - 5}`;
+            document.getElementById("n-4").innerText = `${3 * n} to ${4 * n - 5}`;
+            document.getElementById("n-5").innerText = `${4 * n} to ${5 * n - 5}`;
+            document.getElementById("n-6").innerText = `${5 * n} and above`;
+          }
+        }
+
+        document.getElementById("n-select").addEventListener("change", setPointThresholds);
       </script>
     </body>
 </html>
