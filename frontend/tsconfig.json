@@ -1,20 +1,11 @@
 {
   "compilerOptions": {
+    "noImplicitAny": true,
+    "module": "es6",
     "target": "es5",
-    "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
-    "sourceMap": true,
-    "allowJs": true,
-    "skipLibCheck": false,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "amd",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
     "jsx": "react",
-    "isolatedModules": false,
-    "outFile": "../backend/generated/game.js"
+    "allowJs": true,
+    "lib": ["dom", "es6", "es2017", "esnext.asynciterable"]
   },
   "include": ["src"],
   "exclude": ["node_modules"]
