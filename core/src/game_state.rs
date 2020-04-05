@@ -807,6 +807,7 @@ impl InitializePhase {
         if self.landlord == Some(id) {
             self.landlord = None;
         }
+        self.kitty_size = None;
     }
 
     pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
