@@ -1,7 +1,7 @@
 # What is this?
 
 升级 is a popular Chinese trick-taking playing card game. Rules are available
-[here](https://www.pagat.com/kt5/tractor.html). Due to the COVID-19
+[here](https://robertying.com/shengji/rules). Due to the COVID-19
 shelter-in-place, I've been unable to play the this game in person... so
 I figured an online version would be worthwhile.
 
