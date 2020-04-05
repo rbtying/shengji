@@ -12,7 +12,6 @@ import Credits from './Credits';
 import mapObject from './util/mapObject';
 import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
 
-const e = React.createElement;
 const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
 (window as any).CARD_LUT = CARD_LUT;
 
@@ -880,22 +879,20 @@ class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
   }
 
   render() {
-    return e(
-      'div',
-      {className: 'kicker'},
-      e(
-        'select',
-        {value: this.state.to_kick, onChange: this.onChange},
-        e('option', {value: ''}, ''),
-        this.props.players.map((player) =>
-          e('option', {value: player.id, key: player.id}, player.name),
-        ),
-      ),
-      e(
-        'button',
-        {onClick: this.kick, disabled: this.state.to_kick == ''},
-        'kick',
-      ),
+    return (
+      <div className="kicker">
+        <select value={this.state.to_kick} onChange={this.onChange}>
+          <option value="" />
+          {this.props.players.map((player) => (
+            <option value={player.id} key={player.id}>
+              {player.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={this.kick} disabled={this.state.to_kick == ''}>
+          kick
+        </button>
+      </div>
     );
   }
 }
@@ -921,25 +918,23 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
   }
 
   render() {
-    return e(
-      'div',
-      {className: 'landlord-picker'},
-      e(
-        'label',
-        null,
-        'leader: ',
-        e(
-          'select',
-          {
-            value: this.props.landlord != null ? this.props.landlord : '',
-            onChange: this.onChange,
-          },
-          e('option', {value: ''}, 'winner of the bid'),
-          this.props.players.map((player) =>
-            e('option', {value: player.id, key: player.id}, player.name),
-          ),
-        ),
-      ),
+    return (
+      <div className="landlord-picker">
+        <label>
+          leader:{' '}
+          <select
+            value={this.props.landlord != null ? this.props.landlord : ''}
+            onChange={this.onChange}
+          >
+            <option value="">winner of the bid</option>
+            {this.props.players.map((player) => (
+              <option value={player.id} key={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     );
   }
 }
@@ -1090,64 +1085,58 @@ class Players extends React.Component<IPlayersProps, {}> {
   }
 
   render() {
-    return e(
-      'table',
-      {className: 'players'},
-      e(
-        'tbody',
-        null,
-        e(
-          'tr',
-          null,
-          this.props.players.map((player) => {
-            let className = 'player';
-            let descriptor = `${player.name} (rank ${player.level})`;
+    return (
+      <table className="players">
+        <tbody>
+          <tr>
+            {this.props.players.map((player) => {
+              let className = 'player';
+              let descriptor = `${player.name} (rank ${player.level})`;
 
-            if (player.id == this.props.landlord) {
-              descriptor = descriptor + ' (当庄)';
-            }
-            if (player.name == this.props.name) {
-              descriptor = descriptor + ' (You!)';
-            }
-            if (
-              player.id == this.props.landlord ||
-              (this.props.landlords_team &&
-                this.props.landlords_team.includes(player.id))
-            ) {
-              className = className + ' landlord';
-            }
-            if (player.id == this.props.next) {
-              className = className + ' next';
-            }
+              if (player.id == this.props.landlord) {
+                descriptor = descriptor + ' (当庄)';
+              }
+              if (player.name == this.props.name) {
+                descriptor = descriptor + ' (You!)';
+              }
+              if (
+                player.id == this.props.landlord ||
+                (this.props.landlords_team &&
+                  this.props.landlords_team.includes(player.id))
+              ) {
+                className = className + ' landlord';
+              }
+              if (player.id == this.props.next) {
+                className = className + ' next';
+              }
 
-            return e(
-              'td',
-              {key: player.id, className: className},
-              this.props.movable
-                ? e(
-                    'button',
-                    {
-                      onClick: (evt: any) =>
-                        this.movePlayerLeft(evt, player.id),
-                    },
-                    '<',
-                  )
-                : null,
-              descriptor,
-              this.props.movable
-                ? e(
-                    'button',
-                    {
-                      onClick: (evt: any) =>
-                        this.movePlayerRight(evt, player.id),
-                    },
-                    '>',
-                  )
-                : null,
-            );
-          }),
-        ),
-      ),
+              return (
+                <td key={player.id} className={className}>
+                  {this.props.movable ? (
+                    <button
+                      onClick={(evt: any) =>
+                        this.movePlayerLeft(evt, player.id)
+                      }
+                    >
+                      {'<'}
+                    </button>
+                  ) : null}
+                  {descriptor}
+                  {this.props.movable ? (
+                    <button
+                      onClick={(evt: any) =>
+                        this.movePlayerRight(evt, player.id)
+                      }
+                    >
+                      {'>'}
+                    </button>
+                  ) : null}
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+      </table>
     );
   }
 }
@@ -1225,43 +1214,39 @@ class Chat extends React.Component<IChatProps, IChatState> {
   }
 }
 
-
 class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
     if (this.props.game_mode != 'Tractor') {
-      return e(
-        'div',
-        {className: 'pending-friends'},
-        this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
-          if (friend.player_id != null) {
-            return null;
-          }
+      return (
+        <div className="pending-friends">
+          {this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
+            if (friend.player_id != null) {
+              return null;
+            }
 
-          const c = CARD_LUT[friend.card];
-          if (!c) {
-            return null;
-          }
-          const card = `${c.number}${c.typ}`;
-          if (friend.skip == 0) {
-            return e(
-              'p',
-              {key: idx},
-              'The next person to play ',
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' is a friend',
-            );
-          } else {
-            return e(
-              'p',
-              {key: idx},
-              `${friend.skip} `,
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' can be played before the next person to play ',
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' is a friend',
-            );
-          }
-        }),
+            const c = CARD_LUT[friend.card];
+            if (!c) {
+              return null;
+            }
+            const card = `${c.number}${c.typ}`;
+            if (friend.skip == 0) {
+              return (
+                <p key={idx}>
+                  The next person to play <span className={c.typ}>{card}</span>{' '}
+                  is a friend
+                </p>
+              );
+            } else {
+              return (
+                <p key={idx}>
+                  {friend.skip} <span className={c.typ}>{card}</span> can be
+                  played before the next person to play{' '}
+                  <span className={c.typ}>{card}</span> is a friend
+                </p>
+              );
+            }
+          })}
+        </div>
       );
     } else {
       return null;
