@@ -205,7 +205,10 @@ async fn main() {
 
 async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
     let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
-    let games = games.lock().await;
+    let mut games = games.lock().await;
+    // Drop all games where everyone is disconnected.
+    games.retain(|_, game| !game.users.is_empty());
+
     for (room_name, game_state) in games.iter() {
         if let Ok(snapshot) = game_state.game.dump_state() {
             state_dump.insert(room_name.clone(), snapshot);
