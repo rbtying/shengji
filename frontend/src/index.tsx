@@ -603,7 +603,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     return (
       <div>
         {shouldBeBeeping ? <Beeper /> : null}
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
