@@ -28,7 +28,7 @@ lazy_static::lazy_static! {
             .iter()
             .flat_map(|c| serde_json::to_string(&c.as_info()).ok())
             .collect::<Vec<_>>().join(",");
-        format!("const CARDS = [{}];", cards)
+        format!("window.CARDS = [{}];", cards)
     };
 }
 

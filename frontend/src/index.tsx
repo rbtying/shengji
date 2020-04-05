@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import beep from './beep';
 import Errors from './Errors';
 import Trump from './Trump';
+import FriendSelect from './FriendSelect';
 import {ITrump} from './types';
 
 const e = React.createElement;
@@ -1384,64 +1385,6 @@ class Friends extends React.Component<{game_mode: IGameMode}, {}> {
     } else {
       return null;
     }
-  }
-}
-
-interface IFriendSelectProps {
-  friend: IFriend;
-  trump: ITrump;
-  num_decks: number;
-  onChange(input: any): any;
-}
-class FriendSelect extends React.Component<IFriendSelectProps, {}> {
-  constructor(props: IFriendSelectProps) {
-    super(props);
-    this.onCardChange = this.onCardChange.bind(this);
-    this.onOrdinalChange = this.onOrdinalChange.bind(this);
-  }
-
-  onCardChange(evt: any) {
-    evt.preventDefault();
-    this.props.onChange({
-      card: evt.target.value,
-      skip: this.props.friend.skip,
-    });
-  }
-  onOrdinalChange(evt: any) {
-    evt.preventDefault();
-    this.props.onChange({
-      card: this.props.friend.card,
-      skip: parseInt(evt.target.value, 10),
-    });
-  }
-
-  render() {
-    const number = this.props.trump.Standard
-      ? this.props.trump.Standard.number
-      : this.props.trump.NoTrump?.number;
-    return e(
-      'div',
-      {className: 'friend-select'},
-      e(
-        'select',
-        {value: this.props.friend.card, onChange: this.onCardChange},
-        e('option', {value: ''}, ' '),
-        CARDS.map((c) => {
-          return c.number != null && c.number != number
-            ? e('option', {key: c.value, value: c.value}, `${c.number}${c.typ}`)
-            : null;
-        }),
-      ),
-      e(
-        'select',
-        {value: this.props.friend.skip, onChange: this.onOrdinalChange},
-        Array(this.props.num_decks)
-          .fill(1)
-          .map((_, idx) => {
-            return e('option', {key: idx, value: idx}, idx + 1);
-          }),
-      ),
-    );
   }
 }
 
