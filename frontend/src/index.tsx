@@ -300,6 +300,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           Draw card
         </button>
         <label>
+          auto-draw
           <input
             type="checkbox"
             name="autodraw"
