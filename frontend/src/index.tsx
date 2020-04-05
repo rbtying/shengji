@@ -4,13 +4,16 @@ import Beeper from './Beeper';
 import Errors from './Errors';
 import Trump from './Trump';
 import FriendSelect from './FriendSelect';
-import {ITrump} from './types';
+import LabeledPlay from './LabeledPlay';
+import Card from './Card';
+import Trick from './Trick';
+import GameMode from './GameMode';
+import Credits from './Credits';
+import mapObject from './util/mapObject';
+import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
 
-const e = React.createElement;
-const CARD_LUT: {[details: string]: ICardInfo} = {};
-CARDS.forEach((c) => {
-  CARD_LUT[c.value] = c;
-});
+const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
+(window as any).CARD_LUT = CARD_LUT;
 
 interface IInitializeProps {
   state: IInitializePhase;
@@ -71,7 +74,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -265,7 +268,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -432,7 +435,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     if (this.props.state.players[landlord_idx].name == this.props.name) {
       return (
         <div>
-          <GameMode game_mode={this.props.state.game_mode} />
+          <GameMode gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -494,7 +497,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <GameMode game_mode={this.props.state.game_mode} />
+          <GameMode gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -659,48 +662,6 @@ class Play extends React.Component<IPlayProps, IPlayState> {
   }
 }
 
-class Trick extends React.Component<{players: IPlayer[]; trick: ITrick}, {}> {
-  render() {
-    const names_by_id: {[player_id: number]: string} = {};
-    this.props.players.forEach((p) => {
-      names_by_id[p.id] = p.name;
-    });
-    const blank_cards =
-      this.props.trick.played_cards.length > 0
-        ? Array(this.props.trick.played_cards[0].cards.length).fill('🂠')
-        : ['🂠'];
-
-    return (
-      <div className="trick">
-        {this.props.trick.played_cards.map((played, idx) => {
-          const winning = this.props.trick.current_winner == played.id;
-          return (
-            <LabeledPlay
-              key={idx}
-              label={
-                winning
-                  ? `${names_by_id[played.id]} (!)`
-                  : names_by_id[played.id]
-              }
-              className={winning ? 'winning' : ''}
-              cards={played.cards}
-            />
-          );
-        })}
-        {this.props.trick.player_queue.map((id, idx) => {
-          return (
-            <LabeledPlay
-              key={idx + this.props.trick.played_cards.length}
-              label={names_by_id[id]}
-              cards={blank_cards}
-            />
-          );
-        })}
-      </div>
-    );
-  }
-}
-
 interface IPointsProps {
   players: IPlayer[];
   num_decks: number;
@@ -851,62 +812,6 @@ class Cards extends React.Component<ICardsProps, {}> {
   }
 }
 
-interface ICardProps {
-  card: string;
-  className?: string;
-  onClick?(evt: any): any;
-}
-class Card extends React.Component<ICardProps, {}> {
-  render() {
-    const c = CARD_LUT[this.props.card];
-    if (!c) {
-      return e(
-        'span',
-        {
-          className: this.props.className
-            ? `card unknown ${this.props.className}`
-            : 'card unknown',
-        },
-        this.props.card,
-      );
-    }
-
-    const props: {onClick?(evt: any): any; className: string} = {
-      className: this.props.className
-        ? `card ${c.typ} ${this.props.className}`
-        : `card ${c.typ}`,
-    };
-    if (this.props.onClick) {
-      props.onClick = this.props.onClick;
-    }
-    return e('span', props, c.display_value);
-  }
-}
-
-interface ILabeledPlayProps {
-  className?: string;
-  cards: string[];
-  label: string;
-}
-class LabeledPlay extends React.Component<ILabeledPlayProps, {}> {
-  render() {
-    let className = 'labeled-play';
-    if (this.props.className) {
-      className = className + ' ' + this.props.className;
-    }
-    return (
-      <div className={className}>
-        <div className="play">
-          {this.props.cards.map((card, idx) => (
-            <Card card={card} key={idx} />
-          ))}
-        </div>
-        <div className="label">{this.props.label}</div>
-      </div>
-    );
-  }
-}
-
 interface IJoinRoomProps {
   name: string;
   room_name: string;
@@ -974,22 +879,20 @@ class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
   }
 
   render() {
-    return e(
-      'div',
-      {className: 'kicker'},
-      e(
-        'select',
-        {value: this.state.to_kick, onChange: this.onChange},
-        e('option', {value: ''}, ''),
-        this.props.players.map((player) =>
-          e('option', {value: player.id, key: player.id}, player.name),
-        ),
-      ),
-      e(
-        'button',
-        {onClick: this.kick, disabled: this.state.to_kick == ''},
-        'kick',
-      ),
+    return (
+      <div className="kicker">
+        <select value={this.state.to_kick} onChange={this.onChange}>
+          <option value="" />
+          {this.props.players.map((player) => (
+            <option value={player.id} key={player.id}>
+              {player.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={this.kick} disabled={this.state.to_kick == ''}>
+          kick
+        </button>
+      </div>
     );
   }
 }
@@ -1015,25 +918,23 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
   }
 
   render() {
-    return e(
-      'div',
-      {className: 'landlord-picker'},
-      e(
-        'label',
-        null,
-        'leader: ',
-        e(
-          'select',
-          {
-            value: this.props.landlord != null ? this.props.landlord : '',
-            onChange: this.onChange,
-          },
-          e('option', {value: ''}, 'winner of the bid'),
-          this.props.players.map((player) =>
-            e('option', {value: player.id, key: player.id}, player.name),
-          ),
-        ),
-      ),
+    return (
+      <div className="landlord-picker">
+        <label>
+          leader:{' '}
+          <select
+            value={this.props.landlord != null ? this.props.landlord : ''}
+            onChange={this.onChange}
+          >
+            <option value="">winner of the bid</option>
+            {this.props.players.map((player) => (
+              <option value={player.id} key={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
     );
   }
 }
@@ -1184,64 +1085,58 @@ class Players extends React.Component<IPlayersProps, {}> {
   }
 
   render() {
-    return e(
-      'table',
-      {className: 'players'},
-      e(
-        'tbody',
-        null,
-        e(
-          'tr',
-          null,
-          this.props.players.map((player) => {
-            let className = 'player';
-            let descriptor = `${player.name} (rank ${player.level})`;
+    return (
+      <table className="players">
+        <tbody>
+          <tr>
+            {this.props.players.map((player) => {
+              let className = 'player';
+              let descriptor = `${player.name} (rank ${player.level})`;
 
-            if (player.id == this.props.landlord) {
-              descriptor = descriptor + ' (当庄)';
-            }
-            if (player.name == this.props.name) {
-              descriptor = descriptor + ' (You!)';
-            }
-            if (
-              player.id == this.props.landlord ||
-              (this.props.landlords_team &&
-                this.props.landlords_team.includes(player.id))
-            ) {
-              className = className + ' landlord';
-            }
-            if (player.id == this.props.next) {
-              className = className + ' next';
-            }
+              if (player.id == this.props.landlord) {
+                descriptor = descriptor + ' (当庄)';
+              }
+              if (player.name == this.props.name) {
+                descriptor = descriptor + ' (You!)';
+              }
+              if (
+                player.id == this.props.landlord ||
+                (this.props.landlords_team &&
+                  this.props.landlords_team.includes(player.id))
+              ) {
+                className = className + ' landlord';
+              }
+              if (player.id == this.props.next) {
+                className = className + ' next';
+              }
 
-            return e(
-              'td',
-              {key: player.id, className: className},
-              this.props.movable
-                ? e(
-                    'button',
-                    {
-                      onClick: (evt: any) =>
-                        this.movePlayerLeft(evt, player.id),
-                    },
-                    '<',
-                  )
-                : null,
-              descriptor,
-              this.props.movable
-                ? e(
-                    'button',
-                    {
-                      onClick: (evt: any) =>
-                        this.movePlayerRight(evt, player.id),
-                    },
-                    '>',
-                  )
-                : null,
-            );
-          }),
-        ),
-      ),
+              return (
+                <td key={player.id} className={className}>
+                  {this.props.movable ? (
+                    <button
+                      onClick={(evt: any) =>
+                        this.movePlayerLeft(evt, player.id)
+                      }
+                    >
+                      {'<'}
+                    </button>
+                  ) : null}
+                  {descriptor}
+                  {this.props.movable ? (
+                    <button
+                      onClick={(evt: any) =>
+                        this.movePlayerRight(evt, player.id)
+                      }
+                    >
+                      {'>'}
+                    </button>
+                  ) : null}
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+      </table>
     );
   }
 }
@@ -1319,68 +1214,39 @@ class Chat extends React.Component<IChatProps, IChatState> {
   }
 }
 
-class GameMode extends React.Component<{game_mode: IGameMode}, {}> {
-  render() {
-    if (this.props.game_mode == 'Tractor') {
-      return (
-        <h1>
-          升级 / Tractor (
-          <a href="rules" target="_blank">
-            rules
-          </a>
-          )
-        </h1>
-      );
-    } else {
-      return (
-        <h1>
-          找朋友 / Finding Friends (
-          <a href="rules" target="_blank">
-            rules
-          </a>
-          )
-        </h1>
-      );
-    }
-  }
-}
-
 class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
     if (this.props.game_mode != 'Tractor') {
-      return e(
-        'div',
-        {className: 'pending-friends'},
-        this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
-          if (friend.player_id != null) {
-            return null;
-          }
+      return (
+        <div className="pending-friends">
+          {this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
+            if (friend.player_id != null) {
+              return null;
+            }
 
-          const c = CARD_LUT[friend.card];
-          if (!c) {
-            return null;
-          }
-          const card = `${c.number}${c.typ}`;
-          if (friend.skip == 0) {
-            return e(
-              'p',
-              {key: idx},
-              'The next person to play ',
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' is a friend',
-            );
-          } else {
-            return e(
-              'p',
-              {key: idx},
-              `${friend.skip} `,
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' can be played before the next person to play ',
-              e('span', {className: c.typ}, `${c.number}${c.typ}`),
-              ' is a friend',
-            );
-          }
-        }),
+            const c = CARD_LUT[friend.card];
+            if (!c) {
+              return null;
+            }
+            const card = `${c.number}${c.typ}`;
+            if (friend.skip == 0) {
+              return (
+                <p key={idx}>
+                  The next person to play <span className={c.typ}>{card}</span>{' '}
+                  is a friend
+                </p>
+              );
+            } else {
+              return (
+                <p key={idx}>
+                  {friend.skip} <span className={c.typ}>{card}</span> can be
+                  played before the next person to play{' '}
+                  <span className={c.typ}>{card}</span> is a friend
+                </p>
+              );
+            }
+          })}
+        </div>
       );
     } else {
       return null;
@@ -1437,21 +1303,6 @@ function send(value: any) {
 }
 
 function renderUI() {
-  const credits = (
-    <p>
-      Made by Robert Ying and Abra Shen and other{' '}
-      <a
-        href="https://github.com/rbtying/shengji/graphs/contributors"
-        target="_blank"
-      >
-        friends
-      </a>
-      . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{' '}
-      <a href="https://github.com/rbtying/shengji" target="_blank">
-        GitHub
-      </a>
-    </p>
-  );
   if (state.connected) {
     if (state.game_state == null) {
       ReactDOM.render(
@@ -1474,7 +1325,7 @@ function renderUI() {
             }}
           />
           <hr />
-          {credits}
+          <Credits />
         </div>,
         document.getElementById('root'),
       );
@@ -1570,7 +1421,7 @@ function renderUI() {
               />
             </label>
             <hr />
-            {credits}
+            <Credits />
           </div>
         </div>,
         document.getElementById('root'),
@@ -1633,30 +1484,10 @@ ws.onmessage = (event) => {
 
 declare var CARDS: ICardInfo[];
 
-interface ICardInfo {
-  value: string;
-  display_value: string;
-  typ: string;
-  number: string | null;
-  points: number;
-}
-
 interface IPlayer {
   id: number;
   name: string;
   level: string;
-}
-
-type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
-interface IFindingFriends {
-  num_friends: number;
-  friends: [IFriend];
-}
-
-interface IFriend {
-  card: string;
-  skip: number;
-  player_id: number | null;
 }
 
 interface IGameState {
@@ -1728,25 +1559,6 @@ interface IPlayPhase {
   trick: ITrick;
   last_trick: ITrick | null;
   hide_landlord_points: boolean | null;
-}
-
-interface ITrickUnit {
-  Tractor: {count: number; members: string[]} | null;
-  Repeated: {count: number; card: string} | null;
-}
-
-interface ITrickFormat {
-  suit: string;
-  trump: ITrump;
-  units: [ITrickUnit];
-}
-
-interface ITrick {
-  player_queue: number[];
-  played_cards: {id: number; cards: string[]}[];
-  current_winner: number | null;
-  trick_format: ITrickFormat | null;
-  trump: ITrump;
 }
 
 interface IHands {

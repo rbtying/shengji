@@ -5,8 +5,10 @@
   "repository": "https://github.com/rbtying/shengji.git",
   "license": "MIT",
   "dependencies": {
+    "@types/classnames": "^2.2.10",
     "@types/react": "^16.9.32",
     "@types/react-dom": "^16.9.6",
+    "classnames": "^2.2.6",
     "prettier": "^2.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
