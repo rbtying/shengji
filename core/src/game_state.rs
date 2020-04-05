@@ -868,14 +868,8 @@ impl InitializePhase {
         }
 
         let game_mode = match self.game_mode {
-            GameMode::FindingFriends { num_friends, .. }
-                if num_friends > 0 && num_friends <= self.players.len() - 1 =>
-            {
-                GameMode::FindingFriends {
-                    num_friends,
-                    friends: vec![],
-                }
-            }
+            // Always override the number of friends for finding friends
+            // TODO: consider exposing this in the future properly...
             GameMode::FindingFriends { .. } => GameMode::FindingFriends {
                 num_friends: (self.players.len() / 2) - 1,
                 friends: vec![],
