@@ -1,3 +1,16 @@
+export type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
+
+export interface IFindingFriends {
+  num_friends: number;
+  friends: [IFriend];
+}
+
+export interface IFriend {
+  card: string;
+  skip: number;
+  player_id: number | null;
+}
+
 export interface ICardInfo {
   value: string;
   display_value: string;

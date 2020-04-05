@@ -7,8 +7,9 @@ import FriendSelect from './FriendSelect';
 import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
+import GameMode from './GameMode';
 import mapObject from './util/mapObject';
-import {ICardInfo, ITrick, ITrump} from './types';
+import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
 
 const e = React.createElement;
 const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
@@ -73,7 +74,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -267,7 +268,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -434,7 +435,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     if (this.props.state.players[landlord_idx].name == this.props.name) {
       return (
         <div>
-          <GameMode game_mode={this.props.state.game_mode} />
+          <GameMode gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -496,7 +497,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <GameMode game_mode={this.props.state.game_mode} />
+          <GameMode gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -602,7 +603,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
 
     return (
       <div>
-        <GameMode game_mode={this.props.state.game_mode} />
+        <GameMode gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -1223,31 +1224,6 @@ class Chat extends React.Component<IChatProps, IChatState> {
   }
 }
 
-class GameMode extends React.Component<{game_mode: IGameMode}, {}> {
-  render() {
-    if (this.props.game_mode == 'Tractor') {
-      return (
-        <h1>
-          升级 / Tractor (
-          <a href="rules" target="_blank">
-            rules
-          </a>
-          )
-        </h1>
-      );
-    } else {
-      return (
-        <h1>
-          找朋友 / Finding Friends (
-          <a href="rules" target="_blank">
-            rules
-          </a>
-          )
-        </h1>
-      );
-    }
-  }
-}
 
 class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
@@ -1541,18 +1517,6 @@ interface IPlayer {
   id: number;
   name: string;
   level: string;
-}
-
-type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
-interface IFindingFriends {
-  num_friends: number;
-  friends: [IFriend];
-}
-
-interface IFriend {
-  card: string;
-  skip: number;
-  player_id: number | null;
 }
 
 interface IGameState {
