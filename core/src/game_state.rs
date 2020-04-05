@@ -136,6 +136,28 @@ impl GameState {
         }
     }
 
+    pub fn reset(&mut self) -> Result<Vec<String>, Error> {
+        match self {
+            GameState::Initialize(_) => bail!("Game has not started yet!"),
+            GameState::Draw(ref mut p) => {
+                let (s, m) = p.return_to_initialize()?;
+                *self = GameState::Initialize(s);
+                Ok(m)
+            }
+            GameState::Exchange(ref mut p) => {
+                let (s, m) = p.return_to_initialize()?;
+                *self = GameState::Initialize(s);
+                Ok(m)
+            }
+            GameState::Play(ref mut p) => {
+                let (s, m) = p.return_to_initialize()?;
+                *self = GameState::Initialize(s);
+                Ok(m)
+            }
+            GameState::Done => bail!("Game is done"),
+        }
+    }
+
     pub fn for_player(&self, id: PlayerID) -> GameState {
         let mut s = self.clone();
         match s {
@@ -431,6 +453,36 @@ impl PlayPhase {
             msgs,
         ))
     }
+
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
+        let mut players = self.players.clone();
+        let mut msgs = vec![];
+        for observer in &self.observers {
+            msgs.push(format!("{} is joining the game", observer.name));
+            players.push(observer.clone());
+        }
+
+        msgs.push("Resetting game".to_string());
+
+        Ok((
+            InitializePhase {
+                game_mode: match self.game_mode {
+                    GameMode::Tractor => GameMode::Tractor,
+                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
+                        num_friends,
+                        friends: vec![],
+                    },
+                },
+                num_decks: Some(self.num_decks),
+                kitty_size: None,
+                max_player_id: self.max_player_id,
+                landlord: Some(self.landlord),
+                hide_landlord_points: self.hide_landlord_points,
+                players,
+            },
+            msgs,
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -596,6 +648,36 @@ impl ExchangePhase {
             landlords_team,
         })
     }
+
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
+        let mut players = self.players.clone();
+        let mut msgs = vec![];
+        for observer in &self.observers {
+            msgs.push(format!("{} is joining the game", observer.name));
+            players.push(observer.clone());
+        }
+
+        msgs.push("Resetting game".to_string());
+
+        Ok((
+            InitializePhase {
+                game_mode: match self.game_mode {
+                    GameMode::Tractor => GameMode::Tractor,
+                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
+                        num_friends,
+                        friends: vec![],
+                    },
+                },
+                num_decks: Some(self.num_decks),
+                kitty_size: None,
+                max_player_id: self.max_player_id,
+                landlord: Some(self.landlord),
+                hide_landlord_points: self.hide_landlord_points,
+                players,
+            },
+            msgs,
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -759,6 +841,36 @@ impl DrawPhase {
                 trump,
             })
         }
+    }
+
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
+        let mut players = self.players.clone();
+        let mut msgs = vec![];
+        for observer in &self.observers {
+            msgs.push(format!("{} is joining the game", observer.name));
+            players.push(observer.clone());
+        }
+
+        msgs.push("Resetting game".to_string());
+
+        Ok((
+            InitializePhase {
+                game_mode: match self.game_mode {
+                    GameMode::Tractor => GameMode::Tractor,
+                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
+                        num_friends,
+                        friends: vec![],
+                    },
+                },
+                num_decks: Some(self.num_decks),
+                kitty_size: None,
+                max_player_id: self.max_player_id,
+                landlord: self.landlord,
+                hide_landlord_points: self.hide_landlord_points,
+                players,
+            },
+            msgs,
+        ))
     }
 }
 
