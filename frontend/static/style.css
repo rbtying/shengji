@@ -45,3 +45,4 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .trump { margin: 10px 0; }
 .pending-friends p { margin: 0; }
 .pending-friends { margin: 10px; }
+.reset-link { float: right }
