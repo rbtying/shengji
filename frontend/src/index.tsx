@@ -4,13 +4,17 @@ import beep from './beep';
 import Errors from './Errors';
 import Trump from './Trump';
 import FriendSelect from './FriendSelect';
-import {ITrump} from './types';
+import LabeledPlay from './LabeledPlay';
+import Card from './Card';
+import Trick from './Trick';
+import {ICardInfo, ITrick, ITrump} from './types';
 
 const e = React.createElement;
 const CARD_LUT: {[details: string]: ICardInfo} = {};
 CARDS.forEach((c) => {
   CARD_LUT[c.value] = c;
 });
+(window as any).CARD_LUT = CARD_LUT;
 
 interface IInitializeProps {
   state: IInitializePhase;
@@ -659,48 +663,6 @@ class Play extends React.Component<IPlayProps, IPlayState> {
   }
 }
 
-class Trick extends React.Component<{players: IPlayer[]; trick: ITrick}, {}> {
-  render() {
-    const names_by_id: {[player_id: number]: string} = {};
-    this.props.players.forEach((p) => {
-      names_by_id[p.id] = p.name;
-    });
-    const blank_cards =
-      this.props.trick.played_cards.length > 0
-        ? Array(this.props.trick.played_cards[0].cards.length).fill('🂠')
-        : ['🂠'];
-
-    return (
-      <div className="trick">
-        {this.props.trick.played_cards.map((played, idx) => {
-          const winning = this.props.trick.current_winner == played.id;
-          return (
-            <LabeledPlay
-              key={idx}
-              label={
-                winning
-                  ? `${names_by_id[played.id]} (!)`
-                  : names_by_id[played.id]
-              }
-              className={winning ? 'winning' : ''}
-              cards={played.cards}
-            />
-          );
-        })}
-        {this.props.trick.player_queue.map((id, idx) => {
-          return (
-            <LabeledPlay
-              key={idx + this.props.trick.played_cards.length}
-              label={names_by_id[id]}
-              cards={blank_cards}
-            />
-          );
-        })}
-      </div>
-    );
-  }
-}
-
 interface IPointsProps {
   players: IPlayer[];
   num_decks: number;
@@ -846,62 +808,6 @@ class Cards extends React.Component<ICardsProps, {}> {
           ))}
           {unselected.length == 0 ? <Card card="🂠" /> : null}
         </div>
-      </div>
-    );
-  }
-}
-
-interface ICardProps {
-  card: string;
-  className?: string;
-  onClick?(evt: any): any;
-}
-class Card extends React.Component<ICardProps, {}> {
-  render() {
-    const c = CARD_LUT[this.props.card];
-    if (!c) {
-      return e(
-        'span',
-        {
-          className: this.props.className
-            ? `card unknown ${this.props.className}`
-            : 'card unknown',
-        },
-        this.props.card,
-      );
-    }
-
-    const props: {onClick?(evt: any): any; className: string} = {
-      className: this.props.className
-        ? `card ${c.typ} ${this.props.className}`
-        : `card ${c.typ}`,
-    };
-    if (this.props.onClick) {
-      props.onClick = this.props.onClick;
-    }
-    return e('span', props, c.display_value);
-  }
-}
-
-interface ILabeledPlayProps {
-  className?: string;
-  cards: string[];
-  label: string;
-}
-class LabeledPlay extends React.Component<ILabeledPlayProps, {}> {
-  render() {
-    let className = 'labeled-play';
-    if (this.props.className) {
-      className = className + ' ' + this.props.className;
-    }
-    return (
-      <div className={className}>
-        <div className="play">
-          {this.props.cards.map((card, idx) => (
-            <Card card={card} key={idx} />
-          ))}
-        </div>
-        <div className="label">{this.props.label}</div>
       </div>
     );
   }
@@ -1633,14 +1539,6 @@ ws.onmessage = (event) => {
 
 declare var CARDS: ICardInfo[];
 
-interface ICardInfo {
-  value: string;
-  display_value: string;
-  typ: string;
-  number: string | null;
-  points: number;
-}
-
 interface IPlayer {
   id: number;
   name: string;
@@ -1728,25 +1626,6 @@ interface IPlayPhase {
   trick: ITrick;
   last_trick: ITrick | null;
   hide_landlord_points: boolean | null;
-}
-
-interface ITrickUnit {
-  Tractor: {count: number; members: string[]} | null;
-  Repeated: {count: number; card: string} | null;
-}
-
-interface ITrickFormat {
-  suit: string;
-  trump: ITrump;
-  units: [ITrickUnit];
-}
-
-interface ITrick {
-  player_queue: number[];
-  played_cards: {id: number; cards: string[]}[];
-  current_winner: number | null;
-  trick_format: ITrickFormat | null;
-  trump: ITrump;
 }
 
 interface IHands {
