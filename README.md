@@ -19,7 +19,7 @@ with `nginx`).
 # Development
 
 ```
-cd frontend && yarn build
+cd frontend && yarn watch
 cd backend && cargo run --features dynamic
 ```
 
