@@ -397,7 +397,7 @@ impl Trick {
             Ok((
                 self.current_winner.ok_or(TrickError::OutOfOrder)?,
                 all_card_points,
-                tf.units.iter().map(|u| u.size()).max().unwrap_or(0),
+                tf.units.iter().map(|u| u.size()).max().unwrap_or(0) * 2,
             ))
         } else {
             Err(TrickError::OutOfOrder)
