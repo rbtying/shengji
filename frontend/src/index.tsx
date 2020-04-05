@@ -8,6 +8,7 @@ import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
 import GameMode from './GameMode';
+import Credits from './Credits';
 import mapObject from './util/mapObject';
 import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
 
@@ -1317,21 +1318,6 @@ function send(value: any) {
 }
 
 function renderUI() {
-  const credits = (
-    <p>
-      Made by Robert Ying and Abra Shen and other{' '}
-      <a
-        href="https://github.com/rbtying/shengji/graphs/contributors"
-        target="_blank"
-      >
-        friends
-      </a>
-      . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{' '}
-      <a href="https://github.com/rbtying/shengji" target="_blank">
-        GitHub
-      </a>
-    </p>
-  );
   if (state.connected) {
     if (state.game_state == null) {
       ReactDOM.render(
@@ -1354,7 +1340,7 @@ function renderUI() {
             }}
           />
           <hr />
-          {credits}
+          <Credits />
         </div>,
         document.getElementById('root'),
       );
@@ -1450,7 +1436,7 @@ function renderUI() {
               />
             </label>
             <hr />
-            {credits}
+            <Credits />
           </div>
         </div>,
         document.getElementById('root'),
