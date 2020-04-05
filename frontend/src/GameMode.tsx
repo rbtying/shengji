@@ -11,9 +11,9 @@ const GameMode = (props: Props) => {
     </a>
   );
   if (props.gameMode == 'Tractor') {
-    return <h1>升级 / Tractor ({rules})</h1>;
+    return <span>升级 / Tractor ({rules})</span>;
   } else {
-    return <h1>找朋友 / Finding Friends ({rules})</h1>;
+    return <span>找朋友 / Finding Friends ({rules})</span>;
   }
 };
 

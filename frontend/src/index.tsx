@@ -8,18 +8,22 @@ import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
 import GameMode from './GameMode';
+import Header from './Header';
+import SettingsProvider, {SettingsProps} from './SettingsProvider';
 import Credits from './Credits';
 import mapObject from './util/mapObject';
 import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
+import * as ReactModal from 'react-modal';
+ReactModal.setAppElement(document.getElementById('root'));
 
 const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
 (window as any).CARD_LUT = CARD_LUT;
 
-interface IInitializeProps {
+type IInitializeProps = SettingsProps & {
   state: IInitializePhase;
   cards: string[];
   name: string;
-}
+};
 class Initialize extends React.Component<IInitializeProps, {}> {
   constructor(props: IInitializeProps) {
     super(props);
@@ -74,7 +78,11 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
-        <GameMode gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.game_mode}
+          settings={this.props.settings}
+          onChangeSettings={this.props.onChangeSettings}
+        />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -123,11 +131,11 @@ class Initialize extends React.Component<IInitializeProps, {}> {
   }
 }
 
-interface IDrawProps {
+type IDrawProps = SettingsProps & {
   state: IDrawPhase;
   name: string;
   cards: string[];
-}
+};
 interface IDrawState {
   selected: string[];
   autodraw: boolean;
@@ -268,7 +276,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <GameMode gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.game_mode}
+          settings={this.props.settings}
+          onChangeSettings={this.props.onChangeSettings}
+        />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -338,11 +350,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   }
 }
 
-interface IExchangeProps {
+type IExchangeProps = SettingsProps & {
   state: IExchangePhase;
   name: string;
   cards: string[];
-}
+};
 interface IExchangeState {
   friends: IFriend[];
 }
@@ -438,7 +450,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     if (this.props.state.players[landlord_idx].name == this.props.name) {
       return (
         <div>
-          <GameMode gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            settings={this.props.settings}
+            onChangeSettings={this.props.onChangeSettings}
+          />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -501,7 +517,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <GameMode gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            settings={this.props.settings}
+            onChangeSettings={this.props.onChangeSettings}
+          />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -521,13 +541,13 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 }
 
-interface IPlayProps {
+type IPlayProps = SettingsProps & {
   state: IPlayPhase;
   name: string;
   cards: string[];
   beep_on_turn: boolean;
   show_last_trick: boolean;
-}
+};
 interface IPlayState {
   selected: string[];
 }
@@ -607,7 +627,11 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     return (
       <div>
         {shouldBeBeeping ? <Beeper /> : null}
-        <GameMode gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.game_mode}
+          settings={this.props.settings}
+          onChangeSettings={this.props.onChangeSettings}
+        />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -1334,100 +1358,63 @@ function renderUI() {
         document.getElementById('root'),
       );
     } else {
+      const defaultSettings = {
+        fourColor: state.four_color,
+        showLastTrick: state.show_last_trick,
+        beepOnTurn: state.beep_on_turn,
+      };
       ReactDOM.render(
-        <div className={state.four_color ? 'four-color' : ''}>
-          <Errors errors={state.errors} />
-          <div className="game">
-            {state.game_state.Initialize ? (
-              <Initialize
-                state={state.game_state.Initialize}
-                cards={state.cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Draw ? (
-              <Draw
-                state={state.game_state.Draw}
-                cards={state.cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Exchange ? (
-              <Exchange
-                state={state.game_state.Exchange}
-                cards={state.cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Play ? (
-              <Play
-                state={state.game_state.Play}
-                cards={state.cards}
-                name={state.name}
-                show_last_trick={state.show_last_trick}
-                beep_on_turn={state.beep_on_turn}
-              />
-            ) : null}
-            {state.game_state.Done ? <p>Game Over</p> : null}
-          </div>
-          <Chat messages={state.messages} />
-          <hr />
-          <div className="settings">
-            <label>
-              four-color mode
-              <input
-                name="four-color-mode"
-                type="checkbox"
-                checked={state.four_color}
-                onChange={(evt) => {
-                  state.four_color = evt.target.checked;
-                  if (state.four_color) {
-                    window.localStorage.setItem('four_color', 'on');
-                  } else {
-                    window.localStorage.setItem('four_color', 'off');
-                  }
-                  renderUI();
-                }}
-              />
-            </label>
-            <label>
-              show last trick
-              <input
-                name="show-last-trick"
-                type="checkbox"
-                checked={state.show_last_trick}
-                onChange={(evt) => {
-                  state.show_last_trick = evt.target.checked;
-                  if (state.show_last_trick) {
-                    window.localStorage.setItem('show_last_trick', 'on');
-                  } else {
-                    window.localStorage.setItem('show_last_trick', 'off');
-                  }
-                  renderUI();
-                }}
-              />
-            </label>
-            <label>
-              beep on turn
-              <input
-                name="beep-on-turn"
-                type="checkbox"
-                checked={state.beep_on_turn}
-                onChange={(evt) => {
-                  state.beep_on_turn = evt.target.checked;
-                  if (state.beep_on_turn) {
-                    window.localStorage.setItem('beep_on_turn', 'on');
-                  } else {
-                    window.localStorage.setItem('beep_on_turn', 'off');
-                  }
-                  renderUI();
-                }}
-              />
-            </label>
-            <hr />
-            <Credits />
-          </div>
-        </div>,
+        <SettingsProvider defaultSettings={defaultSettings}>
+          {(settings, handleChangeSettings) => (
+            <div className={state.four_color ? 'four-color' : ''}>
+              <Errors errors={state.errors} />
+              <div className="game">
+                {state.game_state.Initialize ? (
+                  <Initialize
+                    settings={settings}
+                    onChangeSettings={handleChangeSettings}
+                    state={state.game_state.Initialize}
+                    cards={state.cards}
+                    name={state.name}
+                  />
+                ) : null}
+                {state.game_state.Draw ? (
+                  <Draw
+                    settings={settings}
+                    onChangeSettings={handleChangeSettings}
+                    state={state.game_state.Draw}
+                    cards={state.cards}
+                    name={state.name}
+                  />
+                ) : null}
+                {state.game_state.Exchange ? (
+                  <Exchange
+                    settings={settings}
+                    onChangeSettings={handleChangeSettings}
+                    state={state.game_state.Exchange}
+                    cards={state.cards}
+                    name={state.name}
+                  />
+                ) : null}
+                {state.game_state.Play ? (
+                  <Play
+                    settings={settings}
+                    onChangeSettings={handleChangeSettings}
+                    state={state.game_state.Play}
+                    cards={state.cards}
+                    name={state.name}
+                    show_last_trick={state.show_last_trick}
+                    beep_on_turn={state.beep_on_turn}
+                  />
+                ) : null}
+                {state.game_state.Done ? <p>Game Over</p> : null}
+              </div>
+              <Chat messages={state.messages} />
+              <hr />
+              <Credits />
+            </div>
+          )}
+        </SettingsProvider>,
         document.getElementById('root'),
       );
     }
