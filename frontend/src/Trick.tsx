@@ -1,16 +1,17 @@
 import * as React from 'react';
 import {IPlayer, ITrick} from './types';
 import LabeledPlay from './LabeledPlay';
+import mapObject from './util/mapObject';
 
 type Props = {
   players: IPlayer[];
   trick: ITrick;
 };
 const Trick = (props: Props) => {
-  const names_by_id: {[player_id: number]: string} = {};
-  props.players.forEach((p) => {
-    names_by_id[p.id] = p.name;
-  });
+  const namesById = mapObject(props.players, (p: IPlayer) => [
+    String(p.id),
+    p.name,
+  ]);
   const blank_cards =
     props.trick.played_cards.length > 0
       ? Array(props.trick.played_cards[0].cards.length).fill('🂠')
@@ -24,7 +25,7 @@ const Trick = (props: Props) => {
           <LabeledPlay
             key={idx}
             label={
-              winning ? `${names_by_id[played.id]} (!)` : names_by_id[played.id]
+              winning ? `${namesById[played.id]} (!)` : namesById[played.id]
             }
             className={winning ? 'winning' : ''}
             cards={played.cards}
@@ -35,7 +36,7 @@ const Trick = (props: Props) => {
         return (
           <LabeledPlay
             key={idx + props.trick.played_cards.length}
-            label={names_by_id[id]}
+            label={namesById[id]}
             cards={blank_cards}
           />
         );

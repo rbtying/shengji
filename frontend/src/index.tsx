@@ -7,13 +7,11 @@ import FriendSelect from './FriendSelect';
 import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
+import mapObject from './util/mapObject';
 import {ICardInfo, ITrick, ITrump} from './types';
 
 const e = React.createElement;
-const CARD_LUT: {[details: string]: ICardInfo} = {};
-CARDS.forEach((c) => {
-  CARD_LUT[c.value] = c;
-});
+const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
 (window as any).CARD_LUT = CARD_LUT;
 
 interface IInitializeProps {
