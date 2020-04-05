@@ -1,9 +1,10 @@
 module.exports = {
-  mode: "production",
-  devtool: "source-map",
+  mode: 'production',
+  devtool: 'source-map',
   resolve: {
-    extensions: [".ts", ".tsx"]
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
+  entry: './src/index.tsx',
   module: {
     rules: [
       {
@@ -11,14 +12,10 @@ module.exports = {
         exclude: /node_modules/,
         use: [
           {
-            loader: "ts-loader"
-          }
-        ]
+            loader: 'ts-loader',
+          },
+        ],
       },
-    ]
+    ],
   },
-  externals: {
-    react: "React",
-    "react-dom": "ReactDOM"
-  }
 };

@@ -1,7 +1,9 @@
-"use strict";
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import Errors from './Errors';
 
 const e = React.createElement;
-const CARD_LUT: { [details: string]: ICardInfo } = {};
+const CARD_LUT: {[details: string]: ICardInfo} = {};
 CARDS.forEach((c) => {
   CARD_LUT[c.value] = c;
 });
@@ -22,8 +24,8 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setGameMode(evt: any) {
     evt.preventDefault();
-    if (evt.target.value == "Tractor") {
-      send({ Action: { SetGameMode: "Tractor" } });
+    if (evt.target.value == 'Tractor') {
+      send({Action: {SetGameMode: 'Tractor'}});
     } else {
       send({
         Action: {
@@ -40,7 +42,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setKittySize(evt: any) {
     evt.preventDefault();
-    if (evt.target.value != "") {
+    if (evt.target.value != '') {
       const size = parseInt(evt.target.value, 10);
       send({
         Action: {
@@ -52,17 +54,17 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setHideLandlordsPoints(evt: any) {
     evt.preventDefault();
-    send({ Action: { SetHideLandlordsPoints: evt.target.value == "hide" } });
+    send({Action: {SetHideLandlordsPoints: evt.target.value == 'hide'}});
   }
 
   startGame(evt: any) {
     evt.preventDefault();
-    send({ Action: "StartGame" });
+    send({Action: 'StartGame'});
   }
 
   render() {
     const mode_as_string =
-      this.props.state.game_mode == "Tractor" ? "Tractor" : "FindingFriends";
+      this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
         <GameMode game_mode={this.props.state.game_mode} />
@@ -74,7 +76,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
           name={this.props.name}
         />
         <p>
-          Send the link to other players to allow them to join the game:{" "}
+          Send the link to other players to allow them to join the game:{' '}
           <a href={window.location.href} target="_blank">
             <code>{window.location.href}</code>
           </a>
@@ -88,7 +90,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
           players={this.props.state.players}
         />
         <select
-          value={this.props.state.hide_landlord_points ? "hide" : "show"}
+          value={this.props.state.hide_landlord_points ? 'hide' : 'show'}
           onChange={this.setHideLandlordsPoints}
         >
           <option value="show">Show all players' points</option>
@@ -140,18 +142,18 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   }
 
   setSelected(new_selected: string[]) {
-    this.setState({ selected: new_selected });
+    this.setState({selected: new_selected});
   }
 
   makeBid(evt: any) {
     evt.preventDefault();
-    const counts: { [card: string]: number } = {};
+    const counts: {[card: string]: number} = {};
     this.state.selected.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
     if (Object.keys(counts).length != 1) {
       return;
     }
 
-    const players: { [player_id: number]: IPlayer } = {};
+    const players: {[player_id: number]: IPlayer} = {};
     this.props.state.players.forEach((p) => {
       players[p.id] = p;
     });
@@ -164,7 +166,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         }
       });
 
-      send({ Action: { Bid: [c, counts[c] + already_bid] } });
+      send({Action: {Bid: [c, counts[c] + already_bid]}});
       this.setSelected([]);
     }
   }
@@ -178,13 +180,13 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       this.timeout = null;
     }
     if (can_draw) {
-      send({ Action: "DrawCard" });
+      send({Action: 'DrawCard'});
     }
   }
 
   pickUpKitty(evt: any) {
     evt.preventDefault();
-    send({ Action: "PickUpKitty" });
+    send({Action: 'PickUpKitty'});
   }
 
   onAutodrawClicked(evt: any) {
@@ -229,7 +231,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       });
     }
 
-    const players: { [player_id: number]: IPlayer } = {};
+    const players: {[player_id: number]: IPlayer} = {};
     let player_id = -1;
     this.props.state.players.forEach((p) => {
       players[p.id] = p;
@@ -238,7 +240,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       }
     });
 
-    const my_bids: { [card: string]: number } = {};
+    const my_bids: {[card: string]: number} = {};
     this.props.state.bids.forEach((bid) => {
       if (player_id == bid.id) {
         const existing_bid = my_bids[bid.card] || 0;
@@ -351,7 +353,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 
   fixFriends() {
-    if (this.props.state.game_mode != "Tractor") {
+    if (this.props.state.game_mode != 'Tractor') {
       const game_mode = this.props.state.game_mode.FindingFriends;
       const num_friends = game_mode.num_friends;
       const prop_friends = game_mode.friends;
@@ -360,7 +362,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           const friends = [...this.state.friends];
           while (friends.length < num_friends) {
             friends.push({
-              card: "",
+              card: '',
               skip: 0,
               player_id: null,
             });
@@ -368,14 +370,14 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           while (friends.length > num_friends) {
             friends.pop();
           }
-          this.setState({ friends: friends });
+          this.setState({friends: friends});
         } else {
-          this.setState({ friends: prop_friends });
+          this.setState({friends: prop_friends});
         }
       }
     } else {
       if (this.state.friends.length != 0) {
-        this.setState({ friends: [] });
+        this.setState({friends: []});
       }
     }
   }
@@ -389,22 +391,22 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 
   moveCardToKitty(card: string) {
-    send({ Action: { MoveCardToKitty: card } });
+    send({Action: {MoveCardToKitty: card}});
   }
 
   moveCardToHand(card: string) {
-    send({ Action: { MoveCardToHand: card } });
+    send({Action: {MoveCardToHand: card}});
   }
 
   startGame(evt: any) {
     evt.preventDefault();
-    send({ Action: "BeginPlay" });
+    send({Action: 'BeginPlay'});
   }
 
   pickFriends(evt: any) {
     evt.preventDefault();
     if (
-      this.props.state.game_mode != "Tractor" &&
+      this.props.state.game_mode != 'Tractor' &&
       this.props.state.game_mode.FindingFriends.num_friends ==
         this.state.friends.length
     ) {
@@ -434,14 +436,14 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             name={this.props.name}
           />
           <Trump trump={this.props.state.trump} />
-          {this.props.state.game_mode != "Tractor" ? (
+          {this.props.state.game_mode != 'Tractor' ? (
             <div>
               <Friends game_mode={this.props.state.game_mode} />
               {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
                   new_friends[idx] = x;
-                  this.setState({ friends: new_friends });
+                  this.setState({friends: new_friends});
                 };
                 return (
                   <FriendSelect
@@ -467,7 +469,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             ))}
           </div>
           <h2>
-            Discarded cards {this.props.state.kitty.length} /{" "}
+            Discarded cards {this.props.state.kitty.length} /{' '}
             {this.props.state.kitty_size}
           </h2>
           <div className="kitty">
@@ -533,28 +535,28 @@ class Play extends React.Component<IPlayProps, IPlayState> {
   }
 
   setSelected(new_selected: string[]) {
-    this.setState({ selected: new_selected });
+    this.setState({selected: new_selected});
   }
 
   playCards(evt: any) {
     evt.preventDefault();
-    send({ Action: { PlayCards: this.state.selected } });
+    send({Action: {PlayCards: this.state.selected}});
     this.setSelected([]);
   }
 
   takeBackCards(evt: any) {
     evt.preventDefault();
-    send({ Action: "TakeBackCards" });
+    send({Action: 'TakeBackCards'});
   }
 
   endTrick(evt: any) {
     evt.preventDefault();
-    send({ Action: "EndTrick" });
+    send({Action: 'EndTrick'});
   }
 
   startNewGame(evt: any) {
     evt.preventDefault();
-    send({ Action: "StartNewGame" });
+    send({Action: 'StartNewGame'});
   }
 
   render() {
@@ -653,16 +655,16 @@ class Play extends React.Component<IPlayProps, IPlayState> {
   }
 }
 
-class Trick extends React.Component<{ players: IPlayer[]; trick: ITrick }, {}> {
+class Trick extends React.Component<{players: IPlayer[]; trick: ITrick}, {}> {
   render() {
-    const names_by_id: { [player_id: number]: string } = {};
+    const names_by_id: {[player_id: number]: string} = {};
     this.props.players.forEach((p) => {
       names_by_id[p.id] = p.name;
     });
     const blank_cards =
       this.props.trick.played_cards.length > 0
-        ? Array(this.props.trick.played_cards[0].cards.length).fill("🂠")
-        : ["🂠"];
+        ? Array(this.props.trick.played_cards[0].cards.length).fill('🂠')
+        : ['🂠'];
 
     return (
       <div className="trick">
@@ -676,7 +678,7 @@ class Trick extends React.Component<{ players: IPlayer[]; trick: ITrick }, {}> {
                   ? `${names_by_id[played.id]} (!)`
                   : names_by_id[played.id]
               }
-              className={winning ? "winning" : ""}
+              className={winning ? 'winning' : ''}
               cards={played.cards}
             />
           );
@@ -698,7 +700,7 @@ class Trick extends React.Component<{ players: IPlayer[]; trick: ITrick }, {}> {
 interface IPointsProps {
   players: IPlayer[];
   num_decks: number;
-  points: { [player_id: number]: string[] };
+  points: {[player_id: number]: string[]};
   landlords_team: number[];
   landlord: number;
   hide_landlord_points: boolean | null;
@@ -707,7 +709,7 @@ class Points extends React.Component<IPointsProps, {}> {
   render() {
     let total_points_played = 0;
     let non_landlords_points = 0;
-    let landlord = "";
+    let landlord = '';
 
     const player_point_elements = this.props.players.map((player) => {
       if (player.id == this.props.landlord) {
@@ -721,14 +723,14 @@ class Points extends React.Component<IPointsProps, {}> {
       total_points_played += player_points;
 
       const on_landlords_team = this.props.landlords_team.includes(player.id);
-      const className = on_landlords_team ? "landlord" : "";
+      const className = on_landlords_team ? 'landlord' : '';
       if (!on_landlords_team) {
         non_landlords_points += player_points;
       }
       const cards =
         this.props.points[player.id].length > 0
           ? this.props.points[player.id]
-          : ["🂠"];
+          : ['🂠'];
 
       if (this.props.hide_landlord_points && on_landlords_team) {
         return null;
@@ -745,7 +747,7 @@ class Points extends React.Component<IPointsProps, {}> {
     });
 
     const segment = this.props.num_decks * 20;
-    let threshold_str = "";
+    let threshold_str = '';
 
     if (non_landlords_points == 0) {
       threshold_str = `${landlord}'s team will go up 3 levels (next threshold: 5分)`;
@@ -768,7 +770,7 @@ class Points extends React.Component<IPointsProps, {}> {
         5 * segment
       }分)`;
     } else {
-      threshold_str = "The attacking team will go up 3 levels.";
+      threshold_str = 'The attacking team will go up 3 levels.';
     }
 
     return (
@@ -778,7 +780,7 @@ class Points extends React.Component<IPointsProps, {}> {
           {non_landlords_points}分
           {this.props.hide_landlord_points
             ? null
-            : ` / ${total_points_played}分`}{" "}
+            : ` / ${total_points_played}分`}{' '}
           stolen from {landlord}'s team. {threshold_str}
         </p>
         {player_point_elements}
@@ -830,7 +832,7 @@ class Cards extends React.Component<ICardsProps, {}> {
           {this.props.selected.length == 0 ? (
             <Card
               card="🂠"
-              className={this.props.notify_empty ? "notify" : ""}
+              className={this.props.notify_empty ? 'notify' : ''}
             />
           ) : null}
         </div>
@@ -855,17 +857,17 @@ class Card extends React.Component<ICardProps, {}> {
     const c = CARD_LUT[this.props.card];
     if (!c) {
       return e(
-        "span",
+        'span',
         {
           className: this.props.className
             ? `card unknown ${this.props.className}`
-            : "card unknown",
+            : 'card unknown',
         },
-        this.props.card
+        this.props.card,
       );
     }
 
-    const props: { onClick?(evt: any): any; className: string } = {
+    const props: {onClick?(evt: any): any; className: string} = {
       className: this.props.className
         ? `card ${c.typ} ${this.props.className}`
         : `card ${c.typ}`,
@@ -873,7 +875,7 @@ class Card extends React.Component<ICardProps, {}> {
     if (this.props.onClick) {
       props.onClick = this.props.onClick;
     }
-    return e("span", props, c.display_value);
+    return e('span', props, c.display_value);
   }
 }
 
@@ -884,9 +886,9 @@ interface ILabeledPlayProps {
 }
 class LabeledPlay extends React.Component<ILabeledPlayProps, {}> {
   render() {
-    let className = "labeled-play";
+    let className = 'labeled-play';
     if (this.props.className) {
-      className = className + " " + this.props.className;
+      className = className + ' ' + this.props.className;
     }
     return (
       <div className={className}>
@@ -945,12 +947,12 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
   }
 }
 
-class Trump extends React.Component<{ trump: ITrump }, {}> {
+class Trump extends React.Component<{trump: ITrump}, {}> {
   render() {
     if (this.props.trump.Standard) {
       return (
         <div className="trump">
-          The trump suit is{" "}
+          The trump suit is{' '}
           <span className={this.props.trump.Standard.suit}>
             {this.props.trump.Standard.suit}
           </span>
@@ -972,11 +974,11 @@ class Trump extends React.Component<{ trump: ITrump }, {}> {
 interface IKickerProps {
   players: IPlayer[];
 }
-class Kicker extends React.Component<IKickerProps, { to_kick: string }> {
+class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
   constructor(props: IKickerProps) {
     super(props);
     this.state = {
-      to_kick: "",
+      to_kick: '',
     };
     this.onChange = this.onChange.bind(this);
     this.kick = this.kick.bind(this);
@@ -984,30 +986,30 @@ class Kicker extends React.Component<IKickerProps, { to_kick: string }> {
 
   onChange(evt: any) {
     evt.preventDefault();
-    this.setState({ to_kick: evt.target.value });
+    this.setState({to_kick: evt.target.value});
   }
   kick(evt: any) {
     evt.preventDefault();
-    send({ Kick: parseInt(this.state.to_kick, 10) });
+    send({Kick: parseInt(this.state.to_kick, 10)});
   }
 
   render() {
     return e(
-      "div",
-      { className: "kicker" },
+      'div',
+      {className: 'kicker'},
       e(
-        "select",
-        { value: this.state.to_kick, onChange: this.onChange },
-        e("option", { value: "" }, ""),
+        'select',
+        {value: this.state.to_kick, onChange: this.onChange},
+        e('option', {value: ''}, ''),
         this.props.players.map((player) =>
-          e("option", { value: player.id, key: player.id }, player.name)
-        )
+          e('option', {value: player.id, key: player.id}, player.name),
+        ),
       ),
       e(
-        "button",
-        { onClick: this.kick, disabled: this.state.to_kick == "" },
-        "kick"
-      )
+        'button',
+        {onClick: this.kick, disabled: this.state.to_kick == ''},
+        'kick',
+      ),
     );
   }
 }
@@ -1025,33 +1027,33 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != "") {
-      send({ Action: { SetLandlord: parseInt(evt.target.value, 10) } });
+    if (evt.target.value != '') {
+      send({Action: {SetLandlord: parseInt(evt.target.value, 10)}});
     } else {
-      send({ Action: { SetLandlord: null } });
+      send({Action: {SetLandlord: null}});
     }
   }
 
   render() {
     return e(
-      "div",
-      { className: "landlord-picker" },
+      'div',
+      {className: 'landlord-picker'},
       e(
-        "label",
+        'label',
         null,
-        "leader: ",
+        'leader: ',
         e(
-          "select",
+          'select',
           {
-            value: this.props.landlord != null ? this.props.landlord : "",
+            value: this.props.landlord != null ? this.props.landlord : '',
             onChange: this.onChange,
           },
-          e("option", { value: "" }, "winner of the bid"),
+          e('option', {value: ''}, 'winner of the bid'),
           this.props.players.map((player) =>
-            e("option", { value: player.id, key: player.id }, player.name)
-          )
-        )
-      )
+            e('option', {value: player.id, key: player.id}, player.name),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1069,10 +1071,10 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != "") {
-      send({ Action: { SetNumDecks: parseInt(evt.target.value, 10) } });
+    if (evt.target.value != '') {
+      send({Action: {SetNumDecks: parseInt(evt.target.value, 10)}});
     } else {
-      send({ Action: { SetNumDecks: null } });
+      send({Action: {SetNumDecks: null}});
     }
   }
 
@@ -1080,9 +1082,9 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
     return (
       <div className="num-decks-picker">
         <label>
-          number of decks:{" "}
+          number of decks:{' '}
           <select
-            value={this.props.num_decks != null ? this.props.num_decks : ""}
+            value={this.props.num_decks != null ? this.props.num_decks : ''}
             onChange={this.onChange}
           >
             <option value="">default</option>
@@ -1117,13 +1119,13 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != "") {
-      send({ Action: { SetRank: evt.target.value } });
+    if (evt.target.value != '') {
+      send({Action: {SetRank: evt.target.value}});
     }
   }
 
   render() {
-    let rank = "";
+    let rank = '';
     this.props.players.forEach((p) => {
       if (p.name == this.props.name) {
         rank = p.level;
@@ -1132,22 +1134,22 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
     return (
       <div className="landlord-picker">
         <label>
-          rank:{" "}
+          rank:{' '}
           <select value={rank} onChange={this.onChange}>
             {[
-              "2",
-              "3",
-              "4",
-              "5",
-              "6",
-              "7",
-              "8",
-              "9",
-              "10",
-              "J",
-              "K",
-              "Q",
-              "A",
+              '2',
+              '3',
+              '4',
+              '5',
+              '6',
+              '7',
+              '8',
+              '9',
+              '10',
+              'J',
+              'K',
+              'Q',
+              'A',
             ].map((rank) => (
               <option value={rank} key={rank}>
                 {rank}
@@ -1182,7 +1184,7 @@ class Players extends React.Component<IPlayersProps, {}> {
       player_ids[index] = player_ids[player_ids.length - 1];
       player_ids[player_ids.length - 1] = p;
     }
-    send({ Action: { ReorderPlayers: player_ids } });
+    send({Action: {ReorderPlayers: player_ids}});
   }
 
   movePlayerRight(evt: any, player_id: number) {
@@ -1198,74 +1200,74 @@ class Players extends React.Component<IPlayersProps, {}> {
       player_ids[index] = player_ids[0];
       player_ids[0] = p;
     }
-    send({ Action: { ReorderPlayers: player_ids } });
+    send({Action: {ReorderPlayers: player_ids}});
   }
 
   render() {
     return e(
-      "table",
-      { className: "players" },
+      'table',
+      {className: 'players'},
       e(
-        "tbody",
+        'tbody',
         null,
         e(
-          "tr",
+          'tr',
           null,
           this.props.players.map((player) => {
-            let className = "player";
+            let className = 'player';
             let descriptor = `${player.name} (rank ${player.level})`;
 
             if (player.id == this.props.landlord) {
-              descriptor = descriptor + " (当庄)";
+              descriptor = descriptor + ' (当庄)';
             }
             if (player.name == this.props.name) {
-              descriptor = descriptor + " (You!)";
+              descriptor = descriptor + ' (You!)';
             }
             if (
               player.id == this.props.landlord ||
               (this.props.landlords_team &&
                 this.props.landlords_team.includes(player.id))
             ) {
-              className = className + " landlord";
+              className = className + ' landlord';
             }
             if (player.id == this.props.next) {
-              className = className + " next";
+              className = className + ' next';
             }
 
             return e(
-              "td",
-              { key: player.id, className: className },
+              'td',
+              {key: player.id, className: className},
               this.props.movable
                 ? e(
-                    "button",
+                    'button',
                     {
                       onClick: (evt: any) =>
                         this.movePlayerLeft(evt, player.id),
                     },
-                    "<"
+                    '<',
                   )
                 : null,
               descriptor,
               this.props.movable
                 ? e(
-                    "button",
+                    'button',
                     {
                       onClick: (evt: any) =>
                         this.movePlayerRight(evt, player.id),
                     },
-                    ">"
+                    '>',
                   )
-                : null
+                : null,
             );
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
   }
 }
 
 interface IChatProps {
-  messages: { from: string; message: string; from_game?: boolean }[];
+  messages: {from: string; message: string; from_game?: boolean}[];
 }
 interface IChatState {
   message: string;
@@ -1275,25 +1277,25 @@ class Chat extends React.Component<IChatProps, IChatState> {
 
   constructor(props: IChatProps) {
     super(props);
-    this.state = { message: "" };
+    this.state = {message: ''};
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentDidMount() {
     if (this.anchor.current) {
-      this.anchor.current.scrollIntoView({ block: "nearest", inline: "start" });
+      this.anchor.current.scrollIntoView({block: 'nearest', inline: 'start'});
     }
   }
 
   componentDidUpdate() {
     if (this.anchor.current) {
-      this.anchor.current.scrollIntoView({ block: "nearest", inline: "start" });
+      this.anchor.current.scrollIntoView({block: 'nearest', inline: 'start'});
     }
   }
 
   handleChange(event: any) {
-    this.setState({ message: event.target.value });
+    this.setState({message: event.target.value});
   }
 
   handleSubmit(event: any) {
@@ -1303,7 +1305,7 @@ class Chat extends React.Component<IChatProps, IChatState> {
         Message: this.state.message,
       });
     }
-    this.setState({ message: "" });
+    this.setState({message: ''});
   }
 
   render() {
@@ -1311,9 +1313,9 @@ class Chat extends React.Component<IChatProps, IChatState> {
       <div className="chat">
         <div className="messages">
           {this.props.messages.map((m, idx) => {
-            let className = "message";
+            let className = 'message';
             if (m.from_game) {
-              className = className + " game-message";
+              className = className + ' game-message';
             }
             return (
               <p key={idx} className={className}>
@@ -1337,9 +1339,9 @@ class Chat extends React.Component<IChatProps, IChatState> {
   }
 }
 
-class GameMode extends React.Component<{ game_mode: IGameMode }, {}> {
+class GameMode extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
-    if (this.props.game_mode == "Tractor") {
+    if (this.props.game_mode == 'Tractor') {
       return (
         <h1>
           升级 / Tractor (
@@ -1363,12 +1365,12 @@ class GameMode extends React.Component<{ game_mode: IGameMode }, {}> {
   }
 }
 
-class Friends extends React.Component<{ game_mode: IGameMode }, {}> {
+class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
-    if (this.props.game_mode != "Tractor") {
+    if (this.props.game_mode != 'Tractor') {
       return e(
-        "div",
-        { className: "pending-friends" },
+        'div',
+        {className: 'pending-friends'},
         this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
           if (friend.player_id != null) {
             return null;
@@ -1381,24 +1383,24 @@ class Friends extends React.Component<{ game_mode: IGameMode }, {}> {
           const card = `${c.number}${c.typ}`;
           if (friend.skip == 0) {
             return e(
-              "p",
-              { key: idx },
-              "The next person to play ",
-              e("span", { className: c.typ }, `${c.number}${c.typ}`),
-              " is a friend"
+              'p',
+              {key: idx},
+              'The next person to play ',
+              e('span', {className: c.typ}, `${c.number}${c.typ}`),
+              ' is a friend',
             );
           } else {
             return e(
-              "p",
-              { key: idx },
+              'p',
+              {key: idx},
               `${friend.skip} `,
-              e("span", { className: c.typ }, `${c.number}${c.typ}`),
-              " can be played before the next person to play ",
-              e("span", { className: c.typ }, `${c.number}${c.typ}`),
-              " is a friend"
+              e('span', {className: c.typ}, `${c.number}${c.typ}`),
+              ' can be played before the next person to play ',
+              e('span', {className: c.typ}, `${c.number}${c.typ}`),
+              ' is a friend',
             );
           }
-        })
+        }),
       );
     } else {
       return null;
@@ -1439,43 +1441,27 @@ class FriendSelect extends React.Component<IFriendSelectProps, {}> {
       ? this.props.trump.Standard.number
       : this.props.trump.NoTrump?.number;
     return e(
-      "div",
-      { className: "friend-select" },
+      'div',
+      {className: 'friend-select'},
       e(
-        "select",
-        { value: this.props.friend.card, onChange: this.onCardChange },
-        e("option", { value: "" }, " "),
+        'select',
+        {value: this.props.friend.card, onChange: this.onCardChange},
+        e('option', {value: ''}, ' '),
         CARDS.map((c) => {
           return c.number != null && c.number != number
-            ? e(
-                "option",
-                { key: c.value, value: c.value },
-                `${c.number}${c.typ}`
-              )
+            ? e('option', {key: c.value, value: c.value}, `${c.number}${c.typ}`)
             : null;
-        })
+        }),
       ),
       e(
-        "select",
-        { value: this.props.friend.skip, onChange: this.onOrdinalChange },
+        'select',
+        {value: this.props.friend.skip, onChange: this.onOrdinalChange},
         Array(this.props.num_decks)
           .fill(1)
           .map((_, idx) => {
-            return e("option", { key: idx, value: idx }, idx + 1);
-          })
-      )
-    );
-  }
-}
-
-class Errors extends React.Component<{ errors: string[] }, {}> {
-  render() {
-    return e(
-      "div",
-      { className: "errors" },
-      this.props.errors.map((err, idx) =>
-        e("p", { key: idx }, e("code", null, err))
-      )
+            return e('option', {key: idx, value: idx}, idx + 1);
+          }),
+      ),
     );
   }
 }
@@ -1483,15 +1469,15 @@ class Errors extends React.Component<{ errors: string[] }, {}> {
 if (window.location.hash.length != 17) {
   var arr = new Uint8Array(8);
   window.crypto.getRandomValues(arr);
-  const r = Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join("");
+  const r = Array.from(arr, (d) => ('0' + d.toString(16)).substr(-2)).join('');
   window.location.hash = r;
 }
 
 const uri =
-  (location.protocol == "https:" ? "wss://" : "ws://") +
+  (location.protocol == 'https:' ? 'wss://' : 'ws://') +
   location.host +
   location.pathname +
-  (location.pathname.endsWith("/") ? "api" : "/api");
+  (location.pathname.endsWith('/') ? 'api' : '/api');
 const ws = new WebSocket(uri);
 
 interface State {
@@ -1504,18 +1490,18 @@ interface State {
   show_last_trick: boolean;
   cards: string[];
   errors: string[];
-  messages: { from: string; message: string; from_game: boolean }[];
+  messages: {from: string; message: string; from_game: boolean}[];
 }
 
 let state: State = {
   connected: false,
   room_name: window.location.hash.slice(1),
-  name: window.localStorage.getItem("name") || "",
+  name: window.localStorage.getItem('name') || '',
   game_state: null,
-  four_color: window.localStorage.getItem("four_color") == "on" || false,
-  beep_on_turn: window.localStorage.getItem("beep_on_turn") == "on" || false,
+  four_color: window.localStorage.getItem('four_color') == 'on' || false,
+  beep_on_turn: window.localStorage.getItem('beep_on_turn') == 'on' || false,
   show_last_trick:
-    window.localStorage.getItem("show_last_trick") == "on" || false,
+    window.localStorage.getItem('show_last_trick') == 'on' || false,
   cards: [],
   errors: [],
   messages: [],
@@ -1546,24 +1532,24 @@ function renderUI() {
             room_name={state.room_name}
             setName={(name: string) => {
               state.name = name;
-              window.localStorage.setItem("name", name);
+              window.localStorage.setItem('name', name);
               renderUI();
             }}
           />
           <hr />
           <p>
             Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo
-            at @Robert-Ying, or contributing on{" "}
+            at @Robert-Ying, or contributing on{' '}
             <a href="https://github.com/rbtying/shengji" target="_blank">
               GitHub
             </a>
           </p>
         </div>,
-        document.getElementById("root")
+        document.getElementById('root'),
       );
     } else {
       ReactDOM.render(
-        <div className={state.four_color ? "four-color" : ""}>
+        <div className={state.four_color ? 'four-color' : ''}>
           <Errors errors={state.errors} />
           <div className="game">
             {state.game_state.Initialize ? (
@@ -1610,9 +1596,9 @@ function renderUI() {
                 onChange={(evt) => {
                   state.four_color = evt.target.checked;
                   if (state.four_color) {
-                    window.localStorage.setItem("four_color", "on");
+                    window.localStorage.setItem('four_color', 'on');
                   } else {
-                    window.localStorage.setItem("four_color", "off");
+                    window.localStorage.setItem('four_color', 'off');
                   }
                   renderUI();
                 }}
@@ -1627,9 +1613,9 @@ function renderUI() {
                 onChange={(evt) => {
                   state.show_last_trick = evt.target.checked;
                   if (state.show_last_trick) {
-                    window.localStorage.setItem("show_last_trick", "on");
+                    window.localStorage.setItem('show_last_trick', 'on');
                   } else {
-                    window.localStorage.setItem("show_last_trick", "off");
+                    window.localStorage.setItem('show_last_trick', 'off');
                   }
                   renderUI();
                 }}
@@ -1644,9 +1630,9 @@ function renderUI() {
                 onChange={(evt) => {
                   state.beep_on_turn = evt.target.checked;
                   if (state.beep_on_turn) {
-                    window.localStorage.setItem("beep_on_turn", "on");
+                    window.localStorage.setItem('beep_on_turn', 'on');
                   } else {
-                    window.localStorage.setItem("beep_on_turn", "off");
+                    window.localStorage.setItem('beep_on_turn', 'off');
                   }
                   renderUI();
                 }}
@@ -1655,20 +1641,20 @@ function renderUI() {
             <hr />
             <p>
               Made by Robert Ying and Abra Shen. Consider buying us boba via
-              Venmo at @Robert-Ying, or contributing on{" "}
+              Venmo at @Robert-Ying, or contributing on{' '}
               <a href="https://github.com/rbtying/shengji" target="_blank">
                 GitHub
               </a>
             </p>
           </div>
         </div>,
-        document.getElementById("root")
+        document.getElementById('root'),
       );
     }
   } else {
     ReactDOM.render(
       <p>disconnected from server, please refresh</p>,
-      document.getElementById("root")
+      document.getElementById('root'),
     );
   }
 }
@@ -1691,7 +1677,7 @@ ws.onmessage = (event) => {
   }
   if (msg.Broadcast) {
     state.messages.push({
-      from: "GAME",
+      from: 'GAME',
       message: msg.Broadcast,
       from_game: true,
     });
@@ -1713,7 +1699,7 @@ ws.onmessage = (event) => {
     state.cards = msg.State.cards;
   }
 
-  if (msg == "Kicked") {
+  if (msg == 'Kicked') {
     ws.close();
   }
 
@@ -1730,7 +1716,7 @@ function beep(vol: number, freq: number, duration: number) {
   const u = beepContext.createGain();
   v.connect(u);
   v.frequency.value = freq;
-  v.type = "square";
+  v.type = 'square';
   u.connect(beepContext.destination);
   u.gain.value = vol * 0.01;
   v.start(beepContext.currentTime);
@@ -1753,7 +1739,7 @@ interface IPlayer {
   level: string;
 }
 
-type IGameMode = "Tractor" | { FindingFriends: IFindingFriends };
+type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
 interface IFindingFriends {
   num_friends: number;
   friends: [IFriend];
@@ -1824,7 +1810,7 @@ interface IPlayPhase {
   num_decks: number;
   game_mode: IGameMode;
   hands: IHands;
-  points: { [id: number]: string[] };
+  points: {[id: number]: string[]};
   kitty: string[];
   landlord: number;
   landlords_team: number[];
@@ -1837,8 +1823,8 @@ interface IPlayPhase {
 }
 
 interface ITrickUnit {
-  Tractor: { count: number; members: string[] } | null;
-  Repeated: { count: number; card: string } | null;
+  Tractor: {count: number; members: string[]} | null;
+  Repeated: {count: number; card: string} | null;
 }
 
 interface ITrickFormat {
@@ -1849,19 +1835,19 @@ interface ITrickFormat {
 
 interface ITrick {
   player_queue: number[];
-  played_cards: { id: number; cards: string[] }[];
+  played_cards: {id: number; cards: string[]}[];
   current_winner: number | null;
   trick_format: ITrickFormat | null;
   trump: ITrump;
 }
 
 interface IHands {
-  hands: { [player_id: number]: { [card: string]: number } };
+  hands: {[player_id: number]: {[card: string]: number}};
   level: number;
   trump: ITrump | null;
 }
 
 interface ITrump {
-  Standard: { suit: string; number: string } | null;
-  NoTrump: { number: string } | null;
+  Standard: {suit: string; number: string} | null;
+  NoTrump: {number: string} | null;
 }

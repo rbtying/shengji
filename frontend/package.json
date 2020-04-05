@@ -7,13 +7,16 @@
   "dependencies": {
     "@types/react": "^16.9.32",
     "@types/react-dom": "^16.9.6",
+    "prettier": "^2.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "ts-loader": "^6.2.2",
     "typescript": "^3.8.3"
   },
   "scripts": {
-    "build": "./node_modules/.bin/webpack"
+    "build": "webpack",
+    "watch": "webpack --watch --mode=development",
+    "prettier": "prettier src"
   },
   "devDependencies": {
     "webpack": "^4.42.1",

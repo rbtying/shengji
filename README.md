@@ -23,6 +23,17 @@ cd frontend && yarn build
 cd backend && cargo run --features dynamic
 ```
 
+## Prettier
+To format frontend code:
+
+```
+# Dry-run/check
+yarn prettier --check
+
+# Fix files, will overwrite files
+yarn prettier --fix
+```
+
 # Technical details
 The entire state of each game is stored in the memory of the server process.
 Restarting the game kicks all players, and games are automatically closed when
