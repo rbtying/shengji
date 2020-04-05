@@ -602,7 +602,7 @@ mod tests {
         trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 1);
+        assert_eq!(multiplier, 2);
         assert_eq!(points, vec![S_5, S_5]);
     }
 
@@ -621,7 +621,7 @@ mod tests {
         trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 1);
+        assert_eq!(multiplier, 2);
         assert_eq!(points, vec![S_5]);
     }
 
@@ -640,7 +640,7 @@ mod tests {
         trick.play_cards(P4, &mut hands, &[S_3, S_5]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P3);
-        assert_eq!(multiplier, 2);
+        assert_eq!(multiplier, 4);
         assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
@@ -667,7 +667,7 @@ mod tests {
             .unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 4);
+        assert_eq!(multiplier, 8);
         assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
@@ -692,7 +692,7 @@ mod tests {
             .play_cards(P4, &mut hands, &[S_4, S_4, S_4, S_4])
             .unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
-        assert_eq!(multiplier, 2);
+        assert_eq!(multiplier, 4);
         assert_eq!(winner_id, P3);
         assert_eq!(points, vec![]);
     }
@@ -722,7 +722,7 @@ mod tests {
         trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
         trick.play_cards(P4, &mut hands, &[H_3]).unwrap();
         let (winner_id, points, multiplier) = trick.complete().unwrap();
-        assert_eq!(multiplier, 1);
+        assert_eq!(multiplier, 2);
         assert_eq!(winner_id, P3);
         assert_eq!(points, vec![]);
     }

@@ -939,10 +939,10 @@ mod tests {
     #[test]
     fn reinforce_bid() {
         let mut init = InitializePhase::new();
-        let p1 = init.add_player("p1".into());
-        let p2 = init.add_player("p2".into());
-        let p3 = init.add_player("p3".into());
-        let p4 = init.add_player("p4".into());
+        let p1 = init.add_player("p1".into()).unwrap();
+        let p2 = init.add_player("p2".into()).unwrap();
+        let p3 = init.add_player("p3".into()).unwrap();
+        let p4 = init.add_player("p4".into()).unwrap();
         let mut draw = init.start().unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![

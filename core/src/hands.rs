@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -150,8 +151,48 @@ impl Hands {
 
         let hand = self.hands.get_mut(&id).unwrap();
         for card in cards {
-            *hand.entry(card).or_insert(0) -= 1;
+            if let Entry::Occupied(mut o) = hand.entry(card) {
+                *o.get_mut() -= 1;
+                if *o.get() == 0 {
+                    o.remove();
+                }
+            }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Hands;
+    use crate::types::{
+        cards::{S_2, S_3, S_4, S_5},
+        Number, PlayerID,
+    };
+
+    const P1: PlayerID = PlayerID(1);
+    const P2: PlayerID = PlayerID(2);
+    const P3: PlayerID = PlayerID(3);
+    const P4: PlayerID = PlayerID(4);
+
+    #[test]
+    fn test_add_remove() {
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Two);
+        hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
+        hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
+
+        hands.remove(P1, Some(S_2)).unwrap();
+        hands.remove(P1, Some(S_3)).unwrap();
+        hands.remove(P1, Some(S_5)).unwrap();
+        hands.remove(P1, Some(S_5)).unwrap_err();
+        assert!(hands.cards(P1).unwrap().is_empty());
+
+        hands.remove(P2, vec![S_2, S_3, S_5]).unwrap();
+        assert!(hands.cards(P2).unwrap().is_empty());
+
+        hands.remove(P3, vec![S_2, S_3, S_4, S_5]).unwrap_err();
+        assert_eq!(hands.cards(P3).unwrap(), hands.cards(P4).unwrap());
     }
 }
