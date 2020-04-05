@@ -670,19 +670,6 @@ impl fmt::Debug for Suit {
 }
 
 pub const FULL_DECK: [Card; 54] = [
-    cards::C_A,
-    cards::C_K,
-    cards::C_Q,
-    cards::C_J,
-    cards::C_10,
-    cards::C_9,
-    cards::C_8,
-    cards::C_7,
-    cards::C_6,
-    cards::C_5,
-    cards::C_4,
-    cards::C_3,
-    cards::C_2,
     cards::D_A,
     cards::D_K,
     cards::D_Q,
@@ -696,6 +683,19 @@ pub const FULL_DECK: [Card; 54] = [
     cards::D_4,
     cards::D_3,
     cards::D_2,
+    cards::C_A,
+    cards::C_K,
+    cards::C_Q,
+    cards::C_J,
+    cards::C_10,
+    cards::C_9,
+    cards::C_8,
+    cards::C_7,
+    cards::C_6,
+    cards::C_5,
+    cards::C_4,
+    cards::C_3,
+    cards::C_2,
     cards::H_A,
     cards::H_K,
     cards::H_Q,
@@ -953,7 +953,7 @@ mod tests {
     #[test]
     fn test_deck_completeness() {
         assert_eq!(
-            "🃑🃞🃝🃛🃚🃙🃘🃗🃖🃕🃔🃓🃒🃁🃎🃍🃋🃊🃉🃈🃇🃆🃅🃄🃃🃂🂱🂾🂽🂻🂺🂹🂸🂷🂶🂵🂴🂳🂲🂡🂮🂭🂫🂪🂩🂨🂧🂦🂥🂤🂣🂢🃟🃏",
+            "🃁🃎🃍🃋🃊🃉🃈🃇🃆🃅🃄🃃🃂🃑🃞🃝🃛🃚🃙🃘🃗🃖🃕🃔🃓🃒🂱🂾🂽🂻🂺🂹🂸🂷🂶🂵🂴🂳🂲🂡🂮🂭🂫🂪🂩🂨🂧🂦🂥🂤🂣🂢🃟🃏",
             FULL_DECK
                 .iter()
                 .map(|card| card.as_char())

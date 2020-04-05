@@ -1437,6 +1437,21 @@ function send(value: any) {
 }
 
 function renderUI() {
+  const credits = (
+    <p>
+      Made by Robert Ying and Abra Shen and other{' '}
+      <a
+        href="https://github.com/rbtying/shengji/graphs/contributors"
+        target="_blank"
+      >
+        friends
+      </a>
+      . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{' '}
+      <a href="https://github.com/rbtying/shengji" target="_blank">
+        GitHub
+      </a>
+    </p>
+  );
   if (state.connected) {
     if (state.game_state == null) {
       ReactDOM.render(
@@ -1459,13 +1474,7 @@ function renderUI() {
             }}
           />
           <hr />
-          <p>
-            Made by Robert Ying and Abra Shen. Consider buying us boba via Venmo
-            at @Robert-Ying, or contributing on{' '}
-            <a href="https://github.com/rbtying/shengji" target="_blank">
-              GitHub
-            </a>
-          </p>
+          {credits}
         </div>,
         document.getElementById('root'),
       );
@@ -1561,13 +1570,7 @@ function renderUI() {
               />
             </label>
             <hr />
-            <p>
-              Made by Robert Ying and Abra Shen. Consider buying us boba via
-              Venmo at @Robert-Ying, or contributing on{' '}
-              <a href="https://github.com/rbtying/shengji" target="_blank">
-                GitHub
-              </a>
-            </p>
+            {credits}
           </div>
         </div>,
         document.getElementById('root'),

@@ -39,18 +39,6 @@
         and tens are worth ten points each. Fives are worth five points each.
       </p>
       <div class="labeled-play">
-        <div class="play" id="spades"></div>
-        <div class="label">
-          Spades
-        </div>
-      </div>
-      <div class="labeled-play">
-        <div class="play" id="hearts"></div>
-        <div class="label">
-          Hearts
-        </div>
-      </div>
-      <div class="labeled-play">
         <div class="play" id="diamonds"></div>
         <div class="label">
           Diamonds
@@ -60,6 +48,18 @@
         <div class="play" id="clubs"></div>
         <div class="label">
           Clubs
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="hearts"></div>
+        <div class="label">
+          Hearts
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="spades"></div>
+        <div class="label">
+          Spades
         </div>
       </div>
       <p>
@@ -96,11 +96,30 @@
         10, or K.
       </p>
       <div class="labeled-play">
-        <div class="play" id="points"></div>
+        <div class="play" id="points-d"></div>
         <div class="label">
-          All possible point cards in a single deck
+          Point cards in <span class="♢">diamonds (♢)</span>
         </div>
       </div>
+      <div class="labeled-play">
+        <div class="play" id="points-c"></div>
+        <div class="label">
+          Point cards in <span class="♧">clubs (♧)</span>
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="points-h"></div>
+        <div class="label">
+          Point cards in <span class="♡">hearts (♡)</span>
+        </div>
+      </div>
+      <div class="labeled-play">
+        <div class="play" id="points-s"></div>
+        <div class="label">
+          Point cards in <span class="♤">spades (♤)</span>
+        </div>
+      </div>
+
       <h3>Player ranks</h3>
       <p>
         Each player in the game has a rank, starting at 2 and going to A. If
@@ -141,15 +160,15 @@
       </div>
       <p>In all suits, the 3 and the 5 are now considered to be adjacent.</p>
       <p>
-        The order of the trump suit is as follows:
+        The order of the trump suit is as follows (highest to lowest):
       </p>
       <ul>
-        <li>All non-trump-rank numbered cards of the specified suit, in their
-          normal order</li>
+        <li>All jokers, in their normal order</li>
+        <li>Cards of the trump rank in the specified suit</li>
         <li>Cards of the trump rank, but not of the specified suit. Note:
           these are considered to have equal value to one another</li>
-        <li>Cards of the trump rank in the specified suit</li>
-        <li>All jokers, in their normal order</li>
+        <li>All non-trump-rank numbered cards of the specified suit, in their
+          normal order</li>
       </ul>
       <p>
         In the case of the trump specification of <span class="♤">4♤</span>,
@@ -684,7 +703,7 @@
           <span class="card ♤">🂣</span>
         </div>
         <div class="label">
-          Not a tractor&mdash; there is an extra <span class="♤">2♤</span>.
+          Not a tractor&mdash; there is an extra <span class="♤">2♤</span>. See "Throws", below.
         </div>
       </div>
       <p>
@@ -875,12 +894,13 @@
         </div>
       </div>
       <p>
-      The above play can be interpreted as either a tractor and a single card
-      ([<span class="♤">2♤2♤3♤3♤</span>] + <span class="♤">2♤</span>), or as a
-      triple and a pair ([<span class="♤">2♤2♤2♤</span>] + [<span class="♤">3♤3♤</span>]).
-      Since the former interpretation has a maximum component length of 4
-      cards, greater than the latter's 3 cards, we interpret this as a tractor
-      and a single card.
+        The above play can be interpreted as either a tractor and a single card
+        ([<span class="♤">2♤2♤3♤3♤</span>] + <span class="♤">2♤</span>), or as a
+        triple and a pair ([<span class="♤">2♤2♤2♤</span>] + [<span class="♤">3♤3♤</span>]).
+        Since the former interpretation has a maximum component length of 4
+        cards, greater than the latter's 3 cards, we interpret this as a tractor
+        and a single card. The "full house" concept from poker does not exist
+        in this game.
       </p>
       <p>
         Only plays which match the trick-format (either in the original suit,
@@ -1108,7 +1128,10 @@
         addCards("clubs", REVERSED_CARDS.filter((c) => c.typ == '♧'));
         addCards("jokers", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
 
-        addCards("points", REVERSED_CARDS.filter((c) => c.points > 0));
+        addCards("points-d", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♢'));
+        addCards("points-c", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♧'));
+        addCards("points-h", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♡'));
+        addCards("points-s", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♤'));
 
         addCards("trump-4s", REVERSED_CARDS.filter((c) => c.typ == '♤' && c.number != '4'));
         addCards("trump-4s", CARDS.filter((c) => c.typ != '♤' && c.number == '4'));
