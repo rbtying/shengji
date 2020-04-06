@@ -5,7 +5,7 @@ import {IGameState} from './types';
 import {State, combineState, noPersistence} from './State';
 import {stringLocalStorageState} from './localStorageState';
 
-type AppState = {
+export type AppState = {
   settings: Settings;
   connected: boolean;
   roomName: string;

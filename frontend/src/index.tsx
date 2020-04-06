@@ -10,6 +10,7 @@ import Card from './Card';
 import Trick from './Trick';
 import Header from './Header';
 import AppStateProvider, {AppStateConsumer} from './AppStateProvider';
+import WebsocketProvider from './WebsocketProvider';
 import Credits from './Credits';
 import Chat from './Chat';
 import mapObject from './util/mapObject';
@@ -1238,6 +1239,7 @@ function renderUI() {
     if (state.game_state === null) {
       ReactDOM.render(
         <AppStateProvider>
+          <WebsocketProvider />
           <AppStateConsumer>
             {({state: appState, updateState}) => (
               <div>
@@ -1265,6 +1267,7 @@ function renderUI() {
     } else {
       ReactDOM.render(
         <AppStateProvider>
+          <WebsocketProvider />
           <AppStateConsumer>
             {({state: appState, updateState}) => {
               const {settings} = appState;
