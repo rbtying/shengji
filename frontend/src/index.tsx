@@ -1214,14 +1214,12 @@ const ws = new WebSocket(uri);
 interface State {
   connected: boolean;
   game_state: IGameState | null;
-  cards: string[];
   messages: {from: string; message: string; from_game: boolean}[];
 }
 
 const state: State = {
   connected: false,
   game_state: null,
-  cards: [],
   messages: [],
 };
 
@@ -1295,28 +1293,28 @@ function renderUI() {
                     {state.game_state.Initialize ? (
                       <Initialize
                         state={state.game_state.Initialize}
-                        cards={state.cards}
+                        cards={appState.cards}
                         name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Draw ? (
                       <Draw
                         state={state.game_state.Draw}
-                        cards={state.cards}
+                        cards={appState.cards}
                         name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Exchange ? (
                       <Exchange
                         state={state.game_state.Exchange}
-                        cards={state.cards}
+                        cards={appState.cards}
                         name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Play ? (
                       <Play
                         state={state.game_state.Play}
-                        cards={state.cards}
+                        cards={appState.cards}
                         name={appState.name}
                         show_last_trick={settings.showLastTrick}
                         beep_on_turn={settings.beepOnTurn}
@@ -1368,11 +1366,6 @@ ws.onmessage = (event) => {
     if (state.messages.length >= 100) {
       state.messages.shift();
     }
-  }
-
-  if (msg.State) {
-    state.game_state = msg.State.state;
-    state.cards = msg.State.cards;
   }
 
   if (msg === 'Kicked') {
