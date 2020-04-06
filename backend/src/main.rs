@@ -269,7 +269,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 return false;
             }
         }
-        return true;
+        true
     };
 
     while let Some(result) = user_ws_rx.next().await {

@@ -31,6 +31,7 @@ pub struct Friend {
     player_id: Option<PlayerID>,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GameState {
     Initialize(InitializePhase),
@@ -128,12 +129,13 @@ impl GameState {
 
     pub fn kick(&mut self, id: PlayerID) -> Result<(), Error> {
         match self {
-            GameState::Initialize(ref mut p) => Ok(p.remove_player(id)),
-            GameState::Draw(ref mut p) => Ok(p.remove_observer(id)),
-            GameState::Exchange(ref mut p) => Ok(p.remove_observer(id)),
-            GameState::Play(ref mut p) => Ok(p.remove_observer(id)),
+            GameState::Initialize(ref mut p) => p.remove_player(id),
+            GameState::Draw(ref mut p) => p.remove_observer(id),
+            GameState::Exchange(ref mut p) => p.remove_observer(id),
+            GameState::Play(ref mut p) => p.remove_observer(id),
             GameState::Done => bail!("Game is done"),
         }
+        Ok(())
     }
 
     pub fn reset(&mut self) -> Result<Vec<String>, Error> {
@@ -215,11 +217,10 @@ impl GameState {
                 }
                 hands.redact_except(id);
                 // Don't redact at the end of the game.
-                if !hands.is_empty() || !trick.played_cards().is_empty() {
-                    if id != landlord {
-                        for card in kitty {
-                            *card = Card::Unknown;
-                        }
+                let game_ongoing = !hands.is_empty() || !trick.played_cards().is_empty();
+                if game_ongoing && id != landlord {
+                    for card in kitty {
+                        *card = Card::Unknown;
                     }
                 }
             }
@@ -737,6 +738,7 @@ impl DrawPhase {
         }
     }
 
+    #[allow(clippy::comparison_chain)]
     pub fn valid_bids(&self, id: PlayerID) -> Vec<Bid> {
         // Compute all valid bids.
         if self.bids.last().map(|b| b.id) == Some(id) {
@@ -929,7 +931,7 @@ impl InitializePhase {
         }
         let mut new_players = Vec::with_capacity(self.players.len());
         for id in order {
-            match self.players.iter().filter(|p| p.id == *id).next() {
+            match self.players.iter().find(|p| p.id == *id) {
                 Some(player) => new_players.push(player.clone()),
                 None => bail!("player ID not found"),
             }
@@ -954,13 +956,7 @@ impl InitializePhase {
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
         match landlord {
             Some(landlord) => {
-                if self
-                    .players
-                    .iter()
-                    .filter(|p| p.id == landlord)
-                    .next()
-                    .is_some()
-                {
+                if self.players.iter().any(|p| p.id == landlord) {
                     self.landlord = Some(landlord)
                 } else {
                     bail!("player ID not found")
@@ -972,7 +968,7 @@ impl InitializePhase {
     }
 
     pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
-        match self.players.iter_mut().filter(|p| p.id == player_id).next() {
+        match self.players.iter_mut().find(|p| p.id == player_id) {
             Some(ref mut player) => {
                 player.level = level;
             }

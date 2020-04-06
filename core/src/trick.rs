@@ -97,7 +97,7 @@ impl TrickFormat {
             num_correct_suit == num_proposed_correct_suit
         } else {
             // If it's a match, we're good!
-            let counts = Card::count(proposed.into_iter().cloned());
+            let counts = Card::count(proposed.iter().cloned());
             if check_format_matches(self.trump, &self.units, counts.clone()) {
                 return true;
             }
@@ -121,7 +121,7 @@ impl TrickFormat {
                 .iter()
                 .flat_map(|unit| match unit {
                     TrickUnit::Tractor { members, count } => members
-                        .into_iter()
+                        .iter()
                         .map(|card| TrickUnit::Repeated {
                             count: *count,
                             card: *card,
@@ -181,7 +181,7 @@ impl TrickFormat {
             return Err(TrickError::NonMatchingPlay);
         }
 
-        let counts = Card::count(cards.into_iter().cloned());
+        let counts = Card::count(cards.iter().cloned());
         check_format_matches_mapping(self.trump, &self.units, counts)
             .ok_or(TrickError::NonMatchingPlay)
     }
@@ -215,7 +215,7 @@ impl TrickFormat {
             // Let's use something *really* inefficient for now.
 
             // 1. Find all of the tractors
-            let mut counts = Card::count(cards.into_iter().cloned());
+            let mut counts = Card::count(cards.iter().cloned());
             let mut units = vec![];
             loop {
                 let mut tractors = find_tractors(trump, &counts);
@@ -293,7 +293,7 @@ impl Trick {
     }
 
     pub fn player_queue(&self) -> impl Iterator<Item = PlayerID> + '_ {
-        self.player_queue.iter().map(|id| *id)
+        self.player_queue.iter().copied()
     }
 
     /**
@@ -352,7 +352,7 @@ impl Trick {
         self.player_queue.pop_front();
         self.played_cards.push(PlayedCards {
             id,
-            cards: cards.iter().cloned().collect(),
+            cards: cards.to_vec(),
         });
         hands.remove(id, cards.iter().cloned())?;
 
@@ -391,7 +391,7 @@ impl Trick {
             let all_card_points = self
                 .played_cards
                 .iter()
-                .flat_map(|pc| pc.cards.iter().filter(|c| c.points().is_some()).map(|c| *c))
+                .flat_map(|pc| pc.cards.iter().filter(|c| c.points().is_some()).copied())
                 .collect::<Vec<Card>>();
 
             Ok((
@@ -413,11 +413,12 @@ impl Trick {
             Some(tf) => {
                 let mut winner = (0, tf.units.clone());
 
-                for idx in 1..played_cards.len() {
-                    if let Ok(m) = tf.matches(&played_cards[idx].cards) {
-                        if m.iter().zip(winner.1.iter()).all(|(n, w)| {
+                for (idx, pc) in played_cards.iter().enumerate().skip(1) {
+                    if let Ok(m) = tf.matches(&pc.cards) {
+                        let all_greater = m.iter().zip(winner.1.iter()).all(|(n, w)| {
                             trump.compare(n.first_card(), w.first_card()) == Ordering::Greater
-                        }) {
+                        });
+                        if all_greater {
                             winner = (idx, m);
                         }
                     }
@@ -468,8 +469,7 @@ pub fn check_format_matches(
     units: &'_ [TrickUnit],
     mut counts: HashMap<Card, usize>,
 ) -> bool {
-    let matched = check_format_matches_inner(trump, units, &mut counts, &mut vec![]);
-    matched
+    check_format_matches_inner(trump, units, &mut counts, &mut vec![])
 }
 
 pub fn check_format_matches_mapping(
@@ -521,8 +521,8 @@ fn check_format_matches_inner(
                     ) {
                         if !allocations.is_empty() {
                             allocations[units.len() - 1] = TrickUnit::Tractor {
-                                members: tractor.clone(),
-                                count: count,
+                                members: tractor,
+                                count,
                             };
                         }
                         return true;
