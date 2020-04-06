@@ -45,7 +45,7 @@ const errorHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.State) {
-    return {game_state: message.State.state, cards: message.State.crds};
+    return {game_state: message.State.state, cards: message.State.cards};
   } else {
     return null;
   }
@@ -57,7 +57,7 @@ const compose = (
 ): WebsocketHandler => {
   return (state: AppState, message: any) => {
     const newState = {...state, ...left(state, message)};
-    return right(newState, message);
+    return {...newState, ...right(newState, message)};
   };
 };
 

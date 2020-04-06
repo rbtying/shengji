@@ -43,7 +43,9 @@ type Props = {
   children: React.ReactNode;
 };
 const AppStateProvider = (props: Props) => {
-  const [state, setState] = React.useState<AppState>(appState.loadDefault());
+  const [state, setState] = React.useState<AppState>(() => {
+    return appState.loadDefault();
+  });
   const updateState = (newState: Partial<AppState>) => {
     const combined = {...state, ...newState};
     appState.persist(state, combined);
