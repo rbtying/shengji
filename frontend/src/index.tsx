@@ -9,7 +9,7 @@ import Card from './Card';
 import Trick from './Trick';
 import GameMode from './GameMode';
 import Header from './Header';
-import SettingsProvider, {SettingsProps} from './SettingsProvider';
+import SettingsProvider, {SettingsContext} from './SettingsProvider';
 import Credits from './Credits';
 import mapObject from './util/mapObject';
 import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
@@ -19,7 +19,7 @@ ReactModal.setAppElement(document.getElementById('root'));
 const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
 (window as any).CARD_LUT = CARD_LUT;
 
-type IInitializeProps = SettingsProps & {
+type IInitializeProps = {
   state: IInitializePhase;
   cards: string[];
   name: string;
@@ -78,11 +78,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
-        <Header
-          gameMode={this.props.state.game_mode}
-          settings={this.props.settings}
-          onChangeSettings={this.props.onChangeSettings}
-        />
+        <Header gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -131,7 +127,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
   }
 }
 
-type IDrawProps = SettingsProps & {
+type IDrawProps = {
   state: IDrawPhase;
   name: string;
   cards: string[];
@@ -276,11 +272,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <Header
-          gameMode={this.props.state.game_mode}
-          settings={this.props.settings}
-          onChangeSettings={this.props.onChangeSettings}
-        />
+        <Header gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -350,7 +342,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   }
 }
 
-type IExchangeProps = SettingsProps & {
+type IExchangeProps = {
   state: IExchangePhase;
   name: string;
   cards: string[];
@@ -450,11 +442,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     if (this.props.state.players[landlord_idx].name == this.props.name) {
       return (
         <div>
-          <Header
-            gameMode={this.props.state.game_mode}
-            settings={this.props.settings}
-            onChangeSettings={this.props.onChangeSettings}
-          />
+          <Header gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -517,11 +505,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <Header
-            gameMode={this.props.state.game_mode}
-            settings={this.props.settings}
-            onChangeSettings={this.props.onChangeSettings}
-          />
+          <Header gameMode={this.props.state.game_mode} />
           <Players
             players={this.props.state.players}
             landlord={this.props.state.landlord}
@@ -541,7 +525,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 }
 
-type IPlayProps = SettingsProps & {
+type IPlayProps = {
   state: IPlayPhase;
   name: string;
   cards: string[];
@@ -627,11 +611,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     return (
       <div>
         {shouldBeBeeping ? <Beeper /> : null}
-        <Header
-          gameMode={this.props.state.game_mode}
-          settings={this.props.settings}
-          onChangeSettings={this.props.onChangeSettings}
-        />
+        <Header gameMode={this.props.state.game_mode} />
         <Players
           players={this.props.state.players}
           landlord={this.props.state.landlord}
@@ -1365,55 +1345,49 @@ function renderUI() {
       };
       ReactDOM.render(
         <SettingsProvider defaultSettings={defaultSettings}>
-          {(settings, handleChangeSettings) => (
-            <div className={state.four_color ? 'four-color' : ''}>
-              <Errors errors={state.errors} />
-              <div className="game">
-                {state.game_state.Initialize ? (
-                  <Initialize
-                    settings={settings}
-                    onChangeSettings={handleChangeSettings}
-                    state={state.game_state.Initialize}
-                    cards={state.cards}
-                    name={state.name}
-                  />
-                ) : null}
-                {state.game_state.Draw ? (
-                  <Draw
-                    settings={settings}
-                    onChangeSettings={handleChangeSettings}
-                    state={state.game_state.Draw}
-                    cards={state.cards}
-                    name={state.name}
-                  />
-                ) : null}
-                {state.game_state.Exchange ? (
-                  <Exchange
-                    settings={settings}
-                    onChangeSettings={handleChangeSettings}
-                    state={state.game_state.Exchange}
-                    cards={state.cards}
-                    name={state.name}
-                  />
-                ) : null}
-                {state.game_state.Play ? (
-                  <Play
-                    settings={settings}
-                    onChangeSettings={handleChangeSettings}
-                    state={state.game_state.Play}
-                    cards={state.cards}
-                    name={state.name}
-                    show_last_trick={state.show_last_trick}
-                    beep_on_turn={state.beep_on_turn}
-                  />
-                ) : null}
-                {state.game_state.Done ? <p>Game Over</p> : null}
+          <SettingsContext.Consumer>
+            {({settings}) => (
+              <div className={settings.fourColor? 'four-color' : ''}>
+                <Errors errors={state.errors} />
+                <div className="game">
+                  {state.game_state.Initialize ? (
+                    <Initialize
+                      state={state.game_state.Initialize}
+                      cards={state.cards}
+                      name={state.name}
+                    />
+                  ) : null}
+                  {state.game_state.Draw ? (
+                    <Draw
+                      state={state.game_state.Draw}
+                      cards={state.cards}
+                      name={state.name}
+                    />
+                  ) : null}
+                  {state.game_state.Exchange ? (
+                    <Exchange
+                      state={state.game_state.Exchange}
+                      cards={state.cards}
+                      name={state.name}
+                    />
+                  ) : null}
+                  {state.game_state.Play ? (
+                    <Play
+                      state={state.game_state.Play}
+                      cards={state.cards}
+                      name={state.name}
+                      show_last_trick={settings.showLastTrick}
+                      beep_on_turn={settings.beepOnTurn}
+                    />
+                  ) : null}
+                  {state.game_state.Done ? <p>Game Over</p> : null}
+                </div>
+                <Chat messages={state.messages} />
+                <hr />
+                <Credits />
               </div>
-              <Chat messages={state.messages} />
-              <hr />
-              <Credits />
-            </div>
-          )}
+            )}
+          </SettingsContext.Consumer>
         </SettingsProvider>,
         document.getElementById('root'),
       );

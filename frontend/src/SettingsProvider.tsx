@@ -6,24 +6,30 @@ export type Settings = {
   beepOnTurn: boolean;
 };
 
-export type SettingsProps = {
+type ISettingsContext = {
   settings: Settings;
-  onChangeSettings: (settings: Settings) => void;
+  updateSettings: (settings: Settings) => void;
 };
+
+export const SettingsContext = React.createContext<ISettingsContext>({
+  settings: {
+    fourColor: false,
+    showLastTrick: false,
+    beepOnTurn: false,
+  },
+  updateSettings: () => {},
+});
 
 type Props = {
   defaultSettings: Settings;
-  children: (
-    settings: Settings,
-    handleChangeSettings: (settings: Settings) => void,
-  ) => JSX.Element;
+  children: React.ReactNode;
 };
 
 const SettingsProvider = (props: Props) => {
   const [settings, setSettings] = React.useState<Settings>(
     props.defaultSettings,
   );
-  const handleChangeSettings = (newSettings: Settings) => {
+  const updateSettings = (newSettings: Settings) => {
     window.localStorage.setItem(
       'four_color',
       newSettings.fourColor ? 'on' : 'off',
@@ -38,7 +44,11 @@ const SettingsProvider = (props: Props) => {
     );
     setSettings(newSettings);
   };
-  return props.children(settings, handleChangeSettings);
+  return (
+    <SettingsContext.Provider value={{settings, updateSettings}}>
+      {props.children}
+    </SettingsContext.Provider>
+  );
 };
 
 export default SettingsProvider;
