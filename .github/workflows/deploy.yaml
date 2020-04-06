@@ -39,7 +39,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release
+          #args: --release
 
       - name: scp compiled executable to server
         uses: appleboy/scp-action@master
@@ -49,4 +49,4 @@ jobs:
           passphrase: ${{ secrets.GCP_DEPLOY_SSH_PASSPHRASE }}
           key: ${{ secrets.GCP_DEPLOY_SSH_KEY }}
           source: target/release/shengji
-          target: ${{ secrets.GCP_DEPLOY_USERNAME }}/deployed
+          target: /home/${{ secrets.GCP_DEPLOY_USERNAME }}/deployed
