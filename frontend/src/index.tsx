@@ -8,7 +8,6 @@ import FriendSelect from './FriendSelect';
 import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
-import GameMode from './GameMode';
 import Header from './Header';
 import SettingsProvider, {SettingsProps} from './SettingsProvider';
 import Credits from './Credits';
@@ -236,18 +235,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     this.could_draw = can_draw;
 
     let next = this.props.state.players[this.props.state.position].id;
-    let next_idx = this.props.state.position;
     if (
       this.props.state.deck.length === 0 &&
       this.props.state.bids.length > 0
     ) {
       next = this.props.state.bids[this.props.state.bids.length - 1].id;
-
-      this.props.state.players.forEach((player, idx) => {
-        if (player.id === next) {
-          next_idx = idx;
-        }
-      });
     }
 
     const players: {[player_id: number]: IPlayer} = {};
