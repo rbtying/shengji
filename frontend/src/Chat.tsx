@@ -6,16 +6,22 @@ type Props = {
   messages: Message[];
 };
 
+let latestMessage: Message | null = null;
+
 const Chat = (props: Props) => {
   const [draft, setDraft] = React.useState<string>('');
   const anchor = React.useRef(null);
 
-  // TODO: messages is mutable, so can't use reference equality to check for
-  // new state. After making messages immutable, update to only rely on
-  // props.messages
   React.useEffect(() => {
-    anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
-  }, [props.messages.length]);
+    // TODO: messages is mutable, so can't use reference equality to check for
+    // new state. After making messages immutable, update to only rely on
+    // props.messages
+    const {messages} = props;
+    if (messages.length > 0 && messages[messages.length - 1] !== latestMessage) {
+      latestMessage = messages[messages.length - 1];
+      anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
+    }
+  });
 
   const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
