@@ -262,7 +262,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
     let tx_ = tx.clone();
     let send_to_user = move |msg| {
         if let Ok(msg) = serde_json::to_string(&msg) {
-            if let Err(_) = tx_.send(Ok(Message::text(msg))) {
+            if tx_.send(Ok(Message::text(msg))).is_err() {
                 return false;
             }
         }
