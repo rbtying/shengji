@@ -12,7 +12,7 @@ const Trick = (props: Props) => {
     String(p.id),
     p.name,
   ]);
-  const blank_cards =
+  const blankCards =
     props.trick.played_cards.length > 0
       ? Array(props.trick.played_cards[0].cards.length).fill('🂠')
       : ['🂠'];
@@ -20,7 +20,7 @@ const Trick = (props: Props) => {
   return (
     <div className="trick">
       {props.trick.played_cards.map((played, idx) => {
-        const winning = props.trick.current_winner == played.id;
+        const winning = props.trick.current_winner === played.id;
         return (
           <LabeledPlay
             key={idx}
@@ -37,7 +37,7 @@ const Trick = (props: Props) => {
           <LabeledPlay
             key={idx + props.trick.played_cards.length}
             label={namesById[id]}
-            cards={blank_cards}
+            cards={blankCards}
           />
         );
       })}

@@ -5,10 +5,10 @@ type Props = {trump: ITrump};
 const Trump = (props: Props) => {
   const {trump} = props;
   if (trump.Standard) {
-    const {suit, number} = trump.Standard;
+    const {suit, number: rank} = trump.Standard;
     return (
       <div className="trump">
-        The trump suit is <span className={suit}>{suit}</span>, rank {number}
+        The trump suit is <span className={suit}>{suit}</span>, rank {rank}
       </div>
     );
   } else {

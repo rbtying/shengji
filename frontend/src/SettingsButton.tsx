@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactModal from 'react-modal';
 import Gear from './icons/Gear';
 import SettingsPane from './SettingsPane';
-import {Settings, SettingsProps} from './SettingsProvider';
+import {SettingsProps} from './SettingsProvider';
 
 const contentStyle = {
   position: 'absolute',

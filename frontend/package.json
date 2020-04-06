@@ -15,12 +15,14 @@
     "react-dom": "^16.13.1",
     "react-modal": "^3.11.2",
     "ts-loader": "^6.2.2",
+    "tslint": "^6.1.1",
     "typescript": "^3.8.3"
   },
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch --mode=development",
-    "prettier": "prettier src"
+    "prettier": "prettier src",
+    "lint": "tslint 'src/**/*'"
   },
   "devDependencies": {
     "webpack": "^4.42.1",
