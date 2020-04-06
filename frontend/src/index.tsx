@@ -11,6 +11,7 @@ import Trick from './Trick';
 import Header from './Header';
 import SettingsProvider, {SettingsProps} from './SettingsProvider';
 import Credits from './Credits';
+import Chat from './Chat';
 import mapObject from './util/mapObject';
 import {IGameMode, IFriend, ICardInfo, ITrick, ITrump} from './types';
 import * as ReactModal from 'react-modal';
@@ -1161,79 +1162,6 @@ class Players extends React.Component<IPlayersProps, {}> {
           </tr>
         </tbody>
       </table>
-    );
-  }
-}
-
-interface IChatProps {
-  messages: {from: string; message: string; from_game?: boolean}[];
-}
-interface IChatState {
-  message: string;
-}
-class Chat extends React.Component<IChatProps, IChatState> {
-  private anchor = React.createRef<HTMLDivElement>();
-
-  constructor(props: IChatProps) {
-    super(props);
-    this.state = {message: ''};
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
-
-  componentDidMount() {
-    if (this.anchor.current) {
-      this.anchor.current.scrollIntoView({block: 'nearest', inline: 'start'});
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.anchor.current) {
-      this.anchor.current.scrollIntoView({block: 'nearest', inline: 'start'});
-    }
-  }
-
-  handleChange(event: any) {
-    this.setState({message: event.target.value});
-  }
-
-  handleSubmit(event: any) {
-    event.preventDefault();
-    if (this.state.message.length > 0) {
-      send({
-        Message: this.state.message,
-      });
-    }
-    this.setState({message: ''});
-  }
-
-  render() {
-    return (
-      <div className="chat">
-        <div className="messages">
-          {this.props.messages.map((m, idx) => {
-            let className = 'message';
-            if (m.from_game) {
-              className = className + ' game-message';
-            }
-            return (
-              <p key={idx} className={className}>
-                {m.from}: {m.message}
-              </p>
-            );
-          })}
-          <div className="chat-anchor" ref={this.anchor} />
-        </div>
-        <form onSubmit={this.handleSubmit}>
-          <input
-            type="text"
-            placeholder="type message here"
-            value={this.state.message}
-            onChange={this.handleChange}
-          />
-          <input type="submit" value="submit" />
-        </form>
-      </div>
     );
   }
 }
