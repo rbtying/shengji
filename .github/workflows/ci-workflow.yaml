@@ -30,6 +30,12 @@ jobs:
           toolchain: stable
           override: true
 
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Test Rust code
         uses: actions-rs/cargo@v1
         with:
