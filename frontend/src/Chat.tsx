@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 
-type Message = {from: string; message: string; from_game?: boolean};
+export type Message = {from: string; message: string; from_game?: boolean};
 type Props = {
   messages: Message[];
 };

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Settings, SettingsProps} from './SettingsProvider';
+import {Settings} from './state/Settings';
 import DivWithProps from './DivWithProps';
 
 const Row = DivWithProps({style: {display: 'table-row'}});
@@ -8,7 +8,12 @@ const LabelCell = DivWithProps({
 });
 const Cell = DivWithProps({style: {display: 'table-cell'}});
 
-const SettingsPane = (props: SettingsProps) => {
+type Props = {
+  settings: Settings;
+  onChangeSettings: (settings: Settings) => void;
+};
+
+const SettingsPane = (props: Props) => {
   const {settings} = props;
   const handleChange = (partialSettings: Partial<Settings>) => () =>
     props.onChangeSettings({...props.settings, ...partialSettings});

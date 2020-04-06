@@ -2,6 +2,8 @@
   "defaultSeverity": "error",
   "extends": ["tslint:recommended"],
   "jsRules": {},
-  "rules": {},
+  "rules": {
+    "no-empty": [true, "allow-empty-functions"]
+  },
   "rulesDirectory": []
 }

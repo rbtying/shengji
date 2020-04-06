@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as ReactModal from 'react-modal';
 import Gear from './icons/Gear';
 import SettingsPane from './SettingsPane';
-import {SettingsProps} from './SettingsProvider';
+import {Settings} from './state/Settings';
+import {AppStateConsumer} from './AppStateProvider';
 
 const contentStyle = {
   position: 'absolute',
@@ -11,7 +12,7 @@ const contentStyle = {
   transform: 'translate(-50%, -50%)',
 };
 
-const SettingsButton = (props: SettingsProps) => {
+const SettingsButton = () => {
   const [hover, setHover] = React.useState<boolean>(false);
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const fill = hover ? '#444' : '#000';
@@ -35,10 +36,14 @@ const SettingsButton = (props: SettingsProps) => {
         shouldCloseOnEsc
         style={{content: contentStyle}}
       >
-        <SettingsPane
-          settings={props.settings}
-          onChangeSettings={props.onChangeSettings}
-        />
+        <AppStateConsumer>
+          {({state, updateState}) => (
+            <SettingsPane
+              settings={state.settings}
+              onChangeSettings={(settings: Settings) => updateState({settings})}
+            />
+          )}
+        </AppStateConsumer>
       </ReactModal>
     </a>
   );
