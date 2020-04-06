@@ -750,7 +750,7 @@ impl DrawPhase {
                 .counts(id)
                 .and_then(|c| c.get(&last_bid.card).cloned())
                 .unwrap_or(0);
-            (last_bid.count + 1..available + 1)
+            (last_bid.count + 1..=available)
                 .map(|count| Bid {
                     card: last_bid.card,
                     count,
@@ -764,7 +764,7 @@ impl DrawPhase {
                 if !card.is_joker() && card.number() != Some(self.level) {
                     continue;
                 }
-                for inner_count in 1..count + 1 {
+                for inner_count in 1..=*count {
                     if card.is_joker() && inner_count == 1 {
                         continue;
                     }

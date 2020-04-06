@@ -75,6 +75,7 @@ pub enum UserMessage {
     Kick(types::PlayerID),
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum GameMessage {
     State {
@@ -243,6 +244,7 @@ async fn get_stats(
     }))
 }
 
+#[allow(clippy::cognitive_complexity)]
 async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemoryStats>>) {
     // Use a counter to assign a new unique ID for this user.
     let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
