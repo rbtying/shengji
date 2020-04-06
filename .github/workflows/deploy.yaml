@@ -36,7 +36,7 @@ jobs:
           args: --release
 
       - name: scp compiled executable to server
-        uses: actions/scp-action@master
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.GCP_DEPLOY_HOST }}
           username: ${{ secrets.GCP_DEPLOY_USERNAME }}
