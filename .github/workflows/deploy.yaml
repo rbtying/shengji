@@ -39,7 +39,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          #args: --release
+          args: --release
 
       - name: scp compiled executable to server
         uses: appleboy/scp-action@master
@@ -48,5 +48,14 @@ jobs:
           username: ${{ secrets.GCP_DEPLOY_USERNAME }}
           passphrase: ${{ secrets.GCP_DEPLOY_SSH_PASSPHRASE }}
           key: ${{ secrets.GCP_DEPLOY_SSH_KEY }}
-          source: target/debug/shengji
+          source: target/release/shengji
           target: /home/${{ secrets.GCP_DEPLOY_USERNAME }}/deployed
+
+      - name: swap to new executable
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.GCP_DEPLOY_HOST }}
+          username: ${{ secrets.GCP_DEPLOY_USERNAME }}
+          passphrase: ${{ secrets.GCP_DEPLOY_SSH_PASSPHRASE }}
+          key: ${{ secrets.GCP_DEPLOY_SSH_KEY }}
+          script: /home/${{ secrets.GCP_DEPLOY_USERNAME }}/swap.sh
