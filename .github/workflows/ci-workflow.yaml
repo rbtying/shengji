@@ -34,12 +34,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Test Rust code
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+          key: ${{ runner.os }}-cargo-build-target-debug-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Lint Rust code
         uses: actions-rs/cargo@v1
@@ -51,3 +46,8 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+      - name: Test Rust code
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
