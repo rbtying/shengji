@@ -1,7 +1,4 @@
 #![deny(warnings)]
-#![feature(async_closure)]
-#![feature(const_fn)]
-#![feature(const_if_match)]
 
 use std::collections::HashMap;
 use std::sync::{

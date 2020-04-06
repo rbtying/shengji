@@ -304,7 +304,7 @@ impl Card {
         }
     }
 
-    pub const fn as_char(self) -> char {
+    pub fn as_char(self) -> char {
         match self {
             cards::C_A => '🃑',
             cards::C_K => '🃞',
@@ -425,21 +425,21 @@ impl Card {
         }
     }
 
-    pub const fn is_joker(self) -> bool {
+    pub fn is_joker(self) -> bool {
         match self {
             Card::SmallJoker | Card::BigJoker => true,
             Card::Unknown | Card::Suited { .. } => false,
         }
     }
 
-    pub const fn number(self) -> Option<Number> {
+    pub fn number(self) -> Option<Number> {
         match self {
             Card::Unknown | Card::SmallJoker | Card::BigJoker => None,
             Card::Suited { number, .. } => Some(number),
         }
     }
 
-    pub const fn points(self) -> Option<usize> {
+    pub fn points(self) -> Option<usize> {
         match self.number() {
             Some(Number::Five) => Some(5),
             Some(Number::Ten) | Some(Number::King) => Some(10),
@@ -447,7 +447,7 @@ impl Card {
         }
     }
 
-    pub const fn suit(self) -> Option<Suit> {
+    pub fn suit(self) -> Option<Suit> {
         match self {
             Card::Unknown | Card::SmallJoker | Card::BigJoker => None,
             Card::Suited { suit, .. } => Some(suit),
@@ -495,7 +495,7 @@ impl<'d> Deserialize<'d> for Number {
 }
 
 impl Number {
-    pub const fn as_u32(self) -> u32 {
+    pub fn as_u32(self) -> u32 {
         match self {
             Number::Two => 2,
             Number::Three => 3,
@@ -513,7 +513,7 @@ impl Number {
         }
     }
 
-    pub const fn from_u32(n: u32) -> Option<Self> {
+    pub fn from_u32(n: u32) -> Option<Self> {
         match n {
             2 => Some(Number::Two),
             3 => Some(Number::Three),
@@ -532,7 +532,7 @@ impl Number {
         }
     }
 
-    pub const fn successor(self) -> Option<Self> {
+    pub fn successor(self) -> Option<Self> {
         match self {
             Number::Two => Some(Number::Three),
             Number::Three => Some(Number::Four),
@@ -550,7 +550,7 @@ impl Number {
         }
     }
 
-    pub const fn predecessor(self) -> Option<Self> {
+    pub fn predecessor(self) -> Option<Self> {
         match self {
             Number::Two => None,
             Number::Three => Some(Number::Two),
@@ -568,7 +568,7 @@ impl Number {
         }
     }
 
-    pub const fn as_str(self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Number::Two => "2",
             Number::Three => "3",
@@ -635,7 +635,7 @@ impl<'d> Deserialize<'d> for Suit {
 }
 
 impl Suit {
-    pub const fn unicode_offset(self) -> char {
+    pub fn unicode_offset(self) -> char {
         match self {
             Suit::Spades => '\u{1f0a0}',
             Suit::Hearts => '\u{1f0b0}',
@@ -644,7 +644,7 @@ impl Suit {
         }
     }
 
-    pub const fn as_char(self) -> char {
+    pub fn as_char(self) -> char {
         match self {
             Suit::Hearts => '♡',
             Suit::Diamonds => '♢',
@@ -653,7 +653,7 @@ impl Suit {
         }
     }
 
-    pub const fn from_char(c: char) -> Option<Self> {
+    pub fn from_char(c: char) -> Option<Self> {
         match c {
             '♡' => Some(Suit::Hearts),
             '♢' => Some(Suit::Diamonds),
