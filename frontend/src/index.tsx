@@ -1212,8 +1212,6 @@ const ws = new WebSocket(uri);
 
 interface State {
   connected: boolean;
-  room_name: string;
-  name: string;
   game_state: IGameState | null;
   cards: string[];
   errors: string[];
@@ -1222,8 +1220,6 @@ interface State {
 
 const state: State = {
   connected: false,
-  room_name: window.location.hash.slice(1),
-  name: window.localStorage.getItem('name') || '',
   game_state: null,
   cards: [],
   errors: [],
@@ -1241,27 +1237,29 @@ function renderUI() {
   if (state.connected) {
     if (state.game_state === null) {
       ReactDOM.render(
-        <div>
-          <h2>
-            Room Name: {state.room_name} (
-            <a href="rules" target="_blank">
-              rules
-            </a>
-            )
-          </h2>
-          <Errors errors={state.errors} />
-          <JoinRoom
-            name={state.name}
-            room_name={state.room_name}
-            setName={(name: string) => {
-              state.name = name;
-              window.localStorage.setItem('name', name);
-              renderUI();
-            }}
-          />
-          <hr />
-          <Credits />
-        </div>,
+        <AppStateProvider>
+          <AppStateConsumer>
+            {({state: appState, updateState}) => (
+              <div>
+                <h2>
+                  Room Name: {appState.roomName} (
+                  <a href="rules" target="_blank">
+                    rules
+                  </a>
+                  )
+                </h2>
+                <Errors errors={state.errors} />
+                <JoinRoom
+                  name={appState.name}
+                  room_name={appState.roomName}
+                  setName={(name: string) => updateState({name})}
+                />
+                <hr />
+                <Credits />
+              </div>
+            )}
+          </AppStateConsumer>
+        </AppStateProvider>,
         document.getElementById('root'),
       );
     } else {
@@ -1297,28 +1295,28 @@ function renderUI() {
                       <Initialize
                         state={state.game_state.Initialize}
                         cards={state.cards}
-                        name={state.name}
+                        name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Draw ? (
                       <Draw
                         state={state.game_state.Draw}
                         cards={state.cards}
-                        name={state.name}
+                        name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Exchange ? (
                       <Exchange
                         state={state.game_state.Exchange}
                         cards={state.cards}
-                        name={state.name}
+                        name={appState.name}
                       />
                     ) : null}
                     {state.game_state.Play ? (
                       <Play
                         state={state.game_state.Play}
                         cards={state.cards}
-                        name={state.name}
+                        name={appState.name}
                         show_last_trick={settings.showLastTrick}
                         beep_on_turn={settings.beepOnTurn}
                       />
