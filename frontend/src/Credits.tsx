@@ -2,7 +2,7 @@ import * as React from 'react';
 
 const Credits = () => (
   <p>
-    Made by Robert Ying and Abra Shen and other{' '}
+    Made by Robert Ying, Abra Shen and other{' '}
     <a
       href="https://github.com/rbtying/shengji/graphs/contributors"
       target="_blank"
