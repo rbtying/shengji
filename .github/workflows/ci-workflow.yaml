@@ -1,0 +1,54 @@
+name: CI
+on:
+  push
+  pull_request
+  repository_dispatch
+    types: 'run-ci'
+
+jobs:
+  build-and-test:
+    name: "Build and test the code"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - name: Install Yarn deps for frontend
+        run: yarn install
+        working-directory: ./frontend
+
+      - name: Build frontend
+        run: yarn build
+        working-directory: ./frontend
+
+      - name: Lint frontend
+        run: yarn lint
+        working-directory: ./frontend
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Test Rust code
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Lint Rust code
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+
+      - name: Check Rust formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
