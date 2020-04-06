@@ -5,7 +5,7 @@ import {IGameState} from './types';
 import {State, combineState, noPersistence} from './State';
 import {stringLocalStorageState} from './localStorageState';
 
-type AppState = {
+export type AppState = {
   settings: Settings;
   connected: boolean;
   roomName: string;
@@ -43,7 +43,9 @@ type Props = {
   children: React.ReactNode;
 };
 const AppStateProvider = (props: Props) => {
-  const [state, setState] = React.useState<AppState>(appState.loadDefault());
+  const [state, setState] = React.useState<AppState>(() => {
+    return appState.loadDefault();
+  });
   const updateState = (newState: Partial<AppState>) => {
     const combined = {...state, ...newState};
     appState.persist(state, combined);

@@ -9,7 +9,8 @@ import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
 import Header from './Header';
-import AppStateProvider, {AppStateConsumer} from './AppStateProvider';
+import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
+import WebsocketProvider from './WebsocketProvider';
 import Credits from './Credits';
 import Chat from './Chat';
 import mapObject from './util/mapObject';
@@ -19,7 +20,6 @@ import {
   IExchangePhase,
   IFriend,
   IGameMode,
-  IGameState,
   IInitializePhase,
   IPlayPhase,
   IPlayer,
@@ -1203,190 +1203,105 @@ if (window.location.hash.length !== 17) {
   window.location.hash = r;
 }
 
-const uri =
-  (location.protocol === 'https:' ? 'wss://' : 'ws://') +
-  location.host +
-  location.pathname +
-  (location.pathname.endsWith('/') ? 'api' : '/api');
-const ws = new WebSocket(uri);
-
-interface State {
-  connected: boolean;
-  game_state: IGameState | null;
-  cards: string[];
-  errors: string[];
-  messages: {from: string; message: string; from_game: boolean}[];
-}
-
-const state: State = {
-  connected: false,
-  game_state: null,
-  cards: [],
-  errors: [],
-  messages: [],
-};
-
-(window as any).state = state;
-(window as any).send = send;
-
-function send(value: any) {
-  ws.send(JSON.stringify(value));
-}
-
-function renderUI() {
+const renderUI = (props: {
+  state: AppState;
+  updateState: (state: Partial<AppState>) => void;
+}) => {
+  const {state, updateState} = props;
   if (state.connected) {
     if (state.game_state === null) {
-      ReactDOM.render(
-        <AppStateProvider>
-          <AppStateConsumer>
-            {({state: appState, updateState}) => (
-              <div>
-                <h2>
-                  Room Name: {appState.roomName} (
-                  <a href="rules" target="_blank">
-                    rules
-                  </a>
-                  )
-                </h2>
-                <Errors errors={state.errors} />
-                <JoinRoom
-                  name={appState.name}
-                  room_name={appState.roomName}
-                  setName={(name: string) => updateState({name})}
-                />
-                <hr />
-                <Credits />
-              </div>
-            )}
-          </AppStateConsumer>
-        </AppStateProvider>,
-        document.getElementById('root'),
+      return (
+        <div>
+          <h2>
+            Room Name: {state.roomName} (
+            <a href="rules" target="_blank">
+              rules
+            </a>
+            )
+          </h2>
+          <Errors errors={state.errors} />
+          <JoinRoom
+            name={state.name}
+            room_name={state.roomName}
+            setName={(name: string) => updateState({name})}
+          />
+          <hr />
+          <Credits />
+        </div>
       );
     } else {
-      ReactDOM.render(
-        <AppStateProvider>
-          <AppStateConsumer>
-            {({state: appState, updateState}) => {
-              const {settings} = appState;
-              return (
-                <div className={settings.fourColor ? 'four-color' : ''}>
-                  <Errors errors={state.errors} />
-                  <div className="game">
-                    {state.game_state.Initialize ? null : (
-                      <a
-                        href={window.location.href}
-                        className="reset-link"
-                        onClick={(evt) => {
-                          evt.preventDefault();
-                          if (
-                            window.confirm(
-                              'Do you really want to reset the game?',
-                            )
-                          ) {
-                            send({Action: 'ResetGame'});
-                          }
-                          renderUI();
-                        }}
-                      >
-                        Reset game
-                      </a>
-                    )}
-                    {state.game_state.Initialize ? (
-                      <Initialize
-                        state={state.game_state.Initialize}
-                        cards={state.cards}
-                        name={appState.name}
-                      />
-                    ) : null}
-                    {state.game_state.Draw ? (
-                      <Draw
-                        state={state.game_state.Draw}
-                        cards={state.cards}
-                        name={appState.name}
-                      />
-                    ) : null}
-                    {state.game_state.Exchange ? (
-                      <Exchange
-                        state={state.game_state.Exchange}
-                        cards={state.cards}
-                        name={appState.name}
-                      />
-                    ) : null}
-                    {state.game_state.Play ? (
-                      <Play
-                        state={state.game_state.Play}
-                        cards={state.cards}
-                        name={appState.name}
-                        show_last_trick={settings.showLastTrick}
-                        beep_on_turn={settings.beepOnTurn}
-                      />
-                    ) : null}
-                    {state.game_state.Done ? <p>Game Over</p> : null}
-                  </div>
-                  <Chat messages={state.messages} />
-                  <hr />
-                  <Credits />
-                </div>
-              );
-            }}
-          </AppStateConsumer>
-        </AppStateProvider>,
-        document.getElementById('root'),
+      return (
+        <div className={state.settings.fourColor ? 'four-color' : ''}>
+          <Errors errors={state.errors} />
+          <div className="game">
+            {state.game_state.Initialize ? null : (
+              <a
+                href={window.location.href}
+                className="reset-link"
+                onClick={(evt) => {
+                  evt.preventDefault();
+                  if (window.confirm('Do you really want to reset the game?')) {
+                    send({Action: 'ResetGame'});
+                  }
+                }}
+              >
+                Reset game
+              </a>
+            )}
+            {state.game_state.Initialize ? (
+              <Initialize
+                state={state.game_state.Initialize}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Draw ? (
+              <Draw
+                state={state.game_state.Draw}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Exchange ? (
+              <Exchange
+                state={state.game_state.Exchange}
+                cards={state.cards}
+                name={state.name}
+              />
+            ) : null}
+            {state.game_state.Play ? (
+              <Play
+                state={state.game_state.Play}
+                cards={state.cards}
+                name={state.name}
+                show_last_trick={state.settings.showLastTrick}
+                beep_on_turn={state.settings.beepOnTurn}
+              />
+            ) : null}
+            {state.game_state.Done ? <p>Game Over</p> : null}
+          </div>
+          <Chat messages={state.messages} />
+          <hr />
+          <Credits />
+        </div>
       );
     }
   } else {
-    ReactDOM.render(
-      <p>disconnected from server, please refresh</p>,
-      document.getElementById('root'),
-    );
+    return <p>disconnected from server, please refresh</p>;
   }
-}
-
-ws.onopen = () => {
-  state.connected = true;
-  renderUI();
 };
-ws.onclose = (evt) => {
-  state.connected = false;
-  renderUI();
+
+const bootstrap = () => {
+  ReactDOM.render(
+    <AppStateProvider>
+      <WebsocketProvider />
+      <AppStateConsumer>{renderUI}</AppStateConsumer>
+    </AppStateProvider>,
+    document.getElementById('root'),
+  );
 };
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-  if (msg.Message) {
-    state.messages.push(msg.Message);
-    if (state.messages.length >= 100) {
-      state.messages.shift();
-    }
-  }
-  if (msg.Broadcast) {
-    state.messages.push({
-      from: 'GAME',
-      message: msg.Broadcast,
-      from_game: true,
-    });
-    if (state.messages.length >= 100) {
-      state.messages.shift();
-    }
-  }
 
-  if (msg.Error) {
-    state.errors.push(msg.Error);
-    setTimeout(() => {
-      state.errors = state.errors.filter((v) => v !== msg.Error);
-      renderUI();
-    }, 5000);
-  }
-
-  if (msg.State) {
-    state.game_state = msg.State.state;
-    state.cards = msg.State.cards;
-  }
-
-  if (msg === 'Kicked') {
-    ws.close();
-  }
-
-  renderUI();
-};
+bootstrap();
 
 declare var CARDS: ICardInfo[];
+declare var send: (value: any) => void;

@@ -7,7 +7,9 @@ export const localStorageState = <T>(
 ): State<T> => {
   return {
     loadDefault: () => extractor(window.localStorage.getItem(key)),
-    persist: (t: T) => window.localStorage.setItem(key, serializer(t)),
+    persist: (before: T, after: T) => {
+      window.localStorage.setItem(key, serializer(after));
+    },
   };
 };
 
