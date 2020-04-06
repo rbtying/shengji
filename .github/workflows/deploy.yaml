@@ -49,4 +49,4 @@ jobs:
           passphrase: ${{ secrets.GCP_DEPLOY_SSH_PASSPHRASE }}
           key: ${{ secrets.GCP_DEPLOY_SSH_KEY }}
           source: target/release/shengji
-          target: shengji-new
+          target: ${{ secrets.GCP_DEPLOY_USERNAME }}/deployed
