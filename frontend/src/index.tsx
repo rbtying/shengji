@@ -1365,6 +1365,23 @@ function renderUI() {
             <div className={state.four_color ? 'four-color' : ''}>
               <Errors errors={state.errors} />
               <div className="game">
+                {state.game_state.Initialize ? null : (
+                  <a
+                    href={window.location.href}
+                    className="reset-link"
+                    onClick={(evt) => {
+                      evt.preventDefault();
+                      if (
+                        window.confirm('Do you really want to reset the game?')
+                      ) {
+                        send({Action: 'ResetGame'});
+                      }
+                      renderUI();
+                    }}
+                  >
+                    Reset game
+                  </a>
+                )}
                 {state.game_state.Initialize ? (
                   <Initialize
                     settings={settings}

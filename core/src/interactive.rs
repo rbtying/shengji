@@ -61,6 +61,7 @@ impl InteractiveGame {
                     *s = GameState::Done;
                     Ok(vec![])
                 }
+                (Message::ResetGame, _) => Ok(s.reset()?),
                 (Message::StartGame, GameState::Initialize(ref mut state)) => {
                     *s = GameState::Draw(state.start()?);
                     Ok(vec!["Starting game".to_string()])
@@ -176,6 +177,7 @@ impl InteractiveGame {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
     EndGame,
+    ResetGame,
     SetNumDecks(Option<usize>),
     SetKittySize(usize),
     SetHideLandlordsPoints(bool),
