@@ -1,3 +1,4 @@
+/* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import Beeper from './Beeper';
@@ -35,7 +36,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setGameMode(evt: any) {
     evt.preventDefault();
-    if (evt.target.value == 'Tractor') {
+    if (evt.target.value === 'Tractor') {
       send({Action: {SetGameMode: 'Tractor'}});
     } else {
       send({
@@ -53,7 +54,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setKittySize(evt: any) {
     evt.preventDefault();
-    if (evt.target.value != '') {
+    if (evt.target.value !== '') {
       const size = parseInt(evt.target.value, 10);
       send({
         Action: {
@@ -65,7 +66,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   setHideLandlordsPoints(evt: any) {
     evt.preventDefault();
-    send({Action: {SetHideLandlordsPoints: evt.target.value == 'hide'}});
+    send({Action: {SetHideLandlordsPoints: evt.target.value === 'hide'}});
   }
 
   startGame(evt: any) {
@@ -75,7 +76,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   render() {
     const mode_as_string =
-      this.props.state.game_mode == 'Tractor' ? 'Tractor' : 'FindingFriends';
+      this.props.state.game_mode === 'Tractor' ? 'Tractor' : 'FindingFriends';
     return (
       <div>
         <Header
@@ -164,7 +165,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     evt.preventDefault();
     const counts: {[card: string]: number} = {};
     this.state.selected.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
-    if (Object.keys(counts).length != 1) {
+    if (Object.keys(counts).length !== 1) {
       return;
     }
 
@@ -176,7 +177,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     for (const c in counts) {
       let already_bid = 0;
       this.props.state.bids.forEach((bid) => {
-        if (players[bid.id].name == this.props.name && bid.card == c) {
+        if (players[bid.id].name === this.props.name && bid.card === c) {
           already_bid = already_bid < bid.count ? bid.count : already_bid;
         }
       });
@@ -188,7 +189,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
   drawCard() {
     const can_draw =
-      this.props.state.players[this.props.state.position].name ==
+      this.props.state.players[this.props.state.position].name ===
       this.props.name;
     if (this.timeout) {
       clearTimeout(this.timeout);
@@ -220,12 +221,12 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
   render() {
     const can_draw =
-      this.props.state.players[this.props.state.position].name ==
+      this.props.state.players[this.props.state.position].name ===
         this.props.name && this.props.state.deck.length > 0;
     if (
       can_draw &&
       !this.could_draw &&
-      this.timeout == null &&
+      this.timeout === null &&
       this.state.autodraw
     ) {
       this.timeout = setTimeout(() => {
@@ -236,11 +237,14 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     let next = this.props.state.players[this.props.state.position].id;
     let next_idx = this.props.state.position;
-    if (this.props.state.deck.length == 0 && this.props.state.bids.length > 0) {
+    if (
+      this.props.state.deck.length === 0 &&
+      this.props.state.bids.length > 0
+    ) {
       next = this.props.state.bids[this.props.state.bids.length - 1].id;
 
       this.props.state.players.forEach((player, idx) => {
-        if (player.id == next) {
+        if (player.id === next) {
           next_idx = idx;
         }
       });
@@ -250,19 +254,19 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     let player_id = -1;
     this.props.state.players.forEach((p) => {
       players[p.id] = p;
-      if (p.name == this.props.name) {
+      if (p.name === this.props.name) {
         player_id = p.id;
       }
     });
 
     const my_bids: {[card: string]: number} = {};
     this.props.state.bids.forEach((bid) => {
-      if (player_id == bid.id) {
+      if (player_id === bid.id) {
         const existing_bid = my_bids[bid.card] || 0;
         my_bids[bid.card] = existing_bid < bid.count ? bid.count : existing_bid;
       }
     });
-    let cards_not_bid = [...this.props.cards];
+    const cards_not_bid = [...this.props.cards];
 
     Object.keys(my_bids).forEach((card) => {
       const count = my_bids[card] || 0;
@@ -292,7 +296,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             Bids ({this.props.state.deck.length} cards remaining in the deck)
           </h2>
           {this.props.state.bids.map((bid, idx) => {
-            let name = players[bid.id].name;
+            const name = players[bid.id].name;
             return (
               <LabeledPlay
                 label={name}
@@ -322,7 +326,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         </label>
         <button
           onClick={this.makeBid}
-          disabled={this.state.selected.length == 0}
+          disabled={this.state.selected.length === 0}
         >
           Make bid
         </button>
@@ -330,11 +334,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           onClick={this.pickUpKitty}
           disabled={
             this.props.state.deck.length > 0 ||
-            this.props.state.bids.length == 0 ||
-            (this.props.state.landlord != null &&
-              this.props.state.landlord != player_id) ||
-            (this.props.state.landlord == null &&
-              this.props.state.bids[this.props.state.bids.length - 1].id !=
+            this.props.state.bids.length === 0 ||
+            (this.props.state.landlord !== null &&
+              this.props.state.landlord !== player_id) ||
+            (this.props.state.landlord === null &&
+              this.props.state.bids[this.props.state.bids.length - 1].id !==
                 player_id)
           }
         >
@@ -373,12 +377,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 
   fixFriends() {
-    if (this.props.state.game_mode != 'Tractor') {
+    if (this.props.state.game_mode !== 'Tractor') {
       const game_mode = this.props.state.game_mode.FindingFriends;
       const num_friends = game_mode.num_friends;
       const prop_friends = game_mode.friends;
-      if (num_friends != this.state.friends.length) {
-        if (prop_friends.length != num_friends) {
+      if (num_friends !== this.state.friends.length) {
+        if (prop_friends.length !== num_friends) {
           const friends = [...this.state.friends];
           while (friends.length < num_friends) {
             friends.push({
@@ -390,13 +394,13 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           while (friends.length > num_friends) {
             friends.pop();
           }
-          this.setState({friends: friends});
+          this.setState({friends});
         } else {
           this.setState({friends: prop_friends});
         }
       }
     } else {
-      if (this.state.friends.length != 0) {
+      if (this.state.friends.length !== 0) {
         this.setState({friends: []});
       }
     }
@@ -426,8 +430,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   pickFriends(evt: any) {
     evt.preventDefault();
     if (
-      this.props.state.game_mode != 'Tractor' &&
-      this.props.state.game_mode.FindingFriends.num_friends ==
+      this.props.state.game_mode !== 'Tractor' &&
+      this.props.state.game_mode.FindingFriends.num_friends ===
         this.state.friends.length
     ) {
       send({
@@ -443,11 +447,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   render() {
     let landlord_idx = 0;
     this.props.state.players.forEach((player, idx) => {
-      if (player.id == this.props.state.landlord) {
+      if (player.id === this.props.state.landlord) {
         landlord_idx = idx;
       }
     });
-    if (this.props.state.players[landlord_idx].name == this.props.name) {
+    if (this.props.state.players[landlord_idx].name === this.props.name) {
       return (
         <div>
           <Header
@@ -462,7 +466,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             name={this.props.name}
           />
           <Trump trump={this.props.state.trump} />
-          {this.props.state.game_mode != 'Tractor' ? (
+          {this.props.state.game_mode !== 'Tractor' ? (
             <div>
               <Friends game_mode={this.props.state.game_mode} />
               {this.state.friends.map((friend, idx) => {
@@ -507,7 +511,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           <button
             onClick={this.startGame}
             disabled={
-              this.props.state.kitty.length != this.props.state.kitty_size
+              this.props.state.kitty.length !== this.props.state.kitty_size
             }
           >
             Start game
@@ -596,19 +600,19 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     let can_play = false;
     let is_my_turn = false;
     this.props.state.players.forEach((p) => {
-      if (p.name == this.props.name) {
+      if (p.name === this.props.name) {
         const last_play = this.props.state.trick.played_cards[
           this.props.state.trick.played_cards.length - 1
         ];
-        if (p.id == next) {
+        if (p.id === next) {
           is_my_turn = true;
           if (last_play) {
-            can_play = this.state.selected.length == last_play.cards.length;
+            can_play = this.state.selected.length === last_play.cards.length;
           } else {
             can_play = this.state.selected.length > 0;
           }
         }
-        if (last_play && p.id == last_play.id) {
+        if (last_play && p.id === last_play.id) {
           can_take_back = true;
         }
       }
@@ -657,8 +661,8 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         >
           Finish trick
         </button>
-        {remaining_cards_to_play == 0 &&
-        this.props.state.trick.played_cards.length == 0 ? (
+        {remaining_cards_to_play === 0 &&
+        this.props.state.trick.played_cards.length === 0 ? (
           <button onClick={this.startNewGame}>Finish game</button>
         ) : null}
         <Cards
@@ -705,7 +709,7 @@ class Points extends React.Component<IPointsProps, {}> {
     let landlord = '';
 
     const player_point_elements = this.props.players.map((player) => {
-      if (player.id == this.props.landlord) {
+      if (player.id === this.props.landlord) {
         landlord = player.name;
       }
 
@@ -742,7 +746,7 @@ class Points extends React.Component<IPointsProps, {}> {
     const segment = this.props.num_decks * 20;
     let threshold_str = '';
 
-    if (non_landlords_points == 0) {
+    if (non_landlords_points === 0) {
       threshold_str = `${landlord}'s team will go up 3 levels (next threshold: 5分)`;
     } else if (non_landlords_points < segment) {
       threshold_str = `${landlord}'s team will go up 2 levels (next threshold: ${segment}分)`;
@@ -822,7 +826,7 @@ class Cards extends React.Component<ICardsProps, {}> {
           {this.props.selected.map((c, idx) => (
             <Card key={idx} onClick={() => this.unselectCard(c)} card={c} />
           ))}
-          {this.props.selected.length == 0 ? (
+          {this.props.selected.length === 0 ? (
             <Card
               card="🂠"
               className={this.props.notify_empty ? 'notify' : ''}
@@ -833,7 +837,7 @@ class Cards extends React.Component<ICardsProps, {}> {
           {unselected.map((c, idx) => (
             <Card key={idx} onClick={() => this.selectCard(c)} card={c} />
           ))}
-          {unselected.length == 0 ? <Card card="🂠" /> : null}
+          {unselected.length === 0 ? <Card card="🂠" /> : null}
         </div>
       </div>
     );
@@ -917,7 +921,7 @@ class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
             </option>
           ))}
         </select>
-        <button onClick={this.kick} disabled={this.state.to_kick == ''}>
+        <button onClick={this.kick} disabled={this.state.to_kick === ''}>
           kick
         </button>
       </div>
@@ -938,7 +942,7 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != '') {
+    if (evt.target.value !== '') {
       send({Action: {SetLandlord: parseInt(evt.target.value, 10)}});
     } else {
       send({Action: {SetLandlord: null}});
@@ -951,7 +955,7 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
         <label>
           leader:{' '}
           <select
-            value={this.props.landlord != null ? this.props.landlord : ''}
+            value={this.props.landlord !== null ? this.props.landlord : ''}
             onChange={this.onChange}
           >
             <option value="">winner of the bid</option>
@@ -980,7 +984,7 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != '') {
+    if (evt.target.value !== '') {
       send({Action: {SetNumDecks: parseInt(evt.target.value, 10)}});
     } else {
       send({Action: {SetNumDecks: null}});
@@ -993,7 +997,7 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
         <label>
           number of decks:{' '}
           <select
-            value={this.props.num_decks != null ? this.props.num_decks : ''}
+            value={this.props.num_decks !== null ? this.props.num_decks : ''}
             onChange={this.onChange}
           >
             <option value="">default</option>
@@ -1028,23 +1032,23 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
   onChange(evt: any) {
     evt.preventDefault();
 
-    if (evt.target.value != '') {
+    if (evt.target.value !== '') {
       send({Action: {SetRank: evt.target.value}});
     }
   }
 
   render() {
-    let rank = '';
+    let selectedRank = '';
     this.props.players.forEach((p) => {
-      if (p.name == this.props.name) {
-        rank = p.level;
+      if (p.name === this.props.name) {
+        selectedRank = p.level;
       }
     });
     return (
       <div className="landlord-picker">
         <label>
           rank:{' '}
-          <select value={rank} onChange={this.onChange}>
+          <select value={selectedRank} onChange={this.onChange}>
             {[
               '2',
               '3',
@@ -1121,20 +1125,20 @@ class Players extends React.Component<IPlayersProps, {}> {
               let className = 'player';
               let descriptor = `${player.name} (rank ${player.level})`;
 
-              if (player.id == this.props.landlord) {
+              if (player.id === this.props.landlord) {
                 descriptor = descriptor + ' (当庄)';
               }
-              if (player.name == this.props.name) {
+              if (player.name === this.props.name) {
                 descriptor = descriptor + ' (You!)';
               }
               if (
-                player.id == this.props.landlord ||
+                player.id === this.props.landlord ||
                 (this.props.landlords_team &&
                   this.props.landlords_team.includes(player.id))
               ) {
                 className = className + ' landlord';
               }
-              if (player.id == this.props.next) {
+              if (player.id === this.props.next) {
                 className = className + ' next';
               }
 
@@ -1244,11 +1248,11 @@ class Chat extends React.Component<IChatProps, IChatState> {
 
 class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   render() {
-    if (this.props.game_mode != 'Tractor') {
+    if (this.props.game_mode !== 'Tractor') {
       return (
         <div className="pending-friends">
           {this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
-            if (friend.player_id != null) {
+            if (friend.player_id !== null) {
               return null;
             }
 
@@ -1257,7 +1261,7 @@ class Friends extends React.Component<{game_mode: IGameMode}, {}> {
               return null;
             }
             const card = `${c.number}${c.typ}`;
-            if (friend.skip == 0) {
+            if (friend.skip === 0) {
               return (
                 <p key={idx}>
                   The next person to play <span className={c.typ}>{card}</span>{' '}
@@ -1282,15 +1286,15 @@ class Friends extends React.Component<{game_mode: IGameMode}, {}> {
   }
 }
 
-if (window.location.hash.length != 17) {
-  var arr = new Uint8Array(8);
+if (window.location.hash.length !== 17) {
+  const arr = new Uint8Array(8);
   window.crypto.getRandomValues(arr);
   const r = Array.from(arr, (d) => ('0' + d.toString(16)).substr(-2)).join('');
   window.location.hash = r;
 }
 
 const uri =
-  (location.protocol == 'https:' ? 'wss://' : 'ws://') +
+  (location.protocol === 'https:' ? 'wss://' : 'ws://') +
   location.host +
   location.pathname +
   (location.pathname.endsWith('/') ? 'api' : '/api');
@@ -1309,15 +1313,15 @@ interface State {
   messages: {from: string; message: string; from_game: boolean}[];
 }
 
-let state: State = {
+const state: State = {
   connected: false,
   room_name: window.location.hash.slice(1),
   name: window.localStorage.getItem('name') || '',
   game_state: null,
-  four_color: window.localStorage.getItem('four_color') == 'on' || false,
-  beep_on_turn: window.localStorage.getItem('beep_on_turn') == 'on' || false,
+  four_color: window.localStorage.getItem('four_color') === 'on' || false,
+  beep_on_turn: window.localStorage.getItem('beep_on_turn') === 'on' || false,
   show_last_trick:
-    window.localStorage.getItem('show_last_trick') == 'on' || false,
+    window.localStorage.getItem('show_last_trick') === 'on' || false,
   cards: [],
   errors: [],
   messages: [],
@@ -1332,7 +1336,7 @@ function send(value: any) {
 
 function renderUI() {
   if (state.connected) {
-    if (state.game_state == null) {
+    if (state.game_state === null) {
       ReactDOM.render(
         <div>
           <h2>
@@ -1456,7 +1460,7 @@ ws.onmessage = (event) => {
   if (msg.Error) {
     state.errors.push(msg.Error);
     setTimeout(() => {
-      state.errors = state.errors.filter((v) => v != msg.Error);
+      state.errors = state.errors.filter((v) => v !== msg.Error);
       renderUI();
     }, 5000);
   }
@@ -1466,7 +1470,7 @@ ws.onmessage = (event) => {
     state.cards = msg.State.cards;
   }
 
-  if (msg == 'Kicked') {
+  if (msg === 'Kicked') {
     ws.close();
   }
 

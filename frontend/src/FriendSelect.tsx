@@ -31,7 +31,7 @@ const FriendSelect = (props: Props) => {
     skip: parseInt(select.value, 10),
   }));
 
-  const number = props.trump.Standard
+  const rank = props.trump.Standard
     ? props.trump.Standard.number
     : props.trump.NoTrump.number;
   return (
@@ -39,7 +39,7 @@ const FriendSelect = (props: Props) => {
       <select value={props.friend.card} onChange={handleCardChange}>
         <option value=""> </option>
         {(window as any).CARDS.map((c: any) => {
-          return c.number != null && c.number != number ? (
+          return c.number !== null && c.number !== rank ? (
             <option
               key={c.value}
               value={c.value}
