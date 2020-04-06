@@ -1,5 +1,12 @@
 import * as React from 'react';
 
+const loadSettings = (): Settings => ({
+  fourColor: window.localStorage.getItem('four_color') == 'on' || false,
+  beepOnTurn: window.localStorage.getItem('beep_on_turn') == 'on' || false,
+  showLastTrick:
+    window.localStorage.getItem('show_last_trick') == 'on' || false,
+});
+
 export type Settings = {
   fourColor: boolean;
   showLastTrick: boolean;
@@ -12,17 +19,18 @@ export type SettingsProps = {
 };
 
 type Props = {
-  defaultSettings: Settings;
+  defaultSettings?: Settings;
   children: (
     settings: Settings,
     handleChangeSettings: (settings: Settings) => void,
   ) => JSX.Element;
 };
 
-const SettingsProvider = (props: Props) => {
-  const [settings, setSettings] = React.useState<Settings>(
-    props.defaultSettings,
-  );
+const SettingsProvider = ({
+  defaultSettings = loadSettings(),
+  children,
+}: Props) => {
+  const [settings, setSettings] = React.useState<Settings>(defaultSettings);
   const handleChangeSettings = (newSettings: Settings) => {
     window.localStorage.setItem(
       'four_color',
@@ -38,7 +46,7 @@ const SettingsProvider = (props: Props) => {
     );
     setSettings(newSettings);
   };
-  return props.children(settings, handleChangeSettings);
+  return children(settings, handleChangeSettings);
 };
 
 export default SettingsProvider;

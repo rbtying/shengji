@@ -541,8 +541,8 @@ type IPlayProps = SettingsProps & {
   state: IPlayPhase;
   name: string;
   cards: string[];
-  beep_on_turn: boolean;
-  show_last_trick: boolean;
+  beepOnTurn: boolean;
+  showLastTrick: boolean;
 };
 interface IPlayState {
   selected: string[];
@@ -610,7 +610,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
       }
     });
     const shouldBeBeeping =
-      this.props.beep_on_turn && is_my_turn && !this.was_my_turn;
+      this.props.beepOnTurn && is_my_turn && !this.was_my_turn;
     this.was_my_turn = is_my_turn;
 
     let remaining_cards_to_play = 0;
@@ -663,7 +663,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
           selected={this.state.selected}
           setSelected={this.setSelected}
         />
-        {this.props.state.last_trick && this.props.show_last_trick ? (
+        {this.props.state.last_trick && this.props.showLastTrick ? (
           <div>
             <p>Previous trick</p>
             <Trick
@@ -1297,9 +1297,6 @@ interface State {
   room_name: string;
   name: string;
   game_state: IGameState | null;
-  four_color: boolean;
-  beep_on_turn: boolean;
-  show_last_trick: boolean;
   cards: string[];
   errors: string[];
   messages: {from: string; message: string; from_game: boolean}[];
@@ -1310,10 +1307,6 @@ const state: State = {
   room_name: window.location.hash.slice(1),
   name: window.localStorage.getItem('name') || '',
   game_state: null,
-  four_color: window.localStorage.getItem('four_color') === 'on' || false,
-  beep_on_turn: window.localStorage.getItem('beep_on_turn') === 'on' || false,
-  show_last_trick:
-    window.localStorage.getItem('show_last_trick') === 'on' || false,
   cards: [],
   errors: [],
   messages: [],
@@ -1354,15 +1347,10 @@ function renderUI() {
         document.getElementById('root'),
       );
     } else {
-      const defaultSettings = {
-        fourColor: state.four_color,
-        showLastTrick: state.show_last_trick,
-        beepOnTurn: state.beep_on_turn,
-      };
       ReactDOM.render(
-        <SettingsProvider defaultSettings={defaultSettings}>
+        <SettingsProvider>
           {(settings, handleChangeSettings) => (
-            <div className={state.four_color ? 'four-color' : ''}>
+            <div className={settings.fourColor ? 'four-color' : ''}>
               <Errors errors={state.errors} />
               <div className="game">
                 {state.game_state.Initialize ? (
@@ -1399,8 +1387,8 @@ function renderUI() {
                     state={state.game_state.Play}
                     cards={state.cards}
                     name={state.name}
-                    show_last_trick={state.show_last_trick}
-                    beep_on_turn={state.beep_on_turn}
+                    showLastTrick={settings.showLastTrick}
+                    beepOnTurn={settings.beepOnTurn}
                   />
                 ) : null}
                 {state.game_state.Done ? <p>Game Over</p> : null}
