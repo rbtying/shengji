@@ -55,7 +55,6 @@ const WebsocketProvider = (props: Props) => {
       if (message === 'Kicked') {
         ws.close();
       } else {
-        console.log(websocketHandler(stateRef.current, message));
         updateStateRef.current(websocketHandler(stateRef.current, message));
       }
     });
