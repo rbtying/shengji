@@ -1215,7 +1215,6 @@ interface State {
   connected: boolean;
   game_state: IGameState | null;
   cards: string[];
-  errors: string[];
   messages: {from: string; message: string; from_game: boolean}[];
 }
 
@@ -1223,7 +1222,6 @@ const state: State = {
   connected: false,
   game_state: null,
   cards: [],
-  errors: [],
   messages: [],
 };
 
@@ -1250,7 +1248,7 @@ function renderUI() {
                   </a>
                   )
                 </h2>
-                <Errors errors={state.errors} />
+                <Errors errors={appState.errors} />
                 <JoinRoom
                   name={appState.name}
                   room_name={appState.roomName}
@@ -1273,7 +1271,7 @@ function renderUI() {
               const {settings} = appState;
               return (
                 <div className={settings.fourColor ? 'four-color' : ''}>
-                  <Errors errors={state.errors} />
+                  <Errors errors={appState.errors} />
                   <div className="game">
                     {state.game_state.Initialize ? null : (
                       <a
@@ -1370,14 +1368,6 @@ ws.onmessage = (event) => {
     if (state.messages.length >= 100) {
       state.messages.shift();
     }
-  }
-
-  if (msg.Error) {
-    state.errors.push(msg.Error);
-    setTimeout(() => {
-      state.errors = state.errors.filter((v) => v !== msg.Error);
-      renderUI();
-    }, 5000);
   }
 
   if (msg.State) {
