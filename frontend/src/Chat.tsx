@@ -17,7 +17,10 @@ const Chat = (props: Props) => {
     // new state. After making messages immutable, update to only rely on
     // props.messages
     const {messages} = props;
-    if (messages.length > 0 && messages[messages.length - 1] !== latestMessage) {
+    if (
+      messages.length > 0 &&
+      messages[messages.length - 1] !== latestMessage
+    ) {
       latestMessage = messages[messages.length - 1];
       anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
     }

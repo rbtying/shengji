@@ -51,16 +51,6 @@ const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
   }
 };
 
-const compose = (
-  left: WebsocketHandler,
-  right: WebsocketHandler,
-): WebsocketHandler => {
-  return (state: AppState, message: any) => {
-    const newState = {...state, ...left(state, message)};
-    return {...newState, ...right(newState, message)};
-  };
-};
-
 const allHandlers: WebsocketHandler[] = [
   messageHandler,
   broadcastHandler,
@@ -68,4 +58,14 @@ const allHandlers: WebsocketHandler[] = [
   stateHandler,
 ];
 
-export default allHandlers.reduce(compose) as WebsocketHandler;
+const composedHandlers: WebsocketHandler = (state: AppState, message: any) => {
+  let partials = {};
+  allHandlers.forEach((h) => {
+    const partial = h(state, message);
+    partials = {...partials, ...partial};
+    state = {...state, ...partial};
+  });
+  return partials;
+};
+
+export default composedHandlers as WebsocketHandler;

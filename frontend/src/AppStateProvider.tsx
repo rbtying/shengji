@@ -47,9 +47,11 @@ const AppStateProvider = (props: Props) => {
     return appState.loadDefault();
   });
   const updateState = (newState: Partial<AppState>) => {
-    const combined = {...state, ...newState};
-    appState.persist(state, combined);
-    setState(combined);
+    setState((s) => {
+      const combined = {...s, ...newState};
+      appState.persist(state, combined);
+      return combined;
+    });
   };
   return (
     <AppStateContext.Provider value={{state, updateState}}>
