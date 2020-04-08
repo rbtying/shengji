@@ -2,8 +2,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .players button { padding: 2.5px; margin: 0 5px; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
 .trick { padding: 10px; }
-.points .card { font-size: 5em; cursor: default; }
-.card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; }
+.card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; }
 .card.unknown { cursor: default; color: #aaa; }
 .card.notify { animation:blinkingText 1.5s infinite; }
 @keyframes blinkingText {
@@ -18,6 +17,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .♧ { color: #000; }
 .🃟 { color: #000; }
 .🃏 { color: #bb0313; }
+.points .card { font-size: 5em; cursor: default; }
 .four-color .♢ { color: #1933f9; }
 .four-color .♡ { color: #bb0313; }
 .four-color .♤ { color: #000; }
@@ -45,4 +45,4 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .trump { margin: 10px 0; }
 .pending-friends p { margin: 0; }
 .pending-friends { margin: 10px; }
-.reset-link { float: right }
+.reset-link { float: right; }
