@@ -9,7 +9,6 @@ jobs:
   build-and-deploy:
     name: "Build and deploy the code"
     runs-on: ubuntu-latest
-    if: github.actor == github.event.repository.owner.login
     steps:
       - name: Checkout
         uses: actions/checkout@v2
