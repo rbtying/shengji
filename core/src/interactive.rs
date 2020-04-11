@@ -62,16 +62,26 @@ impl InteractiveGame {
                     Ok(vec![])
                 }
                 (Message::ResetGame, _) => Ok(s.reset()?),
+                (Message::SetChatLink(ref link), _) => {
+                    s.set_chat_link(link.clone())?;
+                    Ok(vec![])
+                }
                 (Message::StartGame, GameState::Initialize(ref mut state)) => {
                     *s = GameState::Draw(state.start()?);
                     Ok(vec![BroadcastMessage("Starting game".to_string())])
                 }
-                (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
-                    Ok(state.set_num_decks(num_decks)?)
-                }
                 (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                     state.reorder_players(&players)?;
                     Ok(vec![])
+                }
+                (Message::MakeObserver(id), GameState::Initialize(ref mut state)) => {
+                    Ok(state.make_observer(id)?)
+                }
+                (Message::MakePlayer(id), GameState::Initialize(ref mut state)) => {
+                    Ok(state.make_player(id)?)
+                }
+                (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
+                    Ok(state.set_num_decks(num_decks)?)
                 }
                 (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
                     state.set_rank(id, rank)?;
@@ -83,7 +93,7 @@ impl InteractiveGame {
                     ))])
                 }
                 (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
-                    Ok(vec![state.set_kitty_size(size)?])
+                    Ok(state.set_kitty_size(size)?.into_iter().collect())
                 }
                 (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                     state.set_landlord(landlord)?;
@@ -121,8 +131,7 @@ impl InteractiveGame {
                     }
                 }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
-                    state.set_game_mode(game_mode.clone());
-                    Ok(vec![])
+                    Ok(state.set_game_mode(game_mode.clone())?)
                 }
                 (Message::DrawCard, GameState::Draw(ref mut state)) => {
                     state.draw_card(id)?;
@@ -194,6 +203,9 @@ impl InteractiveGame {
 pub enum Message {
     EndGame,
     ResetGame,
+    MakeObserver(PlayerID),
+    MakePlayer(PlayerID),
+    SetChatLink(Option<String>),
     SetNumDecks(Option<usize>),
     SetKittySize(Option<usize>),
     SetHideLandlordsPoints(bool),

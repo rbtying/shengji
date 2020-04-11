@@ -41,6 +41,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
     this.setGameMode = this.setGameMode.bind(this);
     this.startGame = this.startGame.bind(this);
     this.setKittySize = this.setKittySize.bind(this);
+    this.setNumFriends = this.setNumFriends.bind(this);
     this.setHideLandlordsPoints = this.setHideLandlordsPoints.bind(this);
   }
 
@@ -53,8 +54,33 @@ class Initialize extends React.Component<IInitializeProps, {}> {
         Action: {
           SetGameMode: {
             FindingFriends: {
-              num_friends: 0,
-              friends: [],
+              num_friends: null,
+            },
+          },
+        },
+      });
+    }
+  }
+
+  setNumFriends(evt: any) {
+    evt.preventDefault();
+    if (evt.target.value === '') {
+      send({
+        Action: {
+          SetGameMode: {
+            FindingFriends: {
+              num_friends: null,
+            },
+          },
+        },
+      });
+    } else {
+      const num = parseInt(evt.target.value, 10);
+      send({
+        Action: {
+          SetGameMode: {
+            FindingFriends: {
+              num_friends: num,
             },
           },
         },
@@ -69,6 +95,12 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       send({
         Action: {
           SetKittySize: size,
+        },
+      });
+    } else {
+      send({
+        Action: {
+          SetKittySize: null,
         },
       });
     }
@@ -86,13 +118,32 @@ class Initialize extends React.Component<IInitializeProps, {}> {
 
   render() {
     const mode_as_string =
-      this.props.state.game_mode === 'Tractor' ? 'Tractor' : 'FindingFriends';
+      this.props.state.propagated.game_mode === 'Tractor'
+        ? 'Tractor'
+        : 'FindingFriends';
+    const num_friends =
+      this.props.state.propagated.game_mode === 'Tractor' ||
+      this.props.state.propagated.game_mode.FindingFriends.num_friends === null
+        ? ''
+        : this.props.state.propagated.game_mode.FindingFriends.num_friends;
+    const decks_effective =
+      this.props.state.propagated.num_decks ||
+      Math.floor(this.props.state.propagated.players.length / 2);
+    let kitty_offset =
+      (decks_effective * 54) % this.props.state.propagated.players.length;
+    if (kitty_offset === 0) {
+      kitty_offset += this.props.state.propagated.players.length;
+    }
+
     return (
       <div>
-        <Header gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.propagated.game_mode}
+          chatLink={this.props.state.propagated.chat_link}
+        />
         <Players
-          players={this.props.state.players}
-          landlord={this.props.state.landlord}
+          players={this.props.state.propagated.players}
+          landlord={this.props.state.propagated.landlord}
           next={null}
           movable={true}
           name={this.props.name}
@@ -103,29 +154,74 @@ class Initialize extends React.Component<IInitializeProps, {}> {
             <code>{window.location.href}</code>
           </a>
         </p>
-        {this.props.state.players.length >= 4 ? (
+        {this.props.state.propagated.players.length >= 4 ? (
           <button onClick={this.startGame}>Start game</button>
         ) : (
           <h2>Waiting for players...</h2>
         )}
-        <Kicker players={this.props.state.players} />
+        <Kicker players={this.props.state.propagated.players} />
         <div className="game-settings">
           <h3>Game settings</h3>
-          <label>
-            Game mode:{' '}
-            <select value={mode_as_string} onChange={this.setGameMode}>
-              <option value="Tractor">升级 / Tractor</option>
-              <option value="FindingFriends">找朋友 / Finding Friends</option>
-            </select>
-          </label>
+          <div>
+            <label>
+              Game mode:{' '}
+              <select value={mode_as_string} onChange={this.setGameMode}>
+                <option value="Tractor">升级 / Tractor</option>
+                <option value="FindingFriends">找朋友 / Finding Friends</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            {this.props.state.propagated.game_mode !== 'Tractor' ? (
+              <label>
+                Number of friends:{' '}
+                <select value={num_friends} onChange={this.setNumFriends}>
+                  <option value="">default</option>
+                  {Array(
+                    Math.floor(this.props.state.propagated.players.length / 2),
+                  )
+                    .fill(0)
+                    .map((_, idx) => (
+                      <option value={idx + 1} key={idx}>
+                        {idx + 1}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
           <NumDecksSelector
-            num_decks={this.props.state.num_decks}
-            players={this.props.state.players}
+            num_decks={this.props.state.propagated.num_decks}
+            players={this.props.state.propagated.players}
           />
+          <div>
+            <label>
+              Number of cards in the bottom:{' '}
+              <select
+                value={this.props.state.propagated.kitty_size || ''}
+                onChange={this.setKittySize}
+              >
+                <option value="">default</option>
+                <option value={kitty_offset}>{kitty_offset} cards</option>
+                <option
+                  value={
+                    kitty_offset + this.props.state.propagated.players.length
+                  }
+                >
+                  {kitty_offset + this.props.state.propagated.players.length}{' '}
+                  cards
+                </option>
+              </select>
+            </label>
+          </div>
           <label>
-            Point visibility
+            Point visibility:{' '}
             <select
-              value={this.props.state.hide_landlord_points ? 'hide' : 'show'}
+              value={
+                this.props.state.propagated.hide_landlord_points
+                  ? 'hide'
+                  : 'show'
+              }
               onChange={this.setHideLandlordsPoints}
             >
               <option value="show">Show all players' points</option>
@@ -133,13 +229,13 @@ class Initialize extends React.Component<IInitializeProps, {}> {
             </select>
           </label>
           <LandlordSelector
-            players={this.props.state.players}
-            landlord={this.props.state.landlord}
+            players={this.props.state.propagated.players}
+            landlord={this.props.state.propagated.landlord}
           />
           <RankSelector
-            players={this.props.state.players}
+            players={this.props.state.propagated.players}
             name={this.props.name}
-            num_decks={this.props.state.num_decks}
+            num_decks={this.props.state.propagated.num_decks}
           />
         </div>
       </div>
@@ -185,7 +281,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     }
 
     const players: {[player_id: number]: IPlayer} = {};
-    this.props.state.players.forEach((p) => {
+    this.props.state.propagated.players.forEach((p) => {
       players[p.id] = p;
     });
 
@@ -204,7 +300,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
   drawCard() {
     const can_draw =
-      this.props.state.players[this.props.state.position].name ===
+      this.props.state.propagated.players[this.props.state.position].name ===
       this.props.name;
     if (this.timeout) {
       clearTimeout(this.timeout);
@@ -236,7 +332,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
   render() {
     const can_draw =
-      this.props.state.players[this.props.state.position].name ===
+      this.props.state.propagated.players[this.props.state.position].name ===
         this.props.name && this.props.state.deck.length > 0;
     if (
       can_draw &&
@@ -250,7 +346,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     }
     this.could_draw = can_draw;
 
-    let next = this.props.state.players[this.props.state.position].id;
+    let next = this.props.state.propagated.players[this.props.state.position]
+      .id;
     if (
       this.props.state.deck.length === 0 &&
       this.props.state.bids.length > 0
@@ -260,7 +357,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     const players: {[player_id: number]: IPlayer} = {};
     let player_id = -1;
-    this.props.state.players.forEach((p) => {
+    this.props.state.propagated.players.forEach((p) => {
       players[p.id] = p;
       if (p.name === this.props.name) {
         player_id = p.id;
@@ -290,8 +387,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       <div>
         <Header gameMode={this.props.state.game_mode} />
         <Players
-          players={this.props.state.players}
-          landlord={this.props.state.landlord}
+          players={this.props.state.propagated.players}
+          landlord={this.props.state.propagated.landlord}
           next={next}
           name={this.props.name}
         />
@@ -339,9 +436,9 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           disabled={
             this.props.state.deck.length > 0 ||
             this.props.state.bids.length === 0 ||
-            (this.props.state.landlord !== null &&
-              this.props.state.landlord !== player_id) ||
-            (this.props.state.landlord === null &&
+            (this.props.state.propagated.landlord !== null &&
+              this.props.state.propagated.landlord !== player_id) ||
+            (this.props.state.propagated.landlord === null &&
               this.props.state.bids[this.props.state.bids.length - 1].id !==
                 player_id)
           }
@@ -450,17 +547,19 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
 
   render() {
     let landlord_idx = 0;
-    this.props.state.players.forEach((player, idx) => {
+    this.props.state.propagated.players.forEach((player, idx) => {
       if (player.id === this.props.state.landlord) {
         landlord_idx = idx;
       }
     });
-    if (this.props.state.players[landlord_idx].name === this.props.name) {
+    if (
+      this.props.state.propagated.players[landlord_idx].name === this.props.name
+    ) {
       return (
         <div>
           <Header gameMode={this.props.state.game_mode} />
           <Players
-            players={this.props.state.players}
+            players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
             next={this.props.state.landlord}
             name={this.props.name}
@@ -523,7 +622,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         <div>
           <Header gameMode={this.props.state.game_mode} />
           <Players
-            players={this.props.state.players}
+            players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
             next={this.props.state.landlord}
             name={this.props.name}
@@ -595,7 +694,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
     let can_take_back = false;
     let can_play = false;
     let is_my_turn = false;
-    this.props.state.players.forEach((p) => {
+    this.props.state.propagated.players.forEach((p) => {
       if (p.name === this.props.name) {
         const last_play = this.props.state.trick.played_cards[
           this.props.state.trick.played_cards.length - 1
@@ -629,7 +728,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         {shouldBeBeeping ? <Beeper /> : null}
         <Header gameMode={this.props.state.game_mode} />
         <Players
-          players={this.props.state.players}
+          players={this.props.state.propagated.players}
           landlord={this.props.state.landlord}
           landlords_team={this.props.state.landlords_team}
           name={this.props.name}
@@ -639,7 +738,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
         <Friends game_mode={this.props.state.game_mode} />
         <Trick
           trick={this.props.state.trick}
-          players={this.props.state.players}
+          players={this.props.state.propagated.players}
         />
         <button onClick={this.playCards} disabled={!can_play}>
           Play selected cards
@@ -668,17 +767,19 @@ class Play extends React.Component<IPlayProps, IPlayState> {
             <p>Previous trick</p>
             <Trick
               trick={this.props.state.last_trick}
-              players={this.props.state.players}
+              players={this.props.state.propagated.players}
             />
           </div>
         ) : null}
         <Points
           points={this.props.state.points}
           num_decks={this.props.state.num_decks}
-          players={this.props.state.players}
+          players={this.props.state.propagated.players}
           landlords_team={this.props.state.landlords_team}
           landlord={this.props.state.landlord}
-          hide_landlord_points={this.props.state.hide_landlord_points}
+          hide_landlord_points={
+            this.props.state.propagated.hide_landlord_points
+          }
         />
         <LabeledPlay cards={this.props.state.kitty} label="底牌" />
       </div>

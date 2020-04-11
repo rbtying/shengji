@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use anyhow::{bail, Error};
 use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::hands::Hands;
 use crate::trick::Trick;
@@ -47,8 +48,25 @@ pub struct PropagatedState {
 }
 
 impl PropagatedState {
-    pub fn set_game_mode(&mut self, game_mode: GameModeSettings) {
+    pub fn set_game_mode(
+        &mut self,
+        game_mode: GameModeSettings,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
         self.game_mode = game_mode;
+        match self.game_mode {
+            GameModeSettings::Tractor => Ok(vec![BroadcastMessage(
+                "Game mode set to Tractor".to_string(),
+            )]),
+            GameModeSettings::FindingFriends { num_friends: None } => Ok(vec![BroadcastMessage(
+                "Game mode set to Finding Friends".to_string(),
+            )]),
+            GameModeSettings::FindingFriends {
+                num_friends: Some(num_friends),
+            } => Ok(vec![BroadcastMessage(format!(
+                "Game mode set to Finding Friends with {} friends",
+                num_friends
+            ))]),
+        }
     }
 
     fn num_players_changed(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
@@ -60,10 +78,12 @@ impl PropagatedState {
             ..
         } = self.game_mode
         {
-            *num_friends = None;
-            msgs.push(BroadcastMessage(
-                "Number of friends has been set to default".to_string(),
-            ));
+            if num_friends.is_some() {
+                *num_friends = None;
+                msgs.push(BroadcastMessage(
+                    "Number of friends has been set to default".to_string(),
+                ));
+            }
         }
         Ok(msgs)
     }
@@ -145,8 +165,17 @@ impl PropagatedState {
     }
 
     pub fn set_chat_link(&mut self, chat_link: Option<String>) -> Result<(), Error> {
-        if chat_link.as_ref().map(|link| link.len()).unwrap_or(0) < 128 {
+        if chat_link.as_ref().map(|link| link.len()).unwrap_or(0) >= 128 {
             bail!("link too long");
+        }
+        if let Some(ref chat_link) = chat_link {
+            if let Ok(u) = Url::parse(&chat_link) {
+                if u.scheme() != "https" {
+                    bail!("must be https URL")
+                }
+            } else {
+                bail!("Invalid URL")
+            }
         }
         self.chat_link = chat_link;
         Ok(())
@@ -172,17 +201,23 @@ impl PropagatedState {
                 ));
             }
             self.num_decks = num_decks;
-            msgs.push(self.set_kitty_size(None)?);
+            msgs.extend(self.set_kitty_size(None)?);
         }
         Ok(msgs)
     }
 
-    pub fn set_kitty_size(&mut self, kitty_size: Option<usize>) -> Result<BroadcastMessage, Error> {
+    pub fn set_kitty_size(
+        &mut self,
+        kitty_size: Option<usize>,
+    ) -> Result<Option<BroadcastMessage>, Error> {
+        if self.kitty_size == kitty_size {
+            return Ok(None);
+        }
         if let Some(size) = kitty_size {
             if self.players.is_empty() {
                 bail!("no players")
             }
-            let deck_len = self.players.len() * FULL_DECK.len();
+            let deck_len = self.num_decks.unwrap_or(self.players.len() / 2) * FULL_DECK.len();
             if size >= deck_len {
                 bail!("kitty size too large")
             }
@@ -191,14 +226,15 @@ impl PropagatedState {
                 bail!("kitty must be a multiple of the remaining cards")
             }
             self.kitty_size = Some(size);
-            Ok(BroadcastMessage(format!(
+            Ok(Some(BroadcastMessage(format!(
                 "Number of cards in the bottom set to {}",
                 size
-            )))
+            ))))
         } else {
-            Ok(BroadcastMessage(
+            self.kitty_size = None;
+            Ok(Some(BroadcastMessage(
                 "Number of cards in the bottom set to default".to_string(),
-            ))
+            )))
         }
     }
 
@@ -381,6 +417,16 @@ impl GameState {
             GameState::Draw(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Exchange(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Play(ref mut p) => p.remove_observer(id).map(|()| vec![]),
+            GameState::Done => bail!("Game is done"),
+        }
+    }
+
+    pub fn set_chat_link(&mut self, chat_link: Option<String>) -> Result<(), Error> {
+        match self {
+            GameState::Initialize(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Draw(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Exchange(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Play(ref mut p) => p.propagated.set_chat_link(chat_link),
             GameState::Done => bail!("Game is done"),
         }
     }
@@ -1072,11 +1118,17 @@ impl InitializePhase {
         self.propagated.set_rank(player_id, level)
     }
 
-    pub fn set_kitty_size(&mut self, size: Option<usize>) -> Result<BroadcastMessage, Error> {
+    pub fn set_kitty_size(
+        &mut self,
+        size: Option<usize>,
+    ) -> Result<Option<BroadcastMessage>, Error> {
         self.propagated.set_kitty_size(size)
     }
 
-    pub fn set_game_mode(&mut self, game_mode: GameModeSettings) {
+    pub fn set_game_mode(
+        &mut self,
+        game_mode: GameModeSettings,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
         self.propagated.set_game_mode(game_mode)
     }
 
@@ -1091,7 +1143,7 @@ impl InitializePhase {
             GameModeSettings::FindingFriends {
                 num_friends: Some(num_friends),
                 ..
-            } if num_friends < self.propagated.players.len() => GameMode::FindingFriends {
+            } if num_friends + 1 < self.propagated.players.len() => GameMode::FindingFriends {
                 num_friends,
                 friends: vec![],
             },

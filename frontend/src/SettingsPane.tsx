@@ -18,6 +18,34 @@ const SettingsPane = (props: Props) => {
   const handleChange = (partialSettings: Partial<Settings>) => () =>
     props.onChangeSettings({...props.settings, ...partialSettings});
 
+  const [link, setLink] = React.useState<string>('');
+
+  const setChatLink = (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    if (link.length > 0) {
+      (window as any).send({Action: {SetChatLink: link}});
+    } else {
+      (window as any).send({Action: {SetChatLink: null}});
+    }
+    setLink('');
+  };
+
+  const editor = (
+    <div style={{marginBottom: '15px'}}>
+      <input
+        type="text"
+        style={{width: '200px'}}
+        value={link}
+        onChange={(evt) => {
+          evt.preventDefault();
+          setLink(evt.target.value);
+        }}
+        placeholder="https://... link to voice chat"
+      />
+      <input type="button" onClick={setChatLink} value="Set chat link" />
+    </div>
+  );
+
   return (
     <div className="settings" style={{display: 'table'}}>
       <Row>
@@ -52,6 +80,10 @@ const SettingsPane = (props: Props) => {
             onChange={handleChange({beepOnTurn: !settings.beepOnTurn})}
           />
         </Cell>
+      </Row>
+      <Row>
+        <LabelCell>chat link</LabelCell>
+        <Cell>{editor}</Cell>
       </Row>
     </div>
   );
