@@ -80,7 +80,7 @@ const Points = (props: Props) => {
       <p>
         {nonLandlordPoints}分
         {props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
-        from {landlord}'s team. {thresholdStr}
+        from {landlord.name}'s team. {thresholdStr}
       </p>
       {playerPointElements}
     </div>
