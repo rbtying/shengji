@@ -9,6 +9,8 @@ import LabeledPlay from './LabeledPlay';
 import Card from './Card';
 import Trick from './Trick';
 import Header from './Header';
+import Friends from './Friends';
+import Players from './Players';
 import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
 import Credits from './Credits';
@@ -19,7 +21,6 @@ import {
   IDrawPhase,
   IExchangePhase,
   IFriend,
-  IGameMode,
   IInitializePhase,
   IPlayPhase,
   IPlayer,
@@ -468,7 +469,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           <Trump trump={this.props.state.trump} />
           {this.props.state.game_mode !== 'Tractor' ? (
             <div>
-              <Friends game_mode={this.props.state.game_mode} />
+              <Friends gameMode={this.props.state.game_mode} />
               {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
@@ -636,7 +637,7 @@ class Play extends React.Component<IPlayProps, IPlayState> {
           next={next}
         />
         <Trump trump={this.props.state.trump} />
-        <Friends game_mode={this.props.state.game_mode} />
+        <Friends gameMode={this.props.state.game_mode} />
         <Trick
           trick={this.props.state.trick}
           players={this.props.state.players}
@@ -1126,144 +1127,6 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
   }
 }
 
-interface IPlayersProps {
-  players: IPlayer[];
-  landlord?: number | null;
-  landlords_team?: number[];
-  movable?: boolean;
-  next?: number | null;
-  name: string;
-}
-class Players extends React.Component<IPlayersProps, {}> {
-  movePlayerLeft(evt: any, player_id: number) {
-    evt.preventDefault();
-    const player_ids = this.props.players.map((p) => p.id);
-    const index = player_ids.indexOf(player_id);
-    if (index > 0) {
-      const p = player_ids[index];
-      player_ids[index] = player_ids[index - 1];
-      player_ids[index - 1] = p;
-    } else {
-      const p = player_ids[index];
-      player_ids[index] = player_ids[player_ids.length - 1];
-      player_ids[player_ids.length - 1] = p;
-    }
-    send({Action: {ReorderPlayers: player_ids}});
-  }
-
-  movePlayerRight(evt: any, player_id: number) {
-    evt.preventDefault();
-    const player_ids = this.props.players.map((p) => p.id);
-    const index = player_ids.indexOf(player_id);
-    if (index < player_ids.length - 1) {
-      const p = player_ids[index];
-      player_ids[index] = player_ids[index + 1];
-      player_ids[index + 1] = p;
-    } else {
-      const p = player_ids[index];
-      player_ids[index] = player_ids[0];
-      player_ids[0] = p;
-    }
-    send({Action: {ReorderPlayers: player_ids}});
-  }
-
-  render() {
-    return (
-      <table className="players">
-        <tbody>
-          <tr>
-            {this.props.players.map((player) => {
-              let className = 'player';
-              let descriptor = `${player.name} (rank ${player.level})`;
-
-              if (player.id === this.props.landlord) {
-                descriptor = descriptor + ' (当庄)';
-              }
-              if (player.name === this.props.name) {
-                descriptor = descriptor + ' (You!)';
-              }
-              if (
-                player.id === this.props.landlord ||
-                (this.props.landlords_team &&
-                  this.props.landlords_team.includes(player.id))
-              ) {
-                className = className + ' landlord';
-              }
-              if (player.id === this.props.next) {
-                className = className + ' next';
-              }
-
-              return (
-                <td key={player.id} className={className}>
-                  {this.props.movable ? (
-                    <button
-                      onClick={(evt: any) =>
-                        this.movePlayerLeft(evt, player.id)
-                      }
-                    >
-                      {'<'}
-                    </button>
-                  ) : null}
-                  {descriptor}
-                  {this.props.movable ? (
-                    <button
-                      onClick={(evt: any) =>
-                        this.movePlayerRight(evt, player.id)
-                      }
-                    >
-                      {'>'}
-                    </button>
-                  ) : null}
-                </td>
-              );
-            })}
-          </tr>
-        </tbody>
-      </table>
-    );
-  }
-}
-
-class Friends extends React.Component<{game_mode: IGameMode}, {}> {
-  render() {
-    if (this.props.game_mode !== 'Tractor') {
-      return (
-        <div className="pending-friends">
-          {this.props.game_mode.FindingFriends.friends.map((friend, idx) => {
-            if (friend.player_id !== null) {
-              return null;
-            }
-
-            const c = CARD_LUT[friend.card];
-            if (!c) {
-              return null;
-            }
-            const card = `${c.number}${c.typ}`;
-            if (friend.skip === 0) {
-              return (
-                <p key={idx}>
-                  The next person to play <span className={c.typ}>{card}</span>{' '}
-                  is a friend
-                </p>
-              );
-            } else {
-              return (
-                <p key={idx}>
-                  {friend.skip} <span className={c.typ}>{card}</span> can be
-                  played before the next person to play{' '}
-                  <span className={c.typ}>{card}</span> is a friend
-                </p>
-              );
-            }
-          })}
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
-}
-
 if (window.location.hash.length !== 17) {
   const arr = new Uint8Array(8);
   window.crypto.getRandomValues(arr);
@@ -1365,8 +1228,9 @@ const renderUI = (props: {
 const bootstrap = () => {
   ReactDOM.render(
     <AppStateProvider>
-      <WebsocketProvider />
-      <AppStateConsumer>{renderUI}</AppStateConsumer>
+      <WebsocketProvider>
+        <AppStateConsumer>{renderUI}</AppStateConsumer>
+      </WebsocketProvider>
     </AppStateProvider>,
     document.getElementById('root'),
   );

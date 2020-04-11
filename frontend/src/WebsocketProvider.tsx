@@ -15,9 +15,8 @@ export const WebsocketConsumer = WebsocketContext.Consumer;
 type Props = {
   state: AppState;
   updateState: (state: Partial<AppState>) => void;
-  children?: React.ReactNode;
 };
-const WebsocketProvider = (props: Props) => {
+const _WebsocketProvider: React.FunctionComponent<Props> = (props) => {
   const {state, updateState, children} = props;
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
 
@@ -71,12 +70,14 @@ const WebsocketProvider = (props: Props) => {
   );
 };
 
-export default () => {
-  return (
-    <AppStateConsumer>
-      {({state, updateState}) => (
-        <WebsocketProvider state={state} updateState={updateState} />
-      )}
-    </AppStateConsumer>
-  );
-};
+const WebsocketProvider: React.FunctionComponent<{}> = (props) => (
+  <AppStateConsumer>
+    {({state, updateState}) => (
+      <_WebsocketProvider state={state} updateState={updateState}>
+        {props.children}
+      </_WebsocketProvider>
+    )}
+  </AppStateConsumer>
+);
+
+export default WebsocketProvider;
