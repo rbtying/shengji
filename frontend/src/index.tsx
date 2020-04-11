@@ -178,7 +178,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
                 <select value={num_friends} onChange={this.setNumFriends}>
                   <option value="">default</option>
                   {Array(
-                    Math.floor(this.props.state.propagated.players.length / 2),
+                    Math.max(Math.floor(this.props.state.propagated.players.length / 2) - 1, 0),
                   )
                     .fill(0)
                     .map((_, idx) => (
