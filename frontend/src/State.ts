@@ -1,4 +1,4 @@
-import mapValues from './util/mapValues';
+import ObjectUtils from './util/object';
 
 export type State<T> = {
   loadDefault: () => T;
@@ -17,7 +17,7 @@ export const combineState = <S extends {}>(
 ): State<S> => {
   return {
     loadDefault: (): any =>
-      mapValues(object, (p: State<any>): any => p.loadDefault()),
+      ObjectUtils.mapValues(object, (p: State<any>): any => p.loadDefault()),
     persist: (before: any, after: any) => {
       Object.keys(after).forEach((k: string): any => {
         if (before[k] !== after[k]) {
