@@ -9,6 +9,7 @@ import Cards from './Cards';
 import Points from './Points';
 import LabeledPlay from './LabeledPlay';
 import Players from './Players';
+import ArrayUtils from './util/array';
 import {WebsocketConsumer} from './WebsocketProvider';
 
 type Props = {
@@ -53,11 +54,11 @@ const Play = (props: Props) => {
 
   const shouldBeBeeping = props.beepOnTurn && isCurrentPlayerTurn;
 
-  const remainingCardsInHands = Object.values(playPhase.hands.hands)
-    .map((playerHand) => {
-      return Object.keys(playerHand).length;
-    })
-    .reduce((a, b) => a + b);
+  const remainingCardsInHands = ArrayUtils.sum(
+    Object.values(playPhase.hands.hands).map((playerHand) =>
+      ArrayUtils.sum(Object.values(playerHand)),
+    ),
+  );
   const canFinish =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
 
