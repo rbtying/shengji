@@ -82,6 +82,19 @@ const SettingsPane = (props: Props) => {
         </Cell>
       </Row>
       <Row>
+        <LabelCell>reverse card order (in hand)</LabelCell>
+        <Cell>
+          <input
+            name="beep-on-turn"
+            type="checkbox"
+            checked={settings.reverseCardOrder}
+            onChange={handleChange({
+              reverseCardOrder: !settings.reverseCardOrder,
+            })}
+          />
+        </Cell>
+      </Row>
+      <Row>
         <LabelCell>chat link</LabelCell>
         <Cell>{editor}</Cell>
       </Row>

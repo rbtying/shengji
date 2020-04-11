@@ -1407,6 +1407,10 @@ const renderUI = (props: {
         </div>
       );
     } else {
+      const cards = [...state.cards];
+      if (state.settings.reverseCardOrder) {
+        cards.reverse();
+      }
       return (
         <div className={state.settings.fourColor ? 'four-color' : ''}>
           <Errors errors={state.errors} />
@@ -1428,28 +1432,28 @@ const renderUI = (props: {
             {state.game_state.Initialize ? (
               <Initialize
                 state={state.game_state.Initialize}
-                cards={state.cards}
+                cards={cards}
                 name={state.name}
               />
             ) : null}
             {state.game_state.Draw ? (
               <Draw
                 state={state.game_state.Draw}
-                cards={state.cards}
+                cards={cards}
                 name={state.name}
               />
             ) : null}
             {state.game_state.Exchange ? (
               <Exchange
                 state={state.game_state.Exchange}
-                cards={state.cards}
+                cards={cards}
                 name={state.name}
               />
             ) : null}
             {state.game_state.Play ? (
               <Play
                 state={state.game_state.Play}
-                cards={state.cards}
+                cards={cards}
                 name={state.name}
                 show_last_trick={state.settings.showLastTrick}
                 beep_on_turn={state.settings.beepOnTurn}
