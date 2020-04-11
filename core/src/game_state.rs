@@ -319,14 +319,21 @@ impl PlayPhase {
             }
         }
         let points = self.points.get_mut(&winner).unwrap();
+        let kitty_points = self
+            .kitty
+            .iter()
+            .filter(|c| c.points().is_some())
+            .copied()
+            .collect::<Vec<_>>();
+
         if self.hands.is_empty() {
             for _ in 0..kitty_multipler {
-                new_points.extend(self.kitty.iter().filter(|c| c.points().is_some()).cloned());
+                new_points.extend(kitty_points.iter().copied());
             }
-            if !points.is_empty() && kitty_multipler > 0 {
+            if !kitty_points.is_empty() && kitty_multipler > 0 {
                 msgs.push(
                     format!("{} points were buried and are attached to the last trick, with a multiplier of {}",
-                        self.kitty.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler));
+                        kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler));
             }
         }
         let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
