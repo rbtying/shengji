@@ -21,8 +21,10 @@ const SettingsButton = () => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        height: '1em',
-        width: '1em',
+        height: '1.25em',
+        width: '1.25em',
+        display: 'inline-block',
+        verticalAlign: 'middle',
         paddingLeft: '0.5em',
       }}
     >

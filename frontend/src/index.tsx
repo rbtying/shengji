@@ -98,41 +98,50 @@ class Initialize extends React.Component<IInitializeProps, {}> {
           name={this.props.name}
         />
         <p>
-          Send the link to other players to allow them to join the game:{' '}
+          Send this link to other players to allow them to join the game:{' '}
           <a href={window.location.href} target="_blank">
             <code>{window.location.href}</code>
           </a>
         </p>
-        <select value={mode_as_string} onChange={this.setGameMode}>
-          <option value="Tractor">升级 / Tractor</option>
-          <option value="FindingFriends">找朋友 / Finding Friends</option>
-        </select>
-        <NumDecksSelector
-          num_decks={this.props.state.num_decks}
-          players={this.props.state.players}
-        />
-        <select
-          value={this.props.state.hide_landlord_points ? 'hide' : 'show'}
-          onChange={this.setHideLandlordsPoints}
-        >
-          <option value="show">Show all players' points</option>
-          <option value="hide">Hide defending team's points</option>
-        </select>
         {this.props.state.players.length >= 4 ? (
           <button onClick={this.startGame}>Start game</button>
         ) : (
-          <p>Waiting for players...</p>
+          <h2>Waiting for players...</h2>
         )}
         <Kicker players={this.props.state.players} />
-        <LandlordSelector
-          players={this.props.state.players}
-          landlord={this.props.state.landlord}
-        />
-        <RankSelector
-          players={this.props.state.players}
-          name={this.props.name}
-          num_decks={this.props.state.num_decks}
-        />
+        <div className="game-settings">
+          <h3>Game settings</h3>
+          <label>
+            Game mode:{' '}
+            <select value={mode_as_string} onChange={this.setGameMode}>
+              <option value="Tractor">升级 / Tractor</option>
+              <option value="FindingFriends">找朋友 / Finding Friends</option>
+            </select>
+          </label>
+          <NumDecksSelector
+            num_decks={this.props.state.num_decks}
+            players={this.props.state.players}
+          />
+          <label>
+            Point visibility
+            <select
+              value={this.props.state.hide_landlord_points ? 'hide' : 'show'}
+              onChange={this.setHideLandlordsPoints}
+            >
+              <option value="show">Show all players' points</option>
+              <option value="hide">Hide defending team's points</option>
+            </select>
+          </label>
+          <LandlordSelector
+            players={this.props.state.players}
+            landlord={this.props.state.landlord}
+          />
+          <RankSelector
+            players={this.props.state.players}
+            name={this.props.name}
+            num_decks={this.props.state.num_decks}
+          />
+        </div>
       </div>
     );
   }
@@ -831,21 +840,30 @@ interface IJoinRoomProps {
   name: string;
   room_name: string;
   setName(name: string): void;
+  setRoomName(name: string): void;
 }
-class JoinRoom extends React.Component<IJoinRoomProps, {}> {
+class JoinRoom extends React.Component<IJoinRoomProps, {editable: boolean}> {
   constructor(props: IJoinRoomProps) {
     super(props);
+    this.state = {
+      editable: false,
+    };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleRoomChange = this.handleRoomChange.bind(this);
   }
 
   handleChange(event: any) {
-    this.props.setName(event.target.value);
+    this.props.setName(event.target.value.trim());
+  }
+
+  handleRoomChange(event: any) {
+    this.props.setRoomName(event.target.value.trim());
   }
 
   handleSubmit(event: any) {
     event.preventDefault();
-    if (this.props.name.length > 0) {
+    if (this.props.name.length > 0 && this.props.room_name.length === 16) {
       send({
         room_name: this.props.room_name,
         name: this.props.name,
@@ -854,17 +872,64 @@ class JoinRoom extends React.Component<IJoinRoomProps, {}> {
   }
 
   render() {
+    const editableRoomName = (
+      <input
+        type="text"
+        placeholder="Enter a room code"
+        value={this.props.room_name}
+        onChange={this.handleRoomChange}
+        maxLength={16}
+      />
+    );
+    const nonEditableRoomName = (
+      <span
+        onClick={(evt) => {
+          evt.preventDefault();
+          this.setState({editable: true});
+        }}
+      >
+        {this.props.room_name}
+      </span>
+    );
+
     return (
       <div>
-        <form onSubmit={this.handleSubmit}>
-          <input
-            type="text"
-            placeholder="Enter your name here"
-            value={this.props.name}
-            onChange={this.handleChange}
-            autoFocus={true}
-          />
-          <input type="submit" value="Join the game!" />
+        <LabeledPlay cards={['🃟', '🃟', '🃏', '🃏']} label={null}></LabeledPlay>
+        <form className="join-room" onSubmit={this.handleSubmit}>
+          <div>
+            <h2>
+              <label>
+                <strong>Room Name:</strong>{' '}
+                {this.state.editable ? editableRoomName : nonEditableRoomName} (
+                <a href="rules" target="_blank">
+                  rules
+                </a>
+                )
+              </label>
+            </h2>
+          </div>
+          <div>
+            <label>
+              <strong>Player Name:</strong>{' '}
+              <input
+                type="text"
+                placeholder="Enter your name here"
+                value={this.props.name}
+                onChange={this.handleChange}
+                autoFocus={true}
+              />
+            </label>
+            <input
+              type="submit"
+              value="Join the game!"
+              disabled={
+                this.props.room_name.length !== 16 ||
+                this.props.name.length === 0 ||
+                this.props.name.length > 32
+              }
+            />
+          </div>
+          <div></div>
         </form>
       </div>
     );
@@ -896,17 +961,20 @@ class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
   render() {
     return (
       <div className="kicker">
-        <select value={this.state.to_kick} onChange={this.onChange}>
-          <option value="" />
-          {this.props.players.map((player) => (
-            <option value={player.id} key={player.id}>
-              {player.name}
-            </option>
-          ))}
-        </select>
-        <button onClick={this.kick} disabled={this.state.to_kick === ''}>
-          kick
-        </button>
+        <label>
+          Kick player:{' '}
+          <select value={this.state.to_kick} onChange={this.onChange}>
+            <option value="" />
+            {this.props.players.map((player) => (
+              <option value={player.id} key={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </select>
+          <button onClick={this.kick} disabled={this.state.to_kick === ''}>
+            Kick
+          </button>
+        </label>
       </div>
     );
   }
@@ -936,7 +1004,7 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
     return (
       <div className="landlord-picker">
         <label>
-          leader:{' '}
+          Current leader:{' '}
           <select
             value={this.props.landlord !== null ? this.props.landlord : ''}
             onChange={this.onChange}
@@ -978,7 +1046,7 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
     return (
       <div className="num-decks-picker">
         <label>
-          number of decks:{' '}
+          Number of decks:{' '}
           <select
             value={this.props.num_decks !== null ? this.props.num_decks : ''}
             onChange={this.onChange}
@@ -1028,9 +1096,9 @@ class RankSelector extends React.Component<IRankSelectorProps, {}> {
       }
     });
     return (
-      <div className="landlord-picker">
+      <div className="rank-picker">
         <label>
-          rank:{' '}
+          Your rank:{' '}
           <select value={selectedRank} onChange={this.onChange}>
             {[
               '2',
@@ -1212,19 +1280,22 @@ const renderUI = (props: {
     if (state.game_state === null) {
       return (
         <div>
-          <h2>
-            Room Name: {state.roomName} (
-            <a href="rules" target="_blank">
-              rules
-            </a>
-            )
-          </h2>
           <Errors errors={state.errors} />
-          <JoinRoom
-            name={state.name}
-            room_name={state.roomName}
-            setName={(name: string) => updateState({name})}
-          />
+          <div className="game">
+            <h1>
+              升级 / <span className="red">Tractor</span> / 找朋友 /{' '}
+              <span className="red">Finding Friends</span>
+            </h1>
+            <JoinRoom
+              name={state.name}
+              room_name={state.roomName}
+              setName={(name: string) => updateState({name})}
+              setRoomName={(roomName: string) => {
+                updateState({roomName});
+                window.location.hash = roomName;
+              }}
+            />
+          </div>
           <hr />
           <Credits />
         </div>

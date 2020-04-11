@@ -32,7 +32,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
 .chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
-.game { min-width: 700px; width: 70%; display: inline-block; }
+.game { min-width: 700px; min-height: 480px; width: 70%; display: inline-block; }
 .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
 .chat-anchor { overflow-anchor: auto; height: 1px }
 .message { margin: 0; }
@@ -46,3 +46,9 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .pending-friends p { margin: 0; }
 .pending-friends { margin: 10px; }
 .reset-link { float: right; }
+.red { color: #bb0313; }
+.join-room div { padding: 5px; }
+.join-room span { cursor: pointer; }
+.join-room h2 input { font-size: 24px; }
+.kicker button { padding: 3px; margin: 3px; }
+label { line-height: 23px; }
