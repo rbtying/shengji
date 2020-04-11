@@ -10,6 +10,7 @@ import Points from './Points';
 import LabeledPlay from './LabeledPlay';
 import Players from './Players';
 import ArrayUtils from './util/array';
+import AutoPlayButton from './AutoPlayButton';
 import {WebsocketConsumer} from './WebsocketProvider';
 
 type Props = {
@@ -81,9 +82,11 @@ const Play = (props: Props) => {
             trick={playPhase.trick}
             players={playPhase.propagated.players}
           />
-          <button onClick={playCards(send)} disabled={!canPlay}>
-            Play selected cards
-          </button>
+          <AutoPlayButton
+            onSubmit={playCards(send)}
+            canSubmit={canPlay}
+            isCurrentPlayerTurn={isCurrentPlayerTurn}
+          />
           <button onClick={takeBackCards(send)} disabled={!canTakeBack}>
             Take back last play
           </button>
