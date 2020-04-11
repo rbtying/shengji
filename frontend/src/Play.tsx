@@ -69,7 +69,7 @@ const Play = (props: Props) => {
           <Header gameMode={playPhase.propagated.game_mode} />
           <Players
             players={playPhase.propagated.players}
-            landlord={playPhase.propagated.landlord}
+            landlord={playPhase.landlord}
             landlords_team={playPhase.landlords_team}
             name={props.name}
             next={nextPlayer}
@@ -115,7 +115,7 @@ const Play = (props: Props) => {
             numDecks={playPhase.num_decks}
             players={playPhase.propagated.players}
             landlordTeam={playPhase.landlords_team}
-            landlord={playPhase.propagated.landlord}
+            landlord={playPhase.landlord}
             hideLandlordPoints={playPhase.propagated.hide_landlord_points}
           />
           <LabeledPlay cards={playPhase.kitty} label="底牌" />
