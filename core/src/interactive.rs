@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{Friend, GameMode, GameState, InitializePhase};
+use crate::game_state::{BroadcastMessage, Friend, GameModeSettings, GameState, InitializePhase};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -22,7 +22,7 @@ impl InteractiveGame {
         }
     }
 
-    pub fn register(&self, name: String) -> Result<PlayerID, Error> {
+    pub fn register(&self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
         if let Ok(mut s) = self.state.lock() {
             s.register(name)
         } else {
@@ -30,7 +30,7 @@ impl InteractiveGame {
         }
     }
 
-    pub fn kick(&self, id: PlayerID) -> Result<(), Error> {
+    pub fn kick(&self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
         if let Ok(mut s) = self.state.lock() {
             s.kick(id)
         } else {
@@ -54,7 +54,7 @@ impl InteractiveGame {
         }
     }
 
-    pub fn interact(&self, msg: Message, id: PlayerID) -> Result<Vec<String>, Error> {
+    pub fn interact(&self, msg: Message, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
         if let Ok(mut s) = self.state.lock() {
             match (msg, &mut *s) {
                 (Message::EndGame, _) => {
@@ -64,11 +64,10 @@ impl InteractiveGame {
                 (Message::ResetGame, _) => Ok(s.reset()?),
                 (Message::StartGame, GameState::Initialize(ref mut state)) => {
                     *s = GameState::Draw(state.start()?);
-                    Ok(vec!["Starting game".to_string()])
+                    Ok(vec![BroadcastMessage("Starting game".to_string())])
                 }
                 (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
-                    state.set_num_decks(num_decks);
-                    Ok(vec![])
+                    Ok(state.set_num_decks(num_decks)?)
                 }
                 (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                     state.reorder_players(&players)?;
@@ -77,12 +76,14 @@ impl InteractiveGame {
                 (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
                     state.set_rank(id, rank)?;
                     let n = s.player_name(id)?;
-                    Ok(vec![format!("{} set their rank to {}", n, rank.as_str())])
+                    Ok(vec![BroadcastMessage(format!(
+                        "{} set their rank to {}",
+                        n,
+                        rank.as_str()
+                    ))])
                 }
                 (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
-                    state.set_kitty_size(size)?;
-                    let n = s.player_name(id)?;
-                    Ok(vec![format!("{} set the kitty to {}", n, size)])
+                    Ok(vec![state.set_kitty_size(size)?])
                 }
                 (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                     state.set_landlord(landlord)?;
@@ -90,12 +91,15 @@ impl InteractiveGame {
                     match landlord {
                         Some(ll) => {
                             let ll_n = s.player_name(ll)?;
-                            Ok(vec![format!("{} set the leader to {}", n, ll_n)])
+                            Ok(vec![BroadcastMessage(format!(
+                                "{} set the leader to {}",
+                                n, ll_n
+                            ))])
                         }
-                        None => Ok(vec![format!(
+                        None => Ok(vec![BroadcastMessage(format!(
                             "{} set the leader to the winner of the bid",
                             n
-                        )]),
+                        ))]),
                     }
                 }
                 (
@@ -105,12 +109,15 @@ impl InteractiveGame {
                     state.hide_landlord_points(hide_landlord_points);
                     let n = s.player_name(id)?;
                     if hide_landlord_points {
-                        Ok(vec![format!("{} hid the defending team's points", n)])
+                        Ok(vec![BroadcastMessage(format!(
+                            "{} hid the defending team's points",
+                            n
+                        ))])
                     } else {
-                        Ok(vec![format!(
+                        Ok(vec![BroadcastMessage(format!(
                             "{} made the defending team's points visible",
                             n
-                        )])
+                        ))])
                     }
                 }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
@@ -124,7 +131,10 @@ impl InteractiveGame {
                 (Message::Bid(card, count), GameState::Draw(ref mut state)) => {
                     if state.bid(id, card, count) {
                         let n = s.player_name(id)?;
-                        Ok(vec![format!("{} bid {} {:?}", n, count, card)])
+                        Ok(vec![BroadcastMessage(format!(
+                            "{} bid {} {:?}",
+                            n, count, card
+                        ))])
                     } else {
                         bail!("bid was invalid")
                     }
@@ -153,13 +163,19 @@ impl InteractiveGame {
                     state.play_cards(id, cards)?;
                     let n = s.player_name(id)?;
                     let cards_as_str = cards.iter().map(|c| c.as_char()).collect::<String>();
-                    Ok(vec![format!("{} played {}", n, cards_as_str)])
+                    Ok(vec![BroadcastMessage(format!(
+                        "{} played {}",
+                        n, cards_as_str
+                    ))])
                 }
                 (Message::EndTrick, GameState::Play(ref mut state)) => Ok(state.finish_trick()?),
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
                     state.take_back_cards(id)?;
                     let n = s.player_name(id)?;
-                    Ok(vec![format!("{} took back their last play", n)])
+                    Ok(vec![BroadcastMessage(format!(
+                        "{} took back their last play",
+                        n
+                    ))])
                 }
                 (Message::StartNewGame, GameState::Play(ref mut state)) => {
                     let (new_s, msgs) = state.finish_game()?;
@@ -179,12 +195,12 @@ pub enum Message {
     EndGame,
     ResetGame,
     SetNumDecks(Option<usize>),
-    SetKittySize(usize),
+    SetKittySize(Option<usize>),
     SetHideLandlordsPoints(bool),
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
-    SetGameMode(GameMode),
+    SetGameMode(GameModeSettings),
     StartGame,
     DrawCard,
     Bid(Card, usize),

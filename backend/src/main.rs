@@ -308,7 +308,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 let mut stats = stats.lock().await;
                 stats.num_games_created += 1;
             }
-            let player_id = match game.game.register(name.clone()) {
+            let (player_id, msgs) = match game.game.register(name.clone()) {
                 Ok(player_id) => player_id,
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
@@ -321,6 +321,10 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             for user in game.users.values() {
                 if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id) {
                     user.send(&GameMessage::State { state, cards });
+                }
+
+                for msg in &msgs {
+                    user.send(&GameMessage::Broadcast(msg.0.clone()));
                 }
             }
             player_id
@@ -347,7 +351,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                             let mut g = games.lock().await;
                             if let Some(game) = g.get_mut(&room) {
                                 match game.game.kick(id) {
-                                    Ok(()) => {
+                                    Ok(msgs) => {
                                         for user in game.users.values() {
                                             if user.player_id == id {
                                                 user.send(&GameMessage::Kicked);
@@ -355,6 +359,9 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                                 game.game.dump_state_for_player(user.player_id)
                                             {
                                                 user.send(&GameMessage::State { state, cards });
+                                            }
+                                            for msg in &msgs {
+                                                user.send(&GameMessage::Broadcast(msg.0.clone()));
                                             }
                                         }
                                         game.users.retain(|_, u| u.player_id != id);
@@ -381,7 +388,9 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                                 game.game.dump_state_for_player(user.player_id)
                                             {
                                                 for msg in &msgs {
-                                                    user.send(&GameMessage::Broadcast(msg.clone()));
+                                                    user.send(&GameMessage::Broadcast(
+                                                        msg.0.clone(),
+                                                    ));
                                                 }
                                                 user.send(&GameMessage::State { state, cards });
                                             }
