@@ -47,12 +47,10 @@ export interface IExchangePhase {
 
 export interface IPlayPhase {
   num_decks: number;
-  game_mode: IGameMode;
   propagated: IPropagatedState;
   hands: IHands;
   points: {[id: number]: string[]};
   kitty: string[];
-  landlord: number;
   landlords_team: number[];
   trump: ITrump;
   trick: ITrick;

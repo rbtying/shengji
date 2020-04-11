@@ -1,13 +1,11 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Beeper from './Beeper';
 import Errors from './Errors';
 import Trump from './Trump';
 import FriendSelect from './FriendSelect';
 import LabeledPlay from './LabeledPlay';
 import Card from './Card';
-import Trick from './Trick';
 import Header from './Header';
 import Friends from './Friends';
 import Players from './Players';
@@ -15,20 +13,21 @@ import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
 import Credits from './Credits';
 import Chat from './Chat';
-import mapObject from './util/mapObject';
+import Cards from './Cards';
+import Play from './Play';
+import ArrayUtils from './util/array';
 import {
   ICardInfo,
   IDrawPhase,
   IExchangePhase,
   IFriend,
   IInitializePhase,
-  IPlayPhase,
   IPlayer,
 } from './types';
 import * as ReactModal from 'react-modal';
 ReactModal.setAppElement(document.getElementById('root'));
 
-const CARD_LUT = mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
+const CARD_LUT = ArrayUtils.mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
 (window as any).CARD_LUT = CARD_LUT;
 
 type IInitializeProps = {
@@ -452,9 +451,9 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           Pick up cards from the bottom
         </button>
         <Cards
-          cards={cards_not_bid}
-          selected={this.state.selected}
-          setSelected={this.setSelected}
+          cardsInHand={cards_not_bid}
+          selectedCards={this.state.selected}
+          onSelect={this.setSelected}
         />
       </div>
     );
@@ -643,303 +642,6 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         </div>
       );
     }
-  }
-}
-
-type IPlayProps = {
-  state: IPlayPhase;
-  name: string;
-  cards: string[];
-  beep_on_turn: boolean;
-  show_last_trick: boolean;
-};
-interface IPlayState {
-  selected: string[];
-}
-class Play extends React.Component<IPlayProps, IPlayState> {
-  private was_my_turn: boolean = false;
-
-  constructor(props: IPlayProps) {
-    super(props);
-    this.state = {
-      selected: [],
-    };
-    this.setSelected = this.setSelected.bind(this);
-    this.playCards = this.playCards.bind(this);
-    this.takeBackCards = this.takeBackCards.bind(this);
-    this.endTrick = this.endTrick.bind(this);
-  }
-
-  setSelected(new_selected: string[]) {
-    this.setState({selected: new_selected});
-  }
-
-  playCards(evt: any) {
-    evt.preventDefault();
-    send({Action: {PlayCards: this.state.selected}});
-    this.setSelected([]);
-  }
-
-  takeBackCards(evt: any) {
-    evt.preventDefault();
-    send({Action: 'TakeBackCards'});
-  }
-
-  endTrick(evt: any) {
-    evt.preventDefault();
-    send({Action: 'EndTrick'});
-  }
-
-  startNewGame(evt: any) {
-    evt.preventDefault();
-    send({Action: 'StartNewGame'});
-  }
-
-  render() {
-    const next = this.props.state.trick.player_queue[0];
-    let can_take_back = false;
-    let can_play = false;
-    let is_my_turn = false;
-    this.props.state.propagated.players.forEach((p) => {
-      if (p.name === this.props.name) {
-        const last_play = this.props.state.trick.played_cards[
-          this.props.state.trick.played_cards.length - 1
-        ];
-        if (p.id === next) {
-          is_my_turn = true;
-          if (last_play) {
-            can_play = this.state.selected.length === last_play.cards.length;
-          } else {
-            can_play = this.state.selected.length > 0;
-          }
-        }
-        if (last_play && p.id === last_play.id) {
-          can_take_back = true;
-        }
-      }
-    });
-    const shouldBeBeeping =
-      this.props.beep_on_turn && is_my_turn && !this.was_my_turn;
-    this.was_my_turn = is_my_turn;
-
-    let remaining_cards_to_play = 0;
-    Object.values(this.props.state.hands.hands).forEach((h) => {
-      Object.values(h).forEach((c) => {
-        remaining_cards_to_play += c;
-      });
-    });
-
-    return (
-      <div>
-        {shouldBeBeeping ? <Beeper /> : null}
-        <Header gameMode={this.props.state.game_mode} />
-        <Players
-          players={this.props.state.propagated.players}
-          landlord={this.props.state.landlord}
-          landlords_team={this.props.state.landlords_team}
-          name={this.props.name}
-          next={next}
-        />
-        <Trump trump={this.props.state.trump} />
-        <Friends gameMode={this.props.state.game_mode} />
-        <Trick
-          trick={this.props.state.trick}
-          players={this.props.state.propagated.players}
-        />
-        <button onClick={this.playCards} disabled={!can_play}>
-          Play selected cards
-        </button>
-        <button onClick={this.takeBackCards} disabled={!can_take_back}>
-          Take back last play
-        </button>
-        <button
-          onClick={this.endTrick}
-          disabled={this.props.state.trick.player_queue.length > 0}
-        >
-          Finish trick
-        </button>
-        {remaining_cards_to_play === 0 &&
-        this.props.state.trick.played_cards.length === 0 ? (
-          <button onClick={this.startNewGame}>Finish game</button>
-        ) : null}
-        <Cards
-          cards={this.props.cards}
-          notify_empty={is_my_turn}
-          selected={this.state.selected}
-          setSelected={this.setSelected}
-        />
-        {this.props.state.last_trick && this.props.show_last_trick ? (
-          <div>
-            <p>Previous trick</p>
-            <Trick
-              trick={this.props.state.last_trick}
-              players={this.props.state.propagated.players}
-            />
-          </div>
-        ) : null}
-        <Points
-          points={this.props.state.points}
-          num_decks={this.props.state.num_decks}
-          players={this.props.state.propagated.players}
-          landlords_team={this.props.state.landlords_team}
-          landlord={this.props.state.landlord}
-          hide_landlord_points={
-            this.props.state.propagated.hide_landlord_points
-          }
-        />
-        <LabeledPlay cards={this.props.state.kitty} label="底牌" />
-      </div>
-    );
-  }
-}
-
-interface IPointsProps {
-  players: IPlayer[];
-  num_decks: number;
-  points: {[player_id: number]: string[]};
-  landlords_team: number[];
-  landlord: number;
-  hide_landlord_points: boolean | null;
-}
-class Points extends React.Component<IPointsProps, {}> {
-  render() {
-    let total_points_played = 0;
-    let non_landlords_points = 0;
-    let landlord = '';
-
-    const player_point_elements = this.props.players.map((player) => {
-      if (player.id === this.props.landlord) {
-        landlord = player.name;
-      }
-
-      let player_points = 0;
-      this.props.points[player.id].forEach((c) => {
-        player_points += CARD_LUT[c].points;
-      });
-      total_points_played += player_points;
-
-      const on_landlords_team = this.props.landlords_team.includes(player.id);
-      const className = on_landlords_team ? 'landlord' : '';
-      if (!on_landlords_team) {
-        non_landlords_points += player_points;
-      }
-      const cards =
-        this.props.points[player.id].length > 0
-          ? this.props.points[player.id]
-          : ['🂠'];
-
-      if (this.props.hide_landlord_points && on_landlords_team) {
-        return null;
-      }
-
-      return (
-        <LabeledPlay
-          key={player.id}
-          className={className}
-          label={`${player.name}: ${player_points}分`}
-          cards={cards}
-        />
-      );
-    });
-
-    const segment = this.props.num_decks * 20;
-    let threshold_str = '';
-
-    if (non_landlords_points === 0) {
-      threshold_str = `${landlord}'s team will go up 3 levels (next threshold: 5分)`;
-    } else if (non_landlords_points < segment) {
-      threshold_str = `${landlord}'s team will go up 2 levels (next threshold: ${segment}分)`;
-    } else if (non_landlords_points < 2 * segment) {
-      threshold_str = `${landlord}'s team will go up 1 level (next threshold: ${
-        2 * segment
-      }分)`;
-    } else if (non_landlords_points < 3 * segment) {
-      threshold_str = `Neither team will go up a level (next threshold: ${
-        3 * segment
-      }分)`;
-    } else if (non_landlords_points < 4 * segment) {
-      threshold_str = `The attacking team will go up 1 level (next threshold: ${
-        4 * segment
-      }分)`;
-    } else if (non_landlords_points < 5 * segment) {
-      threshold_str = `The attacking team will go up 2 levels (next threshold: ${
-        5 * segment
-      }分)`;
-    } else {
-      threshold_str = 'The attacking team will go up 3 levels.';
-    }
-
-    return (
-      <div className="points">
-        <h2>Points</h2>
-        <p>
-          {non_landlords_points}分
-          {this.props.hide_landlord_points
-            ? null
-            : ` / ${total_points_played}分`}{' '}
-          stolen from {landlord}'s team. {threshold_str}
-        </p>
-        {player_point_elements}
-      </div>
-    );
-  }
-}
-
-interface ICardsProps {
-  selected: string[];
-  cards: string[];
-  notify_empty?: boolean;
-  setSelected(new_selected: string[]): void;
-}
-class Cards extends React.Component<ICardsProps, {}> {
-  constructor(props: ICardsProps) {
-    super(props);
-    this.selectCard = this.selectCard.bind(this);
-    this.unselectCard = this.unselectCard.bind(this);
-  }
-
-  selectCard(card: string) {
-    const new_selected = [...this.props.selected];
-    new_selected.push(card);
-    this.props.setSelected(new_selected);
-  }
-
-  unselectCard(card: string) {
-    const pos = this.props.selected.indexOf(card);
-    if (pos >= 0) {
-      const new_selected = [...this.props.selected];
-      new_selected.splice(pos, 1);
-      this.props.setSelected(new_selected);
-    }
-  }
-
-  render() {
-    const unselected = [...this.props.cards];
-    this.props.selected.forEach((card) => {
-      unselected.splice(unselected.indexOf(card), 1);
-    });
-
-    return (
-      <div className="hand">
-        <div className="selected-cards">
-          {this.props.selected.map((c, idx) => (
-            <Card key={idx} onClick={() => this.unselectCard(c)} card={c} />
-          ))}
-          {this.props.selected.length === 0 ? (
-            <Card
-              card="🂠"
-              className={this.props.notify_empty ? 'notify' : ''}
-            />
-          ) : null}
-        </div>
-        <div className="unselected-cards">
-          {unselected.map((c, idx) => (
-            <Card key={idx} onClick={() => this.selectCard(c)} card={c} />
-          ))}
-          {unselected.length === 0 ? <Card card="🂠" /> : null}
-        </div>
-      </div>
-    );
   }
 }
 
@@ -1315,11 +1017,11 @@ const renderUI = (props: {
             ) : null}
             {state.game_state.Play ? (
               <Play
-                state={state.game_state.Play}
+                playPhase={state.game_state.Play}
                 cards={cards}
                 name={state.name}
-                show_last_trick={state.settings.showLastTrick}
-                beep_on_turn={state.settings.beepOnTurn}
+                showLastTrick={state.settings.showLastTrick}
+                beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}
             {state.game_state.Done ? <p>Game Over</p> : null}

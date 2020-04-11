@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {IPlayer, ITrick} from './types';
 import LabeledPlay from './LabeledPlay';
-import mapObject from './util/mapObject';
+import ArrayUtils from './util/array';
 
 type Props = {
   players: IPlayer[];
   trick: ITrick;
 };
 const Trick = (props: Props) => {
-  const namesById = mapObject(props.players, (p: IPlayer) => [
+  const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
     String(p.id),
     p.name,
   ]);
