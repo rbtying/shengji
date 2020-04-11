@@ -5,6 +5,7 @@ import {IGameMode} from './types';
 
 type Props = {
   gameMode: IGameMode;
+  chatLink?: string | null;
 };
 
 const Header = (props: Props) => (
@@ -13,6 +14,14 @@ const Header = (props: Props) => (
       <GameMode gameMode={props.gameMode} />
       <SettingsButton />
     </h1>
+    {props.chatLink ? (
+      <p>
+        Join the chat at{' '}
+        <a href={props.chatLink} target="_blank">
+          {props.chatLink}
+        </a>
+      </p>
+    ) : null}
   </div>
 );
 

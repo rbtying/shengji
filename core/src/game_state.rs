@@ -3,10 +3,14 @@ use std::collections::{HashMap, HashSet};
 use anyhow::{bail, Error};
 use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::hands::Hands;
 use crate::trick::Trick;
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+
+#[derive(Debug, Clone)]
+pub struct BroadcastMessage(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
@@ -22,6 +26,285 @@ pub enum GameMode {
         num_friends: usize,
         friends: Vec<Friend>,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GameModeSettings {
+    Tractor,
+    FindingFriends { num_friends: Option<usize> },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PropagatedState {
+    game_mode: GameModeSettings,
+    hide_landlord_points: Option<bool>,
+    kitty_size: Option<usize>,
+    num_decks: Option<usize>,
+    max_player_id: usize,
+    players: Vec<Player>,
+    observers: Vec<Player>,
+    landlord: Option<PlayerID>,
+    chat_link: Option<String>,
+}
+
+impl PropagatedState {
+    pub fn set_game_mode(
+        &mut self,
+        game_mode: GameModeSettings,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
+        self.game_mode = game_mode;
+        match self.game_mode {
+            GameModeSettings::Tractor => Ok(vec![BroadcastMessage(
+                "Game mode set to Tractor".to_string(),
+            )]),
+            GameModeSettings::FindingFriends { num_friends: None } => Ok(vec![BroadcastMessage(
+                "Game mode set to Finding Friends".to_string(),
+            )]),
+            GameModeSettings::FindingFriends {
+                num_friends: Some(num_friends),
+            } => Ok(vec![BroadcastMessage(format!(
+                "Game mode set to Finding Friends with {} friends",
+                num_friends
+            ))]),
+        }
+    }
+
+    fn num_players_changed(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+        let mut msgs = vec![];
+        msgs.extend(self.set_num_decks(None)?);
+
+        if let GameModeSettings::FindingFriends {
+            ref mut num_friends,
+            ..
+        } = self.game_mode
+        {
+            if num_friends.is_some() {
+                *num_friends = None;
+                msgs.push(BroadcastMessage(
+                    "Number of friends has been set to default".to_string(),
+                ));
+            }
+        }
+        Ok(msgs)
+    }
+
+    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+        let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name)
+            || self.observers.iter().any(|p| p.name == name)
+        {
+            bail!("player with name already exists!")
+        }
+
+        let mut msgs = vec![BroadcastMessage(format!("{} has joined the game", name))];
+
+        self.max_player_id += 1;
+        self.players.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+
+        msgs.extend(self.num_players_changed()?);
+        Ok((id, msgs))
+    }
+
+    pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
+        let uniq = order.iter().cloned().collect::<HashSet<PlayerID>>();
+        if uniq.len() != self.players.len() {
+            bail!("Incorrect number of players");
+        }
+        let mut new_players = Vec::with_capacity(self.players.len());
+        for id in order {
+            match self.players.iter().find(|p| p.id == *id) {
+                Some(player) => new_players.push(player.clone()),
+                None => bail!("player ID not found"),
+            }
+        }
+        self.players = new_players;
+        Ok(())
+    }
+
+    pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
+        let id = PlayerID(self.max_player_id);
+        if self.players.iter().any(|p| p.name == name)
+            || self.observers.iter().any(|p| p.name == name)
+        {
+            bail!("player with name already exists!")
+        }
+
+        self.max_player_id += 1;
+        self.observers.push(Player {
+            id,
+            name,
+            level: Number::Two,
+        });
+        Ok(id)
+    }
+
+    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        if let Some(player) = self.players.iter().find(|p| p.id == id).cloned() {
+            let mut msgs = vec![BroadcastMessage(format!(
+                "{} has left the game",
+                player.name
+            ))];
+            if self.landlord == Some(id) {
+                self.landlord = None;
+            }
+            self.players.retain(|p| p.id != id);
+            msgs.extend(self.num_players_changed()?);
+            Ok(msgs)
+        } else {
+            bail!("player not found")
+        }
+    }
+
+    pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
+        self.observers.retain(|p| p.id != id);
+        Ok(())
+    }
+
+    pub fn set_chat_link(&mut self, chat_link: Option<String>) -> Result<(), Error> {
+        if chat_link.as_ref().map(|link| link.len()).unwrap_or(0) >= 128 {
+            bail!("link too long");
+        }
+        if let Some(ref chat_link) = chat_link {
+            if let Ok(u) = Url::parse(&chat_link) {
+                if u.scheme() != "https" {
+                    bail!("must be https URL")
+                }
+            } else {
+                bail!("Invalid URL")
+            }
+        }
+        self.chat_link = chat_link;
+        Ok(())
+    }
+
+    pub fn set_num_decks(
+        &mut self,
+        num_decks: Option<usize>,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
+        if num_decks == Some(0) {
+            bail!("At least one deck is necessary to play the game")
+        }
+        let mut msgs = vec![];
+        if self.num_decks != num_decks {
+            if let Some(num_decks) = num_decks {
+                msgs.push(BroadcastMessage(format!(
+                    "Number of decks set to {}",
+                    num_decks
+                )));
+            } else {
+                msgs.push(BroadcastMessage(
+                    "Number of decks set to default".to_string(),
+                ));
+            }
+            self.num_decks = num_decks;
+            msgs.extend(self.set_kitty_size(None)?);
+        }
+        Ok(msgs)
+    }
+
+    pub fn set_kitty_size(
+        &mut self,
+        kitty_size: Option<usize>,
+    ) -> Result<Option<BroadcastMessage>, Error> {
+        if self.kitty_size == kitty_size {
+            return Ok(None);
+        }
+        if let Some(size) = kitty_size {
+            if self.players.is_empty() {
+                bail!("no players")
+            }
+            let deck_len = self.num_decks.unwrap_or(self.players.len() / 2) * FULL_DECK.len();
+            if size >= deck_len {
+                bail!("kitty size too large")
+            }
+
+            if deck_len % self.players.len() != size % self.players.len() {
+                bail!("kitty must be a multiple of the remaining cards")
+            }
+            self.kitty_size = Some(size);
+            Ok(Some(BroadcastMessage(format!(
+                "Number of cards in the bottom set to {}",
+                size
+            ))))
+        } else {
+            self.kitty_size = None;
+            Ok(Some(BroadcastMessage(
+                "Number of cards in the bottom set to default".to_string(),
+            )))
+        }
+    }
+
+    pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
+        match landlord {
+            Some(landlord) => {
+                if self.players.iter().any(|p| p.id == landlord) {
+                    self.landlord = Some(landlord)
+                } else {
+                    bail!("player ID not found")
+                }
+            }
+            None => self.landlord = None,
+        }
+        Ok(())
+    }
+
+    pub fn hide_landlord_points(&mut self, should_hide: bool) {
+        if should_hide {
+            self.hide_landlord_points = Some(true);
+        } else {
+            self.hide_landlord_points = None;
+        }
+    }
+
+    pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
+            self.players.retain(|p| p.id != player_id);
+            self.observers.push(player);
+            self.num_players_changed()
+        } else {
+            bail!("player not found")
+        }
+    }
+
+    pub fn make_player(&mut self, player_id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        if let Some(player) = self.observers.iter().find(|p| p.id == player_id).cloned() {
+            self.observers.retain(|p| p.id != player_id);
+            self.players.push(player);
+            self.num_players_changed()
+        } else {
+            bail!("player not found")
+        }
+    }
+
+    pub fn make_all_observers_into_players(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+        if self.observers.is_empty() {
+            return Ok(vec![]);
+        }
+        let mut msgs = vec![];
+        while let Some(player) = self.observers.pop() {
+            msgs.push(BroadcastMessage(format!(
+                "{} has joined the game",
+                player.name
+            )));
+            self.players.push(player);
+        }
+        msgs.extend(self.num_players_changed()?);
+        Ok(msgs)
+    }
+
+    pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
+        match self.players.iter_mut().find(|p| p.id == player_id) {
+            Some(ref mut player) => {
+                player.level = level;
+            }
+            None => bail!("player not found"),
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
@@ -44,20 +327,21 @@ pub enum GameState {
 impl GameState {
     pub fn players(&self) -> Option<&'_ [Player]> {
         match self {
-            GameState::Initialize(p) => Some(&p.players),
-            GameState::Draw(p) => Some(&p.players),
-            GameState::Exchange(p) => Some(&p.players),
-            GameState::Play(p) => Some(&p.players),
+            GameState::Initialize(p) => Some(&p.propagated.players),
+            GameState::Draw(p) => Some(&p.propagated.players),
+            GameState::Exchange(p) => Some(&p.propagated.players),
+            GameState::Play(p) => Some(&p.propagated.players),
             GameState::Done => None,
         }
     }
 
     pub fn observers(&self) -> Option<&'_ [Player]> {
         match self {
-            GameState::Draw(p) => Some(&p.observers),
-            GameState::Exchange(p) => Some(&p.observers),
-            GameState::Play(p) => Some(&p.observers),
-            GameState::Initialize(_) | GameState::Done => None,
+            GameState::Draw(p) => Some(&p.propagated.observers),
+            GameState::Exchange(p) => Some(&p.propagated.observers),
+            GameState::Play(p) => Some(&p.propagated.observers),
+            GameState::Initialize(p) => Some(&p.propagated.observers),
+            GameState::Done => None,
         }
     }
 
@@ -114,31 +398,40 @@ impl GameState {
         }
     }
 
-    pub fn register(&mut self, name: String) -> Result<PlayerID, Error> {
+    pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
         if let Ok(pid) = self.player_id(&name) {
-            return Ok(pid);
+            return Ok((pid, vec![]));
         }
         match self {
             GameState::Initialize(ref mut p) => p.add_player(name),
-            GameState::Draw(ref mut p) => p.add_observer(name),
-            GameState::Exchange(ref mut p) => p.add_observer(name),
-            GameState::Play(ref mut p) => p.add_observer(name),
+            GameState::Draw(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
+            GameState::Exchange(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
+            GameState::Play(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
             GameState::Done => bail!("Game is done"),
         }
     }
 
-    pub fn kick(&mut self, id: PlayerID) -> Result<(), Error> {
+    pub fn kick(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
         match self {
             GameState::Initialize(ref mut p) => p.remove_player(id),
-            GameState::Draw(ref mut p) => p.remove_observer(id),
-            GameState::Exchange(ref mut p) => p.remove_observer(id),
-            GameState::Play(ref mut p) => p.remove_observer(id),
+            GameState::Draw(ref mut p) => p.remove_observer(id).map(|()| vec![]),
+            GameState::Exchange(ref mut p) => p.remove_observer(id).map(|()| vec![]),
+            GameState::Play(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Done => bail!("Game is done"),
         }
-        Ok(())
     }
 
-    pub fn reset(&mut self) -> Result<Vec<String>, Error> {
+    pub fn set_chat_link(&mut self, chat_link: Option<String>) -> Result<(), Error> {
+        match self {
+            GameState::Initialize(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Draw(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Exchange(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Play(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Done => bail!("Game is done"),
+        }
+    }
+
+    pub fn reset(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
         match self {
             GameState::Initialize(_) => bail!("Game has not started yet!"),
             GameState::Draw(ref mut p) => {
@@ -204,11 +497,11 @@ impl GameState {
                 ref mut points,
                 ref trick,
                 ref landlords_team,
-                hide_landlord_points,
+                ref propagated,
                 landlord,
                 ..
             }) => {
-                if hide_landlord_points.unwrap_or(false) {
+                if propagated.hide_landlord_points.unwrap_or(false) {
                     for (k, v) in points.iter_mut() {
                         if landlords_team.contains(&k) {
                             v.clear();
@@ -231,40 +524,26 @@ impl GameState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayPhase {
-    max_player_id: usize,
     num_decks: usize,
     game_mode: GameMode,
+    propagated: PropagatedState,
     hands: Hands,
     points: HashMap<PlayerID, Vec<Card>>,
     kitty: Vec<Card>,
     landlord: PlayerID,
     landlords_team: Vec<PlayerID>,
-    players: Vec<Player>,
-    observers: Vec<Player>,
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
-    hide_landlord_points: Option<bool>,
 }
+
 impl PlayPhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
-        let id = PlayerID(self.max_player_id);
-        if self.players.iter().any(|p| p.name == name)
-            || self.observers.iter().any(|p| p.name == name)
-        {
-            bail!("player with name already exists!")
-        }
-        self.max_player_id += 1;
-        self.observers.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
-        Ok(id)
+        self.propagated.add_observer(name)
     }
 
-    pub fn remove_observer(&mut self, id: PlayerID) {
-        self.observers.retain(|p| p.id != id);
+    pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
+        self.propagated.remove_observer(id)
     }
 
     pub fn next_player(&self) -> PlayerID {
@@ -284,7 +563,7 @@ impl PlayPhase {
         Ok(self.trick.take_back(id, &mut self.hands)?)
     }
 
-    pub fn finish_trick(&mut self) -> Result<Vec<String>, Error> {
+    pub fn finish_trick(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
         let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
         let mut msgs = vec![];
         if let GameMode::FindingFriends {
@@ -300,12 +579,12 @@ impl PlayPhase {
                                     friend.player_id = Some(played.id);
                                     if !self.landlords_team.contains(&played.id) {
                                         self.landlords_team.push(played.id);
-                                        for player in &self.players {
+                                        for player in &self.propagated.players {
                                             if player.id == played.id {
-                                                msgs.push(format!(
+                                                msgs.push(BroadcastMessage(format!(
                                                     "{} has joined the team",
                                                     player.name
-                                                ))
+                                                )))
                                             }
                                         }
                                     }
@@ -332,31 +611,36 @@ impl PlayPhase {
             }
             if !kitty_points.is_empty() && kitty_multipler > 0 {
                 msgs.push(
-                    format!("{} points were buried and are attached to the last trick, with a multiplier of {}",
-                        kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler));
+                    BroadcastMessage(format!("{} points were buried and are attached to the last trick, with a multiplier of {}",
+                        kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler)));
             }
         }
-        let winner_idx = self.players.iter().position(|p| p.id == winner).unwrap();
+        let winner_idx = self
+            .propagated
+            .players
+            .iter()
+            .position(|p| p.id == winner)
+            .unwrap();
         if !new_points.is_empty() {
             let trump = self.trump;
             let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
             points.extend(new_points);
             points.sort_by(|a, b| trump.compare(*a, *b));
-            msgs.push(format!(
+            msgs.push(BroadcastMessage(format!(
                 "{} wins the trick and gets {} points",
-                self.players[winner_idx].name, num_points
-            ));
+                self.propagated.players[winner_idx].name, num_points
+            )));
         } else {
-            msgs.push(format!(
+            msgs.push(BroadcastMessage(format!(
                 "{} wins the trick, but gets no points :(",
-                self.players[winner_idx].name
-            ));
+                self.propagated.players[winner_idx].name
+            )));
         }
         let new_trick = Trick::new(
             self.trump,
-            (0..self.players.len()).map(|offset| {
-                let idx = (winner_idx + offset) % self.players.len();
-                self.players[idx].id
+            (0..self.propagated.players.len()).map(|offset| {
+                let idx = (winner_idx + offset) % self.propagated.players.len();
+                self.propagated.players[idx].id
             }),
         );
         self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
@@ -368,7 +652,7 @@ impl PlayPhase {
         self.hands.is_empty() && self.trick.played_cards().is_empty()
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<String>), Error> {
+    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -399,8 +683,8 @@ impl PlayPhase {
         } else {
             (0, 3)
         };
-        let mut players = self.players.clone();
-        for player in &mut players {
+        let mut propagated = self.propagated.clone();
+        for player in &mut propagated.players {
             let bump = if self.landlords_team.contains(&player.id) {
                 landlord_level_bump
             } else {
@@ -412,121 +696,67 @@ impl PlayPhase {
                 }
             }
             if bump > 0 {
-                msgs.push(format!(
+                msgs.push(BroadcastMessage(format!(
                     "{} has advanced to rank {}",
                     player.name,
                     player.level.as_str()
-                ));
+                )));
             }
         }
 
         let landlord_idx = self
+            .propagated
             .players
             .iter()
             .position(|p| p.id == self.landlord)
             .unwrap();
-        let mut idx = (landlord_idx + 1) % players.len();
+        let mut idx = (landlord_idx + 1) % propagated.players.len();
         let (next_landlord, next_landlord_idx) = loop {
-            if landlord_won == self.landlords_team.contains(&players[idx].id) {
-                break (players[idx].id, idx);
+            if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
+                break (propagated.players[idx].id, idx);
             }
-            idx = (idx + 1) % players.len()
+            idx = (idx + 1) % propagated.players.len()
         };
-        msgs.push(format!(
+
+        msgs.push(BroadcastMessage(format!(
             "{} will start the next game",
-            self.players[next_landlord_idx].name
-        ));
+            self.propagated.players[next_landlord_idx].name
+        )));
+        propagated.set_landlord(Some(next_landlord))?;
+        msgs.extend(propagated.make_all_observers_into_players()?);
 
-        for observer in &self.observers {
-            msgs.push(format!("{} is joining the game", observer.name));
-            players.push(observer.clone());
-        }
-
-        Ok((
-            InitializePhase {
-                game_mode: match self.game_mode {
-                    GameMode::Tractor => GameMode::Tractor,
-                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
-                        num_friends,
-                        friends: vec![],
-                    },
-                },
-                kitty_size: Some(self.kitty.len()),
-                num_decks: Some(self.num_decks),
-                landlord: Some(next_landlord),
-                max_player_id: self.max_player_id,
-                hide_landlord_points: self.hide_landlord_points,
-                players,
-            },
-            msgs,
-        ))
+        Ok((InitializePhase { propagated }, msgs))
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
-        let mut players = self.players.clone();
-        let mut msgs = vec![];
-        for observer in &self.observers {
-            msgs.push(format!("{} is joining the game", observer.name));
-            players.push(observer.clone());
-        }
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
+        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
 
-        msgs.push("Resetting game".to_string());
+        let mut propagated = self.propagated.clone();
+        msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((
-            InitializePhase {
-                game_mode: match self.game_mode {
-                    GameMode::Tractor => GameMode::Tractor,
-                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
-                        num_friends,
-                        friends: vec![],
-                    },
-                },
-                num_decks: Some(self.num_decks),
-                kitty_size: None,
-                max_player_id: self.max_player_id,
-                landlord: Some(self.landlord),
-                hide_landlord_points: self.hide_landlord_points,
-                players,
-            },
-            msgs,
-        ))
+        Ok((InitializePhase { propagated }, msgs))
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExchangePhase {
-    max_player_id: usize,
+    propagated: PropagatedState,
     num_decks: usize,
     game_mode: GameMode,
     hands: Hands,
     kitty: Vec<Card>,
     kitty_size: usize,
     landlord: PlayerID,
-    players: Vec<Player>,
-    observers: Vec<Player>,
     trump: Trump,
-    hide_landlord_points: Option<bool>,
 }
 
 impl ExchangePhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
-        let id = PlayerID(self.max_player_id);
-        if self.players.iter().any(|p| p.name == name)
-            || self.observers.iter().any(|p| p.name == name)
-        {
-            bail!("player with name already exists!")
-        }
-        self.max_player_id += 1;
-        self.observers.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
-        Ok(id)
+        self.propagated.add_observer(name)
     }
 
-    pub fn remove_observer(&mut self, id: PlayerID) {
-        self.observers.retain(|p| p.id != id);
+    pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
+        self.propagated.remove_observer(id)
     }
 
     pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
@@ -592,10 +822,10 @@ impl ExchangePhase {
 
     pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
         if id != self.landlord {
-            bail!("only the landlord can advance the game")
+            bail!("only the leader can advance the game")
         }
         if self.kitty.len() != self.kitty_size {
-            bail!("incorrect number of cards in the kitty")
+            bail!("incorrect number of cards in the bottom")
         }
         if let GameMode::FindingFriends {
             num_friends,
@@ -608,12 +838,14 @@ impl ExchangePhase {
         }
 
         let landlord_position = self
+            .propagated
             .players
             .iter()
             .position(|p| p.id == self.landlord)
             .unwrap();
         let landlords_team = match self.game_mode {
             GameMode::Tractor => self
+                .propagated
                 .players
                 .iter()
                 .enumerate()
@@ -628,6 +860,7 @@ impl ExchangePhase {
             GameMode::FindingFriends { .. } => vec![self.landlord],
         };
         let landlord_idx = self
+            .propagated
             .players
             .iter()
             .position(|p| p.id == self.landlord)
@@ -635,56 +868,37 @@ impl ExchangePhase {
 
         Ok(PlayPhase {
             num_decks: self.num_decks,
-            hide_landlord_points: self.hide_landlord_points,
             game_mode: self.game_mode.clone(),
             hands: self.hands.clone(),
             kitty: self.kitty.clone(),
             trick: Trick::new(
                 self.trump,
-                (0..self.players.len()).map(|offset| {
-                    let idx = (landlord_idx + offset) % self.players.len();
-                    self.players[idx].id
+                (0..self.propagated.players.len()).map(|offset| {
+                    let idx = (landlord_idx + offset) % self.propagated.players.len();
+                    self.propagated.players[idx].id
                 }),
             ),
             last_trick: None,
-            points: self.players.iter().map(|p| (p.id, Vec::new())).collect(),
-            players: self.players.clone(),
-            observers: self.observers.clone(),
-            max_player_id: self.max_player_id,
+            points: self
+                .propagated
+                .players
+                .iter()
+                .map(|p| (p.id, Vec::new()))
+                .collect(),
             landlord: self.landlord,
             trump: self.trump,
+            propagated: self.propagated.clone(),
             landlords_team,
         })
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
-        let mut players = self.players.clone();
-        let mut msgs = vec![];
-        for observer in &self.observers {
-            msgs.push(format!("{} is joining the game", observer.name));
-            players.push(observer.clone());
-        }
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
+        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
 
-        msgs.push("Resetting game".to_string());
+        let mut propagated = self.propagated.clone();
+        msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((
-            InitializePhase {
-                game_mode: match self.game_mode {
-                    GameMode::Tractor => GameMode::Tractor,
-                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
-                        num_friends,
-                        friends: vec![],
-                    },
-                },
-                num_decks: Some(self.num_decks),
-                kitty_size: None,
-                max_player_id: self.max_player_id,
-                landlord: Some(self.landlord),
-                hide_landlord_points: self.hide_landlord_points,
-                players,
-            },
-            msgs,
-        ))
+        Ok((InitializePhase { propagated }, msgs))
     }
 }
 
@@ -697,48 +911,32 @@ pub struct Bid {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DrawPhase {
-    max_player_id: usize,
     num_decks: usize,
     game_mode: GameMode,
     deck: Vec<Card>,
-    players: Vec<Player>,
-    observers: Vec<Player>,
+    propagated: PropagatedState,
     hands: Hands,
     bids: Vec<Bid>,
     position: usize,
-    landlord: Option<PlayerID>,
     kitty: Vec<Card>,
     level: Number,
-    hide_landlord_points: Option<bool>,
 }
 impl DrawPhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
-        let id = PlayerID(self.max_player_id);
-        if self.players.iter().any(|p| p.name == name)
-            || self.observers.iter().any(|p| p.name == name)
-        {
-            bail!("player with name already exists!")
-        }
-        self.max_player_id += 1;
-        self.observers.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
-        Ok(id)
+        self.propagated.add_observer(name)
     }
 
-    pub fn remove_observer(&mut self, id: PlayerID) {
-        self.observers.retain(|p| p.id != id);
+    pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
+        self.propagated.remove_observer(id)
     }
 
     pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {
-        if id != self.players[self.position].id {
+        if id != self.propagated.players[self.position].id {
             bail!("not your turn!");
         }
         if let Some(next_card) = self.deck.pop() {
             self.hands.add(id, Some(next_card))?;
-            self.position = (self.position + 1) % self.players.len();
+            self.position = (self.position + 1) % self.propagated.players.len();
             Ok(())
         } else {
             bail!("no cards left in deck")
@@ -822,9 +1020,9 @@ impl DrawPhase {
             bail!("nobody has bid yet")
         } else {
             let winning_bid = self.bids.last().unwrap();
-            let landlord = self.landlord.unwrap_or(winning_bid.id);
+            let landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
             if id != landlord {
-                bail!("only the landlord can advance the game");
+                bail!("only the leader can advance the game");
             }
             let trump = match winning_bid.card {
                 Card::Unknown => bail!("can't bid with unknown cards!"),
@@ -841,10 +1039,7 @@ impl DrawPhase {
                 game_mode: self.game_mode.clone(),
                 kitty_size: self.kitty.len(),
                 kitty: self.kitty.clone(),
-                players: self.players.clone(),
-                observers: self.observers.clone(),
-                max_player_id: self.max_player_id,
-                hide_landlord_points: self.hide_landlord_points,
+                propagated: self.propagated.clone(),
                 landlord,
                 hands,
                 trump,
@@ -852,175 +1047,122 @@ impl DrawPhase {
         }
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<String>), Error> {
-        let mut players = self.players.clone();
-        let mut msgs = vec![];
-        for observer in &self.observers {
-            msgs.push(format!("{} is joining the game", observer.name));
-            players.push(observer.clone());
-        }
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
+        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
 
-        msgs.push("Resetting game".to_string());
+        let mut propagated = self.propagated.clone();
+        msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((
-            InitializePhase {
-                game_mode: match self.game_mode {
-                    GameMode::Tractor => GameMode::Tractor,
-                    GameMode::FindingFriends { num_friends, .. } => GameMode::FindingFriends {
-                        num_friends,
-                        friends: vec![],
-                    },
-                },
-                num_decks: Some(self.num_decks),
-                kitty_size: None,
-                max_player_id: self.max_player_id,
-                landlord: self.landlord,
-                hide_landlord_points: self.hide_landlord_points,
-                players,
-            },
-            msgs,
-        ))
+        Ok((InitializePhase { propagated }, msgs))
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InitializePhase {
-    max_player_id: usize,
-    players: Vec<Player>,
-    num_decks: Option<usize>,
-    kitty_size: Option<usize>,
-    game_mode: GameMode,
-    landlord: Option<PlayerID>,
-    hide_landlord_points: Option<bool>,
+    propagated: PropagatedState,
 }
 
 impl InitializePhase {
     pub fn new() -> Self {
         Self {
-            max_player_id: 0,
-            players: Vec::new(),
-            kitty_size: None,
-            num_decks: None,
-            game_mode: GameMode::Tractor,
-            landlord: None,
-            hide_landlord_points: None,
+            propagated: PropagatedState {
+                max_player_id: 0,
+                players: Vec::new(),
+                kitty_size: None,
+                num_decks: None,
+                game_mode: GameModeSettings::Tractor,
+                landlord: None,
+                hide_landlord_points: None,
+                observers: vec![],
+                chat_link: None,
+            },
         }
     }
 
-    pub fn add_player(&mut self, name: String) -> Result<PlayerID, Error> {
-        let id = PlayerID(self.max_player_id);
-        if self.players.iter().any(|p| p.name == name) {
-            bail!("player with name already exists!")
-        }
-
-        self.max_player_id += 1;
-        self.players.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
-        self.kitty_size = None;
-        Ok(id)
+    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+        self.propagated.add_player(name)
     }
 
-    pub fn remove_player(&mut self, id: PlayerID) {
-        self.players.retain(|p| p.id != id);
-        if self.landlord == Some(id) {
-            self.landlord = None;
-        }
-        self.kitty_size = None;
+    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        self.propagated.remove_player(id)
+    }
+
+    pub fn make_observer(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        self.propagated.make_observer(id)
+    }
+
+    pub fn make_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+        self.propagated.make_player(id)
     }
 
     pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
-        let uniq = order.iter().cloned().collect::<HashSet<PlayerID>>();
-        if uniq.len() != self.players.len() {
-            bail!("Incorrect number of players");
-        }
-        let mut new_players = Vec::with_capacity(self.players.len());
-        for id in order {
-            match self.players.iter().find(|p| p.id == *id) {
-                Some(player) => new_players.push(player.clone()),
-                None => bail!("player ID not found"),
-            }
-        }
-        self.players = new_players;
-        Ok(())
+        self.propagated.reorder_players(order)
     }
 
-    pub fn set_num_decks(&mut self, num_decks: Option<usize>) {
-        self.num_decks = num_decks;
-        self.kitty_size = None;
+    pub fn set_num_decks(
+        &mut self,
+        num_decks: Option<usize>,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
+        self.propagated.set_num_decks(num_decks)
     }
 
     pub fn hide_landlord_points(&mut self, should_hide: bool) {
-        if should_hide {
-            self.hide_landlord_points = Some(true);
-        } else {
-            self.hide_landlord_points = None;
-        }
+        self.propagated.hide_landlord_points(should_hide)
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
-        match landlord {
-            Some(landlord) => {
-                if self.players.iter().any(|p| p.id == landlord) {
-                    self.landlord = Some(landlord)
-                } else {
-                    bail!("player ID not found")
-                }
-            }
-            None => self.landlord = None,
-        }
-        Ok(())
+        self.propagated.set_landlord(landlord)
     }
 
     pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
-        match self.players.iter_mut().find(|p| p.id == player_id) {
-            Some(ref mut player) => {
-                player.level = level;
-            }
-            None => bail!("player ID not found"),
-        }
-        Ok(())
+        self.propagated.set_rank(player_id, level)
     }
 
-    pub fn set_kitty_size(&mut self, size: usize) -> Result<(), Error> {
-        if self.players.is_empty() {
-            bail!("no players")
-        }
-        let deck_len = self.players.len() * FULL_DECK.len();
-        if size >= deck_len {
-            bail!("kitty size too large")
-        }
-
-        if deck_len % self.players.len() != size % self.players.len() {
-            bail!("kitty must be a multiple of the remaining cards")
-        }
-        self.kitty_size = Some(size);
-        Ok(())
+    pub fn set_kitty_size(
+        &mut self,
+        size: Option<usize>,
+    ) -> Result<Option<BroadcastMessage>, Error> {
+        self.propagated.set_kitty_size(size)
     }
 
-    pub fn set_game_mode(&mut self, game_mode: GameMode) {
-        self.game_mode = game_mode;
+    pub fn set_game_mode(
+        &mut self,
+        game_mode: GameModeSettings,
+    ) -> Result<Vec<BroadcastMessage>, Error> {
+        self.propagated.set_game_mode(game_mode)
     }
 
     pub fn start(&self) -> Result<DrawPhase, Error> {
-        if self.players.len() < 4 {
+        if self.propagated.players.len() < 4 {
             bail!("not enough players")
         }
 
-        let game_mode = match self.game_mode {
+        let game_mode = match self.propagated.game_mode {
             // Always override the number of friends for finding friends
             // TODO: consider exposing this in the future properly...
-            GameMode::FindingFriends { .. } => GameMode::FindingFriends {
-                num_friends: (self.players.len() / 2) - 1,
+            GameModeSettings::FindingFriends {
+                num_friends: Some(num_friends),
+                ..
+            } if num_friends + 1 < self.propagated.players.len() => GameMode::FindingFriends {
+                num_friends,
                 friends: vec![],
             },
-            GameMode::Tractor if self.players.len() % 2 == 0 => GameMode::Tractor,
-            GameMode::Tractor => bail!("can only play tractor with an even number of players"),
+            GameModeSettings::FindingFriends { .. } => GameMode::FindingFriends {
+                num_friends: (self.propagated.players.len() / 2) - 1,
+                friends: vec![],
+            },
+            GameModeSettings::Tractor if self.propagated.players.len() % 2 == 0 => {
+                GameMode::Tractor
+            }
+            GameModeSettings::Tractor => {
+                bail!("can only play tractor with an even number of players")
+            }
         };
 
-        let num_decks = self.num_decks.unwrap_or(self.players.len() / 2);
+        let num_decks = self
+            .propagated
+            .num_decks
+            .unwrap_or(self.propagated.players.len() / 2);
         let mut deck = Vec::with_capacity(num_decks * FULL_DECK.len());
         for _ in 0..num_decks {
             deck.extend(FULL_DECK.iter());
@@ -1028,37 +1170,44 @@ impl InitializePhase {
         let mut rng = rand::thread_rng();
         deck.shuffle(&mut rng);
 
-        let kitty_size = match self.kitty_size {
-            Some(size) if deck.len() % self.players.len() == size % self.players.len() => size,
+        let kitty_size = match self.propagated.kitty_size {
+            Some(size)
+                if deck.len() % self.propagated.players.len()
+                    == size % self.propagated.players.len() =>
+            {
+                size
+            }
             Some(_) => bail!("kitty size doesn't match player count"),
             None => {
-                let mut kitty_size = deck.len() % self.players.len();
+                let mut kitty_size = deck.len() % self.propagated.players.len();
                 if kitty_size == 0 {
-                    kitty_size = self.players.len();
+                    kitty_size = self.propagated.players.len();
                 }
                 if kitty_size < 5 {
-                    kitty_size += self.players.len();
+                    kitty_size += self.propagated.players.len();
                 }
                 kitty_size
             }
         };
 
         let position = self
+            .propagated
             .landlord
-            .and_then(|landlord| self.players.iter().position(|p| p.id == landlord))
-            .unwrap_or(rng.next_u32() as usize % self.players.len());
-        let level = self.players[position].level;
+            .and_then(|landlord| {
+                self.propagated
+                    .players
+                    .iter()
+                    .position(|p| p.id == landlord)
+            })
+            .unwrap_or(rng.next_u32() as usize % self.propagated.players.len());
+        let level = self.propagated.players[position].level;
 
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
             kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
-            hands: Hands::new(self.players.iter().map(|p| p.id), level),
+            hands: Hands::new(self.propagated.players.iter().map(|p| p.id), level),
+            propagated: self.propagated.clone(),
             bids: Vec::new(),
-            players: self.players.clone(),
-            observers: vec![],
-            landlord: self.landlord,
-            max_player_id: self.max_player_id,
-            hide_landlord_points: self.hide_landlord_points,
             position,
             num_decks,
             game_mode,
@@ -1076,10 +1225,10 @@ mod tests {
     #[test]
     fn reinforce_bid() {
         let mut init = InitializePhase::new();
-        let p1 = init.add_player("p1".into()).unwrap();
-        let p2 = init.add_player("p2".into()).unwrap();
-        let p3 = init.add_player("p3".into()).unwrap();
-        let p4 = init.add_player("p4".into()).unwrap();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start().unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![

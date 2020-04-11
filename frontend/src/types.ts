@@ -13,13 +13,7 @@ export interface IGameState {
 }
 
 export interface IInitializePhase {
-  max_player_id: number;
-  players: IPlayer[];
-  num_decks: number | null;
-  kitty_size: number | null;
-  game_mode: IGameMode;
-  landlord: number | null;
-  hide_landlord_points: boolean | null;
+  propagated: IPropagatedState;
 }
 
 export interface IBid {
@@ -29,50 +23,52 @@ export interface IBid {
 }
 
 export interface IDrawPhase {
-  max_player_id: number;
   num_decks: number;
   game_mode: IGameMode;
   deck: string[];
-  players: IPlayer[];
-  observers: IPlayer[];
+  propagated: IPropagatedState;
   hands: IHands;
   bids: IBid[];
   position: number;
-  landlord: number | null;
   kitty: string[];
   level: number;
-  hide_landlord_points: boolean | null;
 }
 
 export interface IExchangePhase {
-  max_player_id: number;
+  propagated: IPropagatedState;
   num_decks: number;
   game_mode: IGameMode;
   hands: IHands;
   kitty: string[];
   kitty_size: number;
   landlord: number;
-  players: IPlayer[];
-  observers: IPlayer[];
   trump: ITrump;
-  hide_landlord_points: boolean | null;
 }
 
 export interface IPlayPhase {
-  max_player_id: number;
   num_decks: number;
   game_mode: IGameMode;
+  propagated: IPropagatedState;
   hands: IHands;
   points: {[id: number]: string[]};
   kitty: string[];
   landlord: number;
   landlords_team: number[];
-  players: IPlayer[];
-  observers: IPlayer[];
   trump: ITrump;
   trick: ITrick;
   last_trick: ITrick | null;
+}
+
+export interface IPropagatedState {
+  game_mode: IGameMode;
   hide_landlord_points: boolean | null;
+  kitty_size: number | null;
+  num_decks: number | null;
+  max_player_id: number;
+  players: IPlayer[];
+  observers: IPlayer[];
+  landlord: number | null;
+  chat_link: string | null;
 }
 
 export interface IHands {
@@ -85,7 +81,7 @@ export type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
 
 export interface IFindingFriends {
   num_friends: number;
-  friends: [IFriend];
+  friends?: [IFriend];
 }
 
 export interface IFriend {
