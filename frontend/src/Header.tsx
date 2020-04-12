@@ -1,10 +1,10 @@
 import * as React from 'react';
 import GameMode from './GameMode';
 import SettingsButton from './SettingsButton';
-import {IGameMode} from './types';
+import {IGameModeSettings} from './types';
 
 type Props = {
-  gameMode: IGameMode;
+  gameMode: IGameModeSettings;
   chatLink?: string | null;
 };
 

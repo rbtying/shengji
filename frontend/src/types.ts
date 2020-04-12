@@ -60,7 +60,7 @@ export interface IPlayPhase {
 }
 
 export interface IPropagatedState {
-  game_mode: IGameMode;
+  game_mode: IGameModeSettings;
   hide_landlord_points: boolean | null;
   kitty_size: number | null;
   num_decks: number | null;
@@ -78,10 +78,13 @@ export interface IHands {
 }
 
 export type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
+export type IGameModeSettings =
+  | 'Tractor'
+  | {FindingFriends: {num_friends: number}};
 
 export interface IFindingFriends {
   num_friends: number;
-  friends?: [IFriend];
+  friends: [IFriend];
 }
 
 export interface IFriend {

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import {IGameMode} from './types';
+import {IGameModeSettings, IGameMode} from './types';
 
 type Props = {
-  gameMode: IGameMode;
+  gameMode: IGameModeSettings | IGameMode;
 };
 const GameMode = (props: Props) => {
   const rules = (
