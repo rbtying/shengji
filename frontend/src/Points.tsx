@@ -51,13 +51,13 @@ const Points = (props: Props) => {
   let thresholdStr = '';
 
   if (nonLandlordPoints === 0) {
-    thresholdStr = `${landlord}'s team will go up 3 levels (next threshold: 5分)`;
+    thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
   } else if (nonLandlordPoints < segment) {
-    thresholdStr = `${landlord}'s team will go up 2 levels (next threshold: ${segment}分)`;
+    thresholdStr = `${landlord.name}'s team will go up 2 levels (next threshold: ${segment}分)`;
   } else if (nonLandlordPoints < 2 * segment) {
-    thresholdStr = `${landlord}'s team will go up 1 level (next threshold: ${
-      2 * segment
-    }分)`;
+    thresholdStr = `${
+      landlord.name
+    }'s team will go up 1 level (next threshold: ${2 * segment}分)`;
   } else if (nonLandlordPoints < 3 * segment) {
     thresholdStr = `Neither team will go up a level (next threshold: ${
       3 * segment
