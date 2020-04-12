@@ -20,13 +20,14 @@ use shengji_core::{game_state, interactive, types};
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 
 lazy_static::lazy_static! {
-    static ref CARDS_JS: String = {
-        let cards = types::FULL_DECK
-            .iter()
-            .flat_map(|c| serde_json::to_string(&c.as_info()).ok())
-            .collect::<Vec<_>>().join(",");
-        format!("window.CARDS = [{}];", cards)
+    static ref CARDS_JSON: CardsBlob = CardsBlob {
+        cards: types::FULL_DECK.iter().map(|c| c.as_info()).collect()
     };
+}
+
+#[derive(Clone, Serialize)]
+struct CardsBlob {
+    cards: Vec<types::CardInfo>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -191,11 +192,7 @@ async fn main() {
     let worker_js =
         warp::path("timer-worker.js").and(warp::fs::file("../frontend/static/timer-worker.js"));
 
-    let cards = warp::path("cards.js").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(CARDS_JS.as_str())
-    });
+    let cards = warp::path("cards.json").map(|| warp::reply::json(&*CARDS_JSON));
 
     let dump_state = warp::path("full_state.json")
         .and(games.clone())
@@ -475,3 +472,22 @@ static JS_MAP: &str = include_str!("../../frontend/dist/main.js.map");
 static CSS: &str = include_str!("../../frontend/static/style.css");
 #[cfg(not(feature = "dynamic"))]
 static WORKER_JS: &str = include_str!("../../frontend/static/timer-worker.js");
+
+#[cfg(test)]
+mod tests {
+    use super::CARDS_JSON;
+
+    static CARDS_JSON_FROM_FILE: &str = include_str!("../../frontend/src/generated/cards.json");
+
+    #[test]
+    fn test_cards_json_compatibility() {
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(
+                &serde_json::to_string(&*CARDS_JSON).unwrap()
+            )
+            .unwrap(),
+            serde_json::from_str::<serde_json::Value>(CARDS_JSON_FROM_FILE).unwrap(),
+            "Run `yarn download-cards-json` with the backend running to sync the generated cards.json file"
+        );
+    }
+}

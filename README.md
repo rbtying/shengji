@@ -23,6 +23,14 @@ cd frontend && yarn watch
 cd backend && cargo run --features dynamic
 ```
 
+## Generating JSON
+A mapping of card data is generated from the server. It's checked in at
+`src/generated/cards.json`. To update it, start up the server and run
+
+```
+yarn download-cards-json
+```
+
 ## Prettier
 To format frontend code:
 
