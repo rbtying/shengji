@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{BroadcastMessage, Friend, GameModeSettings, GameState, InitializePhase};
+use crate::game_state::{Friend, GameModeSettings, GameState, InitializePhase, MessageVariant};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -22,17 +22,36 @@ impl InteractiveGame {
         }
     }
 
-    pub fn register(&self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+    pub fn register(
+        &self,
+        name: String,
+    ) -> Result<(PlayerID, Vec<(BroadcastMessage, String)>), Error> {
         if let Ok(mut s) = self.state.lock() {
-            s.register(name)
+            let (actor, msgs) = s.register(name)?;
+            Ok((
+                actor,
+                msgs.into_iter()
+                    .flat_map(|variant| {
+                        let b = BroadcastMessage { actor, variant };
+                        b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
+                    })
+                    .collect(),
+            ))
         } else {
             bail!("lock poisoned")
         }
     }
 
-    pub fn kick(&self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn kick(&self, id: PlayerID) -> Result<Vec<(BroadcastMessage, String)>, Error> {
         if let Ok(mut s) = self.state.lock() {
-            s.kick(id)
+            let msgs = s.kick(id)?;
+            Ok(msgs
+                .into_iter()
+                .flat_map(|variant| {
+                    let b = BroadcastMessage { actor: id, variant };
+                    b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
+                })
+                .collect())
         } else {
             bail!("lock poisoned")
         }
@@ -54,145 +73,119 @@ impl InteractiveGame {
         }
     }
 
-    pub fn interact(&self, msg: Message, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn interact(
+        &self,
+        msg: Message,
+        id: PlayerID,
+    ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
         if let Ok(mut s) = self.state.lock() {
-            match (msg, &mut *s) {
+            let msgs = match (msg, &mut *s) {
                 (Message::EndGame, _) => {
                     *s = GameState::Done;
-                    Ok(vec![])
+                    vec![]
                 }
-                (Message::ResetGame, _) => Ok(s.reset()?),
+                (Message::ResetGame, _) => s.reset()?,
                 (Message::SetChatLink(ref link), _) => {
                     s.set_chat_link(link.clone())?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::StartGame, GameState::Initialize(ref mut state)) => {
                     *s = GameState::Draw(state.start()?);
-                    Ok(vec![BroadcastMessage("Starting game".to_string())])
+                    vec![MessageVariant::StartingGame]
                 }
                 (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                     state.reorder_players(&players)?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::MakeObserver(id), GameState::Initialize(ref mut state)) => {
-                    Ok(state.make_observer(id)?)
+                    state.make_observer(id)?
                 }
                 (Message::MakePlayer(id), GameState::Initialize(ref mut state)) => {
-                    Ok(state.make_player(id)?)
+                    state.make_player(id)?
                 }
                 (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
-                    Ok(state.set_num_decks(num_decks)?)
+                    state.set_num_decks(num_decks)?
                 }
                 (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
                     state.set_rank(id, rank)?;
-                    let n = s.player_name(id)?;
-                    Ok(vec![BroadcastMessage(format!(
-                        "{} set their rank to {}",
-                        n,
-                        rank.as_str()
-                    ))])
+                    vec![MessageVariant::SetRank { rank }]
                 }
                 (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
-                    Ok(state.set_kitty_size(size)?.into_iter().collect())
+                    state.set_kitty_size(size)?.into_iter().collect()
                 }
                 (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                     state.set_landlord(landlord)?;
-                    let n = s.player_name(id)?;
-                    match landlord {
-                        Some(ll) => {
-                            let ll_n = s.player_name(ll)?;
-                            Ok(vec![BroadcastMessage(format!(
-                                "{} set the leader to {}",
-                                n, ll_n
-                            ))])
-                        }
-                        None => Ok(vec![BroadcastMessage(format!(
-                            "{} set the leader to the winner of the bid",
-                            n
-                        ))]),
-                    }
+                    vec![MessageVariant::SetLandlord { landlord }]
                 }
                 (
                     Message::SetHideLandlordsPoints(hide_landlord_points),
                     GameState::Initialize(ref mut state),
                 ) => {
                     state.hide_landlord_points(hide_landlord_points);
-                    let n = s.player_name(id)?;
-                    if hide_landlord_points {
-                        Ok(vec![BroadcastMessage(format!(
-                            "{} hid the defending team's points",
-                            n
-                        ))])
-                    } else {
-                        Ok(vec![BroadcastMessage(format!(
-                            "{} made the defending team's points visible",
-                            n
-                        ))])
-                    }
+                    vec![MessageVariant::SetDefendingPointVisibility {
+                        visible: !hide_landlord_points,
+                    }]
                 }
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
-                    Ok(state.set_game_mode(game_mode.clone())?)
+                    state.set_game_mode(game_mode.clone())?
                 }
                 (Message::DrawCard, GameState::Draw(ref mut state)) => {
                     state.draw_card(id)?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::Bid(card, count), GameState::Draw(ref mut state)) => {
                     if state.bid(id, card, count) {
-                        let n = s.player_name(id)?;
-                        Ok(vec![BroadcastMessage(format!(
-                            "{} bid {} {:?}",
-                            n, count, card
-                        ))])
+                        vec![MessageVariant::MadeBid { card, count }]
                     } else {
                         bail!("bid was invalid")
                     }
                 }
                 (Message::PickUpKitty, GameState::Draw(ref mut state)) => {
                     *s = GameState::Exchange(state.advance(id)?);
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
                     state.move_card_to_kitty(id, card)?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::MoveCardToHand(card), GameState::Exchange(ref mut state)) => {
                     state.move_card_to_hand(id, card)?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::SetFriends(ref friends), GameState::Exchange(ref mut state)) => {
                     state.set_friends(id, friends.iter().cloned())?;
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::BeginPlay, GameState::Exchange(ref mut state)) => {
                     *s = GameState::Play(state.advance(id)?);
-                    Ok(vec![])
+                    vec![]
                 }
                 (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
                     state.play_cards(id, cards)?;
-                    let n = s.player_name(id)?;
-                    let cards_as_str = cards.iter().map(|c| c.as_char()).collect::<String>();
-                    Ok(vec![BroadcastMessage(format!(
-                        "{} played {}",
-                        n, cards_as_str
-                    ))])
+                    vec![MessageVariant::PlayedCards {
+                        cards: cards.to_vec(),
+                    }]
                 }
-                (Message::EndTrick, GameState::Play(ref mut state)) => Ok(state.finish_trick()?),
+                (Message::EndTrick, GameState::Play(ref mut state)) => state.finish_trick()?,
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
                     state.take_back_cards(id)?;
-                    let n = s.player_name(id)?;
-                    Ok(vec![BroadcastMessage(format!(
-                        "{} took back their last play",
-                        n
-                    ))])
+                    vec![MessageVariant::TookBackPlay]
                 }
                 (Message::StartNewGame, GameState::Play(ref mut state)) => {
                     let (new_s, msgs) = state.finish_game()?;
                     *s = GameState::Initialize(new_s);
-                    Ok(msgs)
+                    msgs
                 }
                 _ => bail!("not supported in current phase"),
-            }
+            };
+
+            Ok(msgs
+                .into_iter()
+                .flat_map(|variant| {
+                    let b = BroadcastMessage { actor: id, variant };
+                    b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
+                })
+                .collect())
         } else {
             bail!("lock poisoned")
         }
@@ -225,4 +218,54 @@ pub enum Message {
     EndTrick,
     TakeBackCards,
     StartNewGame,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BroadcastMessage {
+    actor: PlayerID,
+    variant: MessageVariant,
+}
+
+impl BroadcastMessage {
+    pub fn to_string<'a>(
+        &'a self,
+        player_name: impl Fn(PlayerID) -> Result<&'a str, Error>,
+    ) -> Result<String, Error> {
+        let n = player_name(self.actor);
+
+        use MessageVariant::*;
+        Ok(match self.variant {
+            ResettingGame => format!("{} reset the game", n?),
+            StartingGame => format!("{} started the game", n?),
+            TrickWon { winner, points } =>if points > 0 {
+                    format!("{} wins the trick and gets {} points", player_name(winner)?, points)
+                } else {
+                    format!("{} wins the trick, but gets no points :(", player_name(winner)?)
+                },
+            RankAdvanced { player, new_rank } => format!("{} has advanced to rank {}", player_name(player)?, new_rank.as_str()),
+            NewLandlordForNextGame { landlord } => format!("{} will start the next game", player_name(landlord)?),
+            PointsInKitty { points, multiplier } => format!("{} points were burried and are attached to the last trick, with a multiplier of {}", points, multiplier),
+            JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
+            JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
+            LeftGame { ref name } => format!("{} has left the game", name),
+            KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
+            KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
+            NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
+            NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
+            NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),
+            NumFriendsSet { num_friends: None } => format!("{} set the number of friends to default", n?),
+            GameModeSet { game_mode: GameModeSettings::Tractor } => format!("{} set the game mode to Tractor", n?),
+            GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: None }} => format!("{} set the game mode to Finding Friends", n?),
+            GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(1) }} => format!("{} set the game mode to Finding Friends with 1 friend", n?),
+            GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(friends) }} => format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
+            TookBackPlay => format!("{} took back their last play", n?),
+            PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
+            SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
+            SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
+            SetLandlord { landlord: None } => format!("{} set the leader to the winner of the bid", n?),
+            SetLandlord { landlord: Some(landlord) } => format!("{} set the leader to {}", n?, player_name(landlord)?),
+            SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
+            MadeBid { card, count } => format!("{} bid {} {:?}", n?, count, card),
+        })
+    }
 }

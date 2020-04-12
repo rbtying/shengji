@@ -86,7 +86,10 @@ pub enum GameMessage {
         from: String,
         message: String,
     },
-    Broadcast(String),
+    Broadcast {
+        data: interactive::BroadcastMessage,
+        message: String,
+    },
     Error(String),
     Kicked,
 }
@@ -323,8 +326,11 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     user.send(&GameMessage::State { state, cards });
                 }
 
-                for msg in &msgs {
-                    user.send(&GameMessage::Broadcast(msg.0.clone()));
+                for (data, message) in &msgs {
+                    user.send(&GameMessage::Broadcast {
+                        data: data.clone(),
+                        message: message.clone(),
+                    });
                 }
             }
             player_id
@@ -360,8 +366,11 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                             {
                                                 user.send(&GameMessage::State { state, cards });
                                             }
-                                            for msg in &msgs {
-                                                user.send(&GameMessage::Broadcast(msg.0.clone()));
+                                            for (data, message) in &msgs {
+                                                user.send(&GameMessage::Broadcast {
+                                                    data: data.clone(),
+                                                    message: message.clone(),
+                                                });
                                             }
                                         }
                                         game.users.retain(|_, u| u.player_id != id);
@@ -387,10 +396,11 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                             if let Ok((state, cards)) =
                                                 game.game.dump_state_for_player(user.player_id)
                                             {
-                                                for msg in &msgs {
-                                                    user.send(&GameMessage::Broadcast(
-                                                        msg.0.clone(),
-                                                    ));
+                                                for (data, message) in &msgs {
+                                                    user.send(&GameMessage::Broadcast {
+                                                        data: data.clone(),
+                                                        message: message.clone(),
+                                                    });
                                                 }
                                                 user.send(&GameMessage::State { state, cards });
                                             }
