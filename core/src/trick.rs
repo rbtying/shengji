@@ -685,7 +685,7 @@ fn check_format_matches_inner(
 
 #[cfg(test)]
 mod tests {
-    use super::{Trick, TrickFormat, TrickUnit};
+    use super::{Trick, TrickEnded, TrickFormat, TrickUnit};
 
     use crate::hands::Hands;
     use crate::types::{
@@ -715,9 +715,14 @@ mod tests {
         trick.play_cards(P2, &mut hands, &[S_5]).unwrap();
         trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
         trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 2);
+        assert_eq!(largest_trick_unit_size, 1);
         assert_eq!(points, vec![S_5, S_5]);
     }
 
@@ -734,9 +739,14 @@ mod tests {
         trick.play_cards(P2, &mut hands, &[S_4]).unwrap();
         trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
         trick.play_cards(P4, &mut hands, &[S_5]).unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 2);
+        assert_eq!(largest_trick_unit_size, 1);
         assert_eq!(points, vec![S_5]);
     }
 
@@ -753,9 +763,14 @@ mod tests {
         trick.play_cards(P2, &mut hands, &[S_3, S_4]).unwrap();
         trick.play_cards(P3, &mut hands, &[S_5, S_5]).unwrap();
         trick.play_cards(P4, &mut hands, &[S_3, S_5]).unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
         assert_eq!(winner_id, P3);
-        assert_eq!(multiplier, 4);
+        assert_eq!(largest_trick_unit_size, 2);
         assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
@@ -780,9 +795,14 @@ mod tests {
         trick
             .play_cards(P4, &mut hands, &[S_6, S_6, S_6, S_6])
             .unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
         assert_eq!(winner_id, P2);
-        assert_eq!(multiplier, 8);
+        assert_eq!(largest_trick_unit_size, 4);
         assert_eq!(points, vec![S_5, S_5, S_5]);
     }
 
@@ -806,14 +826,19 @@ mod tests {
         trick
             .play_cards(P4, &mut hands, &[S_4, S_4, S_4, S_4])
             .unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
-        assert_eq!(multiplier, 4);
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
+        assert_eq!(largest_trick_unit_size, 2);
         assert_eq!(winner_id, P3);
         assert_eq!(points, vec![]);
     }
 
     #[test]
-    fn test_play_throw_trick_take_back() {
+    fn test_play_throw_trick_failure() {
         let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
         hands.add(P1, vec![H_8, H_8, H_7, H_2]).unwrap();
         hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
@@ -823,23 +848,20 @@ mod tests {
         trick
             .play_cards(P1, &mut hands, &[H_8, H_8, H_7, H_2])
             .unwrap();
-        trick
-            .play_cards(P2, &mut hands, &[H_2, S_2, S_2, S_2])
-            .unwrap();
-        trick
-            .play_cards(P3, &mut hands, &[S_2, S_2, S_3, S_4])
-            .unwrap();
-        trick.take_back(P3, &mut hands).unwrap();
-        trick.take_back(P2, &mut hands).unwrap();
-        trick.take_back(P1, &mut hands).unwrap();
-        trick.play_cards(P1, &mut hands, &[H_2]).unwrap();
         trick.play_cards(P2, &mut hands, &[H_2]).unwrap();
         trick.play_cards(P3, &mut hands, &[S_3]).unwrap();
         trick.play_cards(P4, &mut hands, &[H_3]).unwrap();
-        let (winner_id, points, multiplier) = trick.complete().unwrap();
-        assert_eq!(multiplier, 2);
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            failed_throw_size,
+            ..
+        } = trick.complete().unwrap();
+        assert_eq!(largest_trick_unit_size, 1);
         assert_eq!(winner_id, P3);
         assert_eq!(points, vec![]);
+        assert_eq!(failed_throw_size, 3);
     }
 
     #[test]
