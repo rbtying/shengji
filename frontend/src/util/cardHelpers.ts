@@ -27,8 +27,7 @@ export type SuitCard = {
 type Card = SuitCard | {type: 'big_joker'} | {type: 'little_joker'};
 
 const cardInfoToSuit = (cardInfo: any): Suit => {
-  const {suit} = cardInfo;
-  switch (suit) {
+  switch (cardInfo.typ) {
     case '♢':
       return 'diamonds';
     case '♧':

@@ -10,6 +10,7 @@ use crate::trick::Trick;
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "type")]
 pub enum MessageVariant {
     ResettingGame,
     StartingGame,
