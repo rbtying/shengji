@@ -4,7 +4,6 @@
         <title>升级 / 找朋友 Rules</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" type="text/css" href="style.css">
-        <script type="text/javascript" src="cards.js"></script>
     </head>
     <body id="body">
       <h1>Rules for 升级 and 找朋友</h1>
@@ -1119,32 +1118,6 @@
           });
         }
 
-        const REVERSED_CARDS = [...CARDS];
-        REVERSED_CARDS.reverse();
-
-        addCards("spades", REVERSED_CARDS.filter((c) => c.typ == '♤'));
-        addCards("hearts", REVERSED_CARDS.filter((c) => c.typ == '♡'));
-        addCards("diamonds", REVERSED_CARDS.filter((c) => c.typ == '♢'));
-        addCards("clubs", REVERSED_CARDS.filter((c) => c.typ == '♧'));
-        addCards("jokers", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
-
-        addCards("points-d", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♢'));
-        addCards("points-c", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♧'));
-        addCards("points-h", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♡'));
-        addCards("points-s", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♤'));
-
-        addCards("trump-4s", REVERSED_CARDS.filter((c) => c.typ == '♤' && c.number != '4'));
-        addCards("trump-4s", CARDS.filter((c) => c.typ != '♤' && c.number == '4'));
-        addCards("trump-4s", CARDS.filter((c) => c.typ == '♤' && c.number == '4'));
-        addCards("trump-4s", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
-        addCards("trump-4s-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
-
-        addCards("trump-4nt", CARDS.filter((c) => c.number == '4'));
-        addCards("trump-4nt", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
-        addCards("trump-4nt-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
-
-        addCards("jokers2", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
-
         function setPointThresholds(evt) {
           if (evt.target.value == "n") {
             document.getElementById("n-1").innerText = "5 to n-5";
@@ -1165,6 +1138,37 @@
         }
 
         document.getElementById("n-select").addEventListener("change", setPointThresholds);
+
+        fetch("cards.json").then((response) => {
+          response.json().then((r) => {
+            const CARDS = r.cards;
+            const REVERSED_CARDS = [...CARDS];
+            REVERSED_CARDS.reverse();
+
+            addCards("spades", REVERSED_CARDS.filter((c) => c.typ == '♤'));
+            addCards("hearts", REVERSED_CARDS.filter((c) => c.typ == '♡'));
+            addCards("diamonds", REVERSED_CARDS.filter((c) => c.typ == '♢'));
+            addCards("clubs", REVERSED_CARDS.filter((c) => c.typ == '♧'));
+            addCards("jokers", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+
+            addCards("points-d", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♢'));
+            addCards("points-c", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♧'));
+            addCards("points-h", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♡'));
+            addCards("points-s", REVERSED_CARDS.filter((c) => c.points > 0 && c.typ == '♤'));
+
+            addCards("trump-4s", REVERSED_CARDS.filter((c) => c.typ == '♤' && c.number != '4'));
+            addCards("trump-4s", CARDS.filter((c) => c.typ != '♤' && c.number == '4'));
+            addCards("trump-4s", CARDS.filter((c) => c.typ == '♤' && c.number == '4'));
+            addCards("trump-4s", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+            addCards("trump-4s-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
+
+            addCards("trump-4nt", CARDS.filter((c) => c.number == '4'));
+            addCards("trump-4nt", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+            addCards("trump-4nt-hearts", REVERSED_CARDS.filter((c) => c.typ == '♡' && c.number != '4'));
+
+            addCards("jokers2", CARDS.filter((c) => c.value == '🃏' || c.typ == '🃟'));
+          });
+        });
       </script>
     </body>
 </html>
