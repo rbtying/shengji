@@ -218,6 +218,26 @@ class Initialize extends React.Component<IInitializeProps, {}> {
                   {kitty_offset + this.props.state.propagated.players.length}{' '}
                   cards
                 </option>
+                <option
+                  value={
+                    kitty_offset +
+                    2 * this.props.state.propagated.players.length
+                  }
+                >
+                  {kitty_offset +
+                    2 * this.props.state.propagated.players.length}{' '}
+                  cards
+                </option>
+                <option
+                  value={
+                    kitty_offset +
+                    3 * this.props.state.propagated.players.length
+                  }
+                >
+                  {kitty_offset +
+                    3 * this.props.state.propagated.players.length}{' '}
+                  cards
+                </option>
               </select>
             </label>
           </div>
@@ -392,7 +412,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <Header gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.game_mode}
+          chatLink={this.props.state.propagated.chat_link}
+        />
         <Players
           players={this.props.state.propagated.players}
           landlord={this.props.state.propagated.landlord}
@@ -564,7 +587,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     ) {
       return (
         <div>
-          <Header gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
           <Players
             players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
@@ -627,7 +653,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <Header gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
           <Players
             players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
@@ -1028,6 +1057,9 @@ const renderUI = (props: {
                   cards={cards}
                   name={state.name}
                   showLastTrick={state.settings.showLastTrick}
+                  unsetAutoPlayWhenWinnerChanges={
+                    state.settings.unsetAutoPlayWhenWinnerChanges
+                  }
                   beepOnTurn={state.settings.beepOnTurn}
                 />
               ) : null}

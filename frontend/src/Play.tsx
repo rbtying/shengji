@@ -10,6 +10,7 @@ import Points from './Points';
 import LabeledPlay from './LabeledPlay';
 import Players from './Players';
 import ArrayUtils from './util/array';
+import AutoPlayButton from './AutoPlayButton';
 import {WebsocketConsumer} from './WebsocketProvider';
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   cards: string[];
   beepOnTurn: boolean;
   showLastTrick: boolean;
+  unsetAutoPlayWhenWinnerChanges: boolean;
 };
 
 const Play = (props: Props) => {
@@ -81,9 +83,15 @@ const Play = (props: Props) => {
             trick={playPhase.trick}
             players={playPhase.propagated.players}
           />
-          <button onClick={playCards(send)} disabled={!canPlay}>
-            Play selected cards
-          </button>
+          <AutoPlayButton
+            onSubmit={playCards(send)}
+            canSubmit={canPlay}
+            currentWinner={playPhase.trick.current_winner}
+            unsetAutoPlayWhenWinnerChanges={
+              props.unsetAutoPlayWhenWinnerChanges
+            }
+            isCurrentPlayerTurn={isCurrentPlayerTurn}
+          />
           <button onClick={takeBackCards(send)} disabled={!canTakeBack}>
             Take back last play
           </button>

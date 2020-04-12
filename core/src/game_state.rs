@@ -9,8 +9,28 @@ use crate::hands::Hands;
 use crate::trick::Trick;
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
-#[derive(Debug, Clone)]
-pub struct BroadcastMessage(pub String);
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub enum MessageVariant {
+    ResettingGame,
+    StartingGame,
+    TrickWon { winner: PlayerID, points: usize },
+    RankAdvanced { player: PlayerID, new_rank: Number },
+    NewLandlordForNextGame { landlord: PlayerID },
+    PointsInKitty { points: usize, multiplier: usize },
+    JoinedGame { player: PlayerID },
+    JoinedTeam { player: PlayerID },
+    LeftGame { name: String },
+    KittySizeSet { size: Option<usize> },
+    NumDecksSet { num_decks: Option<usize> },
+    NumFriendsSet { num_friends: Option<usize> },
+    GameModeSet { game_mode: GameModeSettings },
+    TookBackPlay,
+    PlayedCards { cards: Vec<Card> },
+    SetDefendingPointVisibility { visible: bool },
+    SetLandlord { landlord: Option<PlayerID> },
+    SetRank { rank: Number },
+    MadeBid { card: Card, count: usize },
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
@@ -28,7 +48,7 @@ pub enum GameMode {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum GameModeSettings {
     Tractor,
     FindingFriends { num_friends: Option<usize> },
@@ -51,25 +71,12 @@ impl PropagatedState {
     pub fn set_game_mode(
         &mut self,
         game_mode: GameModeSettings,
-    ) -> Result<Vec<BroadcastMessage>, Error> {
+    ) -> Result<Vec<MessageVariant>, Error> {
         self.game_mode = game_mode;
-        match self.game_mode {
-            GameModeSettings::Tractor => Ok(vec![BroadcastMessage(
-                "Game mode set to Tractor".to_string(),
-            )]),
-            GameModeSettings::FindingFriends { num_friends: None } => Ok(vec![BroadcastMessage(
-                "Game mode set to Finding Friends".to_string(),
-            )]),
-            GameModeSettings::FindingFriends {
-                num_friends: Some(num_friends),
-            } => Ok(vec![BroadcastMessage(format!(
-                "Game mode set to Finding Friends with {} friends",
-                num_friends
-            ))]),
-        }
+        Ok(vec![MessageVariant::GameModeSet { game_mode }])
     }
 
-    fn num_players_changed(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+    fn num_players_changed(&mut self) -> Result<Vec<MessageVariant>, Error> {
         let mut msgs = vec![];
         msgs.extend(self.set_num_decks(None)?);
 
@@ -80,15 +87,15 @@ impl PropagatedState {
         {
             if num_friends.is_some() {
                 *num_friends = None;
-                msgs.push(BroadcastMessage(
-                    "Number of friends has been set to default".to_string(),
-                ));
+                msgs.push(MessageVariant::GameModeSet {
+                    game_mode: self.game_mode,
+                });
             }
         }
         Ok(msgs)
     }
 
-    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         let id = PlayerID(self.max_player_id);
         if self.players.iter().any(|p| p.name == name)
             || self.observers.iter().any(|p| p.name == name)
@@ -96,7 +103,7 @@ impl PropagatedState {
             bail!("player with name already exists!")
         }
 
-        let mut msgs = vec![BroadcastMessage(format!("{} has joined the game", name))];
+        let mut msgs = vec![MessageVariant::JoinedGame { player: id }];
 
         self.max_player_id += 1;
         self.players.push(Player {
@@ -142,12 +149,9 @@ impl PropagatedState {
         Ok(id)
     }
 
-    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == id).cloned() {
-            let mut msgs = vec![BroadcastMessage(format!(
-                "{} has left the game",
-                player.name
-            ))];
+            let mut msgs = vec![MessageVariant::LeftGame { name: player.name }];
             if self.landlord == Some(id) {
                 self.landlord = None;
             }
@@ -184,22 +188,13 @@ impl PropagatedState {
     pub fn set_num_decks(
         &mut self,
         num_decks: Option<usize>,
-    ) -> Result<Vec<BroadcastMessage>, Error> {
+    ) -> Result<Vec<MessageVariant>, Error> {
         if num_decks == Some(0) {
             bail!("At least one deck is necessary to play the game")
         }
         let mut msgs = vec![];
         if self.num_decks != num_decks {
-            if let Some(num_decks) = num_decks {
-                msgs.push(BroadcastMessage(format!(
-                    "Number of decks set to {}",
-                    num_decks
-                )));
-            } else {
-                msgs.push(BroadcastMessage(
-                    "Number of decks set to default".to_string(),
-                ));
-            }
+            msgs.push(MessageVariant::NumDecksSet { num_decks });
             self.num_decks = num_decks;
             msgs.extend(self.set_kitty_size(None)?);
         }
@@ -209,7 +204,7 @@ impl PropagatedState {
     pub fn set_kitty_size(
         &mut self,
         kitty_size: Option<usize>,
-    ) -> Result<Option<BroadcastMessage>, Error> {
+    ) -> Result<Option<MessageVariant>, Error> {
         if self.kitty_size == kitty_size {
             return Ok(None);
         }
@@ -226,16 +221,12 @@ impl PropagatedState {
                 bail!("kitty must be a multiple of the remaining cards")
             }
             self.kitty_size = Some(size);
-            Ok(Some(BroadcastMessage(format!(
-                "Number of cards in the bottom set to {}",
-                size
-            ))))
         } else {
             self.kitty_size = None;
-            Ok(Some(BroadcastMessage(
-                "Number of cards in the bottom set to default".to_string(),
-            )))
         }
+        Ok(Some(MessageVariant::KittySizeSet {
+            size: self.kitty_size,
+        }))
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -260,7 +251,7 @@ impl PropagatedState {
         }
     }
 
-    pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
             self.players.retain(|p| p.id != player_id);
             self.observers.push(player);
@@ -270,7 +261,7 @@ impl PropagatedState {
         }
     }
 
-    pub fn make_player(&mut self, player_id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn make_player(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.observers.iter().find(|p| p.id == player_id).cloned() {
             self.observers.retain(|p| p.id != player_id);
             self.players.push(player);
@@ -280,16 +271,13 @@ impl PropagatedState {
         }
     }
 
-    pub fn make_all_observers_into_players(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn make_all_observers_into_players(&mut self) -> Result<Vec<MessageVariant>, Error> {
         if self.observers.is_empty() {
             return Ok(vec![]);
         }
         let mut msgs = vec![];
         while let Some(player) = self.observers.pop() {
-            msgs.push(BroadcastMessage(format!(
-                "{} has joined the game",
-                player.name
-            )));
+            msgs.push(MessageVariant::JoinedGame { player: player.id });
             self.players.push(player);
         }
         msgs.extend(self.num_players_changed()?);
@@ -398,7 +386,7 @@ impl GameState {
         }
     }
 
-    pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+    pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         if let Ok(pid) = self.player_id(&name) {
             return Ok((pid, vec![]));
         }
@@ -411,7 +399,7 @@ impl GameState {
         }
     }
 
-    pub fn kick(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn kick(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         match self {
             GameState::Initialize(ref mut p) => p.remove_player(id),
             GameState::Draw(ref mut p) => p.remove_observer(id).map(|()| vec![]),
@@ -431,7 +419,7 @@ impl GameState {
         }
     }
 
-    pub fn reset(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn reset(&mut self) -> Result<Vec<MessageVariant>, Error> {
         match self {
             GameState::Initialize(_) => bail!("Game has not started yet!"),
             GameState::Draw(ref mut p) => {
@@ -563,7 +551,7 @@ impl PlayPhase {
         Ok(self.trick.take_back(id, &mut self.hands)?)
     }
 
-    pub fn finish_trick(&mut self) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn finish_trick(&mut self) -> Result<Vec<MessageVariant>, Error> {
         let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
         let mut msgs = vec![];
         if let GameMode::FindingFriends {
@@ -581,10 +569,9 @@ impl PlayPhase {
                                         self.landlords_team.push(played.id);
                                         for player in &self.propagated.players {
                                             if player.id == played.id {
-                                                msgs.push(BroadcastMessage(format!(
-                                                    "{} has joined the team",
-                                                    player.name
-                                                )))
+                                                msgs.push(MessageVariant::JoinedTeam {
+                                                    player: player.id,
+                                                });
                                             }
                                         }
                                     }
@@ -610,9 +597,10 @@ impl PlayPhase {
                 new_points.extend(kitty_points.iter().copied());
             }
             if !kitty_points.is_empty() && kitty_multipler > 0 {
-                msgs.push(
-                    BroadcastMessage(format!("{} points were buried and are attached to the last trick, with a multiplier of {}",
-                        kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(), kitty_multipler)));
+                msgs.push(MessageVariant::PointsInKitty {
+                    points: kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(),
+                    multiplier: kitty_multipler,
+                });
             }
         }
         let winner_idx = self
@@ -626,15 +614,15 @@ impl PlayPhase {
             let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
             points.extend(new_points);
             points.sort_by(|a, b| trump.compare(*a, *b));
-            msgs.push(BroadcastMessage(format!(
-                "{} wins the trick and gets {} points",
-                self.propagated.players[winner_idx].name, num_points
-            )));
+            msgs.push(MessageVariant::TrickWon {
+                winner: self.propagated.players[winner_idx].id,
+                points: num_points,
+            });
         } else {
-            msgs.push(BroadcastMessage(format!(
-                "{} wins the trick, but gets no points :(",
-                self.propagated.players[winner_idx].name
-            )));
+            msgs.push(MessageVariant::TrickWon {
+                winner: self.propagated.players[winner_idx].id,
+                points: 0,
+            });
         }
         let new_trick = Trick::new(
             self.trump,
@@ -652,7 +640,7 @@ impl PlayPhase {
         self.hands.is_empty() && self.trick.played_cards().is_empty()
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
+    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -696,11 +684,10 @@ impl PlayPhase {
                 }
             }
             if bump > 0 {
-                msgs.push(BroadcastMessage(format!(
-                    "{} has advanced to rank {}",
-                    player.name,
-                    player.level.as_str()
-                )));
+                msgs.push(MessageVariant::RankAdvanced {
+                    player: player.id,
+                    new_rank: player.level,
+                });
             }
         }
 
@@ -718,18 +705,17 @@ impl PlayPhase {
             idx = (idx + 1) % propagated.players.len()
         };
 
-        msgs.push(BroadcastMessage(format!(
-            "{} will start the next game",
-            self.propagated.players[next_landlord_idx].name
-        )));
+        msgs.push(MessageVariant::NewLandlordForNextGame {
+            landlord: self.propagated.players[next_landlord_idx].id,
+        });
         propagated.set_landlord(Some(next_landlord))?;
         msgs.extend(propagated.make_all_observers_into_players()?);
 
         Ok((InitializePhase { propagated }, msgs))
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
-        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+        let mut msgs = vec![MessageVariant::ResettingGame];
 
         let mut propagated = self.propagated.clone();
         msgs.extend(propagated.make_all_observers_into_players()?);
@@ -892,8 +878,8 @@ impl ExchangePhase {
         })
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
-        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+        let mut msgs = vec![MessageVariant::ResettingGame];
 
         let mut propagated = self.propagated.clone();
         msgs.extend(propagated.make_all_observers_into_players()?);
@@ -1047,8 +1033,8 @@ impl DrawPhase {
         }
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<BroadcastMessage>), Error> {
-        let mut msgs = vec![BroadcastMessage("Resetting game".to_string())];
+    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+        let mut msgs = vec![MessageVariant::ResettingGame];
 
         let mut propagated = self.propagated.clone();
         msgs.extend(propagated.make_all_observers_into_players()?);
@@ -1079,19 +1065,19 @@ impl InitializePhase {
         }
     }
 
-    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<BroadcastMessage>), Error> {
+    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         self.propagated.add_player(name)
     }
 
-    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         self.propagated.remove_player(id)
     }
 
-    pub fn make_observer(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn make_observer(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         self.propagated.make_observer(id)
     }
 
-    pub fn make_player(&mut self, id: PlayerID) -> Result<Vec<BroadcastMessage>, Error> {
+    pub fn make_player(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         self.propagated.make_player(id)
     }
 
@@ -1102,7 +1088,7 @@ impl InitializePhase {
     pub fn set_num_decks(
         &mut self,
         num_decks: Option<usize>,
-    ) -> Result<Vec<BroadcastMessage>, Error> {
+    ) -> Result<Vec<MessageVariant>, Error> {
         self.propagated.set_num_decks(num_decks)
     }
 
@@ -1118,17 +1104,14 @@ impl InitializePhase {
         self.propagated.set_rank(player_id, level)
     }
 
-    pub fn set_kitty_size(
-        &mut self,
-        size: Option<usize>,
-    ) -> Result<Option<BroadcastMessage>, Error> {
+    pub fn set_kitty_size(&mut self, size: Option<usize>) -> Result<Option<MessageVariant>, Error> {
         self.propagated.set_kitty_size(size)
     }
 
     pub fn set_game_mode(
         &mut self,
         game_mode: GameModeSettings,
-    ) -> Result<Vec<BroadcastMessage>, Error> {
+    ) -> Result<Vec<MessageVariant>, Error> {
         self.propagated.set_game_mode(game_mode)
     }
 

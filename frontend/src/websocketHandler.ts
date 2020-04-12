@@ -26,7 +26,8 @@ const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.Broadcast) {
     const newMessage = {
       from: 'GAME',
-      message: message.Broadcast,
+      message: message.Broadcast.message,
+      data: message.Broadcast.data,
       from_game: true,
     };
     return {messages: truncateMessages([...state.messages, newMessage])};
