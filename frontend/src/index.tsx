@@ -11,6 +11,8 @@ import Friends from './Friends';
 import Players from './Players';
 import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
+import TimerProvider from './TimerProvider';
+import {TimerConsumer} from './TimerProvider';
 import Credits from './Credits';
 import Chat from './Chat';
 import Cards from './Cards';
@@ -218,18 +220,22 @@ class Initialize extends React.Component<IInitializeProps, {}> {
                 </option>
                 <option
                   value={
-                    kitty_offset + 2 * this.props.state.propagated.players.length
+                    kitty_offset +
+                    2 * this.props.state.propagated.players.length
                   }
                 >
-                  {kitty_offset + 2 * this.props.state.propagated.players.length}{' '}
+                  {kitty_offset +
+                    2 * this.props.state.propagated.players.length}{' '}
                   cards
                 </option>
                 <option
                   value={
-                    kitty_offset + 3 * this.props.state.propagated.players.length
+                    kitty_offset +
+                    3 * this.props.state.propagated.players.length
                   }
                 >
-                  {kitty_offset + 3 * this.props.state.propagated.players.length}{' '}
+                  {kitty_offset +
+                    3 * this.props.state.propagated.players.length}{' '}
                   cards
                 </option>
               </select>
@@ -268,6 +274,8 @@ type IDrawProps = {
   state: IDrawPhase;
   name: string;
   cards: string[];
+  setTimeout: (fn: () => void, timeout: number) => number;
+  clearTimeout: (id: number) => void;
 };
 interface IDrawState {
   selected: string[];
@@ -324,7 +332,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       this.props.state.propagated.players[this.props.state.position].name ===
       this.props.name;
     if (this.timeout) {
-      clearTimeout(this.timeout);
+      this.props.clearTimeout(this.timeout);
       this.timeout = null;
     }
     if (can_draw) {
@@ -361,7 +369,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       this.timeout === null &&
       this.state.autodraw
     ) {
-      this.timeout = setTimeout(() => {
+      this.timeout = this.props.setTimeout(() => {
         this.drawCard();
       }, 250);
     }
@@ -1027,11 +1035,17 @@ const renderUI = (props: {
               />
             ) : null}
             {state.game_state.Draw ? (
-              <Draw
-                state={state.game_state.Draw}
-                cards={cards}
-                name={state.name}
-              />
+              <TimerConsumer>
+                {({setTimeout, clearTimeout}) => (
+                  <Draw
+                    state={state.game_state.Draw}
+                    cards={cards}
+                    name={state.name}
+                    setTimeout={setTimeout}
+                    clearTimeout={clearTimeout}
+                  />
+                )}
+              </TimerConsumer>
             ) : null}
             {state.game_state.Exchange ? (
               <Exchange
@@ -1069,7 +1083,9 @@ const bootstrap = () => {
   ReactDOM.render(
     <AppStateProvider>
       <WebsocketProvider>
-        <AppStateConsumer>{renderUI}</AppStateConsumer>
+        <TimerProvider>
+          <AppStateConsumer>{renderUI}</AppStateConsumer>
+        </TimerProvider>
       </WebsocketProvider>
     </AppStateProvider>,
     document.getElementById('root'),
