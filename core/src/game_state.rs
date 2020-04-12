@@ -25,7 +25,7 @@ pub enum MessageVariant {
     NumFriendsSet { num_friends: Option<usize> },
     GameModeSet { game_mode: GameModeSettings },
     TookBackPlay,
-    PlayedCards { cards: Vec<Card> },
+    PlayedCards { player_name: String, cards: Vec<Card> },
     SetDefendingPointVisibility { visible: bool },
     SetLandlord { landlord: Option<PlayerID> },
     SetRank { rank: Number },

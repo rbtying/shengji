@@ -1,4 +1,5 @@
 import {AppState} from './AppStateProvider';
+import convertApiUnion from './util/convertApiUnion';
 
 const truncate = (length: number) => <T>(array: T[]): T[] => {
   if (array.length > length) {
@@ -14,9 +15,20 @@ type WebsocketHandler = (
   message: any,
 ) => Partial<AppState> | null;
 
+const transformMessage = (rawMessage: any) => {
+  const data = rawMessage.data
+    ? {...rawMessage.data, variant: convertApiUnion(rawMessage.data.variant)}
+    : rawMessage.data;
+  return {...rawMessage, data};
+};
 const messageHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.Message) {
-    return {messages: truncateMessages([...state.messages, message.Message])};
+    return {
+      messages: truncateMessages([
+        ...state.messages,
+        transformMessage(message.Message),
+      ]),
+    };
   } else {
     return null;
   }
@@ -30,7 +42,12 @@ const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
       data: message.Broadcast.data,
       from_game: true,
     };
-    return {messages: truncateMessages([...state.messages, newMessage])};
+    return {
+      messages: truncateMessages([
+        ...state.messages,
+        transformMessage(newMessage),
+      ]),
+    };
   } else {
     return null;
   }

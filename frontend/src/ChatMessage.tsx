@@ -1,26 +1,28 @@
 import * as React from 'react';
 import {IGameMode} from './types';
+import InlineCard from './InlineCard';
 import classNames from 'classnames';
 
 type MessageVariant =
-  | 'ResettingGame'
-  | 'StartingGame'
-  | {TrickWon: {winner: number; points: number}}
-  | {RankAdvanced: {player: number; new_rank: number}}
-  | {NewLandlordForNextGame: {landlord: number}}
-  | {PointsInKitty: {points: number; multiplier: number}}
-  | {JoinedGame: {player: number}}
-  | {JoinedTeam: {player: number}}
-  | {LeftGame: {name: string}}
-  | {KittySizeSet: {size: number | null}}
-  | {NumDecksSet: {num_decks: number | null}}
-  | {NumFriendsSet: {num_friends: number | null}}
-  | {GameModeSet: {game_mode: IGameMode}}
-  | 'TookBackPlay'
-  | {SetDefendingPointVisibility: {visible: boolean}}
-  | {SetLandlord: {landlord: number | null}}
-  | {SetRank: {rank: string}}
-  | {MadeBid: {card: string; count: number}};
+  | {type: 'GameModeSet'; game_mode: IGameMode}
+  | {type: 'JoinedGame'; player: number}
+  | {type: 'JoinedTeam'; player: number}
+  | {type: 'KittySizeSet'; size: number | null}
+  | {type: 'LeftGame'; name: string}
+  | {type: 'MadeBid'; card: string; count: number}
+  | {type: 'NewLandlordForNextGame'; landlord: number}
+  | {type: 'NumDecksSet'; num_decks: number | null}
+  | {type: 'NumFriendsSet'; num_friends: number | null}
+  | {type: 'PlayedCards'; player_name: string, cards: string[]}
+  | {type: 'PointsInKitty'; points: number; multiplier: number}
+  | {type: 'RankAdvanced'; player: number; new_rank: number}
+  | {type: 'ResettingGame'}
+  | {type: 'SetDefendingPointVisibility'; visible: boolean}
+  | {type: 'SetLandlord'; landlord: number | null}
+  | {type: 'SetRank'; rank: string}
+  | {type: 'StartingGame'}
+  | {type: 'TookBackPlay'}
+  | {type: 'TrickWon'; winner: number; points: number};
 
 type BroadcastMessage = {
   actor: number;
@@ -34,6 +36,27 @@ export type Message = {
   data?: BroadcastMessage;
 };
 
+const renderMessage = (message: Message) => {
+  const variant = message.data?.variant;
+  switch (variant.type) {
+    case 'PlayedCards':
+      const cards = variant.cards.map((card, i) => (
+        <InlineCard card={card} key={i} />
+      ));
+      return (
+        <span>
+          {message.from}: {variant.player_name} played {cards}
+        </span>
+      );
+    default:
+      return (
+        <span>
+          {message.from}: {message.message}
+        </span>
+      );
+  }
+};
+
 type Props = {
   message: Message;
 };
@@ -41,7 +64,7 @@ const ChatMessage = (props: Props) => {
   const {message} = props;
   return (
     <p className={classNames('message', {'game-message': message.from_game})}>
-      {message.from}: {message.message}
+      {renderMessage(message)}
     </p>
   );
 };

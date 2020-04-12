@@ -41,6 +41,13 @@ To run tslint:
 yarn lint
 ```
 
+## Tests
+To run tests:
+
+```
+yarn test
+```
+
 # Technical details
 The entire state of each game is stored in the memory of the server process.
 Restarting the game kicks all players, and games are automatically closed when
