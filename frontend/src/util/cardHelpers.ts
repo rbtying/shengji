@@ -1,7 +1,16 @@
+import preloadedCards from '../preloadedCards';
+import ArrayUtils from '../util/array';
+import {ICardInfo} from '../types';
+
+export const cardLookup = ArrayUtils.mapObject(preloadedCards, (c: ICardInfo) => [
+  c.value,
+  c,
+]);
+
 // prettier-ignore
 type Rank = (
   | 'A' | '2' | '3' | '4' | '5' | '6' | '7'
-  | '8' | '9' | 'T' | 'J' | 'Q' | 'K'
+  | '8' | '9' | '10' | 'J' | 'Q' | 'K'
 );
 type Suit = 'diamonds' | 'clubs' | 'hearts' | 'spades';
 
@@ -42,7 +51,7 @@ const cardInfoToSuit = (cardInfo: any): Suit => {
 };
 
 export const unicodeToCard = (unicode: string): Card => {
-  const cardInfo = (window as any).CARD_LUT[unicode];
+  const cardInfo = cardLookup[unicode];
   if (!cardInfo) {
     throw new Error(`Invalid card string: ${unicode}`);
   }
@@ -55,7 +64,7 @@ export const unicodeToCard = (unicode: string): Card => {
     return {
       type: 'suit_card',
       suit: cardInfoToSuit(cardInfo),
-      rank: cardInfo.number,
+      rank: (cardInfo.number as Rank),
     };
   }
 };
