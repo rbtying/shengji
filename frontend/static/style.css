@@ -31,7 +31,6 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord { background: #ddd }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
-.chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
 .game { min-width: 700px; min-height: 480px; width: 70%; display: inline-block; }
 .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
 .chat-anchor { overflow-anchor: auto; height: 1px }
@@ -52,3 +51,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .join-room h2 input { font-size: 24px; }
 .kicker button { padding: 3px; margin: 3px; }
 label { line-height: 23px; }
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}

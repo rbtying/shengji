@@ -35,8 +35,24 @@ const Chat = (props: Props) => {
   };
 
   return (
-    <div className="chat">
-      <div className="messages">
+    <div
+      style={{
+        width: '19%',
+        maxWidth: '300px',
+        minWidth: '200px',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          overflowAnchor: 'none',
+          overflowY: 'auto',
+          padding: '10px',
+        }}
+      >
         {props.messages.map((m, idx) => (
           <p
             key={idx}
@@ -47,12 +63,16 @@ const Chat = (props: Props) => {
         ))}
         <div className="chat-anchor" ref={anchor} />
       </div>
-      <form onSubmit={handleSubmit}>
+      <form
+        style={{display: 'flex', flexDirection: 'row', paddingBottom: '0.5em'}}
+        onSubmit={handleSubmit}
+      >
         <input
           type="text"
           placeholder="type message here"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          style={{flex: 1, fontSize: '12px', height: '1.2em'}}
         />
         <input type="submit" value="submit" />
       </form>

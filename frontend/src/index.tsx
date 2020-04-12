@@ -1,6 +1,8 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import classNames from 'classnames';
+import Layout from './Layout';
 import Errors from './Errors';
 import Trump from './Trump';
 import FriendSelect from './FriendSelect';
@@ -977,59 +979,65 @@ const renderUI = (props: {
         cards.reverse();
       }
       return (
-        <div className={state.settings.fourColor ? 'four-color' : ''}>
-          <Errors errors={state.errors} />
-          <div className="game">
-            {state.game_state.Initialize ? null : (
-              <a
-                href={window.location.href}
-                className="reset-link"
-                onClick={(evt) => {
-                  evt.preventDefault();
-                  if (window.confirm('Do you really want to reset the game?')) {
-                    send({Action: 'ResetGame'});
-                  }
-                }}
-              >
-                Reset game
-              </a>
-            )}
-            {state.game_state.Initialize ? (
-              <Initialize
-                state={state.game_state.Initialize}
-                cards={cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Draw ? (
-              <Draw
-                state={state.game_state.Draw}
-                cards={cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Exchange ? (
-              <Exchange
-                state={state.game_state.Exchange}
-                cards={cards}
-                name={state.name}
-              />
-            ) : null}
-            {state.game_state.Play ? (
-              <Play
-                playPhase={state.game_state.Play}
-                cards={cards}
-                name={state.name}
-                showLastTrick={state.settings.showLastTrick}
-                beepOnTurn={state.settings.beepOnTurn}
-              />
-            ) : null}
-            {state.game_state.Done ? <p>Game Over</p> : null}
-          </div>
+        <Layout.Main
+          className={classNames({'four-color': state.settings.fourColor})}
+        >
+          <Layout.ScrollPane style={{flex: 1}}>
+            <Errors errors={state.errors} />
+            <div className="game">
+              {state.game_state.Initialize ? null : (
+                <a
+                  href={window.location.href}
+                  className="reset-link"
+                  onClick={(evt) => {
+                    evt.preventDefault();
+                    if (
+                      window.confirm('Do you really want to reset the game?')
+                    ) {
+                      send({Action: 'ResetGame'});
+                    }
+                  }}
+                >
+                  Reset game
+                </a>
+              )}
+              {state.game_state.Initialize ? (
+                <Initialize
+                  state={state.game_state.Initialize}
+                  cards={cards}
+                  name={state.name}
+                />
+              ) : null}
+              {state.game_state.Draw ? (
+                <Draw
+                  state={state.game_state.Draw}
+                  cards={cards}
+                  name={state.name}
+                />
+              ) : null}
+              {state.game_state.Exchange ? (
+                <Exchange
+                  state={state.game_state.Exchange}
+                  cards={cards}
+                  name={state.name}
+                />
+              ) : null}
+              {state.game_state.Play ? (
+                <Play
+                  playPhase={state.game_state.Play}
+                  cards={cards}
+                  name={state.name}
+                  showLastTrick={state.settings.showLastTrick}
+                  beepOnTurn={state.settings.beepOnTurn}
+                />
+              ) : null}
+              {state.game_state.Done ? <p>Game Over</p> : null}
+            </div>
+            <hr />
+            <Credits />
+          </Layout.ScrollPane>
           <Chat messages={state.messages} />
-          <hr />
-          <Credits />
-        </div>
+        </Layout.Main>
       );
     }
   } else {

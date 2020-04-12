@@ -1,10 +1,15 @@
 import * as React from 'react';
 
-type Props = {
-  children: React.ReactNode;
+const DivWithProps = (extraProps: {
+  style: React.CSSProperties;
+}): React.FunctionComponent<
+  React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>
+> => (props) => {
+  const style = {
+    ...extraProps.style,
+    ...props.style,
+  };
+  return <div {...extraProps} {...props} style={style} />;
 };
-const DivWithProps = (extraProps: {}) => (props: Props) => (
-  <div {...extraProps} {...props} />
-);
 
 export default DivWithProps;
