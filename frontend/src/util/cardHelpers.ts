@@ -5,6 +5,19 @@ type Rank = (
 );
 type Suit = 'diamonds' | 'clubs' | 'hearts' | 'spades';
 
+const suitToUnicode: {[key in Suit]: string} = {
+  clubs: '♧',
+  diamonds: '♢',
+  hearts: '♡',
+  spades: '♤',
+};
+const suitToFilledUnicode: {[key in Suit]: string} = {
+  clubs: '♣',
+  diamonds: '♦',
+  hearts: '♥',
+  spades: '♠',
+};
+
 export type SuitCard = {
   type: 'suit_card';
   rank: Rank;
@@ -13,54 +26,45 @@ export type SuitCard = {
 
 type Card = SuitCard | {type: 'big_joker'} | {type: 'little_joker'};
 
-// prettier-ignore
-const orderedRanks: (Rank | null)[] = [
-  'A', '2', '3', '4', '5', '6', '7',
-  '8', '9', 'T', 'J', null, 'Q', 'K',
-];
-const suitsToUnicodeOffsets: {suit: Suit; offset: number}[] = [
-  {suit: 'spades', offset: 56481},
-  {suit: 'hearts', offset: 56497},
-  {suit: 'diamonds', offset: 56513},
-  {suit: 'clubs', offset: 56529},
-];
-
-export const unicodeToCard = (unicode: string): Card => {
-  if (unicode === '🃟') {
-    return {type: 'little_joker'};
+const cardInfoToSuit = (cardInfo: any): Suit => {
+  const {suit} = cardInfo;
+  switch (suit) {
+    case '♢':
+      return 'diamonds';
+    case '♧':
+      return 'clubs';
+    case '♡':
+      return 'hearts';
+    case '♤':
+      return 'spades';
+    default:
+      throw new Error('Invalid cardInfo');
   }
-  if (unicode === '🃏') {
-    return {type: 'big_joker'};
-  }
-  const first = unicode.charCodeAt(0);
-  const second = unicode.charCodeAt(1);
-  if (first === 55356) {
-    const suitAndOffset = suitsToUnicodeOffsets.find(
-      (entry) => second >= entry.offset && second < entry.offset + 14,
-    );
-    if (suitAndOffset && unicode.length === 2) {
-      const rank = orderedRanks[second - suitAndOffset.offset];
-      if (rank) {
-        return {
-          type: 'suit_card',
-          rank,
-          suit: suitAndOffset.suit,
-        };
-      }
-    }
-  }
-  throw new Error(`Invalid card string: ${unicode}`);
 };
 
-export const cardToUnicodeSuit = (card: SuitCard): string => {
-  switch (card.suit) {
-    case 'diamonds':
-      return '♢';
-    case 'clubs':
-      return '♧';
-    case 'hearts':
-      return '♥';
-    case 'spades':
-      return '♤';
+export const unicodeToCard = (unicode: string): Card => {
+  const cardInfo = (window as any).CARD_LUT[unicode];
+  if (!cardInfo) {
+    throw new Error(`Invalid card string: ${unicode}`);
   }
+
+  if (unicode === '🃟') {
+    return {type: 'little_joker'};
+  } else if (unicode === '🃏') {
+    return {type: 'big_joker'};
+  } else {
+    return {
+      type: 'suit_card',
+      suit: cardInfoToSuit(cardInfo),
+      rank: cardInfo.number,
+    };
+  }
+};
+
+export const cardToUnicodeSuit = (
+  card: SuitCard,
+  fill: boolean = true,
+): string => {
+  const table = fill ? suitToFilledUnicode : suitToUnicode;
+  return table[card.suit];
 };
