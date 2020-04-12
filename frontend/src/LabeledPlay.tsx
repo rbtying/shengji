@@ -5,6 +5,7 @@ import Card from './Card';
 type Props = {
   className?: string;
   cards: string[];
+  moreCards?: string[];
   label: string;
 };
 const LabeledPlay = (props: Props) => {
@@ -15,6 +16,13 @@ const LabeledPlay = (props: Props) => {
           <Card card={card} key={idx} />
         ))}
       </div>
+      {props.moreCards && props.moreCards.length > 0 ? (
+        <div className="play more">
+          {props.moreCards.map((card, idx) => (
+            <Card card={card} key={idx} />
+          ))}
+        </div>
+      ) : null}
       <div className="label">{props.label}</div>
     </div>
   );

@@ -45,6 +45,8 @@ class Initialize extends React.Component<IInitializeProps, {}> {
     this.setKittySize = this.setKittySize.bind(this);
     this.setNumFriends = this.setNumFriends.bind(this);
     this.setHideLandlordsPoints = this.setHideLandlordsPoints.bind(this);
+    this.setThrowPenalty = this.setThrowPenalty.bind(this);
+    this.setKittyPenalty = this.setKittyPenalty.bind(this);
   }
 
   setGameMode(evt: any) {
@@ -103,6 +105,40 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       send({
         Action: {
           SetKittySize: null,
+        },
+      });
+    }
+  }
+
+  setKittyPenalty(evt: any) {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetKittyPenalty: evt.target.value,
+        },
+      });
+    } else {
+      send({
+        Action: {
+          SetKittyPenalty: null,
+        },
+      });
+    }
+  }
+
+  setThrowPenalty(evt: any) {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetThrowPenalty: evt.target.value,
+        },
+      });
+    } else {
+      send({
+        Action: {
+          SetThrowPenalty: null,
         },
       });
     }
@@ -240,24 +276,54 @@ class Initialize extends React.Component<IInitializeProps, {}> {
               </select>
             </label>
           </div>
-          <label>
-            Point visibility:{' '}
-            <select
-              value={
-                this.props.state.propagated.hide_landlord_points
-                  ? 'hide'
-                  : 'show'
-              }
-              onChange={this.setHideLandlordsPoints}
-            >
-              <option value="show">Show all players' points</option>
-              <option value="hide">Hide defending team's points</option>
-            </select>
-          </label>
+          <div>
+            <label>
+              Point visibility:{' '}
+              <select
+                value={
+                  this.props.state.propagated.hide_landlord_points
+                    ? 'hide'
+                    : 'show'
+                }
+                onChange={this.setHideLandlordsPoints}
+              >
+                <option value="show">Show all players' points</option>
+                <option value="hide">Hide defending team's points</option>
+              </select>
+            </label>
+          </div>
           <LandlordSelector
             players={this.props.state.propagated.players}
             landlord={this.props.state.propagated.landlord}
           />
+          <div>
+            <label>
+              Penalty for points left in the bottom:{' '}
+              <select
+                value={this.props.state.propagated.kitty_penalty}
+                onChange={this.setKittyPenalty}
+              >
+                <option value="Times">Twice the size of the last trick</option>
+                <option value="Power">
+                  Two to the power of the size of the last trick
+                </option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label>
+              Penalty for incorrect throws:{' '}
+              <select
+                value={this.props.state.propagated.throw_penalty}
+                onChange={this.setThrowPenalty}
+              >
+                <option value="None">No penalty</option>
+                <option value="TenPointsPerAttempt">
+                  Ten points per bad throw
+                </option>
+              </select>
+            </label>
+          </div>
           <RankSelector
             players={this.props.state.propagated.players}
             name={this.props.name}
