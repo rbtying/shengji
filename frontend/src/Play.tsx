@@ -85,6 +85,7 @@ const Play = (props: Props) => {
           <AutoPlayButton
             onSubmit={playCards(send)}
             canSubmit={canPlay}
+            currentWinner={playPhase.trick.current_winner}
             isCurrentPlayerTurn={isCurrentPlayerTurn}
           />
           <button onClick={takeBackCards(send)} disabled={!canTakeBack}>
