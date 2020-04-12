@@ -216,6 +216,22 @@ class Initialize extends React.Component<IInitializeProps, {}> {
                   {kitty_offset + this.props.state.propagated.players.length}{' '}
                   cards
                 </option>
+                <option
+                  value={
+                    kitty_offset + 2 * this.props.state.propagated.players.length
+                  }
+                >
+                  {kitty_offset + 2 * this.props.state.propagated.players.length}{' '}
+                  cards
+                </option>
+                <option
+                  value={
+                    kitty_offset + 3 * this.props.state.propagated.players.length
+                  }
+                >
+                  {kitty_offset + 3 * this.props.state.propagated.players.length}{' '}
+                  cards
+                </option>
               </select>
             </label>
           </div>
