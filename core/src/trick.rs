@@ -352,7 +352,11 @@ impl Trick {
         self.player_queue.pop_front();
         self.played_cards.push(PlayedCards {
             id,
-            cards: cards.to_vec(),
+            cards: {
+                let mut cards = cards.to_vec();
+                cards.sort_by(|a, b| self.trump.compare(*a, *b));
+                cards
+            },
         });
         hands.remove(id, cards.iter().cloned())?;
 
