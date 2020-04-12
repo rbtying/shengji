@@ -16,6 +16,10 @@ const Trick = (props: Props) => {
     props.trick.played_cards.length > 0
       ? Array(props.trick.played_cards[0].cards.length).fill('🂠')
       : ['🂠'];
+  const betterPlayer =
+    props.trick.played_cards.length > 0
+      ? props.trick.played_cards[0].better_player
+      : null;
 
   return (
     <div className="trick">
@@ -29,14 +33,16 @@ const Trick = (props: Props) => {
             }
             className={winning ? 'winning' : ''}
             cards={played.cards}
+            moreCards={played.bad_throw_cards}
           />
         );
       })}
       {props.trick.player_queue.map((id, idx) => {
+        const better = betterPlayer === id;
         return (
           <LabeledPlay
             key={idx + props.trick.played_cards.length}
-            label={namesById[id]}
+            label={better ? `${namesById[id]} (-)` : namesById[id]}
             cards={blankCards}
           />
         );

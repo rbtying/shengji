@@ -3,7 +3,10 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{Friend, GameModeSettings, GameState, InitializePhase, MessageVariant};
+use crate::game_state::{
+    Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, MessageVariant,
+    ThrowPenalty,
+};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -129,6 +132,12 @@ impl InteractiveGame {
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone())?
                 }
+                (Message::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
+                    state.set_kitty_penalty(kitty_penalty)?
+                }
+                (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
+                    state.set_throw_penalty(throw_penalty)?
+                }
                 (Message::DrawCard, GameState::Draw(ref mut state)) => {
                     state.draw_card(id)?;
                     vec![]
@@ -203,6 +212,8 @@ pub enum Message {
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
     SetGameMode(GameModeSettings),
+    SetKittyPenalty(KittyPenalty),
+    SetThrowPenalty(ThrowPenalty),
     StartGame,
     DrawCard,
     Bid(Card, usize),
@@ -264,6 +275,10 @@ impl BroadcastMessage {
             SetLandlord { landlord: Some(landlord) } => format!("{} set the leader to {}", n?, player_name(landlord)?),
             SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
             MadeBid { card, count } => format!("{} bid {} {:?}", n?, count, card),
+            KittyPenaltySet { kitty_penalty: KittyPenalty::Times } => format!("{} set the penalty for points in the bottom to twice the size of the last trick", n?),
+            KittyPenaltySet { kitty_penalty: KittyPenalty::Power } => format!("{} set the penalty for points in the bottom to two to the power of the size of the last trick", n?),
+            ThrowPenaltySet { throw_penalty: ThrowPenalty::None } => format!("{} removed the throw penalty", n?),
+            ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerAttempt } => format!("{} set the throw penalty to 10 points per throw", n?),
         })
     }
 }

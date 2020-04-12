@@ -474,7 +474,7 @@ impl Trick {
     /**
      * Completes the trick and determines the winner. Returns the point cards that the winner won.
      */
-    pub fn complete(&self) -> Result<(PlayerID, Vec<Card>, usize), TrickError> {
+    pub fn complete(&self) -> Result<TrickEnded, TrickError> {
         if !self.player_queue.is_empty() || self.played_cards.is_empty() {
             return Err(TrickError::OutOfOrder);
         }
@@ -485,11 +485,17 @@ impl Trick {
                 .flat_map(|pc| pc.cards.iter().filter(|c| c.points().is_some()).copied())
                 .collect::<Vec<Card>>();
 
-            Ok((
-                self.current_winner.ok_or(TrickError::OutOfOrder)?,
-                all_card_points,
-                tf.units.iter().map(|u| u.size()).max().unwrap_or(0) * 2,
-            ))
+            Ok(TrickEnded {
+                winner: self.current_winner.ok_or(TrickError::OutOfOrder)?,
+                points: all_card_points,
+                largest_trick_unit_size: tf.units.iter().map(|u| u.size()).max().unwrap_or(0),
+                failed_throw_size: self
+                    .played_cards
+                    .get(0)
+                    .ok_or(TrickError::OutOfOrder)?
+                    .bad_throw_cards
+                    .len(),
+            })
         } else {
             Err(TrickError::OutOfOrder)
         }
@@ -519,6 +525,13 @@ impl Trick {
             None => None,
         }
     }
+}
+
+pub struct TrickEnded {
+    pub winner: PlayerID,
+    pub points: Vec<Card>,
+    pub largest_trick_unit_size: usize,
+    pub failed_throw_size: usize,
 }
 
 #[derive(Debug)]

@@ -9,6 +9,7 @@ type Props = {
   players: IPlayer[];
   numDecks: number;
   points: {[playerId: number]: string[]};
+  penalties: {[playerId: number]: number};
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
@@ -25,10 +26,27 @@ const Points = (props: Props) => {
       .map((p) => pointsPerPlayer[p.id]),
   );
 
+  let nonLandlordPointsWithPenalties = nonLandlordPoints;
+  props.players.forEach((p) => {
+    const penalty = props.penalties[p.id];
+    if (penalty > 0) {
+      if (props.landlordTeam.includes(p.id)) {
+        nonLandlordPointsWithPenalties += penalty;
+      } else {
+        nonLandlordPointsWithPenalties = Math.max(
+          0,
+          nonLandlordPoints - penalty,
+        );
+      }
+    }
+  });
+  const penaltyDelta = nonLandlordPointsWithPenalties - nonLandlordPoints;
+
   const playerPointElements = props.players.map((player) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
     const cards =
       props.points[player.id].length > 0 ? props.points[player.id] : ['🂠'];
+    const penalty = props.penalties[player.id] || 0;
 
     if (props.hideLandlordPoints && onLandlordTeam) {
       return null;
@@ -37,7 +55,7 @@ const Points = (props: Props) => {
         <LabeledPlay
           key={player.id}
           className={classNames({landlord: onLandlordTeam})}
-          label={`${player.name}: ${pointsPerPlayer[player.id]}分`}
+          label={`${player.name}: ${pointsPerPlayer[player.id] - penalty}分`}
           cards={cards}
         />
       );
@@ -50,23 +68,23 @@ const Points = (props: Props) => {
   const segment = props.numDecks * 20;
   let thresholdStr = '';
 
-  if (nonLandlordPoints === 0) {
+  if (nonLandlordPointsWithPenalties === 0) {
     thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
-  } else if (nonLandlordPoints < segment) {
+  } else if (nonLandlordPointsWithPenalties < segment) {
     thresholdStr = `${landlord.name}'s team will go up 2 levels (next threshold: ${segment}分)`;
-  } else if (nonLandlordPoints < 2 * segment) {
+  } else if (nonLandlordPointsWithPenalties < 2 * segment) {
     thresholdStr = `${
       landlord.name
     }'s team will go up 1 level (next threshold: ${2 * segment}分)`;
-  } else if (nonLandlordPoints < 3 * segment) {
+  } else if (nonLandlordPointsWithPenalties < 3 * segment) {
     thresholdStr = `Neither team will go up a level (next threshold: ${
       3 * segment
     }分)`;
-  } else if (nonLandlordPoints < 4 * segment) {
+  } else if (nonLandlordPointsWithPenalties < 4 * segment) {
     thresholdStr = `The attacking team will go up 1 level (next threshold: ${
       4 * segment
     }分)`;
-  } else if (nonLandlordPoints < 5 * segment) {
+  } else if (nonLandlordPointsWithPenalties < 5 * segment) {
     thresholdStr = `The attacking team will go up 2 levels (next threshold: ${
       5 * segment
     }分)`;
@@ -78,8 +96,10 @@ const Points = (props: Props) => {
     <div className="points">
       <h2>Points</h2>
       <p>
-        {nonLandlordPoints}分
-        {props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
+        {penaltyDelta === 0
+          ? nonLandlordPoints
+          : `${nonLandlordPoints} + ${penaltyDelta}`}
+        分{props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
         from {landlord.name}'s team. {thresholdStr}
       </p>
       {playerPointElements}

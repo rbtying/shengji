@@ -51,6 +51,7 @@ export interface IPlayPhase {
   propagated: IPropagatedState;
   hands: IHands;
   points: {[id: number]: string[]};
+  penalties: {[id: number]: number};
   kitty: string[];
   landlord: number;
   landlords_team: number[];
@@ -69,6 +70,8 @@ export interface IPropagatedState {
   observers: IPlayer[];
   landlord: number | null;
   chat_link: string | null;
+  kitty_penalty: 'Times' | 'Power';
+  throw_penalty: 'None' | 'TenPointsPerAttempt';
 }
 
 export interface IHands {

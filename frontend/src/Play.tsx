@@ -121,6 +121,7 @@ const Play = (props: Props) => {
           ) : null}
           <Points
             points={playPhase.points}
+            penalties={playPhase.penalties}
             numDecks={playPhase.num_decks}
             players={playPhase.propagated.players}
             landlordTeam={playPhase.landlords_team}
