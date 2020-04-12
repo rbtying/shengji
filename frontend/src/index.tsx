@@ -390,7 +390,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
 
     return (
       <div>
-        <Header gameMode={this.props.state.game_mode} />
+        <Header
+          gameMode={this.props.state.game_mode}
+          chatLink={this.props.state.propagated.chat_link}
+        />
         <Players
           players={this.props.state.propagated.players}
           landlord={this.props.state.propagated.landlord}
@@ -562,7 +565,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     ) {
       return (
         <div>
-          <Header gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
           <Players
             players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
@@ -625,7 +631,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     } else {
       return (
         <div>
-          <Header gameMode={this.props.state.game_mode} />
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
           <Players
             players={this.props.state.propagated.players}
             landlord={this.props.state.landlord}
