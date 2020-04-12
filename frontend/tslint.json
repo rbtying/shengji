@@ -5,5 +5,8 @@
   "rules": {
     "no-empty": [true, "allow-empty-functions"]
   },
+  "linterOptions": {
+    "exclude": ["*.json", "**/*.json"]
+  },
   "rulesDirectory": []
 }
