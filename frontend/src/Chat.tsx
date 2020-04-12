@@ -74,6 +74,7 @@ const Chat = (props: Props) => {
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
+        borderLeft: '2px solid #444222',
       }}
     >
       <div

@@ -981,7 +981,7 @@ const renderUI = (props: {
   if (state.connected) {
     if (state.game_state === null) {
       return (
-        <div>
+        <div style={{padding: '1em'}}>
           <Errors errors={state.errors} />
           <div className="game">
             <h1>
@@ -1011,7 +1011,7 @@ const renderUI = (props: {
         <Layout.Main
           className={classNames({'four-color': state.settings.fourColor})}
         >
-          <Layout.ScrollPane style={{flex: 1}}>
+          <Layout.ScrollPane style={{flex: 1, padding: '1em'}}>
             <Errors errors={state.errors} />
             <div className="game">
               {state.game_state.Initialize ? null : (
