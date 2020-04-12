@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Message} from './Chat';
+import {Message} from './ChatMessage';
 import settings, {Settings} from './state/Settings';
 import {IGameState} from './types';
 import {State, combineState, noPersistence} from './State';
