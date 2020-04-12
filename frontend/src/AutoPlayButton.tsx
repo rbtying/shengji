@@ -1,4 +1,5 @@
 import * as React from 'react';
+import usePrevious from './util/usePrevious';
 
 type Props = {
   onSubmit: () => void;
@@ -6,11 +7,6 @@ type Props = {
   currentWinner: number | null;
   isCurrentPlayerTurn: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
-};
-
-type State = {
-  autoplay: boolean;
-  lastWinner: number | null;
 };
 
 const AutoPlayButton = (props: Props) => {
@@ -21,65 +17,48 @@ const AutoPlayButton = (props: Props) => {
     currentWinner,
     unsetAutoPlayWhenWinnerChanges,
   } = props;
-  const [autoplay, setAutoplay] = React.useState<State>({
-    autoplay: false,
-    lastWinner: props.currentWinner,
-  });
+
+  const [autoplay, setAutoplay] = React.useState<boolean>(false);
+  const previousWinner = usePrevious<number | null>(currentWinner);
 
   React.useEffect(() => {
-    if (
-      autoplay.autoplay &&
-      (!unsetAutoPlayWhenWinnerChanges ||
-        autoplay.lastWinner === currentWinner) &&
-      isCurrentPlayerTurn
-    ) {
-      setAutoplay({
-        autoplay: false,
-        lastWinner: null,
-      });
-      onSubmit();
+    if (autoplay) {
+      if (!canSubmit) {
+        setAutoplay(false);
+      } else if (
+        unsetAutoPlayWhenWinnerChanges &&
+        previousWinner &&
+        previousWinner !== currentWinner
+      ) {
+        setAutoplay(false);
+      } else if (isCurrentPlayerTurn) {
+        setAutoplay(false);
+        onSubmit();
+      }
     }
   }, [
     autoplay,
+    canSubmit,
+    currentWinner,
     isCurrentPlayerTurn,
     currentWinner,
     unsetAutoPlayWhenWinnerChanges,
   ]);
 
-  React.useEffect(() => {
-    if (
-      !canSubmit ||
-      (autoplay.autoplay &&
-        autoplay.lastWinner !== currentWinner &&
-        unsetAutoPlayWhenWinnerChanges)
-    ) {
-      setAutoplay({
-        autoplay: false,
-        lastWinner: null,
-      });
-    }
-  }, [canSubmit, currentWinner, unsetAutoPlayWhenWinnerChanges]);
-
   const handleClick = () => {
     if (isCurrentPlayerTurn) {
       onSubmit();
-    } else if (autoplay.autoplay) {
-      setAutoplay({
-        autoplay: false,
-        lastWinner: null,
-      });
+    } else if (autoplay) {
+      setAutoplay(false);
     } else {
-      setAutoplay({
-        autoplay: true,
-        lastWinner: currentWinner,
-      });
+      setAutoplay(true);
     }
   };
   return (
     <button onClick={handleClick} disabled={!canSubmit}>
       {isCurrentPlayerTurn
         ? 'Play selected cards'
-        : autoplay.autoplay
+        : autoplay
         ? "Don't autoplay selected cards"
         : 'Autoplay selected cards'}
     </button>
