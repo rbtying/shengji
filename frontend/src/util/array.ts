@@ -36,8 +36,14 @@ const mapObject = <T, Value>(
   return result;
 };
 
+const range = <T>(count: number, fn: (idx: number) => T): T[] =>
+  Array(count)
+    .fill(undefined)
+    .map((_, idx) => fn(idx));
+
 export default {
   sum,
   minus,
+  range,
   mapObject,
 };

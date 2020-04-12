@@ -179,20 +179,19 @@ class Initialize extends React.Component<IInitializeProps, {}> {
                 Number of friends:{' '}
                 <select value={num_friends} onChange={this.setNumFriends}>
                   <option value="">default</option>
-                  {Array(
+                  {ArrayUtils.range(
                     Math.max(
                       Math.floor(
                         this.props.state.propagated.players.length / 2,
                       ) - 1,
                       0,
                     ),
-                  )
-                    .fill(0)
-                    .map((_, idx) => (
+                    (idx) => (
                       <option value={idx + 1} key={idx}>
                         {idx + 1}
                       </option>
-                    ))}
+                    ),
+                  )}
                 </select>
               </label>
             ) : null}
@@ -894,16 +893,14 @@ class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
             onChange={this.onChange}
           >
             <option value="">default</option>
-            {Array(this.props.players.length)
-              .fill(0)
-              .map((_, idx) => {
-                const val = idx + 1;
-                return (
-                  <option value={val} key={idx}>
-                    {val}
-                  </option>
-                );
-              })}
+            {ArrayUtils.range(this.props.players.length, (idx) => {
+              const val = idx + 1;
+              return (
+                <option value={val} key={idx}>
+                  {val}
+                </option>
+              );
+            })}
           </select>
         </label>
       </div>

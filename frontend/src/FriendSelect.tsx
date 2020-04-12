@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {ITrump} from './types';
+import ArrayUtils from './util/array';
 
 type FriendSelection = {
   card: string;
@@ -48,13 +49,11 @@ const FriendSelect = (props: Props) => {
         })}
       </select>
       <select value={props.friend.skip} onChange={handleOrdinalChange}>
-        {Array(props.num_decks)
-          .fill(1)
-          .map((_, idx) => (
-            <option key={idx} value={idx}>
-              {idx + 1}
-            </option>
-          ))}
+        {ArrayUtils.range(props.num_decks, (idx) => (
+          <option key={idx} value={idx}>
+            {idx + 1}
+          </option>
+        ))}
       </select>
     </div>
   );

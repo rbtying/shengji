@@ -1,3 +1,8 @@
+// Provides a WebWorker-based timer implementation which doesn't get
+// wakeup-limited by the browser when the tab is running in the background.
+//
+// Relies on timer-worker.js to service the underlying timing requests.
+
 import * as React from 'react';
 
 type Context = {
