@@ -161,10 +161,7 @@ impl InteractiveGame {
                     vec![]
                 }
                 (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
-                    state.play_cards(id, cards)?;
-                    vec![MessageVariant::PlayedCards {
-                        cards: cards.to_vec(),
-                    }]
+                    state.play_cards(id, cards)?
                 }
                 (Message::EndTrick, GameState::Play(ref mut state)) => state.finish_trick()?,
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
@@ -260,6 +257,7 @@ impl BroadcastMessage {
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(friends) }} => format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
             TookBackPlay => format!("{} took back their last play", n?),
             PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
+            ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
             SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
             SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
             SetLandlord { landlord: None } => format!("{} set the leader to the winner of the bid", n?),

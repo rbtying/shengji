@@ -120,10 +120,17 @@ export interface ITrickFormat {
 
 export interface ITrick {
   player_queue: number[];
-  played_cards: {id: number; cards: string[]}[];
+  played_cards: IPlayedCards[];
   current_winner: number | null;
   trick_format: ITrickFormat | null;
   trump: ITrump;
+}
+
+export interface IPlayedCards {
+  id: number;
+  cards: string[];
+  bad_throw_cards: string[];
+  better_player: number | null;
 }
 
 export type ITrump =

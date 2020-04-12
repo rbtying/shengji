@@ -13,23 +13,63 @@ use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 pub enum MessageVariant {
     ResettingGame,
     StartingGame,
-    TrickWon { winner: PlayerID, points: usize },
-    RankAdvanced { player: PlayerID, new_rank: Number },
-    NewLandlordForNextGame { landlord: PlayerID },
-    PointsInKitty { points: usize, multiplier: usize },
-    JoinedGame { player: PlayerID },
-    JoinedTeam { player: PlayerID },
-    LeftGame { name: String },
-    KittySizeSet { size: Option<usize> },
-    NumDecksSet { num_decks: Option<usize> },
-    NumFriendsSet { num_friends: Option<usize> },
-    GameModeSet { game_mode: GameModeSettings },
+    TrickWon {
+        winner: PlayerID,
+        points: usize,
+    },
+    RankAdvanced {
+        player: PlayerID,
+        new_rank: Number,
+    },
+    NewLandlordForNextGame {
+        landlord: PlayerID,
+    },
+    PointsInKitty {
+        points: usize,
+        multiplier: usize,
+    },
+    JoinedGame {
+        player: PlayerID,
+    },
+    JoinedTeam {
+        player: PlayerID,
+    },
+    LeftGame {
+        name: String,
+    },
+    KittySizeSet {
+        size: Option<usize>,
+    },
+    NumDecksSet {
+        num_decks: Option<usize>,
+    },
+    NumFriendsSet {
+        num_friends: Option<usize>,
+    },
+    GameModeSet {
+        game_mode: GameModeSettings,
+    },
     TookBackPlay,
-    PlayedCards { cards: Vec<Card> },
-    SetDefendingPointVisibility { visible: bool },
-    SetLandlord { landlord: Option<PlayerID> },
-    SetRank { rank: Number },
-    MadeBid { card: Card, count: usize },
+    PlayedCards {
+        cards: Vec<Card>,
+    },
+    ThrowFailed {
+        original_cards: Vec<Card>,
+        better_player: PlayerID,
+    },
+    SetDefendingPointVisibility {
+        visible: bool,
+    },
+    SetLandlord {
+        landlord: Option<PlayerID>,
+    },
+    SetRank {
+        rank: Number,
+    },
+    MadeBid {
+        card: Card,
+        count: usize,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -542,9 +582,12 @@ impl PlayPhase {
         Ok(self.trick.can_play_cards(id, &self.hands, cards)?)
     }
 
-    pub fn play_cards(&mut self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
-        self.trick.play_cards(id, &mut self.hands, cards)?;
-        Ok(())
+    pub fn play_cards(
+        &mut self,
+        id: PlayerID,
+        cards: &[Card],
+    ) -> Result<Vec<MessageVariant>, Error> {
+        Ok(self.trick.play_cards(id, &mut self.hands, cards)?)
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
