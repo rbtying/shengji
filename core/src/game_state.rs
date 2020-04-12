@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::hands::Hands;
-use crate::trick::Trick;
+use crate::trick::{Trick, TrickEnded};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -52,8 +52,11 @@ pub enum MessageVariant {
     },
     TookBackPlay,
     PlayedCards {
-        player_name: String,
         cards: Vec<Card>,
+    },
+    ThrowFailed {
+        original_cards: Vec<Card>,
+        better_player: PlayerID,
     },
     SetDefendingPointVisibility {
         visible: bool,
@@ -67,6 +70,12 @@ pub enum MessageVariant {
     MadeBid {
         card: Card,
         count: usize,
+    },
+    KittyPenaltySet {
+        kitty_penalty: KittyPenalty,
+    },
+    ThrowPenaltySet {
+        throw_penalty: ThrowPenalty,
     },
 }
 
@@ -86,15 +95,46 @@ pub enum GameMode {
     },
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameModeSettings {
     Tractor,
     FindingFriends { num_friends: Option<usize> },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl Default for GameModeSettings {
+    fn default() -> Self {
+        GameModeSettings::Tractor
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum ThrowPenalty {
+    None,
+    TenPointsPerAttempt,
+}
+
+impl Default for ThrowPenalty {
+    fn default() -> Self {
+        ThrowPenalty::None
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum KittyPenalty {
+    Times,
+    Power,
+}
+
+impl Default for KittyPenalty {
+    fn default() -> Self {
+        KittyPenalty::Times
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     game_mode: GameModeSettings,
+    #[serde(default)]
     hide_landlord_points: Option<bool>,
     kitty_size: Option<usize>,
     num_decks: Option<usize>,
@@ -103,6 +143,10 @@ pub struct PropagatedState {
     observers: Vec<Player>,
     landlord: Option<PlayerID>,
     chat_link: Option<String>,
+    #[serde(default)]
+    kitty_penalty: KittyPenalty,
+    #[serde(default)]
+    throw_penalty: ThrowPenalty,
 }
 
 impl PropagatedState {
@@ -282,10 +326,34 @@ impl PropagatedState {
     }
 
     pub fn hide_landlord_points(&mut self, should_hide: bool) {
-        if should_hide {
-            self.hide_landlord_points = Some(true);
+        self.hide_landlord_points = Some(should_hide);
+    }
+
+    pub fn set_throw_penalty(
+        &mut self,
+        penalty: ThrowPenalty,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if penalty != self.throw_penalty {
+            self.throw_penalty = penalty;
+            Ok(vec![MessageVariant::ThrowPenaltySet {
+                throw_penalty: penalty,
+            }])
         } else {
-            self.hide_landlord_points = None;
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_kitty_penalty(
+        &mut self,
+        penalty: KittyPenalty,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if penalty != self.kitty_penalty {
+            self.kitty_penalty = penalty;
+            Ok(vec![MessageVariant::KittyPenaltySet {
+                kitty_penalty: penalty,
+            }])
+        } else {
+            Ok(vec![])
         }
     }
 
@@ -555,6 +623,8 @@ pub struct PlayPhase {
     propagated: PropagatedState,
     hands: Hands,
     points: HashMap<PlayerID, Vec<Card>>,
+    #[serde(default)]
+    penalties: HashMap<PlayerID, usize>,
     kitty: Vec<Card>,
     landlord: PlayerID,
     landlords_team: Vec<PlayerID>,
@@ -580,9 +650,12 @@ impl PlayPhase {
         Ok(self.trick.can_play_cards(id, &self.hands, cards)?)
     }
 
-    pub fn play_cards(&mut self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
-        self.trick.play_cards(id, &mut self.hands, cards)?;
-        Ok(())
+    pub fn play_cards(
+        &mut self,
+        id: PlayerID,
+        cards: &[Card],
+    ) -> Result<Vec<MessageVariant>, Error> {
+        Ok(self.trick.play_cards(id, &mut self.hands, cards)?)
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
@@ -590,7 +663,29 @@ impl PlayPhase {
     }
 
     pub fn finish_trick(&mut self) -> Result<Vec<MessageVariant>, Error> {
-        let (winner, mut new_points, kitty_multipler) = self.trick.complete()?;
+        let TrickEnded {
+            winner,
+            points: mut new_points,
+            largest_trick_unit_size,
+            failed_throw_size,
+        } = self.trick.complete()?;
+
+        let kitty_multipler = match self.propagated.kitty_penalty {
+            KittyPenalty::Times => 2 * largest_trick_unit_size,
+            KittyPenalty::Power => 2usize.pow(largest_trick_unit_size as u32),
+        };
+
+        if failed_throw_size > 0 {
+            match self.propagated.throw_penalty {
+                ThrowPenalty::None => (),
+                ThrowPenalty::TenPointsPerAttempt => {
+                    if let Some(id) = self.trick.played_cards().first().map(|pc| pc.id) {
+                        *self.penalties.entry(id).or_insert(0) += 10;
+                    }
+                }
+            }
+        }
+
         let mut msgs = vec![];
         if let GameMode::FindingFriends {
             ref mut friends, ..
@@ -685,13 +780,24 @@ impl PlayPhase {
 
         let mut msgs = vec![];
 
-        let non_landlords_points: usize = self
+        let mut non_landlords_points: usize = self
             .points
             .iter()
             .filter(|(id, _)| !self.landlords_team.contains(id))
             .flat_map(|(_, cards)| cards)
             .flat_map(|c| c.points())
             .sum();
+
+        for (id, penalty) in &self.penalties {
+            if *penalty > 0 {
+                if self.landlords_team.contains(&id) {
+                    non_landlords_points += penalty;
+                } else {
+                    non_landlords_points = non_landlords_points.saturating_sub(*penalty);
+                }
+            }
+        }
+
         let point_segments = self.num_decks * 20;
         let landlord_won = non_landlords_points < 2 * point_segments;
         let (landlord_level_bump, non_landlord_level_bump) = if non_landlords_points == 0 {
@@ -909,6 +1015,7 @@ impl ExchangePhase {
                 .iter()
                 .map(|p| (p.id, Vec::new()))
                 .collect(),
+            penalties: self.propagated.players.iter().map(|p| (p.id, 0)).collect(),
             landlord: self.landlord,
             trump: self.trump,
             propagated: self.propagated.clone(),
@@ -1089,17 +1196,7 @@ pub struct InitializePhase {
 impl InitializePhase {
     pub fn new() -> Self {
         Self {
-            propagated: PropagatedState {
-                max_player_id: 0,
-                players: Vec::new(),
-                kitty_size: None,
-                num_decks: None,
-                game_mode: GameModeSettings::Tractor,
-                landlord: None,
-                hide_landlord_points: None,
-                observers: vec![],
-                chat_link: None,
-            },
+            propagated: PropagatedState::default(),
         }
     }
 
@@ -1144,6 +1241,20 @@ impl InitializePhase {
 
     pub fn set_kitty_size(&mut self, size: Option<usize>) -> Result<Option<MessageVariant>, Error> {
         self.propagated.set_kitty_size(size)
+    }
+
+    pub fn set_kitty_penalty(
+        &mut self,
+        penalty: KittyPenalty,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.propagated.set_kitty_penalty(penalty)
+    }
+
+    pub fn set_throw_penalty(
+        &mut self,
+        penalty: ThrowPenalty,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.propagated.set_throw_penalty(penalty)
     }
 
     pub fn set_game_mode(

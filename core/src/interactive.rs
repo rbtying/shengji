@@ -3,7 +3,10 @@ use std::sync::{Arc, Mutex};
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{Friend, GameModeSettings, GameState, InitializePhase, MessageVariant};
+use crate::game_state::{
+    Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, MessageVariant,
+    ThrowPenalty,
+};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -32,7 +35,7 @@ impl InteractiveGame {
                 actor,
                 msgs.into_iter()
                     .flat_map(|variant| {
-                        let b = BroadcastMessage { actor, variant };
+                        let b = BroadcastMessage { actor, actor_name: s.player_name(actor).ok()?.to_owned(), variant };
                         b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                     })
                     .collect(),
@@ -48,7 +51,7 @@ impl InteractiveGame {
             Ok(msgs
                 .into_iter()
                 .flat_map(|variant| {
-                    let b = BroadcastMessage { actor: id, variant };
+                    let b = BroadcastMessage { actor: id, actor_name: s.player_name(id).ok()?.to_owned(), variant };
                     b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                 })
                 .collect())
@@ -129,6 +132,12 @@ impl InteractiveGame {
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone())?
                 }
+                (Message::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
+                    state.set_kitty_penalty(kitty_penalty)?
+                }
+                (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
+                    state.set_throw_penalty(throw_penalty)?
+                }
                 (Message::DrawCard, GameState::Draw(ref mut state)) => {
                     state.draw_card(id)?;
                     vec![]
@@ -161,11 +170,7 @@ impl InteractiveGame {
                     vec![]
                 }
                 (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
-                    state.play_cards(id, cards)?;
-                    vec![MessageVariant::PlayedCards {
-                        player_name: s.player_name(id).unwrap().to_owned(),
-                        cards: cards.to_vec(),
-                    }]
+                    state.play_cards(id, cards)?
                 }
                 (Message::EndTrick, GameState::Play(ref mut state)) => state.finish_trick()?,
                 (Message::TakeBackCards, GameState::Play(ref mut state)) => {
@@ -183,7 +188,7 @@ impl InteractiveGame {
             Ok(msgs
                 .into_iter()
                 .flat_map(|variant| {
-                    let b = BroadcastMessage { actor: id, variant };
+                    let b = BroadcastMessage { actor: id, actor_name: s.player_name(id).ok()?.to_owned(), variant };
                     b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                 })
                 .collect())
@@ -207,6 +212,8 @@ pub enum Message {
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
     SetGameMode(GameModeSettings),
+    SetKittyPenalty(KittyPenalty),
+    SetThrowPenalty(ThrowPenalty),
     StartGame,
     DrawCard,
     Bid(Card, usize),
@@ -224,6 +231,7 @@ pub enum Message {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BroadcastMessage {
     actor: PlayerID,
+    actor_name: String,
     variant: MessageVariant,
 }
 
@@ -260,13 +268,18 @@ impl BroadcastMessage {
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(1) }} => format!("{} set the game mode to Finding Friends with 1 friend", n?),
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(friends) }} => format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
             TookBackPlay => format!("{} took back their last play", n?),
-            PlayedCards { ref cards, .. } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
+            PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
+            ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
             SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
             SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
             SetLandlord { landlord: None } => format!("{} set the leader to the winner of the bid", n?),
             SetLandlord { landlord: Some(landlord) } => format!("{} set the leader to {}", n?, player_name(landlord)?),
             SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
             MadeBid { card, count } => format!("{} bid {} {:?}", n?, count, card),
+            KittyPenaltySet { kitty_penalty: KittyPenalty::Times } => format!("{} set the penalty for points in the bottom to twice the size of the last trick", n?),
+            KittyPenaltySet { kitty_penalty: KittyPenalty::Power } => format!("{} set the penalty for points in the bottom to two to the power of the size of the last trick", n?),
+            ThrowPenaltySet { throw_penalty: ThrowPenalty::None } => format!("{} removed the throw penalty", n?),
+            ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerAttempt } => format!("{} set the throw penalty to 10 points per throw", n?),
         })
     }
 }

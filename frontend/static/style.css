@@ -42,6 +42,8 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .labeled-play .card { cursor: default; }
 .labeled-play.winning { background: #efefef; }
 .labeled-play.winning .card { background: #efefef; }
+.labeled-play .more .card { font-size: 6em; }
+.labeled-play .play { display: inline-block; }
 .trump { margin: 10px 0; }
 .pending-friends p { margin: 0; }
 .pending-friends { margin: 10px; }
