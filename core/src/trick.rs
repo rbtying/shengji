@@ -406,7 +406,7 @@ impl Trick {
                             .collect(),
                     };
 
-                    tf.units = vec![forced_unit.clone()];
+                    tf.units = vec![forced_unit];
 
                     msgs.push(MessageVariant::ThrowFailed {
                         original_cards: cards.clone(),
