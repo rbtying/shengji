@@ -78,7 +78,7 @@ const Play = (props: Props) => {
             next={nextPlayer}
           />
           <Trump trump={playPhase.trump} />
-          <Friends gameMode={playPhase.propagated.game_mode} />
+          <Friends gameMode={playPhase.game_mode} />
           <Trick
             trick={playPhase.trick}
             players={playPhase.propagated.players}
