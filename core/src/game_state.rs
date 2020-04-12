@@ -13,23 +13,60 @@ use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 pub enum MessageVariant {
     ResettingGame,
     StartingGame,
-    TrickWon { winner: PlayerID, points: usize },
-    RankAdvanced { player: PlayerID, new_rank: Number },
-    NewLandlordForNextGame { landlord: PlayerID },
-    PointsInKitty { points: usize, multiplier: usize },
-    JoinedGame { player: PlayerID },
-    JoinedTeam { player: PlayerID },
-    LeftGame { name: String },
-    KittySizeSet { size: Option<usize> },
-    NumDecksSet { num_decks: Option<usize> },
-    NumFriendsSet { num_friends: Option<usize> },
-    GameModeSet { game_mode: GameModeSettings },
+    TrickWon {
+        winner: PlayerID,
+        points: usize,
+    },
+    RankAdvanced {
+        player: PlayerID,
+        new_rank: Number,
+    },
+    NewLandlordForNextGame {
+        landlord: PlayerID,
+    },
+    PointsInKitty {
+        points: usize,
+        multiplier: usize,
+    },
+    JoinedGame {
+        player: PlayerID,
+    },
+    JoinedTeam {
+        player: PlayerID,
+    },
+    LeftGame {
+        name: String,
+    },
+    KittySizeSet {
+        size: Option<usize>,
+    },
+    NumDecksSet {
+        num_decks: Option<usize>,
+    },
+    NumFriendsSet {
+        num_friends: Option<usize>,
+    },
+    GameModeSet {
+        game_mode: GameModeSettings,
+    },
     TookBackPlay,
-    PlayedCards { player_name: String, cards: Vec<Card> },
-    SetDefendingPointVisibility { visible: bool },
-    SetLandlord { landlord: Option<PlayerID> },
-    SetRank { rank: Number },
-    MadeBid { card: Card, count: usize },
+    PlayedCards {
+        player_name: String,
+        cards: Vec<Card>,
+    },
+    SetDefendingPointVisibility {
+        visible: bool,
+    },
+    SetLandlord {
+        landlord: Option<PlayerID>,
+    },
+    SetRank {
+        rank: Number,
+    },
+    MadeBid {
+        card: Card,
+        count: usize,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
