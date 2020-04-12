@@ -20,12 +20,12 @@ use shengji_core::{game_state, interactive, types};
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 
 lazy_static::lazy_static! {
-    static ref CARDS_JS: String = {
+    static ref CARDS_JSON: String = {
         let cards = types::FULL_DECK
             .iter()
             .flat_map(|c| serde_json::to_string(&c.as_info()).ok())
             .collect::<Vec<_>>().join(",");
-        format!("window.CARDS = [{}];", cards)
+        format!("{{\"cards\": [{}]}}", cards)
     };
 }
 
@@ -191,10 +191,10 @@ async fn main() {
     let worker_js =
         warp::path("timer-worker.js").and(warp::fs::file("../frontend/static/timer-worker.js"));
 
-    let cards = warp::path("cards.js").map(|| {
+    let cards = warp::path("cards.json").map(|| {
         warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(CARDS_JS.as_str())
+            .header("Content-Type", "application/json; charset=utf-8")
+            .body(CARDS_JSON.as_str())
     });
 
     let dump_state = warp::path("full_state.json")

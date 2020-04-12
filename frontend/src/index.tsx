@@ -26,10 +26,12 @@ import {
   IInitializePhase,
   IPlayer,
 } from './types';
+import CARDS from './cardInfo';
 import * as ReactModal from 'react-modal';
 ReactModal.setAppElement(document.getElementById('root'));
 
 const CARD_LUT = ArrayUtils.mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
+(window as any).CARDS = CARDS;
 (window as any).CARD_LUT = CARD_LUT;
 
 type IInitializeProps = {
@@ -1091,5 +1093,4 @@ const bootstrap = () => {
 
 bootstrap();
 
-declare var CARDS: ICardInfo[];
 declare var send: (value: any) => void;
