@@ -170,6 +170,12 @@ async fn main() {
             .header("Content-Type", "text/css; charset=utf-8")
             .body(CSS)
     });
+    #[cfg(not(feature = "dynamic"))]
+    let worker_js = warp::path("timer-worker.js").map(|| {
+        warp::http::Response::builder()
+            .header("Content-Type", "text/javascript; charset=utf-8")
+            .body(WORKER_JS)
+    });
 
     #[cfg(feature = "dynamic")]
     let index = warp::path::end().and(warp::fs::file("../frontend/static/index.html"));
@@ -181,6 +187,9 @@ async fn main() {
     let js_map = warp::path("main.js.map").and(warp::fs::file("../frontend/dist/main.js.map"));
     #[cfg(feature = "dynamic")]
     let css = warp::path("style.css").and(warp::fs::file("../frontend/static/style.css"));
+    #[cfg(feature = "dynamic")]
+    let worker_js =
+        warp::path("timer-worker.js").and(warp::fs::file("../frontend/static/timer-worker.js"));
 
     let cards = warp::path("cards.js").map(|| {
         warp::http::Response::builder()
@@ -197,6 +206,7 @@ async fn main() {
     let routes = index
         .or(js)
         .or(js_map)
+        .or(worker_js)
         .or(css)
         .or(cards)
         .or(api)
@@ -463,3 +473,5 @@ static JS: &str = include_str!("../../frontend/dist/main.js");
 static JS_MAP: &str = include_str!("../../frontend/dist/main.js.map");
 #[cfg(not(feature = "dynamic"))]
 static CSS: &str = include_str!("../../frontend/static/style.css");
+#[cfg(not(feature = "dynamic"))]
+static WORKER_JS: &str = include_str!("../../frontend/static/timer-worker.js");
