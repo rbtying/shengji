@@ -19,6 +19,7 @@ type Props = {
   cards: string[];
   beepOnTurn: boolean;
   showLastTrick: boolean;
+  unsetAutoPlayWhenWinnerChanges: boolean;
 };
 
 const Play = (props: Props) => {
@@ -86,6 +87,9 @@ const Play = (props: Props) => {
             onSubmit={playCards(send)}
             canSubmit={canPlay}
             currentWinner={playPhase.trick.current_winner}
+            unsetAutoPlayWhenWinnerChanges={
+              props.unsetAutoPlayWhenWinnerChanges
+            }
             isCurrentPlayerTurn={isCurrentPlayerTurn}
           />
           <button onClick={takeBackCards(send)} disabled={!canTakeBack}>

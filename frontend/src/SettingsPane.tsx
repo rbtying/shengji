@@ -85,11 +85,24 @@ const SettingsPane = (props: Props) => {
         <LabelCell>reverse card order (in hand)</LabelCell>
         <Cell>
           <input
-            name="beep-on-turn"
+            name="reverse-card-order"
             type="checkbox"
             checked={settings.reverseCardOrder}
             onChange={handleChange({
               reverseCardOrder: !settings.reverseCardOrder,
+            })}
+          />
+        </Cell>
+      </Row>
+      <Row>
+        <LabelCell>unset auto-play if winner changes</LabelCell>
+        <Cell>
+          <input
+            name="unset-auto-play-when-winner-changes"
+            type="checkbox"
+            checked={settings.unsetAutoPlayWhenWinnerChanges}
+            onChange={handleChange({
+              unsetAutoPlayWhenWinnerChanges: !settings.unsetAutoPlayWhenWinnerChanges,
             })}
           />
         </Cell>

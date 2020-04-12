@@ -1021,6 +1021,9 @@ const renderUI = (props: {
                 cards={cards}
                 name={state.name}
                 showLastTrick={state.settings.showLastTrick}
+                unsetAutoPlayWhenWinnerChanges={
+                  state.settings.unsetAutoPlayWhenWinnerChanges
+                }
                 beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}
