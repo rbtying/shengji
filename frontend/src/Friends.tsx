@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {IGameMode} from './types';
+import InlineCard from './InlineCard';
 
 type Props = {gameMode: IGameMode};
 
@@ -13,24 +14,22 @@ const Friends = (props: Props) => {
             return null;
           }
 
-          const c = (window as any).CARD_LUT[friend.card];
-          if (!c) {
+          if (!friend.card) {
             return null;
           }
-          const card = `${c.number}${c.typ}`;
           if (friend.skip === 0) {
             return (
               <p key={idx}>
-                The next person to play <span className={c.typ}>{card}</span> is
-                a friend
+                The next person to play <InlineCard card={friend.card} /> is a
+                friend
               </p>
             );
           } else {
             return (
               <p key={idx}>
-                {friend.skip} <span className={c.typ}>{card}</span> can be
-                played before the next person to play{' '}
-                <span className={c.typ}>{card}</span> is a friend
+                {friend.skip} <InlineCard card={friend.card} /> can be played
+                before the next person to play <InlineCard card={friend.card} />{' '}
+                is a friend
               </p>
             );
           }
