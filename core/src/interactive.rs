@@ -265,7 +265,7 @@ impl BroadcastMessage {
                 },
             RankAdvanced { player, new_rank } => format!("{} has advanced to rank {}", player_name(player)?, new_rank.as_str()),
             NewLandlordForNextGame { landlord } => format!("{} will start the next game", player_name(landlord)?),
-            PointsInKitty { points, multiplier } => format!("{} points were burried and are attached to the last trick, with a multiplier of {}", points, multiplier),
+            PointsInKitty { points, multiplier } => format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
             JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
