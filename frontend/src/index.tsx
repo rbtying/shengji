@@ -13,6 +13,8 @@ import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
 import TimerProvider from './TimerProvider';
 import {TimerConsumer} from './TimerProvider';
+import NumDecksSelector from './NumDecksSelector';
+import RankSelector from './RankSelector';
 import Credits from './Credits';
 import Chat from './Chat';
 import Cards from './Cards';
@@ -169,6 +171,10 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       kitty_offset += this.props.state.propagated.players.length;
     }
 
+    const currentPlayer = this.props.state.propagated.players.find(
+      (p: IPlayer) => p.name === this.props.name,
+    );
+
     return (
       <div>
         <Header
@@ -229,8 +235,11 @@ class Initialize extends React.Component<IInitializeProps, {}> {
             ) : null}
           </div>
           <NumDecksSelector
-            num_decks={this.props.state.propagated.num_decks}
-            players={this.props.state.propagated.players}
+            numPlayers={this.props.state.propagated.players.length}
+            numDecks={this.props.state.propagated.num_decks}
+            onChange={(newNumDecks: number | null) =>
+              send({Action: {SetNumDecks: newNumDecks}})
+            }
           />
           <div>
             <label>
@@ -321,9 +330,10 @@ class Initialize extends React.Component<IInitializeProps, {}> {
             </label>
           </div>
           <RankSelector
-            players={this.props.state.propagated.players}
-            name={this.props.name}
-            num_decks={this.props.state.propagated.num_decks}
+            rank={currentPlayer.level}
+            onChangeRank={(newRank: string) =>
+              send({Action: {SetRank: newRank}})
+            }
           />
         </div>
       </div>
@@ -916,108 +926,6 @@ class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
             {this.props.players.map((player) => (
               <option value={player.id} key={player.id}>
                 {player.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-    );
-  }
-}
-
-interface INumDecksSelectorProps {
-  num_decks: number | null;
-  players: IPlayer[];
-}
-class NumDecksSelector extends React.Component<INumDecksSelectorProps, {}> {
-  constructor(props: INumDecksSelectorProps) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(evt: any) {
-    evt.preventDefault();
-
-    if (evt.target.value !== '') {
-      send({Action: {SetNumDecks: parseInt(evt.target.value, 10)}});
-    } else {
-      send({Action: {SetNumDecks: null}});
-    }
-  }
-
-  render() {
-    return (
-      <div className="num-decks-picker">
-        <label>
-          Number of decks:{' '}
-          <select
-            value={this.props.num_decks !== null ? this.props.num_decks : ''}
-            onChange={this.onChange}
-          >
-            <option value="">default</option>
-            {ArrayUtils.range(this.props.players.length, (idx) => {
-              const val = idx + 1;
-              return (
-                <option value={val} key={idx}>
-                  {val}
-                </option>
-              );
-            })}
-          </select>
-        </label>
-      </div>
-    );
-  }
-}
-
-interface IRankSelectorProps {
-  num_decks: number | null;
-  players: IPlayer[];
-  name: string;
-}
-class RankSelector extends React.Component<IRankSelectorProps, {}> {
-  constructor(props: IRankSelectorProps) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(evt: any) {
-    evt.preventDefault();
-
-    if (evt.target.value !== '') {
-      send({Action: {SetRank: evt.target.value}});
-    }
-  }
-
-  render() {
-    let selectedRank = '';
-    this.props.players.forEach((p) => {
-      if (p.name === this.props.name) {
-        selectedRank = p.level;
-      }
-    });
-    return (
-      <div className="rank-picker">
-        <label>
-          Your rank:{' '}
-          <select value={selectedRank} onChange={this.onChange}>
-            {[
-              '2',
-              '3',
-              '4',
-              '5',
-              '6',
-              '7',
-              '8',
-              '9',
-              '10',
-              'J',
-              'K',
-              'Q',
-              'A',
-            ].map((rank) => (
-              <option value={rank} key={rank}>
-                {rank}
               </option>
             ))}
           </select>
