@@ -67,7 +67,7 @@ impl Default for KittyPenalty {
 pub struct PropagatedState {
     game_mode: GameModeSettings,
     #[serde(default)]
-    hide_landlord_points: Option<bool>,
+    hide_landlord_points: bool,
     kitty_size: Option<usize>,
     num_decks: Option<usize>,
     max_player_id: usize,
@@ -260,7 +260,7 @@ impl PropagatedState {
     }
 
     pub fn hide_landlord_points(&mut self, should_hide: bool) -> Result<MessageVariant, Error> {
-        self.hide_landlord_points = Some(should_hide);
+        self.hide_landlord_points = should_hide;
         Ok(MessageVariant::SetDefendingPointVisibility {
             visible: !should_hide,
         })
@@ -539,7 +539,7 @@ impl GameState {
                 landlord,
                 ..
             }) => {
-                if propagated.hide_landlord_points.unwrap_or(false) {
+                if propagated.hide_landlord_points {
                     for (k, v) in points.iter_mut() {
                         if landlords_team.contains(&k) {
                             v.clear();
