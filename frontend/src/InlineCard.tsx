@@ -5,8 +5,10 @@ import ElementWithProps from './ElementWithProps';
 const Suit = (className: string) =>
   ElementWithProps('span', {
     className,
-    paddingLeft: '0.1em',
-    paddingRight: '0.1em',
+    style: {
+      paddingLeft: '0.1em',
+      paddingRight: '0.1em',
+    },
   });
 const Diamonds = Suit('♢');
 const Hearts = Suit('♡');
