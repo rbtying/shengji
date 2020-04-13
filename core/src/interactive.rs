@@ -35,7 +35,11 @@ impl InteractiveGame {
                 actor,
                 msgs.into_iter()
                     .flat_map(|variant| {
-                        let b = BroadcastMessage { actor, variant };
+                        let b = BroadcastMessage {
+                            actor,
+                            actor_name: s.player_name(actor).ok()?.to_owned(),
+                            variant,
+                        };
                         b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                     })
                     .collect(),
@@ -51,7 +55,11 @@ impl InteractiveGame {
             Ok(msgs
                 .into_iter()
                 .flat_map(|variant| {
-                    let b = BroadcastMessage { actor: id, variant };
+                    let b = BroadcastMessage {
+                        actor: id,
+                        actor_name: s.player_name(id).ok()?.to_owned(),
+                        variant,
+                    };
                     b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                 })
                 .collect())
@@ -188,7 +196,11 @@ impl InteractiveGame {
             Ok(msgs
                 .into_iter()
                 .flat_map(|variant| {
-                    let b = BroadcastMessage { actor: id, variant };
+                    let b = BroadcastMessage {
+                        actor: id,
+                        actor_name: s.player_name(id).ok()?.to_owned(),
+                        variant,
+                    };
                     b.to_string(|id| s.player_name(id)).ok().map(|s| (b, s))
                 })
                 .collect())
@@ -231,6 +243,7 @@ pub enum Message {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BroadcastMessage {
     actor: PlayerID,
+    actor_name: String,
     variant: MessageVariant,
 }
 

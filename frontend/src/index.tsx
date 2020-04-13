@@ -19,18 +19,18 @@ import Cards from './Cards';
 import Play from './Play';
 import ArrayUtils from './util/array';
 import {
-  ICardInfo,
   IDrawPhase,
   IExchangePhase,
   IFriend,
   IInitializePhase,
   IPlayer,
 } from './types';
-import CARDS from './cardInfo';
+import {cardLookup} from './util/cardHelpers';
+import CARDS from './preloadedCards';
 import * as ReactModal from 'react-modal';
 ReactModal.setAppElement(document.getElementById('root'));
 
-const CARD_LUT = ArrayUtils.mapObject(CARDS, (c: ICardInfo) => [c.value, c]);
+const CARD_LUT = cardLookup;
 (window as any).CARDS = CARDS;
 (window as any).CARD_LUT = CARD_LUT;
 
