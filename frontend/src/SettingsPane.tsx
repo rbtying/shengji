@@ -2,7 +2,7 @@ import * as React from 'react';
 import {Settings} from './state/Settings';
 import ElementWithProps from './ElementWithProps';
 
-const Row = ElementWithProps('div', {style: {display: 'table-row'}});
+const Row = ElementWithProps('div', {style: {display: 'table-row', lineHeight: '23px'}});
 const LabelCell = ElementWithProps('div', {
   style: {display: 'table-cell', paddingRight: '2em'},
 });
@@ -34,7 +34,7 @@ const SettingsPane = (props: Props) => {
     <div style={{marginBottom: '15px'}}>
       <input
         type="text"
-        style={{width: '200px'}}
+        style={{width: '150px'}}
         value={link}
         onChange={(evt) => {
           evt.preventDefault();
