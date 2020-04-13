@@ -2,10 +2,10 @@ import preloadedCards from '../preloadedCards';
 import ArrayUtils from '../util/array';
 import {ICardInfo} from '../types';
 
-export const cardLookup = ArrayUtils.mapObject(preloadedCards, (c: ICardInfo) => [
-  c.value,
-  c,
-]);
+export const cardLookup = ArrayUtils.mapObject(
+  preloadedCards,
+  (c: ICardInfo) => [c.value, c],
+);
 
 // prettier-ignore
 type Rank = (
@@ -33,7 +33,11 @@ export type SuitCard = {
   suit: Suit;
 };
 
-type Card = SuitCard | {type: 'big_joker'} | {type: 'little_joker'};
+type Card =
+  | SuitCard
+  | {type: 'big_joker'}
+  | {type: 'little_joker'}
+  | {type: 'unknown'};
 
 const cardInfoToSuit = (cardInfo: any): Suit => {
   switch (cardInfo.typ) {
@@ -51,6 +55,9 @@ const cardInfoToSuit = (cardInfo: any): Suit => {
 };
 
 export const unicodeToCard = (unicode: string): Card => {
+  if (unicode === '🂠') {
+    return {type: 'unknown'};
+  }
   const cardInfo = cardLookup[unicode];
   if (!cardInfo) {
     throw new Error(`Invalid card string: ${unicode}`);
@@ -64,7 +71,7 @@ export const unicodeToCard = (unicode: string): Card => {
     return {
       type: 'suit_card',
       suit: cardInfoToSuit(cardInfo),
-      rank: (cardInfo.number as Rank),
+      rank: cardInfo.number as Rank,
     };
   }
 };

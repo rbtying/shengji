@@ -72,6 +72,7 @@ export interface IPropagatedState {
   chat_link: string | null;
   kitty_penalty: 'Times' | 'Power';
   throw_penalty: 'None' | 'TenPointsPerAttempt';
+  hide_played_cards: boolean;
 }
 
 export interface IHands {
