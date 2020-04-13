@@ -13,6 +13,7 @@ import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
 import TimerProvider from './TimerProvider';
 import {TimerConsumer} from './TimerProvider';
+import LandlordSelector from './LandlordSelector';
 import NumDecksSelector from './NumDecksSelector';
 import RankSelector from './RankSelector';
 import Credits from './Credits';
@@ -299,7 +300,10 @@ class Initialize extends React.Component<IInitializeProps, {}> {
           </div>
           <LandlordSelector
             players={this.props.state.propagated.players}
-            landlord={this.props.state.propagated.landlord}
+            landlordId={this.props.state.propagated.landlord}
+            onChange={(newLandlord: number | null) =>
+              send({Action: {SetLandlord: newLandlord}})
+            }
           />
           <div>
             <label>
@@ -887,48 +891,6 @@ class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
           <button onClick={this.kick} disabled={this.state.to_kick === ''}>
             Kick
           </button>
-        </label>
-      </div>
-    );
-  }
-}
-
-interface ILandlordSelectorProps {
-  landlord: number | null;
-  players: IPlayer[];
-}
-class LandlordSelector extends React.Component<ILandlordSelectorProps, {}> {
-  constructor(props: ILandlordSelectorProps) {
-    super(props);
-    this.onChange = this.onChange.bind(this);
-  }
-
-  onChange(evt: any) {
-    evt.preventDefault();
-
-    if (evt.target.value !== '') {
-      send({Action: {SetLandlord: parseInt(evt.target.value, 10)}});
-    } else {
-      send({Action: {SetLandlord: null}});
-    }
-  }
-
-  render() {
-    return (
-      <div className="landlord-picker">
-        <label>
-          Current leader:{' '}
-          <select
-            value={this.props.landlord !== null ? this.props.landlord : ''}
-            onChange={this.onChange}
-          >
-            <option value="">winner of the bid</option>
-            {this.props.players.map((player) => (
-              <option value={player.id} key={player.id}>
-                {player.name}
-              </option>
-            ))}
-          </select>
         </label>
       </div>
     );
