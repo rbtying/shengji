@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as ReactModal from 'react-modal';
+import IconButton from './IconButton';
 import Gear from './icons/Gear';
 import SettingsPane from './SettingsPane';
 import {Settings} from './state/Settings';
@@ -13,24 +14,12 @@ const contentStyle = {
 };
 
 const SettingsButton = () => {
-  const [hover, setHover] = React.useState<boolean>(false);
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
-  const fill = hover ? '#444' : '#000';
   return (
-    <a
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        height: '1.25em',
-        width: '1.25em',
-        display: 'inline-block',
-        verticalAlign: 'middle',
-        paddingLeft: '0.5em',
-      }}
-    >
-      <span style={{cursor: 'pointer'}} onClick={() => setModalOpen(true)}>
-        <Gear width="1em" fill={fill} />
-      </span>
+    <>
+      <IconButton onClick={() => setModalOpen(true)}>
+        <Gear width="2em" />
+      </IconButton>
       <ReactModal
         isOpen={modalOpen}
         onRequestClose={() => setModalOpen(false)}
@@ -47,7 +36,7 @@ const SettingsButton = () => {
           )}
         </AppStateConsumer>
       </ReactModal>
-    </a>
+    </>
   );
 };
 
