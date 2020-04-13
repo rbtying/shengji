@@ -25,11 +25,8 @@ import {
   IInitializePhase,
   IPlayer,
 } from './types';
-import CARDS from './preloadedCards';
 import * as ReactModal from 'react-modal';
 ReactModal.setAppElement(document.getElementById('root'));
-
-(window as any).CARDS = CARDS;
 
 type IInitializeProps = {
   state: IInitializePhase;

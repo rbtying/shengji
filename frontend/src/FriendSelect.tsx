@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {ITrump} from './types';
 import ArrayUtils from './util/array';
+import preloadedCards from './preloadedCards';
 
 type FriendSelection = {
   card: string;
@@ -39,7 +40,7 @@ const FriendSelect = (props: Props) => {
     <div className="friend-select">
       <select value={props.friend.card} onChange={handleCardChange}>
         <option value=""> </option>
-        {(window as any).CARDS.map((c: any) => {
+        {preloadedCards.map((c) => {
           return c.number !== null && c.number !== rank ? (
             <option
               key={c.value}
