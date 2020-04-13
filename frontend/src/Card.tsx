@@ -1,14 +1,15 @@
 import * as React from 'react';
-import {ICardInfo} from './types';
 import classNames from 'classnames';
+import {cardLookup} from './util/cardHelpers';
 
 type Props = {
   card: string;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
 };
+
 const Card = (props: Props) => {
-  const cardInfo = (window as any).CARD_LUT[props.card] as ICardInfo;
+  const cardInfo = cardLookup[props.card];
   if (!cardInfo) {
     return (
       <span className={classNames('card', 'unknown', props.className)}>

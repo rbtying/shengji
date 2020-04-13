@@ -25,14 +25,8 @@ import {
   IInitializePhase,
   IPlayer,
 } from './types';
-import {cardLookup} from './util/cardHelpers';
-import CARDS from './preloadedCards';
 import * as ReactModal from 'react-modal';
 ReactModal.setAppElement(document.getElementById('root'));
-
-const CARD_LUT = cardLookup;
-(window as any).CARDS = CARDS;
-(window as any).CARD_LUT = CARD_LUT;
 
 type IInitializeProps = {
   state: IInitializePhase;

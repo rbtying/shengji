@@ -4,6 +4,7 @@ import ArrayUtils from './util/array';
 import ObjectUtils from './util/object';
 import LabeledPlay from './LabeledPlay';
 import classNames from 'classnames';
+import {cardLookup} from './util/cardHelpers';
 
 type Props = {
   players: IPlayer[];
@@ -17,7 +18,7 @@ type Props = {
 
 const Points = (props: Props) => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
-    ArrayUtils.sum(cards.map((card) => (window as any).CARD_LUT[card].points)),
+    ArrayUtils.sum(cards.map((card) => cardLookup[card].points)),
   );
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
