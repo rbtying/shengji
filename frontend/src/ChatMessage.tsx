@@ -2,6 +2,7 @@ import * as React from 'react';
 import {IGameMode} from './types';
 import InlineCard from './InlineCard';
 import classNames from 'classnames';
+import ArrayUtil from './util/array';
 
 type MessageVariant =
   | {type: 'GameModeSet'; game_mode: IGameMode}
@@ -39,22 +40,27 @@ export type Message = {
 
 const renderMessage = (message: Message) => {
   const variant = message.data?.variant;
-  switch (variant.type) {
+  switch (variant?.type) {
+    case 'MadeBid':
+      return (
+        <span>
+          {message.data.actor_name} bid{' '}
+          {ArrayUtil.range(variant.count, (i) => (
+            <InlineCard card={variant.card} key={i} />
+          ))}
+        </span>
+      );
     case 'PlayedCards':
       const cards = variant.cards.map((card, i) => (
         <InlineCard card={card} key={i} />
       ));
       return (
         <span>
-          {message.from}: {message.data.actor_name} played {cards}
+          {message.data.actor_name} played {cards}
         </span>
       );
     default:
-      return (
-        <span>
-          {message.from}: {message.message}
-        </span>
-      );
+      return <span>{message.message}</span>;
   }
 };
 
@@ -65,6 +71,7 @@ const ChatMessage = (props: Props) => {
   const {message} = props;
   return (
     <p className={classNames('message', {'game-message': message.from_game})}>
+      <span>{message.from}: </span>
       {renderMessage(message)}
     </p>
   );
