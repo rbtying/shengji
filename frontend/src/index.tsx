@@ -16,6 +16,7 @@ import {TimerConsumer} from './TimerProvider';
 import LandlordSelector from './LandlordSelector';
 import NumDecksSelector from './NumDecksSelector';
 import RankSelector from './RankSelector';
+import Kicker from './Kicker';
 import Credits from './Credits';
 import Chat from './Chat';
 import Cards from './Cards';
@@ -200,7 +201,10 @@ class Initialize extends React.Component<IInitializeProps, {}> {
         ) : (
           <h2>Waiting for players...</h2>
         )}
-        <Kicker players={this.props.state.propagated.players} />
+        <Kicker
+          players={this.props.state.propagated.players}
+          onKick={(playerId: number) => send({Kick: playerId})}
+        />
         <div className="game-settings">
           <h3>Game settings</h3>
           <div>
@@ -848,50 +852,6 @@ class JoinRoom extends React.Component<IJoinRoomProps, {editable: boolean}> {
           </div>
           <div></div>
         </form>
-      </div>
-    );
-  }
-}
-
-interface IKickerProps {
-  players: IPlayer[];
-}
-class Kicker extends React.Component<IKickerProps, {to_kick: string}> {
-  constructor(props: IKickerProps) {
-    super(props);
-    this.state = {
-      to_kick: '',
-    };
-    this.onChange = this.onChange.bind(this);
-    this.kick = this.kick.bind(this);
-  }
-
-  onChange(evt: any) {
-    evt.preventDefault();
-    this.setState({to_kick: evt.target.value});
-  }
-  kick(evt: any) {
-    evt.preventDefault();
-    send({Kick: parseInt(this.state.to_kick, 10)});
-  }
-
-  render() {
-    return (
-      <div className="kicker">
-        <label>
-          Kick player:{' '}
-          <select value={this.state.to_kick} onChange={this.onChange}>
-            <option value="" />
-            {this.props.players.map((player) => (
-              <option value={player.id} key={player.id}>
-                {player.name}
-              </option>
-            ))}
-          </select>
-          <button onClick={this.kick} disabled={this.state.to_kick === ''}>
-            Kick
-          </button>
-        </label>
       </div>
     );
   }
