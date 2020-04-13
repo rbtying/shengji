@@ -9,7 +9,6 @@ export interface IGameState {
   Draw: IDrawPhase | null;
   Exchange: IExchangePhase | null;
   Play: IPlayPhase | null;
-  Done: string | null;
 }
 
 export interface IInitializePhase {

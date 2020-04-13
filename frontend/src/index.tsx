@@ -978,7 +978,6 @@ const renderUI = (props: {
                 beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}
-            {state.game_state.Done ? <p>Game Over</p> : null}
           </div>
           <Chat messages={state.messages} />
           <hr />
