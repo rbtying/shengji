@@ -359,7 +359,6 @@ pub enum GameState {
     Draw(DrawPhase),
     Exchange(ExchangePhase),
     Play(PlayPhase),
-    Done,
 }
 
 impl GameState {
@@ -369,7 +368,6 @@ impl GameState {
             GameState::Draw(p) => Some(&p.propagated.players),
             GameState::Exchange(p) => Some(&p.propagated.players),
             GameState::Play(p) => Some(&p.propagated.players),
-            GameState::Done => None,
         }
     }
 
@@ -379,7 +377,6 @@ impl GameState {
             GameState::Exchange(p) => Some(&p.propagated.observers),
             GameState::Play(p) => Some(&p.propagated.observers),
             GameState::Initialize(p) => Some(&p.propagated.observers),
-            GameState::Done => None,
         }
     }
 
@@ -427,7 +424,7 @@ impl GameState {
 
     pub fn cards(&self, id: PlayerID) -> Vec<Card> {
         match self {
-            GameState::Done | GameState::Initialize { .. } => vec![],
+            GameState::Initialize { .. } => vec![],
             GameState::Draw(DrawPhase { ref hands, .. })
             | GameState::Exchange(ExchangePhase { ref hands, .. })
             | GameState::Play(PlayPhase { ref hands, .. }) => {
@@ -445,7 +442,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
             GameState::Exchange(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
             GameState::Play(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -455,7 +451,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Exchange(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Play(ref mut p) => p.remove_observer(id).map(|()| vec![]),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -465,7 +460,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.propagated.set_chat_link(chat_link),
             GameState::Exchange(ref mut p) => p.propagated.set_chat_link(chat_link),
             GameState::Play(ref mut p) => p.propagated.set_chat_link(chat_link),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -487,14 +481,13 @@ impl GameState {
                 *self = GameState::Initialize(s);
                 Ok(m)
             }
-            GameState::Done => bail!("Game is done"),
         }
     }
 
     pub fn for_player(&self, id: PlayerID) -> GameState {
         let mut s = self.clone();
         match s {
-            GameState::Done | GameState::Initialize { .. } => (),
+            GameState::Initialize { .. } => (),
             GameState::Draw(DrawPhase {
                 ref mut hands,
                 ref mut kitty,
