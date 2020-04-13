@@ -4,8 +4,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::game_state::MessageVariant;
 use crate::hands::{HandError, Hands};
+use crate::message::MessageVariant;
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
 #[derive(Error, Clone, Debug, Serialize, Deserialize)]

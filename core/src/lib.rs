@@ -8,3 +8,4 @@ pub mod hands;
 pub mod interactive;
 pub mod trick;
 pub mod types;
+pub mod message;
