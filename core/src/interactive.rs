@@ -4,9 +4,9 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
-    Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, MessageVariant,
-    ThrowPenalty,
+    Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, ThrowPenalty,
 };
+use crate::message::MessageVariant;
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Clone, Debug)]
@@ -131,12 +131,11 @@ impl InteractiveGame {
                 (
                     Message::SetHideLandlordsPoints(hide_landlord_points),
                     GameState::Initialize(ref mut state),
-                ) => {
-                    state.hide_landlord_points(hide_landlord_points);
-                    vec![MessageVariant::SetDefendingPointVisibility {
-                        visible: !hide_landlord_points,
-                    }]
-                }
+                ) => vec![state.hide_landlord_points(hide_landlord_points)?],
+                (
+                    Message::SetHidePlayedCards(hide_played_cards),
+                    GameState::Initialize(ref mut state),
+                ) => vec![state.hide_played_cards(hide_played_cards)?],
                 (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
                     state.set_game_mode(game_mode.clone())?
                 }
@@ -220,6 +219,7 @@ pub enum Message {
     SetNumDecks(Option<usize>),
     SetKittySize(Option<usize>),
     SetHideLandlordsPoints(bool),
+    SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
@@ -284,6 +284,8 @@ impl BroadcastMessage {
             ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
             SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
             SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
+            SetCardVisibility { visible: true } => format!("{} made the played cards visible in the chat", n?),
+            SetCardVisibility { visible: false } => format!("{} hid the played cards from the chat", n?),
             SetLandlord { landlord: None } => format!("{} set the leader to the winner of the bid", n?),
             SetLandlord { landlord: Some(landlord) } => format!("{} set the leader to {}", n?, player_name(landlord)?),
             SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
