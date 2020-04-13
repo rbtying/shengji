@@ -13,7 +13,7 @@ type MessageVariant =
   | {type: 'NewLandlordForNextGame'; landlord: number}
   | {type: 'NumDecksSet'; num_decks: number | null}
   | {type: 'NumFriendsSet'; num_friends: number | null}
-  | {type: 'PlayedCards'; player_name: string, cards: string[]}
+  | {type: 'PlayedCards'; cards: string[]}
   | {type: 'PointsInKitty'; points: number; multiplier: number}
   | {type: 'RankAdvanced'; player: number; new_rank: number}
   | {type: 'ResettingGame'}
@@ -26,6 +26,7 @@ type MessageVariant =
 
 type BroadcastMessage = {
   actor: number;
+  actor_name: string;
   variant: MessageVariant;
 };
 
@@ -45,7 +46,7 @@ const renderMessage = (message: Message) => {
       ));
       return (
         <span>
-          {message.from}: {variant.player_name} played {cards}
+          {message.from}: {message.data.actor_name} played {cards}
         </span>
       );
     default:

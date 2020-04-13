@@ -1,27 +1,30 @@
 import * as React from 'react';
-import {AppStateConsumer} from './AppStateProvider';
 import {unicodeToCard, cardToUnicodeSuit, SuitCard} from './util/cardHelpers';
 import ElementWithProps from './ElementWithProps';
 
-const ColoredDiv = (color: string) =>
+const Suit = (className: string) =>
   ElementWithProps('span', {
-    style: {color, paddingLeft: '0.1em', paddingRight: '0.1em'},
+    className,
+    paddingLeft: '0.1em',
+    paddingRight: '0.1em',
   });
-const Black = ColoredDiv('#000000');
-const Red = ColoredDiv('#BB0313');
-const Blue = ColoredDiv('#1933F9');
-const Green = ColoredDiv('#477E1B');
+const Diamonds = Suit('♢');
+const Hearts = Suit('♡');
+const Spades = Suit('♤');
+const Clubs = Suit('♧');
+const LittleJoker = Suit('🃟');
+const BigJoker = Suit('🃏');
 
-const suitColor = (suitCard: SuitCard, fourColor: boolean) => {
+const suitComponent = (suitCard: SuitCard) => {
   switch (suitCard.suit) {
     case 'diamonds':
-      return fourColor ? Blue : Red;
+      return Diamonds;
     case 'hearts':
-      return Red;
+      return Hearts;
     case 'clubs':
-      return fourColor ? Green : Black;
+      return Clubs;
     case 'spades':
-      return Black;
+      return Spades;
   }
 };
 
@@ -33,22 +36,16 @@ const InlineCard = (props: Props) => {
   const card = unicodeToCard(props.card);
   switch (card.type) {
     case 'big_joker':
-      return <Red>HJ</Red>;
+      return <BigJoker>HJ</BigJoker>;
     case 'little_joker':
-      return <Black>LJ</Black>;
+      return <LittleJoker>LJ</LittleJoker>;
     case 'suit_card':
+      const Component = suitComponent(card);
       return (
-        <AppStateConsumer>
-          {({state}) => {
-            const Color = suitColor(card, state.settings.fourColor);
-            return (
-              <Color>
-                {card.rank}
-                {cardToUnicodeSuit(card)}
-              </Color>
-            );
-          }}
-        </AppStateConsumer>
+        <Component>
+          {card.rank}
+          {cardToUnicodeSuit(card)}
+        </Component>
       );
   }
 };
