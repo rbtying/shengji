@@ -67,7 +67,6 @@ For simplicity, the game is written in Rust and Javascript, linking in Warp as
 the WebSocket/HTTP server implementation and using React from a CDN.
 
 # Known issues
-- No implementation of throw penalties
 - No mobile support
 - Incomplete validity checking for forced-plays
 - No player limit per game
