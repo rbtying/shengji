@@ -32,7 +32,7 @@ type Context = {
   updateState: (newState: Partial<AppState>) => void;
 };
 
-const AppStateContext = React.createContext<Context>({
+export const AppStateContext = React.createContext<Context>({
   state: appState.loadDefault(),
   updateState: () => {},
 });

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {AppState, AppStateConsumer} from './AppStateProvider';
+import {AppStateContext} from './AppStateProvider';
 import websocketHandler from './websocketHandler';
 
 type Context = {
@@ -10,12 +10,8 @@ export const WebsocketContext = React.createContext<Context>({
   send: () => {},
 });
 
-type Props = {
-  state: AppState;
-  updateState: (state: Partial<AppState>) => void;
-};
-const _WebsocketProvider: React.FunctionComponent<Props> = (props) => {
-  const {state, updateState, children} = props;
+const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
+  const {state, updateState} = React.useContext(AppStateContext);
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
 
   // Because state/updateState are passed in and change every time something
@@ -63,19 +59,9 @@ const _WebsocketProvider: React.FunctionComponent<Props> = (props) => {
 
   return (
     <WebsocketContext.Provider value={{send}}>
-      {children}
+      {props.children}
     </WebsocketContext.Provider>
   );
 };
-
-const WebsocketProvider: React.FunctionComponent<{}> = (props) => (
-  <AppStateConsumer>
-    {({state, updateState}) => (
-      <_WebsocketProvider state={state} updateState={updateState}>
-        {props.children}
-      </_WebsocketProvider>
-    )}
-  </AppStateConsumer>
-);
 
 export default WebsocketProvider;
