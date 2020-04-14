@@ -64,15 +64,22 @@ struct GameState {
 }
 
 impl GameState {
-    pub fn tracer(&mut self, logger: &Logger, room: &str, parent: usize) -> Logger {
+    pub fn tracer(&mut self, logger: &Logger, room: &str, parent: Option<usize>) -> Logger {
         let elapsed = self.last_updated.elapsed();
         self.last_updated = Instant::now();
         self.monotonic_id += 1;
-        logger.new(o!(
-            "elapsed_ms" => elapsed.as_millis(),
-            "span" => format!("{}:{}", room, self.monotonic_id),
-            "parent_span" => format!("{}:{}", room, parent)
-        ))
+        if let Some(parent) = parent {
+            logger.new(o!(
+                "elapsed_ms" => elapsed.as_millis(),
+                "span" => format!("{}:{}", room, self.monotonic_id),
+                "parent_span" => format!("{}:{}", room, parent)
+            ))
+        } else {
+            logger.new(o!(
+                "elapsed_ms" => elapsed.as_millis(),
+                "span" => format!("{}:{}", room, self.monotonic_id),
+            ))
+        }
     }
 }
 
@@ -385,7 +392,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 monotonic_id: 0,
             });
             if game.users.is_empty() {
-                info!(game.tracer(&logger, &room, 1), "Creating new room");
+                info!(game.tracer(&logger, &room, None), "Creating new room");
                 let mut stats = stats.lock().await;
                 stats.num_games_created += 1;
             }
@@ -399,7 +406,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     return;
                 }
             };
-            info!(game.tracer(&logger, &room, 1), "Joining room"; "player_id" => player_id.0);
+            info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
             game.users.insert(ws_id, UserState { player_id, tx });
             // send the updated game state to everyone!
             for user in game.users.values() {
@@ -445,7 +452,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 error!(logger, "Game not found");
                 break;
             };
-            let logger = game.tracer(&logger, &room, join_span);
+            let logger = game.tracer(&logger, &room, Some(join_span));
             match msg {
                 UserMessage::Message(m) => {
                     // Broadcast this msg to everyone
@@ -517,22 +524,32 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
 
         // user_ws_rx stream will keep processing as long as the user stays
         // connected. Once they disconnect, then...
-        user_disconnected(room, ws_id, &games2, logger).await;
+        user_disconnected(room, ws_id, &games2, logger, join_span).await;
     }
 }
 
-async fn user_disconnected(room: String, ws_id: usize, games: &Games, logger: slog::Logger) {
+async fn user_disconnected(
+    room: String,
+    ws_id: usize,
+    games: &Games,
+    logger: slog::Logger,
+    parent: usize,
+) {
     // Stream closed up, so remove from the user list
     let mut g = games.lock().await;
     if let Some(game) = g.get_mut(&room) {
         game.users.remove(&ws_id);
         // If there is nobody connected anymore, drop the game entirely.
         if game.users.is_empty() {
+            info!(game.tracer(&logger, &room, Some(parent)), "Removing empty room"; "room" => room.clone());
             g.remove(&room);
-            info!(logger, "Removing empty room"; "room" => room);
         }
     }
-    info!(logger, "Websocket disconnected");
+    info!(logger, "Websocket disconnected";
+        "room" => room,
+        "parent_span" => format!("{}:{}", room, parent),
+        "span" => format!("{}:ws_{}", room, ws_id)
+    );
 }
 
 #[cfg(not(feature = "dynamic"))]
