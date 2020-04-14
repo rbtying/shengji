@@ -179,9 +179,14 @@ class Initialize extends React.Component<IInitializeProps, {}> {
       kitty_offset += this.props.state.propagated.players.length;
     }
 
-    const currentPlayer = this.props.state.propagated.players.find(
+    let currentPlayer = this.props.state.propagated.players.find(
       (p: IPlayer) => p.name === this.props.name,
     );
+    if (!currentPlayer) {
+      currentPlayer = this.props.state.propagated.observers.find(
+        (p) => p.name === this.props.name,
+      );
+    }
 
     return (
       <div>

@@ -41,9 +41,14 @@ const Play = (props: Props) => {
 
   // TODO: instead of telling who the player is by checking the name, pass in
   // the Player object
-  const currentPlayer = playPhase.propagated.players.find(
+  let currentPlayer = playPhase.propagated.players.find(
     (p) => p.name === props.name,
   );
+  if (!currentPlayer) {
+    currentPlayer = playPhase.propagated.observers.find(
+      (p) => p.name === props.name,
+    );
+  }
   const nextPlayer = playPhase.trick.player_queue[0];
   const lastPlay =
     playPhase.trick.played_cards[playPhase.trick.played_cards.length - 1];
