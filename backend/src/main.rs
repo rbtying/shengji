@@ -67,10 +67,11 @@ impl GameState {
     pub fn tracer(&mut self, logger: &Logger, room: &str, parent: usize) -> Logger {
         let elapsed = self.last_updated.elapsed();
         self.last_updated = Instant::now();
+        let span_id = self.monotonic_id;
         self.monotonic_id += 1;
         logger.new(o!(
             "elapsed_ms" => elapsed.as_millis(),
-            "span" => format!("{}:{}", room, self.monotonic_id),
+            "span" => format!("{}:{}", room, span_id),
             "parent_span" => format!("{}:{}", room, parent)
         ))
     }
