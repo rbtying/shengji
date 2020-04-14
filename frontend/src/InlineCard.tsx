@@ -1,15 +1,15 @@
 import * as React from 'react';
 import {unicodeToCard, cardToUnicodeSuit, SuitCard} from './util/cardHelpers';
-import ElementWithProps from './ElementWithProps';
+import styled from 'styled-components';
 
-const Suit = (className: string) =>
-  ElementWithProps('span', {
-    className,
-    style: {
-      paddingLeft: '0.1em',
-      paddingRight: '0.1em',
-    },
-  });
+const InlineCardBase = styled.span`
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+`;
+
+const Suit = (className: string): React.FunctionComponent<{}> => (props) => (
+  <InlineCardBase className={className} {...props} />
+);
 const Diamonds = Suit('♢');
 const Hearts = Suit('♡');
 const Spades = Suit('♤');

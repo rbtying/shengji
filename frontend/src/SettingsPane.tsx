@@ -1,12 +1,18 @@
 import * as React from 'react';
 import {Settings} from './state/Settings';
-import ElementWithProps from './ElementWithProps';
+import styled from 'styled-components';
 
-const Row = ElementWithProps('div', {style: {display: 'table-row', lineHeight: '23px'}});
-const LabelCell = ElementWithProps('div', {
-  style: {display: 'table-cell', paddingRight: '2em'},
-});
-const Cell = ElementWithProps('div', {style: {display: 'table-cell'}});
+const Row = styled.div`
+  display: 'table-row';
+  line-height: 23px;
+`;
+const LabelCell = styled.div`
+  display: table-cell;
+  padding-right: 2em;
+`;
+const Cell = styled.div`
+  display: table-cell;
+`;
 
 type Props = {
   settings: Settings;
