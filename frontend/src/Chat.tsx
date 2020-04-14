@@ -1,45 +1,32 @@
 import * as React from 'react';
 import ChatMessage, {Message} from './ChatMessage';
 import ChatInput from './ChatInput';
+import {WebsocketContext} from './WebsocketProvider';
 
 type Props = {
   messages: Message[];
 };
 
-let latestMessage: Message | null = null;
-
 const Chat = (props: Props) => {
   const anchor = React.useRef(null);
+  const {send} = React.useContext(WebsocketContext);
 
   React.useEffect(() => {
-    // TODO: messages is mutable, so can't use reference equality to check for
-    // new state. After making messages immutable, update to only rely on
-    // props.messages
-    const {messages} = props;
-    if (
-      messages.length > 0 &&
-      messages[messages.length - 1] !== latestMessage
-    ) {
-      latestMessage = messages[messages.length - 1];
-
-      if (anchor.current) {
-        const rect = anchor.current.getBoundingClientRect();
-        const html = document.documentElement;
-        const isVisible =
-          rect.top >= 0 &&
-          rect.left >= 0 &&
-          rect.bottom <= (window.innerHeight || html.clientHeight) &&
-          rect.right <= (window.innerWidth || html.clientWidth);
-        if (isVisible) {
-          anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
-        }
+    if (anchor.current) {
+      const rect = anchor.current.getBoundingClientRect();
+      const html = document.documentElement;
+      const isVisible =
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || html.clientHeight) &&
+        rect.right <= (window.innerWidth || html.clientWidth);
+      if (isVisible) {
+        anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
       }
     }
-  });
+  }, [props.messages]);
 
-  const handleSubmit = (message: string) => {
-    (window as any).send({Message: message});
-  };
+  const handleSubmit = (message: string) => send({Message: message});
 
   return (
     <div className="chat">
