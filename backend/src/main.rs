@@ -238,20 +238,26 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
         !game.users.is_empty() || game.last_updated.elapsed() <= Duration::from_secs(3600)
     });
 
+    let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
+
     let mut num_players = 0;
     let mut num_observers = 0;
 
     for (room_name, game_state) in games.iter() {
         if let Ok(snapshot) = game_state.game.dump_state() {
-            num_players += snapshot.players().len();
-            num_observers = snapshot.observers().len();
+            num_players += snapshot.players.len();
+            num_observers = snapshot.observers.len();
             state_dump.insert(room_name.clone(), snapshot);
         }
     }
 
-    let logger = ROOT_LOGGER.new(
-        o!("dump_path" => DUMP_PATH, "num_games" => state_dump.len(), "num_players" => num_players, "num_observers" => num_observers),
-    );
+    let logger = ROOT_LOGGER.new(o!(
+        "dump_path" => DUMP_PATH,
+        "num_games" => state_dump.len(),
+        "num_players" => num_players,
+        "num_observers" => num_observers,
+        "num_online_players" => num_players_online_now
+    ));
 
     // Best-effort attempt to write the full state to disk, for fun.
     match write_state_to_disk(&state_dump).await {
