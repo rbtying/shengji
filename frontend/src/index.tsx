@@ -45,6 +45,7 @@ class Initialize extends React.Component<IInitializeProps, {}> {
     this.setKittySize = this.setKittySize.bind(this);
     this.setNumFriends = this.setNumFriends.bind(this);
     this.setHideLandlordsPoints = this.setHideLandlordsPoints.bind(this);
+    this.setHidePlayedCards = this.setHidePlayedCards.bind(this);
     this.setThrowPenalty = this.setThrowPenalty.bind(this);
     this.setKittyPenalty = this.setKittyPenalty.bind(this);
   }
@@ -147,6 +148,11 @@ class Initialize extends React.Component<IInitializeProps, {}> {
   setHideLandlordsPoints(evt: any) {
     evt.preventDefault();
     send({Action: {SetHideLandlordsPoints: evt.target.value === 'hide'}});
+  }
+
+  setHidePlayedCards(evt: any) {
+    evt.preventDefault();
+    send({Action: {SetHidePlayedCards: evt.target.value === 'hide'}});
   }
 
   startGame(evt: any) {
@@ -302,13 +308,22 @@ class Initialize extends React.Component<IInitializeProps, {}> {
               </select>
             </label>
           </div>
-          <LandlordSelector
-            players={this.props.state.propagated.players}
-            landlordId={this.props.state.propagated.landlord}
-            onChange={(newLandlord: number | null) =>
-              send({Action: {SetLandlord: newLandlord}})
-            }
-          />
+          <div>
+            <label>
+              Played card visibility (in chat):{' '}
+              <select
+                value={
+                  this.props.state.propagated.hide_played_cards
+                    ? 'hide'
+                    : 'show'
+                }
+                onChange={this.setHidePlayedCards}
+              >
+                <option value="show">Show played cards in chat</option>
+                <option value="hide">Hide played cards in chat</option>
+              </select>
+            </label>
+          </div>
           <div>
             <label>
               Penalty for points left in the bottom:{' '}
@@ -337,6 +352,14 @@ class Initialize extends React.Component<IInitializeProps, {}> {
               </select>
             </label>
           </div>
+          <h3>Continuation settings</h3>
+          <LandlordSelector
+            players={this.props.state.propagated.players}
+            landlordId={this.props.state.propagated.landlord}
+            onChange={(newLandlord: number | null) =>
+              send({Action: {SetLandlord: newLandlord}})
+            }
+          />
           <RankSelector
             rank={currentPlayer.level}
             onChangeRank={(newRank: string) =>
@@ -955,7 +978,6 @@ const renderUI = (props: {
                 beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}
-            {state.game_state.Done ? <p>Game Over</p> : null}
           </div>
           <Chat messages={state.messages} />
           <hr />

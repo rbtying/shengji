@@ -1,3 +1,4 @@
+body { font-family: sans-serif; font-size: 95%; margin: 0 20px; }
 button { padding: 10px; cursor: pointer; margin: 10px; }
 .players button { padding: 2.5px; margin: 0 5px; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
@@ -31,8 +32,8 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord { background: #ddd }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
-.chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; }
-.game { min-width: 700px; min-height: 480px; width: 70%; display: inline-block; }
+.chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; margin-top: 20px; }
+.game { min-width: 690px; min-height: 660px; width: 70%; display: inline-block; }
 .messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
 .chat-anchor { overflow-anchor: auto; height: 1px }
 .message { margin: 0; }
@@ -53,4 +54,4 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .join-room span { cursor: pointer; }
 .join-room h2 input { font-size: 24px; }
 .kicker button { padding: 3px; margin: 3px; }
-label { line-height: 23px; }
+label { line-height: 25px; }

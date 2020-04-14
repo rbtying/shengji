@@ -394,8 +394,8 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                             }
                         }
                         Ok(UserMessage::Action(m)) => {
-                            let g = games.lock().await;
-                            if let Some(game) = g.get(&room) {
+                            let mut g = games.lock().await;
+                            if let Some(game) = g.get_mut(&room) {
                                 match game.game.interact(m, player_id) {
                                     Ok(msgs) => {
                                         // send the updated game state to everyone!

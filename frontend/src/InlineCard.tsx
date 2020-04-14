@@ -16,6 +16,7 @@ const Spades = Suit('♤');
 const Clubs = Suit('♧');
 const LittleJoker = Suit('🃟');
 const BigJoker = Suit('🃏');
+const Unknown = Suit('🂠');
 
 const suitComponent = (suitCard: SuitCard) => {
   switch (suitCard.suit) {
@@ -37,6 +38,8 @@ type Props = {
 const InlineCard = (props: Props) => {
   const card = unicodeToCard(props.card);
   switch (card.type) {
+    case 'unknown':
+      return <Unknown>🂠</Unknown>;
     case 'big_joker':
       return <BigJoker>HJ</BigJoker>;
     case 'little_joker':

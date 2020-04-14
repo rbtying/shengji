@@ -6,5 +6,6 @@
 pub mod game_state;
 pub mod hands;
 pub mod interactive;
+pub mod message;
 pub mod trick;
 pub mod types;

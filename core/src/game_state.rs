@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::ops::{Deref, DerefMut};
 
 use anyhow::{bail, Error};
 use rand::{seq::SliceRandom, RngCore};
@@ -6,78 +7,9 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::hands::Hands;
+use crate::message::MessageVariant;
 use crate::trick::{Trick, TrickEnded};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum MessageVariant {
-    ResettingGame,
-    StartingGame,
-    TrickWon {
-        winner: PlayerID,
-        points: usize,
-    },
-    RankAdvanced {
-        player: PlayerID,
-        new_rank: Number,
-    },
-    NewLandlordForNextGame {
-        landlord: PlayerID,
-    },
-    PointsInKitty {
-        points: usize,
-        multiplier: usize,
-    },
-    JoinedGame {
-        player: PlayerID,
-    },
-    JoinedTeam {
-        player: PlayerID,
-    },
-    LeftGame {
-        name: String,
-    },
-    KittySizeSet {
-        size: Option<usize>,
-    },
-    NumDecksSet {
-        num_decks: Option<usize>,
-    },
-    NumFriendsSet {
-        num_friends: Option<usize>,
-    },
-    GameModeSet {
-        game_mode: GameModeSettings,
-    },
-    TookBackPlay,
-    PlayedCards {
-        cards: Vec<Card>,
-    },
-    ThrowFailed {
-        original_cards: Vec<Card>,
-        better_player: PlayerID,
-    },
-    SetDefendingPointVisibility {
-        visible: bool,
-    },
-    SetLandlord {
-        landlord: Option<PlayerID>,
-    },
-    SetRank {
-        rank: Number,
-    },
-    MadeBid {
-        card: Card,
-        count: usize,
-    },
-    KittyPenaltySet {
-        kitty_penalty: KittyPenalty,
-    },
-    ThrowPenaltySet {
-        throw_penalty: ThrowPenalty,
-    },
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
@@ -135,7 +67,7 @@ impl Default for KittyPenalty {
 pub struct PropagatedState {
     game_mode: GameModeSettings,
     #[serde(default)]
-    hide_landlord_points: Option<bool>,
+    hide_landlord_points: bool,
     kitty_size: Option<usize>,
     num_decks: Option<usize>,
     max_player_id: usize,
@@ -147,6 +79,8 @@ pub struct PropagatedState {
     kitty_penalty: KittyPenalty,
     #[serde(default)]
     throw_penalty: ThrowPenalty,
+    #[serde(default)]
+    hide_played_cards: bool,
 }
 
 impl PropagatedState {
@@ -325,8 +259,18 @@ impl PropagatedState {
         Ok(())
     }
 
-    pub fn hide_landlord_points(&mut self, should_hide: bool) {
-        self.hide_landlord_points = Some(should_hide);
+    pub fn hide_landlord_points(&mut self, should_hide: bool) -> Result<MessageVariant, Error> {
+        self.hide_landlord_points = should_hide;
+        Ok(MessageVariant::SetDefendingPointVisibility {
+            visible: !should_hide,
+        })
+    }
+
+    pub fn hide_played_cards(&mut self, should_hide: bool) -> Result<MessageVariant, Error> {
+        self.hide_played_cards = should_hide;
+        Ok(MessageVariant::SetCardVisibility {
+            visible: !should_hide,
+        })
     }
 
     pub fn set_throw_penalty(
@@ -415,7 +359,6 @@ pub enum GameState {
     Draw(DrawPhase),
     Exchange(ExchangePhase),
     Play(PlayPhase),
-    Done,
 }
 
 impl GameState {
@@ -425,7 +368,6 @@ impl GameState {
             GameState::Draw(p) => Some(&p.propagated.players),
             GameState::Exchange(p) => Some(&p.propagated.players),
             GameState::Play(p) => Some(&p.propagated.players),
-            GameState::Done => None,
         }
     }
 
@@ -435,7 +377,6 @@ impl GameState {
             GameState::Exchange(p) => Some(&p.propagated.observers),
             GameState::Play(p) => Some(&p.propagated.observers),
             GameState::Initialize(p) => Some(&p.propagated.observers),
-            GameState::Done => None,
         }
     }
 
@@ -483,7 +424,7 @@ impl GameState {
 
     pub fn cards(&self, id: PlayerID) -> Vec<Card> {
         match self {
-            GameState::Done | GameState::Initialize { .. } => vec![],
+            GameState::Initialize { .. } => vec![],
             GameState::Draw(DrawPhase { ref hands, .. })
             | GameState::Exchange(ExchangePhase { ref hands, .. })
             | GameState::Play(PlayPhase { ref hands, .. }) => {
@@ -501,7 +442,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
             GameState::Exchange(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
             GameState::Play(ref mut p) => p.add_observer(name).map(|id| (id, vec![])),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -511,7 +451,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Exchange(ref mut p) => p.remove_observer(id).map(|()| vec![]),
             GameState::Play(ref mut p) => p.remove_observer(id).map(|()| vec![]),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -521,7 +460,6 @@ impl GameState {
             GameState::Draw(ref mut p) => p.propagated.set_chat_link(chat_link),
             GameState::Exchange(ref mut p) => p.propagated.set_chat_link(chat_link),
             GameState::Play(ref mut p) => p.propagated.set_chat_link(chat_link),
-            GameState::Done => bail!("Game is done"),
         }
     }
 
@@ -543,14 +481,13 @@ impl GameState {
                 *self = GameState::Initialize(s);
                 Ok(m)
             }
-            GameState::Done => bail!("Game is done"),
         }
     }
 
     pub fn for_player(&self, id: PlayerID) -> GameState {
         let mut s = self.clone();
         match s {
-            GameState::Done | GameState::Initialize { .. } => (),
+            GameState::Initialize { .. } => (),
             GameState::Draw(DrawPhase {
                 ref mut hands,
                 ref mut kitty,
@@ -595,7 +532,7 @@ impl GameState {
                 landlord,
                 ..
             }) => {
-                if propagated.hide_landlord_points.unwrap_or(false) {
+                if propagated.hide_landlord_points {
                     for (k, v) in points.iter_mut() {
                         if landlords_team.contains(&k) {
                             v.clear();
@@ -655,7 +592,28 @@ impl PlayPhase {
         id: PlayerID,
         cards: &[Card],
     ) -> Result<Vec<MessageVariant>, Error> {
-        Ok(self.trick.play_cards(id, &mut self.hands, cards)?)
+        let mut msgs = self.trick.play_cards(id, &mut self.hands, cards)?;
+        if self.propagated.hide_played_cards {
+            for msg in &mut msgs {
+                match msg {
+                    MessageVariant::PlayedCards { ref mut cards, .. } => {
+                        for card in cards {
+                            *card = Card::Unknown;
+                        }
+                    }
+                    MessageVariant::ThrowFailed {
+                        ref mut original_cards,
+                        ..
+                    } => {
+                        for card in original_cards {
+                            *card = Card::Unknown;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+        Ok(msgs)
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
@@ -1200,78 +1158,12 @@ impl InitializePhase {
         }
     }
 
-    pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
-        self.propagated.add_player(name)
-    }
-
-    pub fn remove_player(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.remove_player(id)
-    }
-
-    pub fn make_observer(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.make_observer(id)
-    }
-
-    pub fn make_player(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.make_player(id)
-    }
-
-    pub fn reorder_players(&mut self, order: &[PlayerID]) -> Result<(), Error> {
-        self.propagated.reorder_players(order)
-    }
-
-    pub fn set_num_decks(
-        &mut self,
-        num_decks: Option<usize>,
-    ) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.set_num_decks(num_decks)
-    }
-
-    pub fn hide_landlord_points(&mut self, should_hide: bool) {
-        self.propagated.hide_landlord_points(should_hide)
-    }
-
-    pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
-        self.propagated.set_landlord(landlord)
-    }
-
-    pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
-        self.propagated.set_rank(player_id, level)
-    }
-
-    pub fn set_kitty_size(&mut self, size: Option<usize>) -> Result<Option<MessageVariant>, Error> {
-        self.propagated.set_kitty_size(size)
-    }
-
-    pub fn set_kitty_penalty(
-        &mut self,
-        penalty: KittyPenalty,
-    ) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.set_kitty_penalty(penalty)
-    }
-
-    pub fn set_throw_penalty(
-        &mut self,
-        penalty: ThrowPenalty,
-    ) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.set_throw_penalty(penalty)
-    }
-
-    pub fn set_game_mode(
-        &mut self,
-        game_mode: GameModeSettings,
-    ) -> Result<Vec<MessageVariant>, Error> {
-        self.propagated.set_game_mode(game_mode)
-    }
-
     pub fn start(&self) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
         }
 
         let game_mode = match self.propagated.game_mode {
-            // Always override the number of friends for finding friends
-            // TODO: consider exposing this in the future properly...
             GameModeSettings::FindingFriends {
                 num_friends: Some(num_friends),
                 ..
@@ -1345,6 +1237,20 @@ impl InitializePhase {
             game_mode,
             level,
         })
+    }
+}
+
+impl Deref for InitializePhase {
+    type Target = PropagatedState;
+
+    fn deref(&self) -> &PropagatedState {
+        &self.propagated
+    }
+}
+
+impl DerefMut for InitializePhase {
+    fn deref_mut(&mut self) -> &mut PropagatedState {
+        &mut self.propagated
     }
 }
 
