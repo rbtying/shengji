@@ -4,7 +4,7 @@ import IconButton from './IconButton';
 import Gear from './icons/Gear';
 import SettingsPane from './SettingsPane';
 import {Settings} from './state/Settings';
-import {AppStateConsumer} from './AppStateProvider';
+import {AppStateContext} from './AppStateProvider';
 
 const contentStyle = {
   position: 'absolute',
@@ -15,6 +15,7 @@ const contentStyle = {
 
 const SettingsButton = () => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const {state, updateState} = React.useContext(AppStateContext);
   return (
     <>
       <IconButton onClick={() => setModalOpen(true)}>
@@ -27,14 +28,10 @@ const SettingsButton = () => {
         shouldCloseOnEsc
         style={{content: contentStyle}}
       >
-        <AppStateConsumer>
-          {({state, updateState}) => (
-            <SettingsPane
-              settings={state.settings}
-              onChangeSettings={(settings: Settings) => updateState({settings})}
-            />
-          )}
-        </AppStateConsumer>
+        <SettingsPane
+          settings={state.settings}
+          onChangeSettings={(settings: Settings) => updateState({settings})}
+        />
       </ReactModal>
     </>
   );

@@ -9,10 +9,9 @@ import Card from './Card';
 import Header from './Header';
 import Friends from './Friends';
 import Players from './Players';
-import AppStateProvider, {AppState, AppStateConsumer} from './AppStateProvider';
+import AppStateProvider, {AppStateContext} from './AppStateProvider';
 import WebsocketProvider from './WebsocketProvider';
-import TimerProvider from './TimerProvider';
-import {TimerConsumer} from './TimerProvider';
+import TimerProvider, {TimerContext} from './TimerProvider';
 import LandlordSelector from './LandlordSelector';
 import NumDecksSelector from './NumDecksSelector';
 import RankSelector from './RankSelector';
@@ -892,11 +891,9 @@ if (window.location.hash.length !== 17) {
   window.location.hash = r;
 }
 
-const renderUI = (props: {
-  state: AppState;
-  updateState: (state: Partial<AppState>) => void;
-}) => {
-  const {state, updateState} = props;
+const Root = () => {
+  const {state, updateState} = React.useContext(AppStateContext);
+  const timerContext = React.useContext(TimerContext);
   if (state.connected) {
     if (state.game_state === null) {
       return (
@@ -952,17 +949,13 @@ const renderUI = (props: {
               />
             ) : null}
             {state.game_state.Draw ? (
-              <TimerConsumer>
-                {({setTimeout, clearTimeout}) => (
-                  <Draw
-                    state={state.game_state.Draw}
-                    cards={cards}
-                    name={state.name}
-                    setTimeout={setTimeout}
-                    clearTimeout={clearTimeout}
-                  />
-                )}
-              </TimerConsumer>
+              <Draw
+                state={state.game_state.Draw}
+                cards={cards}
+                name={state.name}
+                setTimeout={timerContext.setTimeout}
+                clearTimeout={timerContext.clearTimeout}
+              />
             ) : null}
             {state.game_state.Exchange ? (
               <Exchange
@@ -1000,7 +993,7 @@ const bootstrap = () => {
     <AppStateProvider>
       <WebsocketProvider>
         <TimerProvider>
-          <AppStateConsumer>{renderUI}</AppStateConsumer>
+          <Root />
         </TimerProvider>
       </WebsocketProvider>
     </AppStateProvider>,
