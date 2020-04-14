@@ -1,6 +1,6 @@
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
-use slog::{info, o, Logger};
+use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
     Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, ThrowPenalty,
@@ -70,13 +70,16 @@ impl InteractiveGame {
                 vec![MessageVariant::StartingGame]
             }
             (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Reordering players");
                 state.reorder_players(&players)?;
                 vec![]
             }
             (Message::MakeObserver(id), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Making player an observer"; "id" => id.0);
                 state.make_observer(id)?
             }
             (Message::MakePlayer(id), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Making observer a player"; "id" => id.0);
                 state.make_player(id)?
             }
             (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
@@ -124,10 +127,12 @@ impl InteractiveGame {
                 state.set_throw_penalty(throw_penalty)?
             }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
+                debug!(logger, "Drawing card");
                 state.draw_card(id)?;
                 vec![]
             }
             (Message::Bid(card, count), GameState::Draw(ref mut state)) => {
+                info!(logger, "Making bid");
                 if state.bid(id, card, count) {
                     vec![MessageVariant::MadeBid { card, count }]
                 } else {
@@ -140,14 +145,17 @@ impl InteractiveGame {
                 vec![]
             }
             (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
+                debug!(logger, "Moving card to kitty");
                 state.move_card_to_kitty(id, card)?;
                 vec![]
             }
             (Message::MoveCardToHand(card), GameState::Exchange(ref mut state)) => {
+                debug!(logger, "Moving card to hand");
                 state.move_card_to_hand(id, card)?;
                 vec![]
             }
             (Message::SetFriends(ref friends), GameState::Exchange(ref mut state)) => {
+                info!(logger, "Setting friends");
                 state.set_friends(id, friends.iter().cloned())?;
                 vec![]
             }
@@ -157,10 +165,15 @@ impl InteractiveGame {
                 vec![]
             }
             (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
+                debug!(logger, "Playing cards");
                 state.play_cards(id, cards)?
             }
-            (Message::EndTrick, GameState::Play(ref mut state)) => state.finish_trick()?,
+            (Message::EndTrick, GameState::Play(ref mut state)) => {
+                info!(logger, "Finishing trick");
+                state.finish_trick()?
+            }
             (Message::TakeBackCards, GameState::Play(ref mut state)) => {
+                debug!(logger, "Taking back cards");
                 state.take_back_cards(id)?;
                 vec![MessageVariant::TookBackPlay]
             }
