@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 
 use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use slog::Drain;
 use tokio::prelude::*;
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
@@ -22,6 +23,18 @@ static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 lazy_static::lazy_static! {
     static ref CARDS_JSON: CardsBlob = CardsBlob {
         cards: types::FULL_DECK.iter().map(|c| c.as_info()).collect()
+    };
+
+    static ref ROOT_LOGGER: slog::Logger = {
+        #[cfg(not(feature = "dynamic"))]
+        let drain = slog_bunyan::default(std::io::stdout());
+        #[cfg(feature = "dynamic")]
+        let drain = slog_term::FullFormat::new(slog_term::TermDecorator::new().build()).build();
+
+        slog::Logger::root(
+            std::sync::Mutex::new(drain).fuse(),
+            slog::o!("version" => env!("CARGO_PKG_VERSION")),
+        )
     };
 }
 
@@ -101,12 +114,14 @@ const DUMP_PATH: &str = "/tmp/shengji_state.json";
 async fn main() {
     let mut game_state = HashMap::new();
 
+    let init_logger = ROOT_LOGGER.new(slog::o!("dump_path" => DUMP_PATH));
+
     match tokio::fs::File::open(DUMP_PATH).await {
         Ok(mut f) => {
             let mut data = vec![];
             match f.read_to_end(&mut data).await {
                 Ok(n) => {
-                    eprintln!("Read {} bytes off disk", n);
+                    slog::info!(init_logger, "Read state dump"; "num_bytes" => n);
                     match serde_json::from_slice::<HashMap<String, game_state::GameState>>(&data) {
                         Ok(dump) => {
                             for (room_name, game_dump) in dump {
@@ -123,20 +138,20 @@ async fn main() {
                             }
                         }
                         Err(e) => {
-                            eprintln!("Failed to deserialize file {} {:?}", DUMP_PATH, e);
+                            slog::error!(init_logger, "Failed to deserialize file"; "error" => format!("{:?}", e));
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Failed to read file {} {:?}", DUMP_PATH, e);
+                    slog::error!(init_logger, "Failed to read file"; "error" => format!("{:?}", e));
                 }
             }
         }
         Err(e) => {
-            eprintln!("Failed to open dump {} {:?}", DUMP_PATH, e);
+            slog::error!(init_logger, "Failed to open dump"; "error" => format!("{:?}", e));
         }
     }
-    eprintln!("Loaded {} games from state dump", game_state.len());
+    slog::info!(init_logger, "Loaded games from state dump"; "num_games" => game_state.len());
 
     let games = Arc::new(Mutex::new(game_state));
     let stats = Arc::new(Mutex::new(InMemoryStats::default()));
