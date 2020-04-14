@@ -1,5 +1,22 @@
 import * as React from 'react';
 import ArrayUtils from './util/array';
+import styled from 'styled-components';
+
+const Container = styled.div`
+  position: relative;
+`;
+const Positioner = styled.div`
+  position: absolute;
+  width: 0px;
+  height: 0px;
+`;
+
+const ItemContainer = styled.div`
+  position: absolute;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+`;
 
 type Props = {
   style?: React.CSSProperties;
@@ -13,28 +30,17 @@ const EllipseLayout: React.FunctionComponent<Props> = (props) => {
     const toPercent = (range: number): number =>
       (range * scaleFactor * 100 + 100) / 2;
     const positionStyle = {
-      position: 'absolute',
       left: `${toPercent(Math.sin(angles[i]))}%`,
       bottom: `${toPercent(-1 * Math.cos(angles[i]))}%`,
-      width: '0px',
-      height: '0px',
-    };
-    const containerStyle = {
-      position: 'absolute',
-      transform: 'translate(-50%, -50%)',
-      top: '50%',
-      left: '50%',
     };
     return (
-      <div style={positionStyle}>
-        <div style={containerStyle}>{child}</div>
-      </div>
+      <Positioner style={positionStyle}>
+        <ItemContainer>{child}</ItemContainer>
+      </Positioner>
     );
   });
 
-  return (
-    <div style={{...props.style, position: 'relative'}}>{arrangedChildren}</div>
-  );
+  return <Container style={props.style}>{arrangedChildren}</Container>;
 };
 
 export default EllipseLayout;
