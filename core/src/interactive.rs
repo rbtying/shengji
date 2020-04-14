@@ -42,6 +42,7 @@ impl InteractiveGame {
         Ok((self.state.for_player(id), self.state.cards(id)))
     }
 
+    #[allow(clippy::cognitive_complexity)]
     pub fn interact(
         &mut self,
         msg: Message,
