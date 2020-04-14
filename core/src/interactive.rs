@@ -49,9 +49,10 @@ impl InteractiveGame {
         logger: &Logger,
     ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
         let logger = logger.new(o!(
-            "num_players" => self.state.players().len(),
-            "num_observers" => self.state.observers().len(),
-            "mode" => self.state.game_mode().variant(),
+            "num_players" => self.state.players.len(),
+            "num_observers" => self.state.observers.len(),
+            "mode" => self.state.game_mode.variant(),
+            "num_games_finished" => self.state.num_games_finished,
         ));
 
         let msgs = match (msg, &mut self.state) {
@@ -134,6 +135,7 @@ impl InteractiveGame {
                 }
             }
             (Message::PickUpKitty, GameState::Draw(ref mut state)) => {
+                info!(logger, "Entering exchange phase");
                 self.state = GameState::Exchange(state.advance(id)?);
                 vec![]
             }
@@ -150,6 +152,7 @@ impl InteractiveGame {
                 vec![]
             }
             (Message::BeginPlay, GameState::Exchange(ref mut state)) => {
+                info!(logger, "Entering play phase");
                 self.state = GameState::Play(state.advance(id)?);
                 vec![]
             }

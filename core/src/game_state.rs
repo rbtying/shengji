@@ -73,14 +73,14 @@ impl Default for KittyPenalty {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
-    game_mode: GameModeSettings,
+    pub game_mode: GameModeSettings,
     #[serde(default)]
     hide_landlord_points: bool,
     kitty_size: Option<usize>,
     num_decks: Option<usize>,
     max_player_id: usize,
-    players: Vec<Player>,
-    observers: Vec<Player>,
+    pub players: Vec<Player>,
+    pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
     chat_link: Option<String>,
     #[serde(default)]
@@ -89,6 +89,8 @@ pub struct PropagatedState {
     throw_penalty: ThrowPenalty,
     #[serde(default)]
     hide_played_cards: bool,
+    #[serde(default)]
+    pub num_games_finished: usize,
 }
 
 impl PropagatedState {
@@ -370,44 +372,26 @@ pub enum GameState {
 }
 
 impl GameState {
-    pub fn players(&self) -> &'_ [Player] {
+    pub fn propagated(&self) -> &'_ PropagatedState {
         match self {
-            GameState::Initialize(p) => &p.propagated.players,
-            GameState::Draw(p) => &p.propagated.players,
-            GameState::Exchange(p) => &p.propagated.players,
-            GameState::Play(p) => &p.propagated.players,
-        }
-    }
-
-    pub fn game_mode(&self) -> GameModeSettings {
-        match self {
-            GameState::Initialize(p) => p.propagated.game_mode,
-            GameState::Draw(p) => p.propagated.game_mode,
-            GameState::Exchange(p) => p.propagated.game_mode,
-            GameState::Play(p) => p.propagated.game_mode,
-        }
-    }
-
-    pub fn observers(&self) -> &'_ [Player] {
-        match self {
-            GameState::Draw(p) => &p.propagated.observers,
-            GameState::Exchange(p) => &p.propagated.observers,
-            GameState::Play(p) => &p.propagated.observers,
-            GameState::Initialize(p) => &p.propagated.observers,
+            GameState::Initialize(p) => &p.propagated,
+            GameState::Draw(p) => &p.propagated,
+            GameState::Exchange(p) => &p.propagated,
+            GameState::Play(p) => &p.propagated,
         }
     }
 
     pub fn is_player(&self, id: PlayerID) -> bool {
-        self.players().iter().any(|p| p.id == id)
+        self.propagated().players.iter().any(|p| p.id == id)
     }
 
     pub fn player_name(&self, id: PlayerID) -> Result<&'_ str, Error> {
-        for p in self.players() {
+        for p in &self.propagated().players {
             if p.id == id {
                 return Ok(&p.name);
             }
         }
-        for p in self.observers() {
+        for p in &self.propagated().observers {
             if p.id == id {
                 return Ok(&p.name);
             }
@@ -416,12 +400,12 @@ impl GameState {
     }
 
     pub fn player_id(&self, name: &str) -> Result<PlayerID, Error> {
-        for p in self.players() {
+        for p in &self.propagated().players {
             if p.name == name {
                 return Ok(p.id);
             }
         }
-        for p in self.observers() {
+        for p in &self.propagated().observers {
             if p.name == name {
                 return Ok(p.id);
             }
@@ -557,6 +541,14 @@ impl GameState {
             }
         }
         s
+    }
+}
+
+impl Deref for GameState {
+    type Target = PropagatedState;
+
+    fn deref(&self) -> &PropagatedState {
+        self.propagated()
     }
 }
 
@@ -818,6 +810,7 @@ impl PlayPhase {
             landlord: self.propagated.players[next_landlord_idx].id,
         });
         propagated.set_landlord(Some(next_landlord))?;
+        propagated.num_games_finished += 1;
         msgs.extend(propagated.make_all_observers_into_players()?);
 
         Ok((InitializePhase { propagated }, msgs))
