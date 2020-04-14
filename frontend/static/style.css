@@ -32,9 +32,9 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord { background: #ddd }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
-.chat { min-width: 225px; width: 20%; padding: 10px; border: 1px #000 solid; float: right; margin-top: 20px; }
+.chat { min-width: 225px; width: 20%; border: 1px #eee solid; float: right; margin-top: 20px; }
 .game { min-width: 690px; min-height: 660px; width: 70%; display: inline-block; }
-.messages { height: 400px; overflow-y: scroll; overflow-anchor: none; }
+.messages { padding-top: 10px; padding-left: 10px; height: 400px; overflow-y: auto; overflow-anchor: none; }
 .chat-anchor { overflow-anchor: auto; height: 1px }
 .message { margin: 0; }
 .game-message { color: #00f; }

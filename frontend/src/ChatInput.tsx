@@ -12,6 +12,7 @@ const ChatBox = styled.div`
   flex-direction: row;
   padding-left: 1em;
   padding-right: 1em;
+  margin: 0.5em;
 `;
 const Input = styled.input`
   outline: none;
