@@ -6,6 +6,7 @@ import Trump from './Trump';
 import FriendSelect from './FriendSelect';
 import LabeledPlay from './LabeledPlay';
 import Initialize from './Initialize';
+import JoinRoom from './JoinRoom';
 import Card from './Card';
 import Header from './Header';
 import Friends from './Friends';
@@ -426,106 +427,6 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         </div>
       );
     }
-  }
-}
-
-interface IJoinRoomProps {
-  name: string;
-  room_name: string;
-  setName(name: string): void;
-  setRoomName(name: string): void;
-}
-class JoinRoom extends React.Component<IJoinRoomProps, {editable: boolean}> {
-  constructor(props: IJoinRoomProps) {
-    super(props);
-    this.state = {
-      editable: false,
-    };
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleRoomChange = this.handleRoomChange.bind(this);
-  }
-
-  handleChange(event: any) {
-    this.props.setName(event.target.value.trim());
-  }
-
-  handleRoomChange(event: any) {
-    this.props.setRoomName(event.target.value.trim());
-  }
-
-  handleSubmit(event: any) {
-    event.preventDefault();
-    if (this.props.name.length > 0 && this.props.room_name.length === 16) {
-      send({
-        room_name: this.props.room_name,
-        name: this.props.name,
-      });
-    }
-  }
-
-  render() {
-    const editableRoomName = (
-      <input
-        type="text"
-        placeholder="Enter a room code"
-        value={this.props.room_name}
-        onChange={this.handleRoomChange}
-        maxLength={16}
-      />
-    );
-    const nonEditableRoomName = (
-      <span
-        onClick={(evt) => {
-          evt.preventDefault();
-          this.setState({editable: true});
-        }}
-      >
-        {this.props.room_name}
-      </span>
-    );
-
-    return (
-      <div>
-        <LabeledPlay cards={['🃟', '🃟', '🃏', '🃏']} label={null}></LabeledPlay>
-        <form className="join-room" onSubmit={this.handleSubmit}>
-          <div>
-            <h2>
-              <label>
-                <strong>Room Name:</strong>{' '}
-                {this.state.editable ? editableRoomName : nonEditableRoomName} (
-                <a href="rules" target="_blank">
-                  rules
-                </a>
-                )
-              </label>
-            </h2>
-          </div>
-          <div>
-            <label>
-              <strong>Player Name:</strong>{' '}
-              <input
-                type="text"
-                placeholder="Enter your name here"
-                value={this.props.name}
-                onChange={this.handleChange}
-                autoFocus={true}
-              />
-            </label>
-            <input
-              type="submit"
-              value="Join the game!"
-              disabled={
-                this.props.room_name.length !== 16 ||
-                this.props.name.length === 0 ||
-                this.props.name.length > 32
-              }
-            />
-          </div>
-          <div></div>
-        </form>
-      </div>
-    );
   }
 }
 
