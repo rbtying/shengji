@@ -6,11 +6,9 @@ type Context = {
   send: (value: any) => void;
 };
 
-const WebsocketContext = React.createContext<Context>({
+export const WebsocketContext = React.createContext<Context>({
   send: () => {},
 });
-
-export const WebsocketConsumer = WebsocketContext.Consumer;
 
 type Props = {
   state: AppState;
