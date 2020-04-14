@@ -67,11 +67,10 @@ impl GameState {
     pub fn tracer(&mut self, logger: &Logger, room: &str, parent: usize) -> Logger {
         let elapsed = self.last_updated.elapsed();
         self.last_updated = Instant::now();
-        let span_id = self.monotonic_id;
         self.monotonic_id += 1;
         logger.new(o!(
             "elapsed_ms" => elapsed.as_millis(),
-            "span" => format!("{}:{}", room, span_id),
+            "span" => format!("{}:{}", room, self.monotonic_id),
             "parent_span" => format!("{}:{}", room, parent)
         ))
     }
@@ -386,7 +385,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 monotonic_id: 0,
             });
             if game.users.is_empty() {
-                info!(game.tracer(&logger, &room, 0), "Creating new room");
+                info!(game.tracer(&logger, &room, 1), "Creating new room");
                 let mut stats = stats.lock().await;
                 stats.num_games_created += 1;
             }
@@ -400,7 +399,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     return;
                 }
             };
-            info!(game.tracer(&logger, &room, 0), "Joining room"; "player_id" => player_id.0);
+            info!(game.tracer(&logger, &room, 1), "Joining room"; "player_id" => player_id.0);
             game.users.insert(ws_id, UserState { player_id, tx });
             // send the updated game state to everyone!
             for user in game.users.values() {
