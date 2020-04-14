@@ -12,14 +12,12 @@ type Context = {
   clearInterval: (id: number) => void;
 };
 
-const TimerContext = React.createContext<Context>({
+export const TimerContext = React.createContext<Context>({
   setTimeout: (fn, delay) => 0,
   clearTimeout: (id) => {},
   setInterval: (fn, interval) => 0,
   clearInterval: (id) => {},
 });
-
-export const TimerConsumer = TimerContext.Consumer;
 
 const _TimerProvider: React.FunctionComponent<{}> = (props) => {
   const [worker, setWorker] = React.useState<Worker | null>(null);
