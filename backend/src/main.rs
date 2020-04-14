@@ -53,6 +53,7 @@ struct GameStats {
     num_games_created: usize,
     num_active_games: usize,
     num_players_online_now: usize,
+    sha: &'static str,
 }
 
 struct GameState {
@@ -288,6 +289,7 @@ async fn get_stats(
         num_games_created,
         num_players_online_now,
         num_active_games: games.len(),
+        sha: env!("VERGEN_SHA"),
     }))
 }
 
