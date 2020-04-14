@@ -32,6 +32,14 @@ pub enum GameModeSettings {
     Tractor,
     FindingFriends { num_friends: Option<usize> },
 }
+impl GameModeSettings {
+    pub fn variant(self) -> &'static str {
+        match self {
+            GameModeSettings::Tractor => "Tractor",
+            GameModeSettings::FindingFriends { .. } => "FindingFriends",
+        }
+    }
+}
 
 impl Default for GameModeSettings {
     fn default() -> Self {
@@ -362,61 +370,60 @@ pub enum GameState {
 }
 
 impl GameState {
-    pub fn players(&self) -> Option<&'_ [Player]> {
+    pub fn players(&self) -> &'_ [Player] {
         match self {
-            GameState::Initialize(p) => Some(&p.propagated.players),
-            GameState::Draw(p) => Some(&p.propagated.players),
-            GameState::Exchange(p) => Some(&p.propagated.players),
-            GameState::Play(p) => Some(&p.propagated.players),
+            GameState::Initialize(p) => &p.propagated.players,
+            GameState::Draw(p) => &p.propagated.players,
+            GameState::Exchange(p) => &p.propagated.players,
+            GameState::Play(p) => &p.propagated.players,
         }
     }
 
-    pub fn observers(&self) -> Option<&'_ [Player]> {
+    pub fn game_mode(&self) -> GameModeSettings {
         match self {
-            GameState::Draw(p) => Some(&p.propagated.observers),
-            GameState::Exchange(p) => Some(&p.propagated.observers),
-            GameState::Play(p) => Some(&p.propagated.observers),
-            GameState::Initialize(p) => Some(&p.propagated.observers),
+            GameState::Initialize(p) => p.propagated.game_mode,
+            GameState::Draw(p) => p.propagated.game_mode,
+            GameState::Exchange(p) => p.propagated.game_mode,
+            GameState::Play(p) => p.propagated.game_mode,
+        }
+    }
+
+    pub fn observers(&self) -> &'_ [Player] {
+        match self {
+            GameState::Draw(p) => &p.propagated.observers,
+            GameState::Exchange(p) => &p.propagated.observers,
+            GameState::Play(p) => &p.propagated.observers,
+            GameState::Initialize(p) => &p.propagated.observers,
         }
     }
 
     pub fn is_player(&self, id: PlayerID) -> bool {
-        self.players()
-            .map(|p| p.iter().any(|pp| pp.id == id))
-            .unwrap_or(false)
+        self.players().iter().any(|p| p.id == id)
     }
 
     pub fn player_name(&self, id: PlayerID) -> Result<&'_ str, Error> {
-        if let Some(players) = self.players() {
-            for p in players {
-                if p.id == id {
-                    return Ok(&p.name);
-                }
+        for p in self.players() {
+            if p.id == id {
+                return Ok(&p.name);
             }
         }
-        if let Some(observers) = self.observers() {
-            for p in observers {
-                if p.id == id {
-                    return Ok(&p.name);
-                }
+        for p in self.observers() {
+            if p.id == id {
+                return Ok(&p.name);
             }
         }
         bail!("Couldn't find player name")
     }
 
     pub fn player_id(&self, name: &str) -> Result<PlayerID, Error> {
-        if let Some(players) = self.players() {
-            for p in players {
-                if p.name == name {
-                    return Ok(p.id);
-                }
+        for p in self.players() {
+            if p.name == name {
+                return Ok(p.id);
             }
         }
-        if let Some(observers) = self.observers() {
-            for p in observers {
-                if p.name == name {
-                    return Ok(p.id);
-                }
+        for p in self.observers() {
+            if p.name == name {
+                return Ok(p.id);
             }
         }
         bail!("Couldn't find player id")

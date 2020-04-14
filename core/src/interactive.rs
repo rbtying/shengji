@@ -1,5 +1,6 @@
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
+use slog::{info, o, Logger};
 
 use crate::game_state::{
     Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, ThrowPenalty,
@@ -45,14 +46,25 @@ impl InteractiveGame {
         &mut self,
         msg: Message,
         id: PlayerID,
+        logger: &Logger,
     ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
+        let logger = logger.new(o!(
+            "num_players" => self.state.players().len(),
+            "num_observers" => self.state.observers().len(),
+            "mode" => self.state.game_mode().variant(),
+        ));
+
         let msgs = match (msg, &mut self.state) {
-            (Message::ResetGame, _) => self.state.reset()?,
+            (Message::ResetGame, _) => {
+                info!(logger, "Resetting game");
+                self.state.reset()?
+            }
             (Message::SetChatLink(ref link), _) => {
                 self.state.set_chat_link(link.clone())?;
                 vec![]
             }
             (Message::StartGame, GameState::Initialize(ref mut state)) => {
+                info!(logger, "Starting game");
                 self.state = GameState::Draw(state.start()?);
                 vec![MessageVariant::StartingGame]
             }
@@ -67,34 +79,47 @@ impl InteractiveGame {
                 state.make_player(id)?
             }
             (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting number of decks"; "num_decks" => num_decks);
                 state.set_num_decks(num_decks)?
             }
             (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting rank"; "rank" => rank.as_str());
                 state.set_rank(id, rank)?;
                 vec![MessageVariant::SetRank { rank }]
             }
             (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
             }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
                 state.set_landlord(landlord)?;
                 vec![MessageVariant::SetLandlord { landlord }]
             }
             (
                 Message::SetHideLandlordsPoints(hide_landlord_points),
                 GameState::Initialize(ref mut state),
-            ) => vec![state.hide_landlord_points(hide_landlord_points)?],
+            ) => {
+                info!(logger, "Setting hide landlords points"; "hide_landlord_points" => hide_landlord_points);
+                vec![state.hide_landlord_points(hide_landlord_points)?]
+            }
             (
                 Message::SetHidePlayedCards(hide_played_cards),
                 GameState::Initialize(ref mut state),
-            ) => vec![state.hide_played_cards(hide_played_cards)?],
+            ) => {
+                info!(logger, "Setting hide played cards"; "hide_played_cards" => hide_played_cards);
+                vec![state.hide_played_cards(hide_played_cards)?]
+            }
             (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
                 state.set_game_mode(game_mode.clone())?
             }
             (Message::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting kitty penalty"; "penalty" => format!("{:?}", kitty_penalty));
                 state.set_kitty_penalty(kitty_penalty)?
             }
             (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
             }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
@@ -137,6 +162,7 @@ impl InteractiveGame {
                 vec![MessageVariant::TookBackPlay]
             }
             (Message::StartNewGame, GameState::Play(ref mut state)) => {
+                info!(logger, "Starting new game");
                 let (new_s, msgs) = state.finish_game()?;
                 self.state = GameState::Initialize(new_s);
                 msgs
