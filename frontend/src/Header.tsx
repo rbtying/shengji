@@ -12,6 +12,7 @@ const Header = (props: Props) => (
   <div>
     <h1>
       <GameMode gameMode={props.gameMode} />
+      &nbsp;
       <SettingsButton />
     </h1>
     {props.chatLink ? (
