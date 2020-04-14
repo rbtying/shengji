@@ -400,7 +400,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     return;
                 }
             };
-            info!(game.tracer(&logger, &room, 1), "Joining room"; "player_id" => player_id.0);
+            info!(game.tracer(&logger, &room, 0), "Joining room"; "player_id" => player_id.0);
             game.users.insert(ws_id, UserState { player_id, tx });
             // send the updated game state to everyone!
             for user in game.users.values() {
