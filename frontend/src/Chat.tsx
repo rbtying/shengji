@@ -1,5 +1,6 @@
 import * as React from 'react';
 import ChatMessage, {Message} from './ChatMessage';
+import ChatInput from './ChatInput';
 
 type Props = {
   messages: Message[];
@@ -8,7 +9,6 @@ type Props = {
 let latestMessage: Message | null = null;
 
 const Chat = (props: Props) => {
-  const [draft, setDraft] = React.useState<string>('');
   const anchor = React.useRef(null);
 
   React.useEffect(() => {
@@ -25,12 +25,8 @@ const Chat = (props: Props) => {
     }
   });
 
-  const handleSubmit = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    if (draft.length > 0) {
-      (window as any).send({Message: draft});
-    }
-    setDraft('');
+  const handleSubmit = (message: string) => {
+    (window as any).send({Message: message});
   };
 
   return (
@@ -41,15 +37,7 @@ const Chat = (props: Props) => {
         ))}
         <div className="chat-anchor" ref={anchor} />
       </div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="type message here"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <input type="submit" value="submit" />
-      </form>
+      <ChatInput onSubmit={handleSubmit} />
     </div>
   );
 };
