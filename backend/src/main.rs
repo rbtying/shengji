@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 
 use futures::{FutureExt, StreamExt};
 use serde::{Deserialize, Serialize};
+use slog::{error, info, o, Drain, Logger};
 use tokio::prelude::*;
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
@@ -22,6 +23,18 @@ static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
 lazy_static::lazy_static! {
     static ref CARDS_JSON: CardsBlob = CardsBlob {
         cards: types::FULL_DECK.iter().map(|c| c.as_info()).collect()
+    };
+
+    static ref ROOT_LOGGER: Logger = {
+        #[cfg(not(feature = "dynamic"))]
+        let drain = slog_bunyan::default(std::io::stdout());
+        #[cfg(feature = "dynamic")]
+        let drain = slog_term::FullFormat::new(slog_term::TermDecorator::new().build()).build();
+
+        Logger::root(
+            slog_async::Async::new(drain.fuse()).build().fuse(),
+            o!("commit" => env!("VERGEN_SHA_SHORT"))
+        )
     };
 }
 
@@ -40,6 +53,7 @@ struct GameStats {
     num_games_created: usize,
     num_active_games: usize,
     num_players_online_now: usize,
+    sha: &'static str,
 }
 
 struct GameState {
@@ -101,12 +115,14 @@ const DUMP_PATH: &str = "/tmp/shengji_state.json";
 async fn main() {
     let mut game_state = HashMap::new();
 
+    let init_logger = ROOT_LOGGER.new(o!("dump_path" => DUMP_PATH));
+
     match tokio::fs::File::open(DUMP_PATH).await {
         Ok(mut f) => {
             let mut data = vec![];
             match f.read_to_end(&mut data).await {
                 Ok(n) => {
-                    eprintln!("Read {} bytes off disk", n);
+                    info!(init_logger, "Read state dump"; "num_bytes" => n);
                     match serde_json::from_slice::<HashMap<String, game_state::GameState>>(&data) {
                         Ok(dump) => {
                             for (room_name, game_dump) in dump {
@@ -123,20 +139,20 @@ async fn main() {
                             }
                         }
                         Err(e) => {
-                            eprintln!("Failed to deserialize file {} {:?}", DUMP_PATH, e);
+                            error!(init_logger, "Failed to deserialize file"; "error" => format!("{:?}", e));
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("Failed to read file {} {:?}", DUMP_PATH, e);
+                    error!(init_logger, "Failed to read file"; "error" => format!("{:?}", e));
                 }
             }
         }
         Err(e) => {
-            eprintln!("Failed to open dump {} {:?}", DUMP_PATH, e);
+            error!(init_logger, "Failed to open dump"; "error" => format!("{:?}", e));
         }
     }
-    eprintln!("Loaded {} games from state dump", game_state.len());
+    info!(init_logger, "Loaded games from state dump"; "num_games" => game_state.len());
 
     let games = Arc::new(Mutex::new(game_state));
     let stats = Arc::new(Mutex::new(InMemoryStats::default()));
@@ -222,21 +238,43 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
         !game.users.is_empty() || game.last_updated.elapsed() <= Duration::from_secs(3600)
     });
 
+    let mut num_players = 0;
+    let mut num_observers = 0;
+
     for (room_name, game_state) in games.iter() {
         if let Ok(snapshot) = game_state.game.dump_state() {
+            num_players += snapshot.players().len();
+            num_observers = snapshot.observers().len();
             state_dump.insert(room_name.clone(), snapshot);
         }
     }
 
+    let logger = ROOT_LOGGER.new(
+        o!("dump_path" => DUMP_PATH, "num_games" => state_dump.len(), "num_players" => num_players, "num_observers" => num_observers),
+    );
+
     // Best-effort attempt to write the full state to disk, for fun.
-    if let Ok(mut f) = tokio::fs::File::create(DUMP_PATH).await {
-        if let Ok(json) = serde_json::to_vec(&state_dump) {
-            let _ = f.write_all(&json).await;
-            let _ = f.sync_all().await;
+    match write_state_to_disk(&state_dump).await {
+        Ok(()) => {
+            info!(logger, "Dumped state to disk");
+        }
+        Err(e) => {
+            error!(logger, "Failed to dump state to disk"; "error" => format!("{:?}", e));
         }
     }
 
     Ok(warp::reply::json(&state_dump))
+}
+
+async fn write_state_to_disk(
+    state: &HashMap<String, game_state::GameState>,
+) -> std::io::Result<()> {
+    let mut f = tokio::fs::File::create(DUMP_PATH).await?;
+    let json = serde_json::to_vec(state)?;
+    f.write_all(&json).await?;
+    f.sync_all().await?;
+
+    Ok(())
 }
 
 async fn get_stats(
@@ -251,6 +289,7 @@ async fn get_stats(
         num_games_created,
         num_players_online_now,
         num_active_games: games.len(),
+        sha: env!("VERGEN_SHA"),
     }))
 }
 
@@ -258,6 +297,8 @@ async fn get_stats(
 async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemoryStats>>) {
     // Use a counter to assign a new unique ID for this user.
     let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
+    let logger = ROOT_LOGGER.new(o!("ws_id" => ws_id));
+    info!(logger, "Websocket connection initialized");
 
     // Split the socket into a sender and receive of messages.
     let (user_ws_tx, mut user_ws_rx) = ws.split();
@@ -306,12 +347,17 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
     }
 
     if let Some((room, name)) = val {
-        let player_id = {
+        let logger = logger.new(o!("room" => room.clone(), "name" => name.clone()));
+
+        let (player_id, logger) = {
             let mut g = games.lock().await;
-            let game = g.entry(room.clone()).or_insert_with(|| GameState {
-                game: interactive::InteractiveGame::new(),
-                users: HashMap::new(),
-                last_updated: Instant::now(),
+            let game = g.entry(room.clone()).or_insert_with(|| {
+                info!(logger, "Creating new room");
+                GameState {
+                    game: interactive::InteractiveGame::new(),
+                    users: HashMap::new(),
+                    last_updated: Instant::now(),
+                }
             });
             game.last_updated = Instant::now();
             if game.users.is_empty() {
@@ -321,11 +367,15 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             let (player_id, msgs) = match game.game.register(name.clone()) {
                 Ok(player_id) => player_id,
                 Err(err) => {
+                    error!(logger, "Failed to join room"; "error" => format!("{:?}", err));
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
                     let _ = send_to_user(err);
                     return;
                 }
             };
+            let logger = logger.new(o!("player_id" => player_id.0));
+            info!(logger, "Joining room");
+
             game.users.insert(ws_id, UserState { player_id, tx });
             // send the updated game state to everyone!
             for user in game.users.values() {
@@ -340,7 +390,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     });
                 }
             }
-            player_id
+            (player_id, logger)
         };
         let games2 = games.clone();
 
@@ -358,11 +408,15 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                         message: m.clone(),
                                     });
                                 }
+                            } else {
+                                error!(logger, "Game not found");
+                                break;
                             }
                         }
                         Ok(UserMessage::Kick(id)) => {
                             let mut g = games.lock().await;
                             if let Some(game) = g.get_mut(&room) {
+                                info!(logger, "Kicking user"; "other" => id.0);
                                 match game.game.kick(id) {
                                     Ok(msgs) => {
                                         for user in game.users.values() {
@@ -390,13 +444,14 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                     }
                                 }
                             } else {
+                                error!(logger, "Game not found");
                                 break;
                             }
                         }
                         Ok(UserMessage::Action(m)) => {
                             let mut g = games.lock().await;
                             if let Some(game) = g.get_mut(&room) {
-                                match game.game.interact(m, player_id) {
+                                match game.game.interact(m, player_id, &logger) {
                                     Ok(msgs) => {
                                         // send the updated game state to everyone!
                                         for user in game.users.values() {
@@ -422,6 +477,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                     }
                                 }
                             } else {
+                                error!(logger, "Game not found");
                                 break;
                             }
                         }
@@ -444,11 +500,11 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
 
         // user_ws_rx stream will keep processing as long as the user stays
         // connected. Once they disconnect, then...
-        user_disconnected(room, ws_id, &games2).await;
+        user_disconnected(room, ws_id, &games2, logger).await;
     }
 }
 
-async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
+async fn user_disconnected(room: String, ws_id: usize, games: &Games, logger: slog::Logger) {
     // Stream closed up, so remove from the user list
     let mut g = games.lock().await;
     if let Some(game) = g.get_mut(&room) {
@@ -456,8 +512,10 @@ async fn user_disconnected(room: String, ws_id: usize, games: &Games) {
         // If there is nobody connected anymore, drop the game entirely.
         if game.users.is_empty() {
             g.remove(&room);
+            info!(logger, "Removing empty room"; "room" => room);
         }
     }
+    info!(logger, "Websocket disconnected");
 }
 
 #[cfg(not(feature = "dynamic"))]
