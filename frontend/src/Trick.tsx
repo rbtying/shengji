@@ -1,11 +1,12 @@
 import * as React from 'react';
-import {IPlayer, ITrick} from './types';
+import {IPlayer, ITrick, IPlayedCards} from './types';
 import LabeledPlay from './LabeledPlay';
 import ArrayUtils from './util/array';
 
 type Props = {
   players: IPlayer[];
   trick: ITrick;
+  showTrickInPlayerOrder: boolean;
 };
 const Trick = (props: Props) => {
   const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
@@ -21,29 +22,41 @@ const Trick = (props: Props) => {
       ? props.trick.played_cards[0].better_player
       : null;
 
+  const playedByID: {[id: number]: IPlayedCards} = {};
+  let playOrder: number[] = [];
+
+  props.trick.played_cards.forEach((played) => {
+    playOrder.push(played.id);
+    playedByID[played.id] = played;
+  });
+
+  if (props.showTrickInPlayerOrder) {
+    playOrder = props.players.map((p) => p.id);
+  } else {
+    props.trick.player_queue.forEach((id) => playOrder.push(id));
+  }
+
   return (
     <div className="trick">
-      {props.trick.played_cards.map((played, idx) => {
-        const winning = props.trick.current_winner === played.id;
-        return (
-          <LabeledPlay
-            key={idx}
-            label={
-              winning ? `${namesById[played.id]} (!)` : namesById[played.id]
-            }
-            className={winning ? 'winning' : ''}
-            cards={played.cards}
-            moreCards={played.bad_throw_cards}
-          />
-        );
-      })}
-      {props.trick.player_queue.map((id, idx) => {
+      {playOrder.map((id) => {
+        const winning = props.trick.current_winner === id;
         const better = betterPlayer === id;
+        const cards = playedByID[id]?.cards || blankCards;
+        const suffix = winning ? ' (!)' : better ? ' (-)' : '';
+
         return (
           <LabeledPlay
-            key={idx + props.trick.played_cards.length}
-            label={better ? `${namesById[id]} (-)` : namesById[id]}
-            cards={blankCards}
+            key={id}
+            label={namesById[id] + suffix}
+            className={
+              winning
+                ? 'winning'
+                : props.trick.player_queue[0] === id
+                ? 'notify'
+                : ''
+            }
+            cards={cards}
+            moreCards={playedByID[id]?.bad_throw_cards}
           />
         );
       })}

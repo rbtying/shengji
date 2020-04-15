@@ -93,6 +93,7 @@ const Root = () => {
                 unsetAutoPlayWhenWinnerChanges={
                   state.settings.unsetAutoPlayWhenWinnerChanges
                 }
+                showTrickInPlayerOrder={state.settings.showTrickInPlayerOrder}
                 beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}

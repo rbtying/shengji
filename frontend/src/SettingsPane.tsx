@@ -114,6 +114,19 @@ const SettingsPane = (props: Props) => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>show tricks in player order</LabelCell>
+          <Cell>
+            <input
+              name="show-trick-in-player-order"
+              type="checkbox"
+              checked={settings.showTrickInPlayerOrder}
+              onChange={handleChange({
+                showTrickInPlayerOrder: !settings.showTrickInPlayerOrder,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{display: 'table'}}>
