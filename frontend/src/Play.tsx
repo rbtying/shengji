@@ -74,6 +74,7 @@ const Play = (props: Props) => {
       <Header gameMode={playPhase.propagated.game_mode} />
       <Players
         players={playPhase.propagated.players}
+        observers={playPhase.propagated.observers}
         landlord={playPhase.landlord}
         landlords_team={playPhase.landlords_team}
         name={props.name}
