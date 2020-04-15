@@ -156,6 +156,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         />
         <Players
           players={this.props.state.propagated.players}
+          observers={this.props.state.propagated.observers}
           landlord={this.props.state.propagated.landlord}
           next={next}
           name={this.props.name}

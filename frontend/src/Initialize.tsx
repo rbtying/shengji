@@ -163,6 +163,7 @@ const Initialize = (props: Props) => {
       />
       <Players
         players={props.state.propagated.players}
+        observers={props.state.propagated.observers}
         landlord={props.state.propagated.landlord}
         next={null}
         movable={true}

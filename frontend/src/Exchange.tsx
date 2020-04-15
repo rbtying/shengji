@@ -116,6 +116,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           />
           <Players
             players={this.props.state.propagated.players}
+            observers={this.props.state.propagated.observers}
             landlord={this.props.state.landlord}
             next={this.props.state.landlord}
             name={this.props.name}
@@ -182,6 +183,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           />
           <Players
             players={this.props.state.propagated.players}
+            observers={this.props.state.propagated.observers}
             landlord={this.props.state.landlord}
             next={this.props.state.landlord}
             name={this.props.name}

@@ -32,6 +32,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .landlord { background: #ddd }
 .landlord .card { background: #ddd }
 .player { border: 1px #000 solid; padding: 10px; }
+.observer { border: 1px #222 dashed; color: #222; }
 .chat { min-width: 225px; width: 20%; border: 1px #eee solid; float: right; margin-top: 20px; }
 .game { min-width: 690px; min-height: 660px; width: 70%; display: inline-block; }
 .messages { padding-top: 10px; padding-left: 10px; height: 400px; overflow-y: auto; overflow-anchor: none; }
