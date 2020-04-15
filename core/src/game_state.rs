@@ -372,6 +372,14 @@ pub enum GameState {
 }
 
 impl GameState {
+    pub fn next_player(&self) -> Result<PlayerID, Error> {
+        match self {
+            GameState::Play(p) => Ok(p.next_player()),
+            GameState::Draw(p) => Ok(p.next_player()?),
+            _ => bail!("Not valid in this phase!"),
+        }
+    }
+
     pub fn propagated(&self) -> &'_ PropagatedState {
         match self {
             GameState::Initialize(p) => &p.propagated,
@@ -1017,6 +1025,13 @@ impl DrawPhase {
 
     pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
         self.propagated.remove_observer(id)
+    }
+
+    pub fn next_player(&self) -> Result<PlayerID, Error> {
+        if self.deck.is_empty() {
+            bail!("Deck has been fully drawn")
+        }
+        Ok(self.propagated.players[self.position].id)
     }
 
     pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {

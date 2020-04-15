@@ -42,6 +42,10 @@ impl InteractiveGame {
         Ok((self.state.for_player(id), self.state.cards(id)))
     }
 
+    pub fn next_player(&self) -> Result<PlayerID, Error> {
+        Ok(self.state.next_player()?)
+    }
+
     #[allow(clippy::cognitive_complexity)]
     pub fn interact(
         &mut self,
@@ -239,6 +243,7 @@ pub enum Message {
     EndTrick,
     TakeBackCards,
     StartNewGame,
+    Beep,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

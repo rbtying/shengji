@@ -5,6 +5,7 @@ import {IDrawPhase, IPlayer} from './types';
 import Header from './Header';
 import Players from './Players';
 import LabeledPlay from './LabeledPlay';
+import BeepButton from './BeepButton';
 
 type IDrawProps = {
   state: IDrawPhase;
@@ -214,6 +215,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         >
           Pick up cards from the bottom
         </button>
+        <BeepButton />
         <Cards
           cardsInHand={cards_not_bid}
           selectedCards={this.state.selected}
