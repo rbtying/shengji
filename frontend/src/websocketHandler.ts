@@ -62,9 +62,8 @@ const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
       beep(3, 261.63, 200);
       lastBeeped = now;
     }
-  } else {
-    return null;
   }
+  return null;
 };
 
 const allHandlers: WebsocketHandler[] = [
