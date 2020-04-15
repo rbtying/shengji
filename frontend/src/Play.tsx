@@ -20,6 +20,7 @@ type Props = {
   beepOnTurn: boolean;
   showLastTrick: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
+  showTrickInPlayerOrder: boolean;
 };
 
 const Play = (props: Props) => {
@@ -81,7 +82,11 @@ const Play = (props: Props) => {
       />
       <Trump trump={playPhase.trump} />
       <Friends gameMode={playPhase.game_mode} />
-      <Trick trick={playPhase.trick} players={playPhase.propagated.players} />
+      <Trick
+        trick={playPhase.trick}
+        players={playPhase.propagated.players}
+        showTrickInPlayerOrder={props.showTrickInPlayerOrder}
+      />
       <AutoPlayButton
         onSubmit={playCards}
         canSubmit={canPlay}
@@ -111,6 +116,7 @@ const Play = (props: Props) => {
           <Trick
             trick={playPhase.last_trick}
             players={playPhase.propagated.players}
+            showTrickInPlayerOrder={props.showTrickInPlayerOrder}
           />
         </div>
       ) : null}

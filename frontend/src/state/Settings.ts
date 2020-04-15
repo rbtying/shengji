@@ -7,6 +7,7 @@ export type Settings = {
   beepOnTurn: boolean;
   reverseCardOrder: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
+  showTrickInPlayerOrder: boolean;
 };
 
 const fourColor: State<boolean> = booleanLocalStorageState('four_color');
@@ -20,6 +21,9 @@ const reverseCardOrder: State<boolean> = booleanLocalStorageState(
 const unsetAutoPlayWhenWinnerChanges: State<boolean> = booleanLocalStorageState(
   'unset_autoplay_on_winner_change',
 );
+const showTrickInPlayerOrder: State<boolean> = booleanLocalStorageState(
+  'show_trick_in_player_order',
+);
 
 const settings: State<Settings> = combineState({
   fourColor,
@@ -27,6 +31,7 @@ const settings: State<Settings> = combineState({
   beepOnTurn,
   reverseCardOrder,
   unsetAutoPlayWhenWinnerChanges,
+  showTrickInPlayerOrder,
 });
 
 export default settings;
