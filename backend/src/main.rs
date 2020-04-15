@@ -109,6 +109,7 @@ pub enum UserMessage {
     Message(String),
     Action(interactive::Message),
     Kick(types::PlayerID),
+    Beep,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -126,6 +127,7 @@ pub enum GameMessage {
         data: interactive::BroadcastMessage,
         message: String,
     },
+    Beep,
     Error(String),
     Kicked,
 }
@@ -454,6 +456,25 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             };
             let logger = game.tracer(&logger, &room, Some(join_span));
             match msg {
+                UserMessage::Beep => match game.game.next_player() {
+                    Ok(player_id) => {
+                        for user in game.users.values() {
+                            user.send(&GameMessage::Message {
+                                from: name.clone(),
+                                message: "BEEP".to_owned(),
+                            });
+                            if user.player_id == player_id {
+                                user.send(&GameMessage::Beep);
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        let err = GameMessage::Error(format!("{}", err));
+                        if !send_to_user(err) {
+                            break;
+                        }
+                    }
+                },
                 UserMessage::Message(m) => {
                     // Broadcast this msg to everyone
                     for user in game.users.values() {

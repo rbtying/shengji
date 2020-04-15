@@ -11,6 +11,7 @@ import LabeledPlay from './LabeledPlay';
 import Players from './Players';
 import ArrayUtils from './util/array';
 import AutoPlayButton from './AutoPlayButton';
+import BeepButton from './BeepButton';
 import {WebsocketContext} from './WebsocketProvider';
 
 type Props = {
@@ -104,6 +105,7 @@ const Play = (props: Props) => {
         Finish trick
       </button>
       {canFinish && <button onClick={startNewGame}>Finish game</button>}
+      <BeepButton />
       <Cards
         cardsInHand={props.cards}
         selectedCards={selected}

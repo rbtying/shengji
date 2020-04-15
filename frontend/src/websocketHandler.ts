@@ -1,4 +1,5 @@
 import {AppState} from './AppStateProvider';
+import beep from './beep';
 
 const truncate = (length: number) => <T>(array: T[]): T[] => {
   if (array.length > length) {
@@ -52,11 +53,26 @@ const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
   }
 };
 
+let lastBeeped = performance.now();
+const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
+  if (message === 'Beep') {
+    const now = performance.now();
+    // Rate-limit beeps to prevent annoyance.
+    if (now - lastBeeped >= 500) {
+      beep(3, 261.63, 200);
+      lastBeeped = now;
+    }
+  } else {
+    return null;
+  }
+};
+
 const allHandlers: WebsocketHandler[] = [
   messageHandler,
   broadcastHandler,
   errorHandler,
   stateHandler,
+  beepHandler,
 ];
 
 const composedHandlers: WebsocketHandler = (state: AppState, message: any) => {
