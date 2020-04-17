@@ -234,6 +234,7 @@ impl TrickFormat {
         let mut possibilities = TrickUnit::find_plays(trump, cards.iter().copied())
             .into_iter()
             .collect::<Vec<Units>>();
+        possibilities.sort_by_key(|units| units.iter().map(|u| (u.size(), u.is_tractor())).max());
         let mut units = possibilities.pop().unwrap();
 
         units.sort_by(|a, b| {
@@ -376,14 +377,12 @@ impl Trick {
                                     .clone()
                                     .collect::<BTreeMap<OrderedCard, usize>>();
                                 for (c, ct) in in_suit.range(members[1]..) {
-                                    let mut higher_tractors = Units::new();
-                                    find_tractors_from_start(
+                                    let higher_tractors = find_tractors_from_start(
                                         *c,
                                         *ct,
                                         &in_suit,
                                         *count,
                                         members.len(),
-                                        &mut higher_tractors,
                                     );
                                     if !higher_tractors.is_empty() {
                                         invalid = Some((player, unit.clone()));
@@ -537,158 +536,6 @@ pub struct TrickEnded {
     pub largest_trick_unit_size: usize,
     pub failed_throw_size: usize,
 }
-
-/*
-
-#[derive(Debug)]
-pub struct FoundTractor {
-    members: Vec<Card>,
-    count: usize,
-    size: usize,
-}
-
-pub fn find_tractors(trump: Trump, counts: &HashMap<Card, usize>) -> Vec<FoundTractor> {
-    let mut tractors = vec![];
-    for (card, count) in counts {
-        if *count <= 1 {
-            continue;
-        }
-
-        // DFS for possible tractors
-        let mut stk = vec![(*card, vec![*card])];
-        while let Some((c, p)) = stk.pop() {
-            for cc in trump.successor(c) {
-                if counts.get(&cc).cloned().unwrap_or(0) > 1 {
-                    let mut pp = p.clone();
-                    pp.push(cc);
-                    stk.push((cc, pp));
-                }
-            }
-            if p.len() >= 2 {
-                // This is a tractor!
-                let min_count = p.iter().map(|cc| counts[&cc]).min().unwrap();
-                let size = p.len() * min_count;
-                tractors.push(FoundTractor {
-                    members: p,
-                    count: min_count,
-                    size,
-                });
-            }
-        }
-    }
-
-    // Sort the tractors by the number of available cards
-    tractors.sort_by_key(|FoundTractor { size, .. }| *size);
-    tractors
-}
-
-pub fn check_format_matches(
-    trump: Trump,
-    units: &'_ [TrickUnit],
-    mut counts: HashMap<Card, usize>,
-) -> bool {
-    check_format_matches_inner(trump, units, &mut counts, &mut vec![])
-}
-
-pub fn check_format_matches_mapping(
-    trump: Trump,
-    units: &'_ [TrickUnit],
-    mut counts: HashMap<Card, usize>,
-) -> Option<Vec<TrickUnit>> {
-    // Start out with dummy values.
-    let mut matches = units
-        .iter()
-        .map(|_| TrickUnit::Repeated {
-            count: 0,
-            card: Card::BigJoker,
-        })
-        .collect();
-    let matched = check_format_matches_inner(trump, units, &mut counts, &mut matches);
-    if matched {
-        matches.sort_by(|a, b| {
-            a.size()
-                .cmp(&b.size())
-                .then(trump.compare(a.first_card(), b.first_card()))
-        });
-        Some(matches)
-    } else {
-        None
-    }
-}
-
-fn check_format_matches_inner(
-    trump: Trump,
-    units: &'_ [TrickUnit],
-    counts: &'_ mut HashMap<Card, usize>,
-    allocations: &'_ mut Vec<TrickUnit>,
-) -> bool {
-    if let Some(unit) = units.last() {
-        match unit {
-            TrickUnit::Tractor { members, count } => {
-                let mut available_tractors = find_tractors(trump, &counts);
-                available_tractors.retain(
-                    |FoundTractor {
-                         members: t,
-                         count: ct,
-                         ..
-                     }| t.len() == members.len() && *ct == *count,
-                );
-                for FoundTractor { members, count, .. } in available_tractors {
-                    for card in &members {
-                        *counts.get_mut(card).unwrap() -= count;
-                    }
-                    if check_format_matches_inner(
-                        trump,
-                        &units[..units.len() - 1],
-                        counts,
-                        allocations,
-                    ) {
-                        if !allocations.is_empty() {
-                            allocations[units.len() - 1] = TrickUnit::Tractor { members, count };
-                        }
-                        return true;
-                    } else {
-                        for card in &members {
-                            *counts.get_mut(card).unwrap() += count;
-                        }
-                    }
-                }
-                false
-            }
-            TrickUnit::Repeated { count, .. } => {
-                let viable_repeated = counts
-                    .iter()
-                    .filter(|(_, ct)| **ct >= *count)
-                    .map(|(card, _)| *card)
-                    .collect::<Vec<_>>();
-                for card in viable_repeated {
-                    *counts.get_mut(&card).unwrap() -= count;
-
-                    if check_format_matches_inner(
-                        trump,
-                        &units[..units.len() - 1],
-                        counts,
-                        allocations,
-                    ) {
-                        if !allocations.is_empty() {
-                            allocations[units.len() - 1] = TrickUnit::Repeated {
-                                count: *count,
-                                card,
-                            };
-                        }
-                        return true;
-                    } else {
-                        *counts.get_mut(&card).unwrap() += count;
-                    }
-                }
-                false
-            }
-        }
-    } else {
-        true
-    }
-}
-*/
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[allow(unused)]
@@ -859,14 +706,13 @@ fn check_format_inner(
         }) => {
             let mut potential_starts = Units::new();
             for (card, count) in &*counts {
-                find_tractors_from_start(
+                potential_starts.extend(find_tractors_from_start(
                     *card,
                     *count,
                     counts,
                     width,
                     length as usize,
-                    &mut potential_starts,
-                );
+                ));
             }
             for tractor in potential_starts {
                 let (found, mut path) = without_cards(counts, &tractor, |subcounts| {
@@ -909,10 +755,11 @@ fn find_tractors_from_start(
     counts: &BTreeMap<OrderedCard, usize>,
     min_count: usize,
     min_length: usize,
-    potential_starts: &mut Units,
-) {
+) -> Units {
+    let mut potential_starts = Units::new();
+
     if count < min_count {
-        return;
+        return potential_starts;
     }
 
     let mut next_cards: SmallVec<[(OrderedCard, SmallVec<_>); 1]> = card
@@ -944,6 +791,7 @@ fn find_tractors_from_start(
             break;
         }
     }
+    potential_starts
 }
 
 fn find_plays_inner(
@@ -964,11 +812,26 @@ fn find_plays_inner(
     // The return values are therefore always sorted in reverse `first_card` order.
     let mut potential_starts = Units::new();
     for (card, count) in iter {
-        find_tractors_from_start(*card, *count, counts, 2, 2, &mut potential_starts);
-        potential_starts.push(TrickUnit::Repeated {
-            card: *card,
-            count: *count,
-        });
+        let new_tractors = find_tractors_from_start(*card, *count, counts, 2, 2);
+
+        let all_consumed = new_tractors.len() > 0
+            && new_tractors.iter().all(|t| match t {
+                TrickUnit::Repeated { .. } => unreachable!(),
+                TrickUnit::Tractor {
+                    ref members,
+                    count: width,
+                } => members
+                    .iter()
+                    .all(|c| counts.get(c).copied().unwrap_or(0) == *width),
+            });
+        potential_starts.extend(new_tractors);
+
+        if !all_consumed {
+            potential_starts.push(TrickUnit::Repeated {
+                card: *card,
+                count: *count,
+            });
+        }
         break;
     }
 
@@ -1003,7 +866,9 @@ mod tests {
 
     use crate::hands::Hands;
     use crate::types::{
-        cards::{H_2, H_3, H_4, H_7, H_8, H_A, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_A, S_K, S_Q},
+        cards::{
+            H_2, H_3, H_4, H_5, H_7, H_8, H_A, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_A, S_K, S_Q,
+        },
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
 
@@ -1063,6 +928,14 @@ mod tests {
         test_eq!(H_2, H_2, H_3, H_3, H_3; [[H_3], [H_2, H_2, H_3, H_3]], [[H_3, H_3, H_3], [H_2, H_2]]);
         test_eq!(H_4, H_4, S_4, S_4; [[H_4, H_4, S_4, S_4]]);
         test_eq!(H_4, H_4, S_A, S_A; [[S_A, S_A, H_4, H_4]]);
+        test_eq!(S_Q, S_Q, S_K, S_K, S_A; [[S_A], [S_Q, S_Q, S_K, S_K]]);
+
+        test_eq!(H_3, H_3, H_3, H_5, H_5, H_5; [[H_3, H_3, H_3, H_5, H_5, H_5]]);
+        test_eq!(H_2, H_2, H_3, H_3, H_3, H_5, H_5, H_5;
+            [[H_5, H_5, H_5], [H_3], [H_2, H_2, H_3, H_3]],
+            [[H_3, H_3, H_3, H_5, H_5, H_5], [H_2, H_2]],
+            [[H_5], [H_3], [H_2, H_2, H_3, H_3, H_5, H_5]]
+        );
     }
 
     #[test]
