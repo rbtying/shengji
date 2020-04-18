@@ -381,9 +381,13 @@ impl Trick {
                                     ..
                                 } in find_tractors(self.trump, hands.get(*player)?)
                                 {
-                                    if self.trump.effective_suit(members[0]) == tf.suit
+                                    if self.trump.effective_suit(found_members[0]) == tf.suit
                                         && found_count >= *count
                                         && found_members.len() >= members.len()
+                                        && self.trump.compare(
+                                            found_members[found_members.len() - members.len()],
+                                            members[0],
+                                        ) == Ordering::Greater
                                     {
                                         invalid = Some((player, unit.clone()));
                                         break 'search;
@@ -689,7 +693,7 @@ mod tests {
 
     use crate::hands::Hands;
     use crate::types::{
-        cards::{H_2, H_3, H_7, H_8, S_2, S_3, S_4, S_5, S_6, S_7, S_8},
+        cards::{H_2, H_3, H_7, H_8, H_A, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_A, S_K, S_Q},
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
 
@@ -1043,5 +1047,40 @@ mod tests {
         let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2]));
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5]));
+    }
+
+    #[test]
+    fn test_play_throw_tractor_with_other_tractor_in_game() {
+        let trump = Trump::Standard {
+            number: Number::Four,
+            suit: Suit::Hearts,
+        };
+
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let p2_hand = vec![H_2, H_2, H_3, H_A, H_3];
+        let p1_hand = vec![S_Q, S_Q, S_K, S_K, S_A];
+        let p3_hand = vec![S_A, S_A, S_3, S_3, S_3];
+        let p4_hand = vec![S_3, S_3, S_3, S_3, S_3];
+
+        hands.add(P1, p1_hand.clone()).unwrap();
+        hands.add(P2, p2_hand.clone()).unwrap();
+        hands.add(P3, p3_hand.clone()).unwrap();
+        hands.add(P4, p4_hand.clone()).unwrap();
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+        trick.play_cards(P1, &mut hands, &p1_hand).unwrap();
+        trick.play_cards(P2, &mut hands, &p2_hand).unwrap();
+        trick.play_cards(P3, &mut hands, &p3_hand).unwrap();
+        trick.play_cards(P4, &mut hands, &p4_hand).unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            failed_throw_size,
+            ..
+        } = trick.complete().unwrap();
+        assert_eq!(largest_trick_unit_size, 4);
+        assert_eq!(winner_id, P2);
+        assert_eq!(points, vec![S_K, S_K]);
+        assert_eq!(failed_throw_size, 0);
     }
 }
