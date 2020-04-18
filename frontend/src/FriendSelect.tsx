@@ -1,7 +1,10 @@
 import * as React from 'react';
+import Select from 'react-select';
 import {ITrump} from './types';
 import ArrayUtils from './util/array';
 import preloadedCards from './preloadedCards';
+import InlineCard from './InlineCard';
+import {cardLookup} from './util/cardHelpers';
 
 type FriendSelection = {
   card: string;
@@ -13,16 +16,19 @@ type Props = {
   num_decks: number;
   onChange: (input: FriendSelection) => void;
 };
+type Option = {
+  value: string;
+  label: string;
+};
 
 const FriendSelect = (props: Props) => {
-  const handleChange = (
-    transform: (e: HTMLSelectElement) => Partial<FriendSelection>,
-  ) => (event: React.ChangeEvent<HTMLSelectElement>) => {
-    event.preventDefault();
+  const handleChange = (transform: (e: Option) => Partial<FriendSelection>) => (
+    value: Option,
+  ) => {
     props.onChange({
       card: props.friend.card,
       skip: props.friend.skip,
-      ...transform(event.target),
+      ...transform(value),
     });
   };
 
@@ -36,26 +42,52 @@ const FriendSelect = (props: Props) => {
   const rank = props.trump.Standard
     ? props.trump.Standard.number
     : props.trump.NoTrump.number;
+
+  const cardOptions: Option[] = [];
+  const currentValue: {[s: string]: any} = {};
+  if (props.friend.card !== '') {
+    const c = cardLookup[props.friend.card];
+    currentValue.label = `${c.number}${c.typ}`;
+    currentValue.value = c.value;
+  }
+
+  preloadedCards.forEach((c) => {
+    if (c.number !== null && c.number !== rank) {
+      cardOptions.push({
+        label: `${c.number}${c.typ}`,
+        value: c.value,
+      });
+    }
+  });
+
   return (
     <div className="friend-select">
-      <select value={props.friend.card} onChange={handleCardChange}>
-        <option value=""> </option>
-        {preloadedCards.map((c) => {
-          return c.number !== null && c.number !== rank ? (
-            <option
-              key={c.value}
-              value={c.value}
-            >{`${c.number}${c.typ}`}</option>
-          ) : null;
-        })}
-      </select>
-      <select value={props.friend.skip} onChange={handleOrdinalChange}>
-        {ArrayUtils.range(props.num_decks, (idx) => (
-          <option key={idx} value={idx}>
-            {idx + 1}
-          </option>
-        ))}
-      </select>
+      <div style={{width: '100px', display: 'inline-block'}}>
+        <Select
+          value={currentValue}
+          onChange={handleCardChange}
+          options={cardOptions}
+          formatOptionLabel={({value}) => <InlineCard card={value} />}
+        />
+      </div>
+      <div
+        style={{width: '100px', display: 'inline-block', marginLeft: '10px'}}
+      >
+        <Select
+          value={
+            props.friend.skip !== null
+              ? {
+                  value: `${props.friend.skip}`,
+                  label: `#${props.friend.skip + 1}`,
+                }
+              : {}
+          }
+          onChange={handleOrdinalChange}
+          options={ArrayUtils.range(props.num_decks, (idx) => {
+            return {value: `${idx}`, label: `#${idx + 1}`};
+          })}
+        />
+      </div>
     </div>
   );
 };
