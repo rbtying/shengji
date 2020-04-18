@@ -5,7 +5,7 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .trick { padding: 10px; }
 .card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; }
 .card.unknown { cursor: default; color: #aaa; }
-.notify .card, .card.notify { animation:blinkingText 1.5s infinite; }
+.notify .card, .card.notify { animation:blinkingText 1.5s 1; color: #000; }
 @keyframes blinkingText {
   0% {color: #000; }
   50% { color: #aaa; }
