@@ -152,7 +152,8 @@ impl TrickFormat {
                 .map(UnitLike::from)
                 .collect::<SmallVec<[_; 4]>>()];
 
-            while let Some(requirement) = requirements.pop() {
+            while let Some(mut requirement) = requirements.pop() {
+                eprintln!("checking {:?}", requirement);
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
                     self.trump,
@@ -175,6 +176,17 @@ impl TrickFormat {
                 }
 
                 // Otherwise, downgrade the requirements.
+                while let Some(unit) = requirement.pop() {
+                    let decomposed = unit.decompose();
+                    if !decomposed.is_empty() {
+                        for subunits in decomposed {
+                            let mut r = requirement.clone();
+                            r.extend(subunits);
+                            requirements.push(r);
+                        }
+                        break;
+                    }
+                }
             }
 
             // Couldn't meet requirements in either hand or proposed play, so the proposed play is
@@ -538,36 +550,42 @@ pub struct TrickEnded {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-#[allow(unused)]
 enum UnitLike {
     Tractor { count: usize, length: usize },
     Repeated { count: usize },
 }
 
 impl UnitLike {
-    #[allow(unused)]
-    fn decompose(&self) -> SmallVec<[UnitLike; 2]> {
+    fn decompose(&self) -> SmallVec<[SmallVec<[UnitLike; 2]>; 2]> {
         let mut units = smallvec![];
 
         match self {
             UnitLike::Tractor { count, length } => {
                 // Try making the tractor smaller
                 if *count > 2 {
-                    units.push(UnitLike::Tractor {
+                    units.push(smallvec![UnitLike::Tractor {
                         length: *length,
                         count: count - 1,
-                    });
-                }
-                if *length > 2 {
-                    units.push(UnitLike::Tractor {
-                        length: length - 1,
-                        count: *count,
-                    });
+                    }]);
                 }
                 // Also try separating the tractor into pieces
+                if *length > 2 {
+                    units.push(smallvec![
+                        UnitLike::Tractor {
+                            length: length - 1,
+                            count: *count,
+                        },
+                        UnitLike::Repeated { count: *count }
+                    ]);
+                } else if *length == 2 {
+                    units.push(smallvec![
+                        UnitLike::Repeated { count: *count },
+                        UnitLike::Repeated { count: *count }
+                    ]);
+                }
             }
             UnitLike::Repeated { count } if *count > 2 => {
-                units.push(UnitLike::Repeated { count: count - 1 });
+                units.push(smallvec![UnitLike::Repeated { count: count - 1 }]);
             }
             _ => (),
         }
@@ -575,7 +593,6 @@ impl UnitLike {
         units
     }
 
-    #[allow(unused)]
     fn check_play(
         trump: Trump,
         iter: impl IntoIterator<Item = Card>,
@@ -753,12 +770,12 @@ fn find_tractors_from_start(
     card: OrderedCard,
     count: usize,
     counts: &BTreeMap<OrderedCard, usize>,
-    min_count: usize,
+    external_min_count: usize,
     min_length: usize,
 ) -> Units {
     let mut potential_starts = Units::new();
 
-    if count < min_count {
+    if count < external_min_count {
         return potential_starts;
     }
 
@@ -776,7 +793,7 @@ fn find_tractors_from_start(
             if next_count >= 2 {
                 min_count = min_count.min(next_count);
                 path.push(next_card);
-                if min_count >= min_count && path.len() >= min_length {
+                if min_count >= external_min_count && path.len() >= min_length {
                     potential_starts.push(TrickUnit::Tractor {
                         members: path.clone(),
                         count: min_count,
@@ -804,17 +821,17 @@ fn find_plays_inner(
         return smallvec![];
     }
 
-    let iter = match min_start {
+    let mut iter = match min_start {
         Some(c) => counts.range(c..),
         None => counts.range(..),
     };
     // We can skip everything < `min_start` safely, because we pick starts from lowest to highest.
     // The return values are therefore always sorted in reverse `first_card` order.
     let mut potential_starts = Units::new();
-    for (card, count) in iter {
+    if let Some((card, count)) = iter.next() {
         let new_tractors = find_tractors_from_start(*card, *count, counts, 2, 2);
 
-        let all_consumed = new_tractors.len() > 0
+        let all_consumed = !new_tractors.is_empty()
             && new_tractors.iter().all(|t| match t {
                 TrickUnit::Repeated { .. } => unreachable!(),
                 TrickUnit::Tractor {
@@ -832,7 +849,6 @@ fn find_plays_inner(
                 count: *count,
             });
         }
-        break;
     }
 
     if let Some(start) = potential_starts.iter().find(|u| u.size() == num_cards) {
@@ -1273,6 +1289,19 @@ mod tests {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
             units: smallvec![TrickUnit::Repeated {
+                count: 3,
+                card: oc!(S_3),
+            }],
+        };
+
+        let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5]));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5]));
+
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: smallvec![TrickUnit::Repeated {
                 count: 5,
                 card: oc!(S_3),
             }],
@@ -1297,6 +1326,7 @@ mod tests {
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2]));
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5]));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3]));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
