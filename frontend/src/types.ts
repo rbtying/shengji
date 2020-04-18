@@ -110,22 +110,10 @@ export interface IPlayer {
   level: string;
 }
 
-export interface ITrickUnit {
-  Tractor: {count: number; members: string[]} | null;
-  Repeated: {count: number; card: string} | null;
-}
-
-export interface ITrickFormat {
-  suit: string;
-  trump: ITrump;
-  units: [ITrickUnit];
-}
-
 export interface ITrick {
   player_queue: number[];
   played_cards: IPlayedCards[];
   current_winner: number | null;
-  trick_format: ITrickFormat | null;
   trump: ITrump;
 }
 

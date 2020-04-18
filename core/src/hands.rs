@@ -110,12 +110,9 @@ impl Hands {
 
     pub fn cards(&self, id: PlayerID) -> Result<Vec<Card>, HandError> {
         self.exists(id)?;
-        let mut cards = vec![];
-        for (card, number) in &self.hands[&id] {
-            for _ in 0..*number {
-                cards.push(*card);
-            }
-        }
+        let mut cards = Card::cards(self.hands[&id].iter())
+            .copied()
+            .collect::<Vec<Card>>();
         if let Some(trump) = self.trump {
             cards.sort_by(|a, b| trump.compare(*a, *b));
         } else {

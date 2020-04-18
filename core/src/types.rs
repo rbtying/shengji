@@ -4,6 +4,7 @@ use std::fmt;
 
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
+use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(transparent)]
@@ -126,30 +127,30 @@ impl Trump {
         }
     }
 
-    pub fn successor(self, card: Card) -> Vec<Card> {
+    pub fn successor(self, card: Card) -> SmallVec<[Card; 4]> {
         match card {
-            Card::Unknown => vec![],
-            Card::BigJoker => vec![],
-            Card::SmallJoker => vec![Card::BigJoker],
+            Card::Unknown => smallvec![],
+            Card::BigJoker => smallvec![],
+            Card::SmallJoker => smallvec![Card::BigJoker],
             Card::Suited { suit, number } if number == self.number() => match self {
                 Trump::Standard {
                     suit: trump_suit,
                     number: trump_number,
                 } => {
                     if suit == trump_suit {
-                        vec![Card::SmallJoker]
+                        smallvec![Card::SmallJoker]
                     } else {
-                        vec![Card::Suited {
+                        smallvec![Card::Suited {
                             suit: trump_suit,
                             number: trump_number,
                         }]
                     }
                 }
-                Trump::NoTrump { .. } => vec![Card::SmallJoker],
+                Trump::NoTrump { .. } => smallvec![Card::SmallJoker],
             },
             Card::Suited { suit, number } if number.successor() == Some(self.number()) => {
                 match number.successor().and_then(|n| n.successor()) {
-                    Some(n) => vec![Card::Suited { suit, number: n }],
+                    Some(n) => smallvec![Card::Suited { suit, number: n }],
                     None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
                         .iter()
                         .flat_map(|s| {
@@ -163,11 +164,11 @@ impl Trump {
                             }
                         })
                         .collect(),
-                    None => vec![],
+                    None => smallvec![],
                 }
             }
             Card::Suited { suit, number } => match number.successor() {
-                Some(n) => vec![Card::Suited { suit, number: n }],
+                Some(n) => smallvec![Card::Suited { suit, number: n }],
                 None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
                     .iter()
                     .flat_map(|s| {
@@ -181,12 +182,17 @@ impl Trump {
                         }
                     })
                     .collect(),
-                None => vec![],
+                None => smallvec![],
             },
         }
     }
 
     pub fn compare(self, card1: Card, card2: Card) -> Ordering {
+        self.compare_effective(card1, card2)
+            .then(card1.as_char().cmp(&card2.as_char()))
+    }
+
+    pub fn compare_effective(self, card1: Card, card2: Card) -> Ordering {
         if card1 == card2 {
             return Ordering::Equal;
         }
@@ -287,6 +293,12 @@ impl Card {
             *counts.entry(card).or_insert(0) += 1
         }
         counts
+    }
+
+    pub fn cards<'a, 'b: 'a>(
+        iter: impl Iterator<Item = (&'b Card, &'b usize)> + 'a,
+    ) -> impl Iterator<Item = &'b Card> + 'a {
+        iter.flat_map(|(card, count)| (0..*count).map(move |_| card))
     }
 
     pub fn as_info(self) -> CardInfo {
@@ -992,38 +1004,43 @@ mod tests {
             number: Number::Four,
             suit: Suit::Spades,
         };
-        assert_eq!(trump.successor(cards::S_3), vec![cards::S_5]);
-        assert_eq!(trump.successor(cards::S_4), vec![Card::SmallJoker]);
-        assert!(trump.successor(cards::H_4).contains(&cards::S_4));
-        assert!(trump.successor(cards::S_A).contains(&cards::H_4));
-        assert!(trump.successor(cards::H_A).is_empty());
+
+        let s = |c| trump.successor(c).into_iter().collect::<Vec<_>>();
+        assert_eq!(s(cards::S_3), vec![cards::S_5]);
+        assert_eq!(s(cards::S_4), vec![Card::SmallJoker]);
+        assert!(s(cards::H_4).contains(&cards::S_4));
+        assert!(s(cards::S_A).contains(&cards::H_4));
+        assert!(s(cards::H_A).is_empty());
 
         let no_trump = Trump::NoTrump {
             number: Number::Four,
         };
-        assert_eq!(no_trump.successor(cards::S_3), vec![cards::S_5]);
-        assert_eq!(no_trump.successor(cards::S_4), vec![Card::SmallJoker]);
-        assert_eq!(no_trump.successor(cards::H_4), vec![Card::SmallJoker]);
-        assert!(no_trump.successor(cards::S_A).is_empty());
-        assert!(no_trump.successor(cards::H_A).is_empty());
+        let s = |c| no_trump.successor(c).into_iter().collect::<Vec<_>>();
+        assert_eq!(s(cards::S_3), vec![cards::S_5]);
+        assert_eq!(s(cards::S_4), vec![Card::SmallJoker]);
+        assert_eq!(s(cards::H_4), vec![Card::SmallJoker]);
+        assert!(s(cards::S_A).is_empty());
+        assert!(s(cards::H_A).is_empty());
 
         let trump_ace = Trump::Standard {
             number: Number::Ace,
             suit: Suit::Spades,
         };
-        assert_eq!(trump_ace.successor(cards::S_3), vec![cards::S_4]);
-        assert_eq!(trump_ace.successor(cards::S_A), vec![Card::SmallJoker]);
-        assert_eq!(trump_ace.successor(cards::H_A), vec![cards::S_A]);
-        assert!(trump_ace.successor(cards::S_K).contains(&cards::H_A));
-        assert!(trump_ace.successor(cards::H_K).is_empty());
+        let s = |c| trump_ace.successor(c).into_iter().collect::<Vec<_>>();
+        assert_eq!(s(cards::S_3), vec![cards::S_4]);
+        assert_eq!(s(cards::S_A), vec![Card::SmallJoker]);
+        assert_eq!(s(cards::H_A), vec![cards::S_A]);
+        assert!(s(cards::S_K).contains(&cards::H_A));
+        assert!(s(cards::H_K).is_empty());
 
         let no_trump_ace = Trump::NoTrump {
             number: Number::Ace,
         };
-        assert_eq!(no_trump_ace.successor(cards::S_3), vec![cards::S_4]);
-        assert_eq!(no_trump_ace.successor(cards::S_A), vec![Card::SmallJoker]);
-        assert_eq!(no_trump_ace.successor(cards::H_A), vec![Card::SmallJoker]);
-        assert!(no_trump_ace.successor(cards::S_K).is_empty());
-        assert!(no_trump_ace.successor(cards::H_K).is_empty());
+        let s = |c| no_trump_ace.successor(c).into_iter().collect::<Vec<_>>();
+        assert_eq!(s(cards::S_3), vec![cards::S_4]);
+        assert_eq!(s(cards::S_A), vec![Card::SmallJoker]);
+        assert_eq!(s(cards::H_A), vec![Card::SmallJoker]);
+        assert!(s(cards::S_K).is_empty());
+        assert!(s(cards::H_K).is_empty());
     }
 }
