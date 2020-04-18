@@ -67,7 +67,9 @@ const FriendSelect = (props: Props) => {
           value={currentValue}
           onChange={handleCardChange}
           options={cardOptions}
-          formatOptionLabel={({value}) => <InlineCard card={value} />}
+          formatOptionLabel={({value}) =>
+            value ? <InlineCard card={value} /> : value
+          }
         />
       </div>
       <div
