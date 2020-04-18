@@ -556,6 +556,7 @@ enum UnitLike {
 }
 
 impl UnitLike {
+    #[allow(clippy::comparison_chain)]
     fn decompose(&self) -> SmallVec<[SmallVec<[UnitLike; 2]>; 2]> {
         let mut units = smallvec![];
 
