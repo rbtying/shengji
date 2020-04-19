@@ -153,7 +153,6 @@ impl TrickFormat {
                 .collect::<SmallVec<[_; 4]>>()];
 
             while let Some(mut requirement) = requirements.pop() {
-                eprintln!("checking {:?}", requirement);
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
                     self.trump,
