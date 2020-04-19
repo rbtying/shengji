@@ -6,6 +6,7 @@ import {WebsocketContext} from './WebsocketProvider';
 
 const Container = styled.div`
   width: 80%;
+  max-width: 35em;
   border: 1px solid #eee;
   border-radius: 4px;
   padding: 1em;
@@ -21,6 +22,7 @@ const Cell = styled.div`
   border-style: solid;
   border-color: transparent;
   border-width: 0.2em 1em;
+  white-space: nowrap;
 `;
 
 const FullWidthCell = styled.div`
@@ -54,8 +56,8 @@ type RowProps = {
 };
 const UserRow = (props: RowProps) => (
   <Row key={props.player.name}>
-    <Cell style={{width: '50%'}}>{props.player.name}</Cell>
-    <Cell style={{width: '50%'}}>Rank {props.player.level}</Cell>
+    <Cell style={{width: '100%'}}>{props.player.name}</Cell>
+    <Cell>Rank {props.player.level}</Cell>
     <Cell>{props.actions}</Cell>
   </Row>
 );
