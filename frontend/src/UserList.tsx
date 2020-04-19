@@ -57,8 +57,14 @@ type RowProps = {
 };
 const UserRow = (props: RowProps) => (
   <Row key={props.player.name}>
-    <Cell style={{borderRight: '0px', userSelect: 'none'}}>
-      {props.isLandlord && '👑'}
+    <Cell
+      style={{
+        borderRight: '0px',
+        userSelect: 'none',
+        color: props.isLandlord ? 'black' : 'transparent',
+      }}
+    >
+      👑
     </Cell>
     <Cell style={{width: '100%'}}>{props.player.name}</Cell>
     <Cell>Rank {props.player.level}</Cell>
