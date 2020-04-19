@@ -29,7 +29,7 @@ const FullWidthCell = styled.div`
 
 const Heading = styled(FullWidthCell)`
   font-size: 1.2em;
-  padding: 1em 0.5em 0.5em 0.5em;
+  padding: 0.5em;
   font-weight: 200;
 `;
 
@@ -116,7 +116,9 @@ const UserList = (props: Props) => {
       ))}
       {players.length === 0 && <Empty>(No players)</Empty>}
 
-      {observers.length > 0 && <Heading>Spectators</Heading>}
+      {observers.length > 0 && (
+        <Heading style={{paddingTop: '1em'}}>Spectators</Heading>
+      )}
       {observers.map((observer) => (
         <UserRow
           player={observer}
