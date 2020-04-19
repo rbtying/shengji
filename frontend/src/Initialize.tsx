@@ -2,13 +2,12 @@ import * as React from 'react';
 import LandlordSelector from './LandlordSelector';
 import NumDecksSelector from './NumDecksSelector';
 import RankSelector from './RankSelector';
-import Kicker from './Kicker';
 import ArrayUtils from './util/array';
 import {IInitializePhase} from './types';
 import {WebsocketContext} from './WebsocketProvider';
 import {IPlayer} from './types';
 import Header from './Header';
-import Players from './Players';
+import UserList from './UserList';
 
 type Props = {
   state: IInitializePhase;
@@ -161,13 +160,10 @@ const Initialize = (props: Props) => {
         gameMode={props.state.propagated.game_mode}
         chatLink={props.state.propagated.chat_link}
       />
-      <Players
+      <UserList
+        currentPlayer={currentPlayer}
         players={props.state.propagated.players}
         observers={props.state.propagated.observers}
-        landlord={props.state.propagated.landlord}
-        next={null}
-        movable={true}
-        name={props.name}
       />
       <p>
         Send link to other players to allow them to join the game:{' '}
@@ -180,10 +176,6 @@ const Initialize = (props: Props) => {
       ) : (
         <h2>Waiting for players...</h2>
       )}
-      <Kicker
-        players={props.state.propagated.players}
-        onKick={(playerId: number) => send({Kick: playerId})}
-      />
       <div className="game-settings">
         <h3>Game settings</h3>
         <div>
