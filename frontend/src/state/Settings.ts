@@ -3,6 +3,7 @@ import {booleanLocalStorageState} from '../localStorageState';
 
 export type Settings = {
   fourColor: boolean;
+  showCardLabels: boolean;
   showLastTrick: boolean;
   beepOnTurn: boolean;
   reverseCardOrder: boolean;
@@ -11,6 +12,9 @@ export type Settings = {
 };
 
 const fourColor: State<boolean> = booleanLocalStorageState('four_color');
+const showCardLabels: State<boolean> = booleanLocalStorageState(
+  'show_card_labels',
+);
 const showLastTrick: State<boolean> = booleanLocalStorageState(
   'show_last_trick',
 );
@@ -27,6 +31,7 @@ const showTrickInPlayerOrder: State<boolean> = booleanLocalStorageState(
 
 const settings: State<Settings> = combineState({
   fourColor,
+  showCardLabels,
   showLastTrick,
   beepOnTurn,
   reverseCardOrder,

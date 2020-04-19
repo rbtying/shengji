@@ -1,6 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 import {cardLookup} from './util/cardHelpers';
+import InlineCard from './InlineCard';
 
 type Props = {
   card: string;
@@ -22,6 +23,9 @@ const Card = (props: Props) => {
         className={classNames('card', cardInfo.typ, props.className)}
         onClick={props.onClick}
       >
+        <div className="card-label">
+          <InlineCard card={props.card} />
+        </div>
         {cardInfo.display_value}
       </span>
     );

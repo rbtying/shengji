@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classNames from 'classnames';
 import Errors from './Errors';
 import Initialize from './Initialize';
 import Draw from './Draw';
@@ -44,7 +45,12 @@ const Root = () => {
         cards.reverse();
       }
       return (
-        <div className={state.settings.fourColor ? 'four-color' : ''}>
+        <div
+          className={classNames(
+            state.settings.fourColor ? 'four-color' : '',
+            state.settings.showCardLabels ? 'always-show-labels' : '',
+          )}
+        >
           <Errors errors={state.errors} />
           <div className="game">
             {state.game_state.Initialize ? null : (
