@@ -19,13 +19,13 @@ const bootstrap = () => {
   const root = document.getElementById('root');
   ReactModal.setAppElement(root);
   ReactDOM.render(
-    <AppStateProvider>
-      <WebsocketProvider>
-        <TimerProvider>
+    <TimerProvider>
+      <AppStateProvider>
+        <WebsocketProvider>
           <Root />
-        </TimerProvider>
-      </WebsocketProvider>
-    </AppStateProvider>,
+        </WebsocketProvider>
+      </AppStateProvider>
+    </TimerProvider>,
     root,
   );
 };

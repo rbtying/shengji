@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {AppStateContext} from './AppStateProvider';
 import websocketHandler from './websocketHandler';
+import {TimerContext} from './TimerProvider';
 
 type Context = {
   send: (value: any) => void;
@@ -12,6 +13,8 @@ export const WebsocketContext = React.createContext<Context>({
 
 const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
   const {state, updateState} = React.useContext(AppStateContext);
+  const {setTimeout, clearTimeout} = React.useContext(TimerContext);
+  const [timer, setTimer] = React.useState<number | null>(null);
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
 
   // Because state/updateState are passed in and change every time something
@@ -21,11 +24,25 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
   // https://reactjs.org/docs/hooks-faq.html#why-am-i-seeing-stale-props-or-state-inside-my-function
   const stateRef = React.useRef(state);
   const updateStateRef = React.useRef(updateState);
+  const timerRef = React.useRef(timer);
+  const setTimerRef = React.useRef(setTimer);
+  const setTimeoutRef = React.useRef(setTimeout);
+  const clearTimeoutRef = React.useRef(clearTimeout);
 
   React.useEffect(() => {
     stateRef.current = state;
     updateStateRef.current = updateState;
   }, [state, updateState]);
+
+  React.useEffect(() => {
+    setTimeoutRef.current = setTimeout;
+    clearTimeoutRef.current = clearTimeout;
+  }, [setTimeout, clearTimeout]);
+
+  React.useEffect(() => {
+    timerRef.current = timer;
+    setTimerRef.current = setTimer;
+  }, [timer, setTimerRef]);
 
   React.useEffect(() => {
     const uri =
@@ -44,16 +61,42 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
       updateStateRef.current({connected: false}),
     );
     ws.addEventListener('message', (event: MessageEvent) => {
+      if (timerRef.current !== null) {
+        clearTimeoutRef.current(timerRef.current);
+      }
+      setTimerRef.current(null);
+
       const message = JSON.parse(event.data);
       if (message === 'Kicked') {
         ws.close();
       } else {
-        updateStateRef.current(websocketHandler(stateRef.current, message));
+        updateStateRef.current({
+          connected: true,
+          ...websocketHandler(stateRef.current, message),
+        });
       }
     });
+
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeoutRef.current(timerRef.current);
+      }
+    };
   }, []);
 
-  const send = (value: any) => websocket?.send(JSON.stringify(value));
+  const send = (value: any) => {
+    if (timerRef.current !== null) {
+      clearTimeoutRef.current(timerRef.current);
+    }
+    // We expect a response back from the server within 5 seconds. Otherwise,
+    // we should assume we have lost our websocket connection.
+    setTimerRef.current(
+      setTimeoutRef.current(() => {
+        updateStateRef.current({connected: false});
+      }, 5000),
+    );
+    websocket?.send(JSON.stringify(value));
+  };
   // TODO(read this from consumers instead of globals)
   (window as any).send = send;
 
