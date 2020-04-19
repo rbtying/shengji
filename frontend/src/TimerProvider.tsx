@@ -38,6 +38,9 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
       }
     });
     setWorker(timerWorker);
+    return () => {
+      timerWorker.terminate();
+    };
   }, []);
 
   const setTimeout = (fn: () => void, delay: number) => {
@@ -45,7 +48,9 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     delay = delay || 0;
     const id = timeoutId.current;
     callbacks.current[id] = fn;
-    worker.postMessage({command: 'setTimeout', id, timeout: delay});
+    if (worker !== null) {
+      worker.postMessage({command: 'setTimeout', id, timeout: delay});
+    }
     return id;
   };
 
@@ -59,12 +64,16 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     interval = interval || 0;
     const id = timeoutId.current;
     callbacks.current[id] = fn;
-    worker.postMessage({command: 'setInterval', id, interval});
+    if (worker !== null) {
+      worker.postMessage({command: 'setInterval', id, interval});
+    }
     return id;
   };
 
   const clearInterval = (id: number) => {
-    worker.postMessage({command: 'clearInterval', id});
+    if (worker !== null) {
+      worker.postMessage({command: 'clearInterval', id});
+    }
     delete callbacks.current[id];
   };
 
