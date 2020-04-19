@@ -3,8 +3,10 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .players button { padding: 2.5px; margin: 0 5px; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
 .trick { padding: 10px; }
-.card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; }
+.card { font-size: 8em; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; position: relative; }
 .card.unknown { cursor: default; color: #aaa; }
+.card .card-label { display: none; }
+.always-show-labels .card .card-label, .card:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.7em; bottom: 1em; z-index: 1; background: inherit; }
 .notify .card, .card.notify { animation:blinkingText 1.5s 1; color: #000; }
 @keyframes blinkingText {
   0% {color: #000; }

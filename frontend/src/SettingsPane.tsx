@@ -67,6 +67,19 @@ const SettingsPane = (props: Props) => {
           </Cell>
         </Row>
         <Row>
+          <LabelCell>always show card labels</LabelCell>
+          <Cell>
+            <input
+              name="show-card-labels"
+              type="checkbox"
+              checked={settings.showCardLabels}
+              onChange={handleChange({
+                showCardLabels: !settings.showCardLabels,
+              })}
+            />
+          </Cell>
+        </Row>
+        <Row>
           <LabelCell>show last trick</LabelCell>
           <Cell>
             <input
