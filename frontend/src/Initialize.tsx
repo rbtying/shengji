@@ -154,6 +154,10 @@ const Initialize = (props: Props) => {
     );
   }
 
+  const landlord = props.state.propagated.players.find(
+    (p: IPlayer) => p.id === props.state.propagated.landlord,
+  );
+
   return (
     <div>
       <Header
@@ -164,6 +168,7 @@ const Initialize = (props: Props) => {
         currentPlayer={currentPlayer}
         players={props.state.propagated.players}
         observers={props.state.propagated.observers}
+        landlord={landlord}
       />
       <p>
         Send link to other players to allow them to join the game:{' '}

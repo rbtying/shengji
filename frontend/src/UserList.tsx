@@ -53,9 +53,13 @@ const ButtonContainer = styled.div`
 type RowProps = {
   player: IPlayer;
   actions: JSX.Element;
+  isLandlord: boolean;
 };
 const UserRow = (props: RowProps) => (
   <Row key={props.player.name}>
+    <Cell style={{borderRight: '0px', userSelect: 'none'}}>
+      {props.isLandlord && '👑'}
+    </Cell>
     <Cell style={{width: '100%'}}>{props.player.name}</Cell>
     <Cell>Rank {props.player.level}</Cell>
     <Cell>{props.actions}</Cell>
@@ -66,6 +70,7 @@ type Props = {
   currentPlayer: IPlayer;
   players: IPlayer[];
   observers: IPlayer[];
+  landlord: IPlayer;
 };
 
 const UserList = (props: Props) => {
@@ -114,6 +119,7 @@ const UserList = (props: Props) => {
           player={player}
           key={player.name}
           actions={renderPlayerActions(player)}
+          isLandlord={player.id === props.landlord?.id}
         />
       ))}
       {players.length === 0 && <Empty>(No players)</Empty>}
@@ -126,6 +132,7 @@ const UserList = (props: Props) => {
           player={observer}
           key={observer.name}
           actions={renderObserverActions(observer)}
+          isLandlord={false}
         />
       ))}
     </Container>
