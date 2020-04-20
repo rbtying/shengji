@@ -73,7 +73,10 @@ const Play = (props: Props) => {
   return (
     <div>
       {shouldBeBeeping ? <Beeper /> : null}
-      <Header gameMode={playPhase.propagated.game_mode} />
+      <Header
+        gameMode={playPhase.propagated.game_mode}
+        chatLink={playPhase.propagated.chat_link}
+      />
       <Players
         players={playPhase.propagated.players}
         observers={playPhase.propagated.observers}
