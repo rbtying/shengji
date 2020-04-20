@@ -257,9 +257,9 @@ async fn main() {
 async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
     let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
     let mut games = games.lock().await;
-    // Drop all games where everyone is disconnected.
     games.retain(|_, game| {
-        !game.users.is_empty() || game.last_updated.elapsed() <= Duration::from_secs(3600)
+        // Drop all games where we haven't seen an update for over an hour.
+        game.last_updated.elapsed() <= Duration::from_secs(3600)
     });
 
     let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
