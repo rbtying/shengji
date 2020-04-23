@@ -1085,14 +1085,9 @@ impl DrawPhase {
                     if let Some(existing_bid) = self.bids.last() {
                         if new_bid.count > existing_bid.count {
                             valid_bids.push(new_bid);
-                        } else if new_bid.count == existing_bid.count {
-                            match (new_bid.card, existing_bid.card) {
-                                (Card::BigJoker, Card::SmallJoker)
-                                | (Card::BigJoker, Card::Suited { .. })
-                                | (Card::SmallJoker, Card::Suited { .. }) => {
-                                    valid_bids.push(new_bid);
-                                }
-                                _ => (),
+                        } else if new_bid.count == existing_bid.count && new_bid.count > 1 {
+                            if let Card::Suited { .. } = existing_bid.card {
+                                valid_bids.push(new_bid);
                             }
                         }
                     } else {
@@ -1273,7 +1268,7 @@ impl DerefMut for InitializePhase {
 mod tests {
     use super::InitializePhase;
 
-    use crate::types::cards;
+    use crate::types::{cards, Card};
 
     #[test]
     fn reinforce_bid() {
@@ -1286,11 +1281,11 @@ mod tests {
         // Hackily ensure that everyone can bid.
         draw.deck = vec![
             cards::S_2,
-            cards::D_2,
+            Card::SmallJoker,
             cards::C_2,
             cards::H_2,
             cards::S_2,
-            cards::D_2,
+            Card::SmallJoker,
             cards::C_2,
             cards::H_2,
         ];
@@ -1307,5 +1302,9 @@ mod tests {
 
         assert!(draw.bid(p1, cards::H_2, 1));
         assert!(draw.bid(p1, cards::H_2, 2));
+        assert!(draw.bid(p2, cards::C_2, 2));
+        assert!(draw.bid(p1, cards::H_2, 2));
+        assert!(draw.bid(p3, Card::SmallJoker, 2));
+        assert!(!draw.bid(p1, cards::H_2, 2));
     }
 }
