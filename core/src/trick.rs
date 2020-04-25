@@ -246,7 +246,7 @@ impl TrickFormat {
             .into_iter()
             .collect::<Vec<Units>>();
         possibilities.sort_by_key(|units| units.iter().map(|u| (u.size(), u.is_tractor())).max());
-        let mut units = possibilities.pop().unwrap();
+        let mut units = possibilities.pop().ok_or(TrickError::IllegalPlay)?;
 
         units.sort_by(|a, b| {
             a.size()

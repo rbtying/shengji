@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 
-use anyhow::{bail, Error};
+use anyhow::{anyhow, bail, Error};
 use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -10,6 +10,15 @@ use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::trick::{Trick, TrickEnded};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+
+macro_rules! bail_unwrap {
+    ($opt:expr) => {
+        match $opt {
+            Some(v) => v,
+            None => return Err(anyhow!("option was none")),
+        }
+    };
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
@@ -374,7 +383,7 @@ pub enum GameState {
 impl GameState {
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         match self {
-            GameState::Play(p) => Ok(p.next_player()),
+            GameState::Play(p) => Ok(p.next_player()?),
             GameState::Draw(p) => Ok(p.next_player()?),
             _ => bail!("Not valid in this phase!"),
         }
@@ -586,8 +595,8 @@ impl PlayPhase {
         self.propagated.remove_observer(id)
     }
 
-    pub fn next_player(&self) -> PlayerID {
-        self.trick.next_player().unwrap()
+    pub fn next_player(&self) -> Result<PlayerID, Error> {
+        Ok(bail_unwrap!(self.trick.next_player()))
     }
 
     pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
@@ -682,7 +691,7 @@ impl PlayPhase {
                 }
             }
         }
-        let points = self.points.get_mut(&winner).unwrap();
+        let points = bail_unwrap!(self.points.get_mut(&winner));
         let kitty_points = self
             .kitty
             .iter()
@@ -701,12 +710,7 @@ impl PlayPhase {
                 });
             }
         }
-        let winner_idx = self
-            .propagated
-            .players
-            .iter()
-            .position(|p| p.id == winner)
-            .unwrap();
+        let winner_idx = bail_unwrap!(self.propagated.players.iter().position(|p| p.id == winner));
         if !new_points.is_empty() {
             let trump = self.trump;
             let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
@@ -800,12 +804,11 @@ impl PlayPhase {
             }
         }
 
-        let landlord_idx = self
+        let landlord_idx = bail_unwrap!(self
             .propagated
             .players
             .iter()
-            .position(|p| p.id == self.landlord)
-            .unwrap();
+            .position(|p| p.id == self.landlord));
         let mut idx = (landlord_idx + 1) % propagated.players.len();
         let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
@@ -933,12 +936,11 @@ impl ExchangePhase {
             }
         }
 
-        let landlord_position = self
+        let landlord_position = bail_unwrap!(self
             .propagated
             .players
             .iter()
-            .position(|p| p.id == self.landlord)
-            .unwrap();
+            .position(|p| p.id == self.landlord));
         let landlords_team = match self.game_mode {
             GameMode::Tractor => self
                 .propagated
@@ -955,12 +957,11 @@ impl ExchangePhase {
                 .collect(),
             GameMode::FindingFriends { .. } => vec![self.landlord],
         };
-        let landlord_idx = self
+        let landlord_idx = bail_unwrap!(self
             .propagated
             .players
             .iter()
-            .position(|p| p.id == self.landlord)
-            .unwrap();
+            .position(|p| p.id == self.landlord));
 
         Ok(PlayPhase {
             num_decks: self.num_decks,
@@ -1048,24 +1049,24 @@ impl DrawPhase {
     }
 
     #[allow(clippy::comparison_chain)]
-    pub fn valid_bids(&self, id: PlayerID) -> Vec<Bid> {
+    pub fn valid_bids(&self, id: PlayerID) -> Result<Vec<Bid>, Error> {
         // Compute all valid bids.
         if self.bids.last().map(|b| b.id) == Some(id) {
             // If we're the current highest bidder, the only permissible bid is
             // one which is the same as the previous one, but has more cards
-            let last_bid = self.bids.last().unwrap();
+            let last_bid = bail_unwrap!(self.bids.last());
             let available = self
                 .hands
                 .counts(id)
                 .and_then(|c| c.get(&last_bid.card).cloned())
                 .unwrap_or(0);
-            (last_bid.count + 1..=available)
+            Ok((last_bid.count + 1..=available)
                 .map(|count| Bid {
                     card: last_bid.card,
                     count,
                     id,
                 })
-                .collect()
+                .collect())
         } else if let Some(counts) = self.hands.counts(id) {
             // Construct all the valid bids from the player's hand
             let mut valid_bids = vec![];
@@ -1096,15 +1097,19 @@ impl DrawPhase {
                 }
             }
 
-            valid_bids
+            Ok(valid_bids)
         } else {
-            vec![]
+            Ok(vec![])
         }
     }
 
     pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
         let new_bid = Bid { id, card, count };
-        if self.valid_bids(id).contains(&new_bid) {
+        if self
+            .valid_bids(id)
+            .map(|b| b.contains(&new_bid))
+            .unwrap_or(false)
+        {
             self.bids.push(new_bid);
             true
         } else {
@@ -1118,7 +1123,7 @@ impl DrawPhase {
         } else if self.bids.is_empty() {
             bail!("nobody has bid yet")
         } else {
-            let winning_bid = self.bids.last().unwrap();
+            let winning_bid = bail_unwrap!(self.bids.last());
             let landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
             if id != landlord {
                 bail!("only the leader can advance the game");
