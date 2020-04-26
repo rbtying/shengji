@@ -1,5 +1,4 @@
 import * as React from 'react';
-import usePrevious from './util/usePrevious';
 
 type Props = {
   onSubmit: () => void;
@@ -8,6 +7,10 @@ type Props = {
   isCurrentPlayerTurn: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
 };
+
+type AutoPlay = {
+  observedWinner: number | null;
+} | null;
 
 const AutoPlayButton = (props: Props) => {
   const {
@@ -18,21 +21,16 @@ const AutoPlayButton = (props: Props) => {
     unsetAutoPlayWhenWinnerChanges,
   } = props;
 
-  const [autoplay, setAutoplay] = React.useState<boolean>(false);
-  const previousWinner = usePrevious<number | null>(currentWinner);
+  const [autoplay, setAutoplay] = React.useState<AutoPlay>(null);
 
   React.useEffect(() => {
-    if (autoplay) {
+    if (autoplay !== null) {
       if (!canSubmit) {
-        setAutoplay(false);
-      } else if (
-        unsetAutoPlayWhenWinnerChanges &&
-        previousWinner &&
-        previousWinner !== currentWinner
-      ) {
-        setAutoplay(false);
+        setAutoplay(null);
+      } else if (unsetAutoPlayWhenWinnerChanges && autoplay.observedWinner !== currentWinner) {
+        setAutoplay(null);
       } else if (isCurrentPlayerTurn) {
-        setAutoplay(false);
+        setAutoplay(null);
         onSubmit();
       }
     }
@@ -41,17 +39,16 @@ const AutoPlayButton = (props: Props) => {
     canSubmit,
     currentWinner,
     isCurrentPlayerTurn,
-    currentWinner,
     unsetAutoPlayWhenWinnerChanges,
   ]);
 
   const handleClick = () => {
     if (isCurrentPlayerTurn) {
       onSubmit();
-    } else if (autoplay) {
-      setAutoplay(false);
+    } else if (autoplay !== null) {
+      setAutoplay(null);
     } else {
-      setAutoplay(true);
+      setAutoplay({observedWinner: currentWinner});
     }
   };
   return (
