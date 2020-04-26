@@ -27,7 +27,7 @@ const Initialize = (props: Props) => {
         Action: {
           SetGameMode: {
             FindingFriends: {
-              numFriends: null,
+              num_friends: null,
             },
           },
         },
@@ -42,7 +42,7 @@ const Initialize = (props: Props) => {
         Action: {
           SetGameMode: {
             FindingFriends: {
-              numFriends: null,
+              num_friends: null,
             },
           },
         },
@@ -53,7 +53,7 @@ const Initialize = (props: Props) => {
         Action: {
           SetGameMode: {
             FindingFriends: {
-              numFriends: num,
+              num_friends: num,
             },
           },
         },
