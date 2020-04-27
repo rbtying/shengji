@@ -45,6 +45,7 @@ pub enum MessageVariant {
         game_mode: GameModeSettings,
     },
     TookBackPlay,
+    TookBackBid,
     PlayedCards {
         cards: Vec<Card>,
     },
