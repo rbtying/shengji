@@ -1117,6 +1117,15 @@ impl DrawPhase {
         }
     }
 
+    pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.bids.last().map(|b| b.id) == Some(id) {
+            self.bids.pop();
+            Ok(())
+        } else {
+            bail!("Can't do that right now")
+        }
+    }
+
     pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {
         if !self.deck.is_empty() {
             bail!("deck has cards remaining")

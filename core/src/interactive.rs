@@ -144,6 +144,11 @@ impl InteractiveGame {
                     bail!("bid was invalid")
                 }
             }
+            (Message::TakeBackBid, GameState::Draw(ref mut state)) => {
+                debug!(logger, "Taking back bid");
+                state.take_back_bid(id)?;
+                vec![MessageVariant::TookBackBid]
+            }
             (Message::PickUpKitty, GameState::Draw(ref mut state)) => {
                 info!(logger, "Entering exchange phase");
                 self.state = GameState::Exchange(state.advance(id)?);
@@ -242,6 +247,7 @@ pub enum Message {
     PlayCards(Vec<Card>),
     EndTrick,
     TakeBackCards,
+    TakeBackBid,
     StartNewGame,
     Beep,
 }
@@ -285,6 +291,7 @@ impl BroadcastMessage {
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: None }} => format!("{} set the game mode to Finding Friends", n?),
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(1) }} => format!("{} set the game mode to Finding Friends with 1 friend", n?),
             GameModeSet { game_mode: GameModeSettings::FindingFriends { num_friends: Some(friends) }} => format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
+            TookBackBid => format!("{} took back their last bid", n?),
             TookBackPlay => format!("{} took back their last play", n?),
             PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
             ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),

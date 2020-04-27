@@ -30,6 +30,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     };
     this.setSelected = this.setSelected.bind(this);
     this.makeBid = this.makeBid.bind(this);
+    this.takeBackBid = this.takeBackBid.bind(this);
     this.drawCard = this.drawCard.bind(this);
     this.onAutodrawClicked = this.onAutodrawClicked.bind(this);
   }
@@ -62,6 +63,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       (window as any).send({Action: {Bid: [c, counts[c] + already_bid]}});
       this.setSelected([]);
     }
+  }
+
+  takeBackBid(evt: any) {
+    evt.preventDefault();
+    (window as any).send({Action: 'TakeBackBid'});
   }
 
   drawCard() {
@@ -200,6 +206,16 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           disabled={this.state.selected.length === 0}
         >
           Make bid
+        </button>
+        <button
+          onClick={this.takeBackBid}
+          disabled={
+            this.props.state.bids.length === 0 ||
+            this.props.state.bids[this.props.state.bids.length - 1].id !==
+              player_id
+          }
+        >
+          Take back bid
         </button>
         <button
           onClick={this.pickUpKitty}
