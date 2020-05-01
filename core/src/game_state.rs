@@ -323,6 +323,9 @@ impl PropagatedState {
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
             self.players.retain(|p| p.id != player_id);
+            if self.landlord == Some(player_id) {
+                self.landlord = None;
+            }
             self.observers.push(player);
             self.num_players_changed()
         } else {

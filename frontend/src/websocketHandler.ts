@@ -55,10 +55,10 @@ const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 let lastBeeped = performance.now();
 const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message === 'Beep') {
+  if (message === "Beep") {
     const now = performance.now();
     // Rate-limit beeps to prevent annoyance.
-    if (now - lastBeeped >= 500) {
+    if (now - lastBeeped >= 1000) {
       beep(3, 261.63, 200);
       lastBeeped = now;
     }
