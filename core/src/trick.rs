@@ -28,16 +28,12 @@ pub enum TrickError {
     NonMatchingPlay,
 }
 
+type Members = SmallVec<[OrderedCard; 3]>;
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TrickUnit {
-    Tractor {
-        count: usize,
-        members: SmallVec<[OrderedCard; 3]>,
-    },
-    Repeated {
-        count: usize,
-        card: OrderedCard,
-    },
+    Tractor { count: usize, members: Members },
+    Repeated { count: usize, card: OrderedCard },
 }
 
 impl TrickUnit {
@@ -146,13 +142,15 @@ impl TrickFormat {
             .copied()
             .collect::<Vec<_>>();
 
-            let mut requirements: SmallVec<[_; 3]> = smallvec![self
-                .units
-                .iter()
-                .map(UnitLike::from)
-                .collect::<SmallVec<[_; 4]>>()];
+            let mut requirements = VecDeque::new();
+            requirements.push_back(
+                self.units
+                    .iter()
+                    .map(UnitLike::from)
+                    .collect::<SmallVec<[_; 4]>>(),
+            );
 
-            while let Some(mut requirement) = requirements.pop() {
+            while let Some(mut requirement) = requirements.pop_front() {
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
                     self.trump,
@@ -160,6 +158,7 @@ impl TrickFormat {
                     requirement.iter().copied(),
                 )
                 .0;
+
                 if play_matches {
                     return true;
                 }
@@ -175,15 +174,19 @@ impl TrickFormat {
                 }
 
                 // Otherwise, downgrade the requirements.
+                let mut suffix_units = vec![];
                 while let Some(unit) = requirement.pop() {
                     let decomposed = unit.decompose();
                     if !decomposed.is_empty() {
                         for subunits in decomposed {
                             let mut r = requirement.clone();
                             r.extend(subunits);
-                            requirements.push(r);
+                            r.extend(suffix_units.iter().copied());
+                            requirements.push_back(r);
                         }
                         break;
+                    } else {
+                        suffix_units.push(unit);
                     }
                 }
             }
@@ -584,8 +587,11 @@ impl UnitLike {
                     ]);
                 }
             }
-            UnitLike::Repeated { count } if *count > 2 => {
-                units.push(smallvec![UnitLike::Repeated { count: count - 1 }]);
+            UnitLike::Repeated { count } if *count > 1 => {
+                units.push(smallvec![
+                    UnitLike::Repeated { count: count - 1 },
+                    UnitLike::Repeated { count: 1 },
+                ]);
             }
             _ => (),
         }
@@ -779,7 +785,7 @@ fn find_tractors_from_start(
         return potential_starts;
     }
 
-    let mut next_cards: SmallVec<[(OrderedCard, SmallVec<_>); 1]> = card
+    let mut next_cards: SmallVec<[(OrderedCard, Members); 1]> = card
         .successor()
         .into_iter()
         .map(|c| (c, smallvec![card]))
@@ -883,12 +889,13 @@ mod tests {
     use crate::hands::Hands;
     use crate::types::{
         cards::{
-            H_2, H_3, H_4, H_5, H_7, H_8, H_A, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_A, S_K, S_Q,
+            C_10, C_4, C_5, C_6, C_7, C_8, C_K, D_K, H_2, H_3, H_4, H_5, H_7, H_8, H_A, H_K, S_10,
+            S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
         },
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
 
-    use super::{OrderedCard, Trick, TrickEnded, TrickFormat, TrickUnit, UnitLike};
+    use super::{OrderedCard, Trick, TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike};
 
     const TRUMP: Trump = Trump::Standard {
         number: Number::Four,
@@ -1380,5 +1387,47 @@ mod tests {
         assert_eq!(winner_id, P2);
         assert_eq!(points, vec![S_K, S_K]);
         assert_eq!(failed_throw_size, 0);
+    }
+
+    #[test]
+    fn test_long_tractor_decomposition_draws_pairs() {
+        let trump = Trump::Standard {
+            number: Number::King,
+            suit: Suit::Spades,
+        };
+
+        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::King);
+
+        let p1_hand = vec![S_7, S_7, S_8, S_8, S_9, S_9, C_4, C_4];
+        let p2_hand = vec![S_4, S_10, S_A, H_K, D_K, C_K, S_K, S_K];
+        let p3_hand = vec![S_2, S_6, S_J, S_Q, H_K, C_K, C_10, Card::SmallJoker];
+        let p4_hand = vec![C_4, C_6, C_7, S_3, S_3, Card::BigJoker, C_5, C_8];
+
+        hands.add(P1, p1_hand).unwrap();
+        hands.add(P2, p2_hand).unwrap();
+        hands.add(P3, p3_hand).unwrap();
+        hands.add(P4, p4_hand).unwrap();
+
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+
+        trick
+            .play_cards(P1, &mut hands, &[S_7, S_7, S_8, S_8, S_9, S_9])
+            .unwrap();
+        // This play should not succeed, because P2 also has S_K, S_K which is a pair.
+        if let Err(TrickError::IllegalPlay) =
+            trick.play_cards(P2, &mut hands, &[S_4, S_10, S_A, H_K, D_K, C_K])
+        {
+            trick
+                .play_cards(P2, &mut hands, &[S_4, S_10, S_A, H_K, S_K, S_K])
+                .unwrap();
+        } else {
+            panic!("Expected play to be illegal, but it wasn't")
+        }
+        trick
+            .play_cards(P3, &mut hands, &[S_2, S_6, S_J, S_Q, H_K, C_K])
+            .unwrap();
+        trick
+            .play_cards(P4, &mut hands, &[C_4, C_6, C_7, S_3, S_3, Card::BigJoker])
+            .unwrap();
     }
 }
