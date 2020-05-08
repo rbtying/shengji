@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::{GameModeSettings, KittyPenalty, ThrowPenalty};
+use crate::game_state::{AdvancementPolicy, GameModeSettings, KittyPenalty, ThrowPenalty};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -15,6 +15,10 @@ pub enum MessageVariant {
     RankAdvanced {
         player: PlayerID,
         new_rank: Number,
+    },
+    AdvancementBlocked {
+        player: PlayerID,
+        rank: Number,
     },
     NewLandlordForNextGame {
         landlord: PlayerID,
@@ -31,6 +35,9 @@ pub enum MessageVariant {
     },
     LeftGame {
         name: String,
+    },
+    AdvancementPolicySet {
+        policy: AdvancementPolicy,
     },
     KittySizeSet {
         size: Option<usize>,

@@ -27,7 +27,10 @@ const AutoPlayButton = (props: Props) => {
     if (autoplay !== null) {
       if (!canSubmit) {
         setAutoplay(null);
-      } else if (unsetAutoPlayWhenWinnerChanges && autoplay.observedWinner !== currentWinner) {
+      } else if (
+        unsetAutoPlayWhenWinnerChanges &&
+        autoplay.observedWinner !== currentWinner
+      ) {
         setAutoplay(null);
       } else if (isCurrentPlayerTurn) {
         setAutoplay(null);

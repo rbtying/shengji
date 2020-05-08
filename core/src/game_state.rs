@@ -80,6 +80,18 @@ impl Default for KittyPenalty {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum AdvancementPolicy {
+    Unrestricted,
+    DefendPoints,
+}
+
+impl Default for AdvancementPolicy {
+    fn default() -> Self {
+        AdvancementPolicy::Unrestricted
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -92,6 +104,8 @@ pub struct PropagatedState {
     pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
     chat_link: Option<String>,
+    #[serde(default)]
+    advancement_policy: AdvancementPolicy,
     #[serde(default)]
     kitty_penalty: KittyPenalty,
     #[serde(default)]
@@ -315,6 +329,18 @@ impl PropagatedState {
             Ok(vec![MessageVariant::KittyPenaltySet {
                 kitty_penalty: penalty,
             }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_advancement_policy(
+        &mut self,
+        policy: AdvancementPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.advancement_policy {
+            self.advancement_policy = policy;
+            Ok(vec![MessageVariant::AdvancementPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -752,57 +778,64 @@ impl PlayPhase {
 
         let mut msgs = vec![];
 
-        let mut non_landlords_points: usize = self
+        let mut non_landlords_points: isize = self
             .points
             .iter()
             .filter(|(id, _)| !self.landlords_team.contains(id))
             .flat_map(|(_, cards)| cards)
             .flat_map(|c| c.points())
-            .sum();
+            .sum::<usize>() as isize;
 
         for (id, penalty) in &self.penalties {
             if *penalty > 0 {
                 if self.landlords_team.contains(&id) {
-                    non_landlords_points += penalty;
+                    non_landlords_points += *penalty as isize;
                 } else {
-                    non_landlords_points = non_landlords_points.saturating_sub(*penalty);
+                    non_landlords_points -= *penalty as isize;
                 }
             }
         }
 
-        let point_segments = self.num_decks * 20;
-        let landlord_won = non_landlords_points < 2 * point_segments;
-        let (landlord_level_bump, non_landlord_level_bump) = if non_landlords_points == 0 {
-            (3, 0)
-        } else if non_landlords_points < point_segments {
-            (2, 0)
-        } else if non_landlords_points < 2 * point_segments {
-            (1, 0)
-        } else if non_landlords_points < 3 * point_segments {
-            (0, 0)
-        } else if non_landlords_points < 4 * point_segments {
-            (0, 1)
-        } else if non_landlords_points < 5 * point_segments {
-            (0, 2)
-        } else {
-            (0, 3)
-        };
+        let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
+            Self::compute_level_deltas(self.num_decks, non_landlords_points);
+
         let mut propagated = self.propagated.clone();
         for player in &mut propagated.players {
-            let bump = if self.landlords_team.contains(&player.id) {
+            let is_defending = self.landlords_team.contains(&player.id);
+            let bump = if is_defending {
                 landlord_level_bump
             } else {
                 non_landlord_level_bump
             };
+            let mut num_advances = 0;
+            let mut was_blocked = false;
+
             for _ in 0..bump {
+                match self.propagated.advancement_policy {
+                    AdvancementPolicy::DefendPoints
+                        if !is_defending && player.level.points().is_some() =>
+                    {
+                        was_blocked = true;
+                        break;
+                    }
+                    AdvancementPolicy::Unrestricted | AdvancementPolicy::DefendPoints => (),
+                }
+
                 if let Some(next_level) = player.level.successor() {
                     player.level = next_level;
+                    num_advances += 1;
                 }
             }
-            if bump > 0 {
+            if num_advances > 0 {
                 msgs.push(MessageVariant::RankAdvanced {
                     player: player.id,
                     new_rank: player.level,
+                });
+            }
+            if was_blocked {
+                msgs.push(MessageVariant::AdvancementBlocked {
+                    player: player.id,
+                    rank: player.level,
                 });
             }
         }
@@ -837,6 +870,34 @@ impl PlayPhase {
         msgs.extend(propagated.make_all_observers_into_players()?);
 
         Ok((InitializePhase { propagated }, msgs))
+    }
+
+    pub fn compute_level_deltas(
+        num_decks: usize,
+        non_landlords_points: isize,
+    ) -> (usize, usize, bool) {
+        let point_segments = (num_decks * 20) as isize;
+        let landlord_won = non_landlords_points < 2 * point_segments;
+
+        if landlord_won && non_landlords_points <= 0 {
+            (
+                0,
+                (3 - non_landlords_points / point_segments) as usize,
+                true,
+            )
+        } else if landlord_won {
+            (
+                0,
+                (2 - non_landlords_points / point_segments) as usize,
+                true,
+            )
+        } else {
+            (
+                (non_landlords_points / point_segments - 2) as usize,
+                0,
+                false,
+            )
+        }
     }
 }
 
@@ -1283,9 +1344,31 @@ impl DerefMut for InitializePhase {
 
 #[cfg(test)]
 mod tests {
-    use super::InitializePhase;
+    use super::{InitializePhase, PlayPhase};
 
     use crate::types::{cards, Card};
+
+    #[test]
+    fn test_level_deltas() {
+        assert_eq!(PlayPhase::compute_level_deltas(2, -80), (0, 5, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, -40), (0, 4, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, -35), (0, 3, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 0), (0, 3, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 5), (0, 2, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 35), (0, 2, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 40), (0, 1, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 75), (0, 1, true));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 80), (0, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 115), (0, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 120), (1, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 155), (1, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 160), (2, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 195), (2, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 200), (3, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 235), (3, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 240), (4, 0, false));
+        assert_eq!(PlayPhase::compute_level_deltas(2, 280), (5, 0, false));
+    }
 
     #[test]
     fn reinforce_bid() {

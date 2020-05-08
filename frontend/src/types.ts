@@ -69,6 +69,7 @@ export interface IPropagatedState {
   observers: IPlayer[];
   landlord: number | null;
   chat_link: string | null;
+  advancement_policy: 'Unrestricted' | 'DefendPoints';
   kitty_penalty: 'Times' | 'Power';
   throw_penalty: 'None' | 'TenPointsPerAttempt';
   hide_played_cards: boolean;
