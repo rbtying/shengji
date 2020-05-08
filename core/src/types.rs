@@ -452,11 +452,7 @@ impl Card {
     }
 
     pub fn points(self) -> Option<usize> {
-        match self.number() {
-            Some(Number::Five) => Some(5),
-            Some(Number::Ten) | Some(Number::King) => Some(10),
-            _ => None,
-        }
+        self.number().and_then(|n| n.points())
     }
 
     pub fn suit(self) -> Option<Suit> {
@@ -613,6 +609,14 @@ impl Number {
             "Q" => Some(Number::Queen),
             "K" => Some(Number::King),
             "A" => Some(Number::Ace),
+            _ => None,
+        }
+    }
+
+    pub fn points(self) -> Option<usize> {
+        match self {
+            Number::Five => Some(5),
+            Number::Ten | Number::King => Some(10),
             _ => None,
         }
     }

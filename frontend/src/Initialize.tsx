@@ -96,6 +96,23 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setAdvancementPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetAdvancementPolicy: evt.target.value,
+        },
+      });
+    } else {
+      send({
+        Action: {
+          SetAdvancementPolicy: 'Unrestricted',
+        },
+      });
+    }
+  };
+
   const setThrowPenalty = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== '') {
@@ -273,6 +290,20 @@ const Initialize = (props: Props) => {
             >
               <option value="show">Show played cards in chat</option>
               <option value="hide">Hide played cards in chat</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Rank advancement policy:{' '}
+            <select
+              value={props.state.propagated.advancement_policy}
+              onChange={setAdvancementPolicy}
+            >
+              <option value="Unrestricted">Unrestricted</option>
+              <option value="DefendPoints">
+                Points (5, 10, K) must be defended
+              </option>
             </select>
           </label>
         </div>

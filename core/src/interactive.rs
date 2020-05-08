@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty, ThrowPenalty,
+    AdvancementPolicy, Friend, GameModeSettings, GameState, InitializePhase, KittyPenalty,
+    ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::types::{Card, Number, PlayerID};
@@ -127,6 +128,10 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty penalty"; "penalty" => format!("{:?}", kitty_penalty));
                 state.set_kitty_penalty(kitty_penalty)?
             }
+            (Message::SetAdvancementPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting advancement policy"; "policy" => format!("{:?}", policy));
+                state.set_advancement_policy(policy)?
+            }
             (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
@@ -234,6 +239,7 @@ pub enum Message {
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
     SetGameMode(GameModeSettings),
+    SetAdvancementPolicy(AdvancementPolicy),
     SetKittyPenalty(KittyPenalty),
     SetThrowPenalty(ThrowPenalty),
     StartGame,
@@ -276,11 +282,14 @@ impl BroadcastMessage {
                     format!("{} wins the trick, but gets no points :(", player_name(winner)?)
                 },
             RankAdvanced { player, new_rank } => format!("{} has advanced to rank {}", player_name(player)?, new_rank.as_str()),
+            AdvancementBlocked { player, rank } => format!("{} must defend on rank {}", player_name(player)?, rank.as_str()),
             NewLandlordForNextGame { landlord } => format!("{} will start the next game", player_name(landlord)?),
             PointsInKitty { points, multiplier } => format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
             JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
+            AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),
+            AdvancementPolicySet { policy: AdvancementPolicy::DefendPoints } => format!("{} required players to defend on points", n?),
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
