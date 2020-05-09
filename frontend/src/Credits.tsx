@@ -36,6 +36,10 @@ const ChangeLog = () => {
             rather than a random selected one.
           </li>
           <li>Card labels are not visible above the settings pane.</li>
+          <li>
+            Cards can be revealed from the bottom when the deck is fully drawn
+            to determine trump.
+          </li>
         </ul>
         <hr />
         <p>Changes prior to 5/8/2020 not listed</p>

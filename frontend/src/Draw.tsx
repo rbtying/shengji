@@ -32,6 +32,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     this.makeBid = this.makeBid.bind(this);
     this.takeBackBid = this.takeBackBid.bind(this);
     this.drawCard = this.drawCard.bind(this);
+    this.pickUpKitty = this.pickUpKitty.bind(this);
+    this.revealCard = this.revealCard.bind(this);
     this.onAutodrawClicked = this.onAutodrawClicked.bind(this);
   }
 
@@ -86,6 +88,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   pickUpKitty(evt: any) {
     evt.preventDefault();
     (window as any).send({Action: 'PickUpKitty'});
+  }
+
+  revealCard(evt: any) {
+    evt.preventDefault();
+    (window as any).send({Action: 'RevealCard'});
   }
 
   onAutodrawClicked(evt: any) {
@@ -172,6 +179,14 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           <h2>
             Bids ({this.props.state.deck.length} cards remaining in the deck)
           </h2>
+          {this.props.state.autobid !== null ? (
+            <LabeledPlay
+              label={`${
+                players[this.props.state.autobid.id].name
+              } (from bottom)`}
+              cards={[this.props.state.autobid.card]}
+            />
+          ) : null}
           {this.props.state.bids.map((bid, idx) => {
             const name = players[bid.id].name;
             return (
@@ -221,7 +236,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           onClick={this.pickUpKitty}
           disabled={
             this.props.state.deck.length > 0 ||
-            this.props.state.bids.length === 0 ||
+            (this.props.state.bids.length === 0 &&
+              this.props.state.autobid === null) ||
             (this.props.state.propagated.landlord !== null &&
               this.props.state.propagated.landlord !== player_id) ||
             (this.props.state.propagated.landlord === null &&
@@ -230,6 +246,17 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           }
         >
           Pick up cards from the bottom
+        </button>
+        <button
+          onClick={this.revealCard}
+          disabled={
+            this.props.state.deck.length > 0 ||
+            this.props.state.bids.length > 0 ||
+            this.props.state.autobid !== null ||
+            this.props.state.revealed_cards >= this.props.state.kitty.length
+          }
+        >
+          Reveal card from the bottom
         </button>
         <BeepButton />
         {this.props.state.propagated.landlord !== null ? (
@@ -247,6 +274,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           selectedCards={this.state.selected}
           onSelect={this.setSelected}
         />
+        <LabeledPlay cards={this.props.state.kitty} label="底牌" />
       </div>
     );
   }

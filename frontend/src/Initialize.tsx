@@ -96,6 +96,17 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setKittyBidPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetKittyBidPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== '') {
@@ -303,6 +314,20 @@ const Initialize = (props: Props) => {
               <option value="Unrestricted">Unrestricted</option>
               <option value="DefendPoints">
                 Points (5, 10, K) must be defended
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Trump policy for cards revealed from the bottom:{' '}
+            <select
+              value={props.state.propagated.kitty_bid_policy}
+              onChange={setKittyBidPolicy}
+            >
+              <option value="FirstCard">First card revealed</option>
+              <option value="FirstCardOfLevelOrHighest">
+                First card revealed of the appropriate rank
               </option>
             </select>
           </label>
