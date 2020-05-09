@@ -27,9 +27,11 @@ export interface IDrawPhase {
   deck: string[];
   propagated: IPropagatedState;
   hands: IHands;
+  autobid: IBid | null;
   bids: IBid[];
   position: number;
   kitty: string[];
+  revealed_cards: number;
   level: number;
 }
 
@@ -71,6 +73,7 @@ export interface IPropagatedState {
   chat_link: string | null;
   advancement_policy: 'Unrestricted' | 'DefendPoints';
   kitty_penalty: 'Times' | 'Power';
+  kitty_bid_policy: 'FirstCard' | 'FirstCardOfLevelOrHighest';
   throw_penalty: 'None' | 'TenPointsPerAttempt';
   hide_played_cards: boolean;
 }

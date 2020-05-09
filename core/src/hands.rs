@@ -23,16 +23,14 @@ pub enum HandError {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Hands {
     hands: HashMap<PlayerID, HashMap<Card, usize>>,
-    level: Number,
     trump: Option<Trump>,
 }
 
 impl Hands {
-    pub fn new(players: impl IntoIterator<Item = PlayerID>, level: Number) -> Self {
+    pub fn new(players: impl IntoIterator<Item = PlayerID>) -> Self {
         Hands {
             hands: players.into_iter().map(|id| (id, HashMap::new())).collect(),
             trump: None,
-            level,
         }
     }
 
@@ -108,7 +106,7 @@ impl Hands {
         !self.hands.values().any(|h| h.values().any(|c| *c > 0))
     }
 
-    pub fn cards(&self, id: PlayerID) -> Result<Vec<Card>, HandError> {
+    pub fn cards(&self, id: PlayerID, level: Number) -> Result<Vec<Card>, HandError> {
         self.exists(id)?;
         let mut cards = Card::cards(self.hands[&id].iter())
             .copied()
@@ -116,7 +114,7 @@ impl Hands {
         if let Some(trump) = self.trump {
             cards.sort_by(|a, b| trump.compare(*a, *b));
         } else {
-            cards.sort_by(|a, b| Trump::NoTrump { number: self.level }.compare(*a, *b));
+            cards.sort_by(|a, b| Trump::NoTrump { number: level }.compare(*a, *b));
         }
         Ok(cards)
     }
@@ -174,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_add_remove() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Two);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
@@ -184,12 +182,15 @@ mod tests {
         hands.remove(P1, Some(S_3)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap_err();
-        assert!(hands.cards(P1).unwrap().is_empty());
+        assert!(hands.cards(P1, Number::Two).unwrap().is_empty());
 
         hands.remove(P2, vec![S_2, S_3, S_5]).unwrap();
-        assert!(hands.cards(P2).unwrap().is_empty());
+        assert!(hands.cards(P2, Number::Two).unwrap().is_empty());
 
         hands.remove(P3, vec![S_2, S_3, S_4, S_5]).unwrap_err();
-        assert_eq!(hands.cards(P3).unwrap(), hands.cards(P4).unwrap());
+        assert_eq!(
+            hands.cards(P3, Number::Two).unwrap(),
+            hands.cards(P4, Number::Two).unwrap()
+        );
     }
 }

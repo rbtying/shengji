@@ -92,6 +92,18 @@ impl Default for AdvancementPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum KittyBidPolicy {
+    FirstCard,
+    FirstCardOfLevelOrHighest,
+}
+
+impl Default for KittyBidPolicy {
+    fn default() -> Self {
+        KittyBidPolicy::FirstCard
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -114,6 +126,8 @@ pub struct PropagatedState {
     hide_played_cards: bool,
     #[serde(default)]
     pub num_games_finished: usize,
+    #[serde(default)]
+    kitty_bid_policy: KittyBidPolicy,
 }
 
 impl PropagatedState {
@@ -334,6 +348,18 @@ impl PropagatedState {
         }
     }
 
+    pub fn set_kitty_bid_policy(
+        &mut self,
+        policy: KittyBidPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.kitty_bid_policy {
+            self.kitty_bid_policy = policy;
+            Ok(vec![MessageVariant::KittyBidPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
     pub fn set_advancement_policy(
         &mut self,
         policy: AdvancementPolicy,
@@ -462,11 +488,26 @@ impl GameState {
     pub fn cards(&self, id: PlayerID) -> Vec<Card> {
         match self {
             GameState::Initialize { .. } => vec![],
-            GameState::Draw(DrawPhase { ref hands, .. })
-            | GameState::Exchange(ExchangePhase { ref hands, .. })
-            | GameState::Play(PlayPhase { ref hands, .. }) => {
-                hands.cards(id).unwrap_or_else(|_| vec![])
+            GameState::Draw(DrawPhase {
+                ref hands,
+                ref propagated,
+                ..
+            }) => {
+                let level_id = propagated.landlord.unwrap_or(id);
+                propagated
+                    .players
+                    .iter()
+                    .filter(|p| p.id == level_id)
+                    .flat_map(|p| hands.cards(id, p.level).ok())
+                    .next()
+                    .unwrap_or_else(|| vec![])
             }
+            GameState::Exchange(ExchangePhase {
+                ref hands, trump, ..
+            })
+            | GameState::Play(PlayPhase {
+                ref hands, trump, ..
+            }) => hands.cards(id, trump.number()).unwrap_or_else(|_| vec![]),
         }
     }
 
@@ -529,10 +570,11 @@ impl GameState {
                 ref mut hands,
                 ref mut kitty,
                 ref mut deck,
+                revealed_cards,
                 ..
             }) => {
                 hands.redact_except(id);
-                for card in kitty {
+                for card in &mut kitty[revealed_cards..] {
                     *card = Card::Unknown;
                 }
                 for card in deck {
@@ -1079,9 +1121,13 @@ pub struct DrawPhase {
     propagated: PropagatedState,
     hands: Hands,
     bids: Vec<Bid>,
+    #[serde(default)]
+    autobid: Option<Bid>,
     position: usize,
     kitty: Vec<Card>,
-    level: Number,
+    #[serde(default)]
+    revealed_cards: usize,
+    level: Option<Number>,
 }
 impl DrawPhase {
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
@@ -1112,6 +1158,60 @@ impl DrawPhase {
         }
     }
 
+    pub fn reveal_card(&mut self) -> Result<MessageVariant, Error> {
+        if !self.deck.is_empty() {
+            bail!("can't reveal card until deck is fully drawn")
+        }
+        if !self.bids.is_empty() {
+            bail!("can't reveal card if at least one bid has been made")
+        }
+        let id = self
+            .propagated
+            .landlord
+            .ok_or_else(|| anyhow!("can't reveal card if landlord hasn't been selected yet"))?;
+        if self.revealed_cards >= self.kitty.len() || self.autobid.is_some() {
+            bail!("can't reveal any more cards")
+        }
+
+        let level = self
+            .propagated
+            .players
+            .iter()
+            .find(|p| p.id == id)
+            .map(|p| p.level)
+            .ok_or_else(|| anyhow!("can't find landlord level?"))?;
+
+        let card = self.kitty[self.revealed_cards];
+
+        match self.propagated.kitty_bid_policy {
+            KittyBidPolicy::FirstCard => {
+                self.autobid = Some(Bid { count: 1, id, card });
+            }
+            KittyBidPolicy::FirstCardOfLevelOrHighest
+                if card.is_joker() || card.number() == Some(level) =>
+            {
+                self.autobid = Some(Bid { count: 1, id, card });
+            }
+            KittyBidPolicy::FirstCardOfLevelOrHighest
+                if self.revealed_cards >= self.kitty.len() - 1 =>
+            {
+                let mut sorted_kitty = self.kitty.clone();
+                sorted_kitty.sort_by(|a, b| Trump::NoTrump { number: level }.compare(*a, *b));
+                if let Some(highest_card) = sorted_kitty.last() {
+                    self.autobid = Some(Bid {
+                        count: 1,
+                        id,
+                        card: *highest_card,
+                    });
+                }
+            }
+            _ => (),
+        }
+        self.revealed_cards += 1;
+
+        Ok(MessageVariant::RevealedCardFromKitty)
+    }
+
     #[allow(clippy::comparison_chain)]
     pub fn valid_bids(&self, id: PlayerID) -> Result<Vec<Bid>, Error> {
         // Compute all valid bids.
@@ -1135,7 +1235,14 @@ impl DrawPhase {
             // Construct all the valid bids from the player's hand
             let mut valid_bids = vec![];
             for (card, count) in counts {
-                if !card.is_joker() && card.number() != Some(self.level) {
+                let bid_player_id = self.propagated.landlord.unwrap_or(id);
+                let bid_level = self
+                    .propagated
+                    .players
+                    .iter()
+                    .find(|p| p.id == bid_player_id)
+                    .map(|p| p.level);
+                if !card.is_joker() && card.number() != bid_level {
                     continue;
                 }
                 for inner_count in 1..=*count {
@@ -1168,6 +1275,9 @@ impl DrawPhase {
     }
 
     pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
+        if self.revealed_cards > 0 {
+            return false;
+        }
         let new_bid = Bid { id, card, count };
         if self
             .valid_bids(id)
@@ -1193,20 +1303,29 @@ impl DrawPhase {
     pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {
         if !self.deck.is_empty() {
             bail!("deck has cards remaining")
-        } else if self.bids.is_empty() {
+        } else if self.bids.is_empty() && self.autobid.is_none() {
             bail!("nobody has bid yet")
         } else {
-            let winning_bid = bail_unwrap!(self.bids.last());
+            let winning_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.last().copied()));
             let landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
             if id != landlord {
                 bail!("only the leader can advance the game");
             }
+            let landlord_level = self
+                .propagated
+                .players
+                .iter()
+                .find(|p| p.id == landlord)
+                .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
+                .level;
             let trump = match winning_bid.card {
                 Card::Unknown => bail!("can't bid with unknown cards!"),
-                Card::SmallJoker | Card::BigJoker => Trump::NoTrump { number: self.level },
+                Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
+                    number: landlord_level,
+                },
                 Card::Suited { suit, .. } => Trump::Standard {
                     suit,
-                    number: self.level,
+                    number: landlord_level,
                 },
             };
             let mut hands = self.hands.clone();
@@ -1312,14 +1431,21 @@ impl InitializePhase {
                     .position(|p| p.id == landlord)
             })
             .unwrap_or(rng.next_u32() as usize % self.propagated.players.len());
-        let level = self.propagated.players[position].level;
+
+        let level = if self.propagated.landlord.is_some() {
+            Some(self.propagated.players[position].level)
+        } else {
+            None
+        };
 
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
             kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
-            hands: Hands::new(self.propagated.players.iter().map(|p| p.id), level),
+            hands: Hands::new(self.propagated.players.iter().map(|p| p.id)),
             propagated: self.propagated.clone(),
             bids: Vec::new(),
+            revealed_cards: 0,
+            autobid: None,
             position,
             num_decks,
             game_mode,
