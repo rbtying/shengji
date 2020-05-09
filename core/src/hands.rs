@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_add_remove() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Two);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
@@ -182,12 +182,15 @@ mod tests {
         hands.remove(P1, Some(S_3)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap_err();
-        assert!(hands.cards(P1).unwrap().is_empty());
+        assert!(hands.cards(P1, Number::Two).unwrap().is_empty());
 
         hands.remove(P2, vec![S_2, S_3, S_5]).unwrap();
-        assert!(hands.cards(P2).unwrap().is_empty());
+        assert!(hands.cards(P2, Number::Two).unwrap().is_empty());
 
         hands.remove(P3, vec![S_2, S_3, S_4, S_5]).unwrap_err();
-        assert_eq!(hands.cards(P3).unwrap(), hands.cards(P4).unwrap());
+        assert_eq!(
+            hands.cards(P3, Number::Two).unwrap(),
+            hands.cards(P4, Number::Two).unwrap()
+        );
     }
 }

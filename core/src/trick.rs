@@ -921,6 +921,7 @@ mod tests {
         };
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn test_play_formats() {
         macro_rules! test_eq {
@@ -963,7 +964,7 @@ mod tests {
 
     #[test]
     fn test_play_singles_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
@@ -987,7 +988,7 @@ mod tests {
 
     #[test]
     fn test_play_trump_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
         hands.add(P2, vec![H_2, H_3, S_4]).unwrap();
         hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
@@ -1011,7 +1012,7 @@ mod tests {
 
     #[test]
     fn test_play_pairs_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_2, S_5]).unwrap();
         hands.add(P2, vec![H_2, S_3, S_4]).unwrap();
         hands.add(P3, vec![S_5, S_5, S_5]).unwrap();
@@ -1035,7 +1036,7 @@ mod tests {
 
     #[test]
     fn test_play_tractor_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_2, S_2, S_3, S_3, S_4]).unwrap();
         hands.add(P2, vec![S_6, S_6, S_7, S_7, S_4]).unwrap();
         hands.add(P3, vec![S_2, S_5, S_5, S_5, S_4]).unwrap();
@@ -1067,7 +1068,7 @@ mod tests {
 
     #[test]
     fn test_play_throw_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![H_8, H_8, H_7, H_2]).unwrap();
         hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
@@ -1098,7 +1099,7 @@ mod tests {
 
     #[test]
     fn test_play_throw_trick_failure() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![H_8, H_8, H_7, H_2]).unwrap();
         hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
@@ -1125,7 +1126,7 @@ mod tests {
 
     #[test]
     fn test_play_throw_tractor_extra_cards() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_Q, S_Q, S_K, S_K, S_A]).unwrap();
         hands.add(P2, vec![S_2, S_3, S_3, S_5, H_3]).unwrap();
         hands.add(P3, vec![S_A, S_A, H_3, H_3, H_3]).unwrap();
@@ -1361,7 +1362,7 @@ mod tests {
             suit: Suit::Hearts,
         };
 
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::Four);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         let p2_hand = vec![H_2, H_2, H_3, H_A, H_3];
         let p1_hand = vec![S_Q, S_Q, S_K, S_K, S_A];
         let p3_hand = vec![S_A, S_A, S_3, S_3, S_3];
@@ -1396,7 +1397,7 @@ mod tests {
             suit: Suit::Spades,
         };
 
-        let mut hands = Hands::new(vec![P1, P2, P3, P4], Number::King);
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
 
         let p1_hand = vec![S_7, S_7, S_8, S_8, S_9, S_9, C_4, C_4];
         let p2_hand = vec![S_4, S_10, S_A, H_K, D_K, C_K, S_K, S_K];
