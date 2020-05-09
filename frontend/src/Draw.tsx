@@ -232,6 +232,16 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           Pick up cards from the bottom
         </button>
         <BeepButton />
+        {this.props.state.propagated.landlord !== null ? (
+          <p>
+            Bid using {players[this.props.state.propagated.landlord].level}'s in
+            the same suit, or jokers
+          </p>
+        ) : (
+          <p>
+            Bid using {players[player_id].level}'s in the same suit, or jokers
+          </p>
+        )}
         <Cards
           cardsInHand={cards_not_bid}
           selectedCards={this.state.selected}

@@ -23,16 +23,14 @@ pub enum HandError {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Hands {
     hands: HashMap<PlayerID, HashMap<Card, usize>>,
-    level: Number,
     trump: Option<Trump>,
 }
 
 impl Hands {
-    pub fn new(players: impl IntoIterator<Item = PlayerID>, level: Number) -> Self {
+    pub fn new(players: impl IntoIterator<Item = PlayerID>) -> Self {
         Hands {
             hands: players.into_iter().map(|id| (id, HashMap::new())).collect(),
             trump: None,
-            level,
         }
     }
 
@@ -108,7 +106,7 @@ impl Hands {
         !self.hands.values().any(|h| h.values().any(|c| *c > 0))
     }
 
-    pub fn cards(&self, id: PlayerID) -> Result<Vec<Card>, HandError> {
+    pub fn cards(&self, id: PlayerID, level: Number) -> Result<Vec<Card>, HandError> {
         self.exists(id)?;
         let mut cards = Card::cards(self.hands[&id].iter())
             .copied()
@@ -116,7 +114,7 @@ impl Hands {
         if let Some(trump) = self.trump {
             cards.sort_by(|a, b| trump.compare(*a, *b));
         } else {
-            cards.sort_by(|a, b| Trump::NoTrump { number: self.level }.compare(*a, *b));
+            cards.sort_by(|a, b| Trump::NoTrump { number: level }.compare(*a, *b));
         }
         Ok(cards)
     }
