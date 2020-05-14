@@ -107,6 +107,17 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setTrickDrawPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetTrickDrawPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== '') {
@@ -356,6 +367,20 @@ const Initialize = (props: Props) => {
               <option value="None">No penalty</option>
               <option value="TenPointsPerAttempt">
                 Ten points per bad throw
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Card protection policy:{' '}
+            <select
+              value={props.state.propagated.trick_draw_policy}
+              onChange={setTrickDrawPolicy}
+            >
+              <option value="NoProtections">No protections</option>
+              <option value="LongerTuplesProtected">
+                Longer tuple (triple) is protected from shorter (pair)
               </option>
             </select>
           </label>

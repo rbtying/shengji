@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
     AdvancementPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty, ThrowPenalty,
+    TrickDrawPolicy,
 };
 use crate::types::{Card, Number, PlayerID};
 
@@ -86,6 +87,9 @@ pub enum MessageVariant {
     },
     KittyBidPolicySet {
         policy: KittyBidPolicy,
+    },
+    TrickDrawPolicySet {
+        policy: TrickDrawPolicy,
     },
     RevealedCardFromKitty,
 }

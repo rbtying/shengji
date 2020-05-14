@@ -4,7 +4,7 @@ use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
     AdvancementPolicy, Friend, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, ThrowPenalty,
+    KittyPenalty, ThrowPenalty, TrickDrawPolicy,
 };
 use crate::message::MessageVariant;
 use crate::types::{Card, Number, PlayerID};
@@ -135,6 +135,10 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty bid policy"; "bid_policy" => format!("{:?}", kitty_bid_policy));
                 state.set_kitty_bid_policy(kitty_bid_policy)?
             }
+            (Message::SetTrickDrawPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting trick draw policy"; "draw_policy" => format!("{:?}", policy));
+                state.set_trick_draw_policy(policy)?
+            }
             (Message::SetAdvancementPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting advancement policy"; "policy" => format!("{:?}", policy));
                 state.set_advancement_policy(policy)?
@@ -253,6 +257,7 @@ pub enum Message {
     SetAdvancementPolicy(AdvancementPolicy),
     SetKittyPenalty(KittyPenalty),
     SetKittyBidPolicy(KittyBidPolicy),
+    SetTrickDrawPolicy(TrickDrawPolicy),
     SetThrowPenalty(ThrowPenalty),
     StartGame,
     DrawCard,
@@ -331,6 +336,9 @@ impl BroadcastMessage {
             ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerAttempt } => format!("{} set the throw penalty to 10 points per throw", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCard } => format!("{} set the bid-from-bottom policy to be the first card revealed", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCardOfLevelOrHighest } => format!("{} set the bid-from-bottom policy to be the first card of the appropriate level, or the highest if none are found", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::NoProtections } => format!("{} removed long-tuple protections (pair can draw triple)", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{}
+                protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
         })
     }

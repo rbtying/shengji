@@ -29,6 +29,13 @@ const ChangeLog = () => {
         style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
+        <p>5/13/2020:</p>
+        <ul>
+          <li>
+            Add an option to protect triples from being drawn out by pairs
+          </li>
+          <li>Fill in the suit character in the trump UI</li>
+        </ul>
         <p>5/8/2020:</p>
         <ul>
           <li>
