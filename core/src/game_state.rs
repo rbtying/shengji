@@ -104,6 +104,18 @@ impl Default for KittyBidPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum TrickDrawPolicy {
+    NoProtections,
+    LongerTuplesProtected,
+}
+
+impl Default for TrickDrawPolicy {
+    fn default() -> Self {
+        TrickDrawPolicy::NoProtections
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -128,6 +140,8 @@ pub struct PropagatedState {
     pub num_games_finished: usize,
     #[serde(default)]
     kitty_bid_policy: KittyBidPolicy,
+    #[serde(default)]
+    trick_draw_policy: TrickDrawPolicy,
 }
 
 impl PropagatedState {
@@ -355,6 +369,18 @@ impl PropagatedState {
         if policy != self.kitty_bid_policy {
             self.kitty_bid_policy = policy;
             Ok(vec![MessageVariant::KittyBidPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_trick_draw_policy(
+        &mut self,
+        policy: TrickDrawPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.trick_draw_policy {
+            self.trick_draw_policy = policy;
+            Ok(vec![MessageVariant::TrickDrawPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -671,7 +697,15 @@ impl PlayPhase {
     }
 
     pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
-        Ok(self.trick.can_play_cards(id, &self.hands, cards)?)
+        Ok(self.trick.can_play_cards(
+            id,
+            &self.hands,
+            cards,
+            match self.propagated.trick_draw_policy {
+                TrickDrawPolicy::NoProtections => true,
+                TrickDrawPolicy::LongerTuplesProtected => false,
+            },
+        )?)
     }
 
     pub fn play_cards(
@@ -679,7 +713,15 @@ impl PlayPhase {
         id: PlayerID,
         cards: &[Card],
     ) -> Result<Vec<MessageVariant>, Error> {
-        let mut msgs = self.trick.play_cards(id, &mut self.hands, cards)?;
+        let mut msgs = self.trick.play_cards(
+            id,
+            &mut self.hands,
+            cards,
+            match self.propagated.trick_draw_policy {
+                TrickDrawPolicy::NoProtections => true,
+                TrickDrawPolicy::LongerTuplesProtected => false,
+            },
+        )?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {
                 match msg {
