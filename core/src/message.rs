@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
     AdvancementPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty, ThrowPenalty,
     TrickDrawPolicy,
 };
-use crate::types::{Card, Number, PlayerID};
+use crate::types::{Card, Number, PlayerID, PlayerResult};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
@@ -92,4 +94,7 @@ pub enum MessageVariant {
         policy: TrickDrawPolicy,
     },
     RevealedCardFromKitty,
+    GameFinished {
+        result: HashMap<String, PlayerResult>
+    },
 }

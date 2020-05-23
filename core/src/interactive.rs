@@ -340,6 +340,7 @@ impl BroadcastMessage {
             TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{}
                 protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
+            GameFinished { result: _ } => "The game has finished.".to_string()
         })
     }
 }

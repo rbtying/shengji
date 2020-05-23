@@ -9,7 +9,7 @@ use url::Url;
 use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::trick::{Trick, TrickEnded};
-use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+use crate::types::{Card, Number, PlayerID, PlayerResult, Trump, FULL_DECK};
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -883,6 +883,8 @@ impl PlayPhase {
         let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
             Self::compute_level_deltas(self.num_decks, non_landlords_points);
 
+        let mut game_result = HashMap::new();
+
         let mut propagated = self.propagated.clone();
         for player in &mut propagated.players {
             let is_defending = self.landlords_team.contains(&player.id);
@@ -922,7 +924,18 @@ impl PlayPhase {
                     rank: player.level,
                 });
             }
+
+            game_result.insert(player.name.to_string(), PlayerResult {
+                won_game: landlord_won == self.landlords_team.contains(&player.id),
+                is_defending: is_defending,
+                is_landlord: self.landlord == player.id,
+                ranks_up: num_advances,
+            });
         }
+
+        msgs.push(MessageVariant::GameFinished {
+            result: game_result,
+        });
 
         let landlord_idx = bail_unwrap!(self
             .propagated
