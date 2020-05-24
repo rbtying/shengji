@@ -11,14 +11,6 @@ use smallvec::{smallvec, SmallVec};
 pub struct PlayerID(pub usize);
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
-pub struct PlayerResult {
-    pub won_game: bool,
-    pub is_defending: bool,
-    pub is_landlord: bool,
-    pub ranks_up: usize,
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub enum Trump {
     Standard { suit: Suit, number: Number },
     NoTrump { number: Number },

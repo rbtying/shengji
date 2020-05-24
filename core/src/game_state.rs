@@ -9,7 +9,7 @@ use url::Url;
 use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::trick::{Trick, TrickEnded};
-use crate::types::{Card, Number, PlayerID, PlayerResult, Trump, FULL_DECK};
+use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -666,6 +666,14 @@ impl Deref for GameState {
     }
 }
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+pub struct PlayerGameFinishedResult {
+    pub won_game: bool,
+    pub is_defending: bool,
+    pub is_landlord: bool,
+    pub ranks_up: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayPhase {
     num_decks: usize,
@@ -927,8 +935,8 @@ impl PlayPhase {
 
             game_result.insert(
                 player.name.to_string(),
-                PlayerResult {
-                    won_game: landlord_won == self.landlords_team.contains(&player.id),
+                PlayerGameFinishedResult {
+                    won_game: landlord_won == is_defending,
                     is_defending,
                     is_landlord: self.landlord == player.id,
                     ranks_up: num_advances,
