@@ -29,6 +29,12 @@ const ChangeLog = () => {
         style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
+        <p>5/24/2020:</p>
+        <ul>
+          <li>
+            Add game result statistics tracking.
+          </li>
+        </ul>
         <p>5/13/2020:</p>
         <ul>
           <li>
