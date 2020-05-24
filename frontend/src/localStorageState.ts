@@ -32,3 +32,13 @@ export const stringLocalStorageState = (
     (value: any): string => (typeof value === 'string' ? value : defaultValue),
     (state: string) => state,
   );
+
+export const numberLocalStorageState = (
+  key: string,
+  defaultValue = 0,
+): State<number> =>
+  localStorageState(
+    key,
+    (value: any): number => (value != null && !isNaN(value) ? parseInt(value) : defaultValue),
+    (state: number) => state,
+  );

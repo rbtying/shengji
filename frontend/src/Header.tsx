@@ -1,5 +1,6 @@
 import * as React from 'react';
 import GameMode from './GameMode';
+import GameStatisticsButton from './GameStatisticsButton';
 import SettingsButton from './SettingsButton';
 import {IGameModeSettings} from './types';
 
@@ -14,6 +15,7 @@ const Header = (props: Props) => (
       <GameMode gameMode={props.gameMode} />
       &nbsp;
       <SettingsButton />
+      <GameStatisticsButton />
     </h1>
     {props.chatLink ? (
       <p>

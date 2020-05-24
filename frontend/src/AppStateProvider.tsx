@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {Message} from './ChatMessage';
+import gameStatistics, {GameStatistics} from './state/GameStatistics'
 import settings, {Settings} from './state/Settings';
 import {IGameState} from './types';
 import {State, combineState, noPersistence} from './State';
@@ -7,6 +8,7 @@ import {stringLocalStorageState} from './localStorageState';
 
 export type AppState = {
   settings: Settings;
+  gameStatistics: GameStatistics,
   connected: boolean;
   roomName: string;
   name: string;
@@ -18,6 +20,7 @@ export type AppState = {
 
 const appState: State<AppState> = combineState({
   settings,
+  gameStatistics,
   connected: noPersistence(() => false),
   roomName: noPersistence(() => window.location.hash.slice(1)),
   name: stringLocalStorageState('name'),
