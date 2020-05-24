@@ -24,7 +24,7 @@ const percentage = (numerator: number, denominator: number) => {
   return 'n/a';
 }
 
-const ranks = (ranks: number, numGames: number) => {
+const ranksPerGame = (ranks: number, numGames: number) => {
   if (numGames > 0) {
     return (ranks/numGames).toFixed(3);
   }
@@ -55,7 +55,6 @@ type Props = {
 
 const GameStatisticsPane = (props: Props) => {
   const {gameStatistics} = props;
-  console.log(gameStatistics);
 
   const gamesPlayedAsAttacking = gameStatistics.gamesPlayed - gameStatistics.gamesPlayedAsDefending;
   const gamesWonAsAttacking = gameStatistics.gamesWon - gameStatistics.gamesWonAsDefending;
@@ -70,22 +69,22 @@ const GameStatisticsPane = (props: Props) => {
           <LabelCell>won</LabelCell>
           <LabelCell>percentage</LabelCell>
         </Row>
-        <GameStatisticsRow 
+        <GameStatisticsRow
           label={'attacking'}
           numPlayed={gamesPlayedAsAttacking}
           numWon={gamesWonAsAttacking}
         />
-        <GameStatisticsRow 
+        <GameStatisticsRow
           label={'defending'}
           numPlayed={gameStatistics.gamesPlayedAsDefending}
           numWon={gameStatistics.gamesWonAsDefending}
         />
-        <GameStatisticsRow 
+        <GameStatisticsRow
           label={'as landlord'}
           numPlayed={gameStatistics.gamesPlayedAsLandlord}
           numWon={gameStatistics.gamesWonAsLandlord}
         />
-        <GameStatisticsRow 
+        <GameStatisticsRow
           label={'total'}
           numPlayed={gameStatistics.gamesPlayed}
           numWon={gameStatistics.gamesWon}
@@ -95,11 +94,11 @@ const GameStatisticsPane = (props: Props) => {
       <div style={{display: 'table'}}>
         <Row>
           <LabelCell>ranks/game</LabelCell>
-          <Cell>{ranks(gameStatistics.ranksUp, gameStatistics.gamesPlayed)}</Cell>
+          <Cell>{ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesPlayed)}</Cell>
         </Row>
         <Row>
           <LabelCell>ranks/win</LabelCell>
-          <Cell>{ranks(gameStatistics.ranksUp, gameStatistics.gamesWon)}</Cell>
+          <Cell>{ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesWon)}</Cell>
         </Row>
       </div>
     </div>

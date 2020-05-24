@@ -925,12 +925,15 @@ impl PlayPhase {
                 });
             }
 
-            game_result.insert(player.name.to_string(), PlayerResult {
-                won_game: landlord_won == self.landlords_team.contains(&player.id),
-                is_defending: is_defending,
-                is_landlord: self.landlord == player.id,
-                ranks_up: num_advances,
-            });
+            game_result.insert(
+                player.name.to_string(),
+                PlayerResult {
+                    won_game: landlord_won == self.landlords_team.contains(&player.id),
+                    is_defending,
+                    is_landlord: self.landlord == player.id,
+                    ranks_up: num_advances,
+                },
+            );
         }
 
         msgs.push(MessageVariant::GameFinished {

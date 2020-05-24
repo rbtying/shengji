@@ -95,6 +95,6 @@ pub enum MessageVariant {
     },
     RevealedCardFromKitty,
     GameFinished {
-        result: HashMap<String, PlayerResult>
+        result: HashMap<String, PlayerResult>,
     },
 }

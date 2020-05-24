@@ -15,7 +15,7 @@ pub struct PlayerResult {
     pub won_game: bool,
     pub is_defending: bool,
     pub is_landlord: bool,
-    pub ranks_up: usize
+    pub ranks_up: usize,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
