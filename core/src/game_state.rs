@@ -666,6 +666,14 @@ impl Deref for GameState {
     }
 }
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+pub struct PlayerGameFinishedResult {
+    pub won_game: bool,
+    pub is_defending: bool,
+    pub is_landlord: bool,
+    pub ranks_up: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayPhase {
     num_decks: usize,
@@ -883,6 +891,8 @@ impl PlayPhase {
         let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
             Self::compute_level_deltas(self.num_decks, non_landlords_points);
 
+        let mut game_result = HashMap::new();
+
         let mut propagated = self.propagated.clone();
         for player in &mut propagated.players {
             let is_defending = self.landlords_team.contains(&player.id);
@@ -922,7 +932,21 @@ impl PlayPhase {
                     rank: player.level,
                 });
             }
+
+            game_result.insert(
+                player.name.to_string(),
+                PlayerGameFinishedResult {
+                    won_game: landlord_won == is_defending,
+                    is_defending,
+                    is_landlord: self.landlord == player.id,
+                    ranks_up: num_advances,
+                },
+            );
         }
+
+        msgs.push(MessageVariant::GameFinished {
+            result: game_result,
+        });
 
         let landlord_idx = bail_unwrap!(self
             .propagated
