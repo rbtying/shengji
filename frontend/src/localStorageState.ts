@@ -39,6 +39,7 @@ export const numberLocalStorageState = (
 ): State<number> =>
   localStorageState(
     key,
-    (value: any): number => (value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue),
+    (value: any): number =>
+      value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue,
     (state: number) => state,
   );

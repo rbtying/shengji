@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {Message} from './ChatMessage';
-import gameStatistics, {GameStatistics} from './state/GameStatistics'
+import gameStatistics, {GameStatistics} from './state/GameStatistics';
 import settings, {Settings} from './state/Settings';
 import {IGameState} from './types';
 import {State, combineState, noPersistence} from './State';
@@ -8,7 +8,7 @@ import {stringLocalStorageState} from './localStorageState';
 
 export type AppState = {
   settings: Settings;
-  gameStatistics: GameStatistics,
+  gameStatistics: GameStatistics;
   connected: boolean;
   roomName: string;
   name: string;

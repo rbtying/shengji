@@ -17,7 +17,10 @@ const GameStatisticsButton = () => {
   const {state} = React.useContext(AppStateContext);
   return (
     <>
-      <IconButton style={{paddingLeft: "10px"}} onClick={() => setModalOpen(true)}>
+      <IconButton
+        style={{paddingLeft: '10px'}}
+        onClick={() => setModalOpen(true)}
+      >
         <BarChart width="2em" />
       </IconButton>
       <ReactModal
@@ -27,9 +30,7 @@ const GameStatisticsButton = () => {
         shouldCloseOnEsc
         style={{content: contentStyle}}
       >
-        <GameStatisticsPane
-          gameStatistics={state.gameStatistics}
-        />
+        <GameStatisticsPane gameStatistics={state.gameStatistics} />
       </ReactModal>
     </>
   );

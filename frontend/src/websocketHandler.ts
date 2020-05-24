@@ -66,8 +66,14 @@ const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
   return null;
 };
 
-const gameFinishedHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message.Broadcast && message.Broadcast.data.variant.type === 'GameFinished') {
+const gameFinishedHandler: WebsocketHandler = (
+  state: AppState,
+  message: any,
+) => {
+  if (
+    message.Broadcast &&
+    message.Broadcast.data.variant.type === 'GameFinished'
+  ) {
     const ownResult = message.Broadcast.data.variant.result[state.name];
     const gameStatistics = state.gameStatistics;
 
@@ -94,8 +100,7 @@ const gameFinishedHandler: WebsocketHandler = (state: AppState, message: any) =>
     return {gameStatistics: newGameStatistics};
   }
   return null;
-}
-
+};
 
 const allHandlers: WebsocketHandler[] = [
   messageHandler,

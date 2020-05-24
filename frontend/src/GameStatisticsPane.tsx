@@ -15,27 +15,25 @@ const Cell = styled.div`
   display: table-cell;
 `;
 
-
-
 const percentage = (numerator: number, denominator: number) => {
   if (denominator > 0) {
-    return (numerator/denominator * 100).toFixed(2)+'%';
+    return ((numerator / denominator) * 100).toFixed(2) + '%';
   }
   return 'n/a';
-}
+};
 
 const ranksPerGame = (ranks: number, numGames: number) => {
   if (numGames > 0) {
-    return (ranks/numGames).toFixed(3);
+    return (ranks / numGames).toFixed(3);
   }
   return 'n/a';
-}
+};
 
 type RowProps = {
   label: string;
   numPlayed: number;
   numWon: number;
-}
+};
 
 const GameStatisticsRow = ({label, numPlayed, numWon}: RowProps) => {
   return (
@@ -45,9 +43,8 @@ const GameStatisticsRow = ({label, numPlayed, numWon}: RowProps) => {
       <Cell>{numWon}</Cell>
       <Cell>{percentage(numWon, numPlayed)}</Cell>
     </Row>
-  )
-}
-
+  );
+};
 
 type Props = {
   gameStatistics: GameStatistics;
@@ -56,15 +53,17 @@ type Props = {
 const GameStatisticsPane = (props: Props) => {
   const {gameStatistics} = props;
 
-  const gamesPlayedAsAttacking = gameStatistics.gamesPlayed - gameStatistics.gamesPlayedAsDefending;
-  const gamesWonAsAttacking = gameStatistics.gamesWon - gameStatistics.gamesWonAsDefending;
+  const gamesPlayedAsAttacking =
+    gameStatistics.gamesPlayed - gameStatistics.gamesPlayedAsDefending;
+  const gamesWonAsAttacking =
+    gameStatistics.gamesWon - gameStatistics.gamesWonAsDefending;
 
   return (
     <div className="gameStatistics">
       <h3>win statistics</h3>
       <div style={{display: 'table'}}>
         <Row>
-          <Cell/>
+          <Cell />
           <LabelCell>played</LabelCell>
           <LabelCell>won</LabelCell>
           <LabelCell>percentage</LabelCell>
@@ -94,11 +93,15 @@ const GameStatisticsPane = (props: Props) => {
       <div style={{display: 'table'}}>
         <Row>
           <LabelCell>ranks/game</LabelCell>
-          <Cell>{ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesPlayed)}</Cell>
+          <Cell>
+            {ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesPlayed)}
+          </Cell>
         </Row>
         <Row>
           <LabelCell>ranks/win</LabelCell>
-          <Cell>{ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesWon)}</Cell>
+          <Cell>
+            {ranksPerGame(gameStatistics.ranksUp, gameStatistics.gamesWon)}
+          </Cell>
         </Row>
       </div>
     </div>
