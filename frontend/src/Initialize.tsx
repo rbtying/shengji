@@ -118,6 +118,17 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setThrowEvaluationPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetThrowEvaluationPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== '') {
@@ -381,6 +392,22 @@ const Initialize = (props: Props) => {
               <option value="NoProtections">No protections</option>
               <option value="LongerTuplesProtected">
                 Longer tuple (triple) is protected from shorter (pair)
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Multi-throw evaluation policy:{' '}
+            <select
+              value={props.state.propagated.throw_evaluation_policy}
+              onChange={setThrowEvaluationPolicy}
+            >
+              <option value="All">
+                Subsequent throw must beat all cards to win
+              </option>
+              <option value="Highest">
+                Subsequent throw must beat highest card to win
               </option>
             </select>
           </label>

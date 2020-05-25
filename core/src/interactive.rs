@@ -4,9 +4,10 @@ use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
     AdvancementPolicy, Friend, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, ThrowPenalty, TrickDrawPolicy,
+    KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
+use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
 
 pub struct InteractiveGame {
@@ -147,6 +148,10 @@ impl InteractiveGame {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
             }
+            (Message::SetThrowEvaluationPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting throw evaluation policy"; "policy" => format!("{:?}", policy));
+                state.set_throw_evaluation_policy(policy)?
+            }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -259,6 +264,7 @@ pub enum Message {
     SetKittyBidPolicy(KittyBidPolicy),
     SetTrickDrawPolicy(TrickDrawPolicy),
     SetThrowPenalty(ThrowPenalty),
+    SetThrowEvaluationPolicy(ThrowEvaluationPolicy),
     StartGame,
     DrawCard,
     RevealCard,
@@ -339,6 +345,8 @@ impl BroadcastMessage {
             TrickDrawPolicySet { policy: TrickDrawPolicy::NoProtections } => format!("{} removed long-tuple protections (pair can draw triple)", n?),
             TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{}
                 protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
+            ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::All } => format!("{} set throws to be evaluated based on all of the cards", n?),
+            ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             GameFinished { result: _ } => "The game has finished.".to_string()
         })

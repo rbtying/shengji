@@ -28,6 +28,30 @@ pub enum TrickError {
     NonMatchingPlay,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum TrickDrawPolicy {
+    NoProtections,
+    LongerTuplesProtected,
+}
+
+impl Default for TrickDrawPolicy {
+    fn default() -> Self {
+        TrickDrawPolicy::NoProtections
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum ThrowEvaluationPolicy {
+    All,
+    Highest,
+}
+
+impl Default for ThrowEvaluationPolicy {
+    fn default() -> Self {
+        ThrowEvaluationPolicy::All
+    }
+}
+
 type Members = SmallVec<[OrderedCard; 3]>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -64,6 +88,15 @@ impl TrickUnit {
         match self {
             TrickUnit::Repeated { card, .. } => *card,
             TrickUnit::Tractor { ref members, .. } => members[0],
+        }
+    }
+
+    pub fn last_card(&self) -> OrderedCard {
+        match self {
+            TrickUnit::Repeated { card, .. } => *card,
+            TrickUnit::Tractor { ref members, .. } => {
+                *members.last().expect("Last card must exist")
+            }
         }
     }
 
@@ -113,7 +146,7 @@ impl TrickFormat {
         &self,
         hand: &HashMap<Card, usize>,
         proposed: &'_ [Card],
-        allow_breaking_larger_tuples: bool,
+        trick_draw_policy: TrickDrawPolicy,
     ) -> bool {
         let required = self.units.iter().map(|c| c.size()).sum::<usize>();
         if proposed.len() != required {
@@ -161,7 +194,7 @@ impl TrickFormat {
                     self.trump,
                     proposed.iter().copied(),
                     requirement.iter().copied(),
-                    true,
+                    TrickDrawPolicy::NoProtections,
                 )
                 .0;
 
@@ -173,7 +206,7 @@ impl TrickFormat {
                     self.trump,
                     available_cards.iter().copied(),
                     requirement.iter().copied(),
-                    allow_breaking_larger_tuples,
+                    trick_draw_policy,
                 )
                 .0;
                 if hand_can_play {
@@ -224,7 +257,7 @@ impl TrickFormat {
             self.trump,
             cards.iter().copied(),
             self.units.iter().map(UnitLike::from),
-            true,
+            TrickDrawPolicy::NoProtections,
         );
         if found {
             debug_assert_eq!(
@@ -319,7 +352,7 @@ impl Trick {
         id: PlayerID,
         hands: &'a Hands,
         cards: &'b [Card],
-        allow_breaking_larger_tuples: bool,
+        trick_draw_policy: TrickDrawPolicy,
     ) -> Result<(), TrickError> {
         hands.contains(id, cards.iter().cloned())?;
         if self.player_queue.front().cloned() != Some(id) {
@@ -327,7 +360,7 @@ impl Trick {
         }
         match self.trick_format.as_ref() {
             Some(tf) => {
-                if tf.is_legal_play(hands.get(id)?, cards, allow_breaking_larger_tuples) {
+                if tf.is_legal_play(hands.get(id)?, cards, trick_draw_policy) {
                     Ok(())
                 } else {
                     Err(TrickError::IllegalPlay)
@@ -358,9 +391,10 @@ impl Trick {
         id: PlayerID,
         hands: &'a mut Hands,
         cards: &'b [Card],
-        allow_breaking_larger_tuples: bool,
+        trick_draw_policy: TrickDrawPolicy,
+        throw_eval_policy: ThrowEvaluationPolicy,
     ) -> Result<Vec<MessageVariant>, TrickError> {
-        self.can_play_cards(id, hands, cards, allow_breaking_larger_tuples)?;
+        self.can_play_cards(id, hands, cards, trick_draw_policy)?;
         let mut msgs = vec![];
         let mut cards = cards.to_vec();
         cards.sort_by(|a, b| self.trump.compare(*a, *b));
@@ -473,15 +507,24 @@ impl Trick {
             better_player,
         });
 
-        self.current_winner =
-            Self::winner(self.trick_format.as_ref(), &self.played_cards, self.trump);
+        self.current_winner = Self::winner(
+            self.trick_format.as_ref(),
+            &self.played_cards,
+            self.trump,
+            throw_eval_policy,
+        );
         Ok(msgs)
     }
 
     /**
      * Takes back cards just played, e.g. in case of dispute.
      */
-    pub fn take_back(&mut self, id: PlayerID, hands: &'_ mut Hands) -> Result<(), TrickError> {
+    pub fn take_back(
+        &mut self,
+        id: PlayerID,
+        hands: &'_ mut Hands,
+        throw_eval_policy: ThrowEvaluationPolicy,
+    ) -> Result<(), TrickError> {
         if self.played_cards.last().map(|p| p.id) == Some(id) {
             let played = self.played_cards.pop().unwrap();
             hands.add(id, played.cards).unwrap();
@@ -489,8 +532,12 @@ impl Trick {
             if self.played_cards.is_empty() {
                 self.trick_format = None;
             }
-            self.current_winner =
-                Self::winner(self.trick_format.as_ref(), &self.played_cards, self.trump);
+            self.current_winner = Self::winner(
+                self.trick_format.as_ref(),
+                &self.played_cards,
+                self.trump,
+                throw_eval_policy,
+            );
             Ok(())
         } else {
             Err(TrickError::OutOfOrder)
@@ -531,6 +578,7 @@ impl Trick {
         trick_format: Option<&'_ TrickFormat>,
         played_cards: &'_ [PlayedCards],
         trump: Trump,
+        throw_eval_policy: ThrowEvaluationPolicy,
     ) -> Option<PlayerID> {
         match trick_format {
             Some(tf) => {
@@ -538,11 +586,30 @@ impl Trick {
 
                 for (idx, pc) in played_cards.iter().enumerate().skip(1) {
                     if let Ok(m) = tf.matches(&pc.cards) {
-                        let all_greater = m.iter().zip(winner.1.iter()).all(|(n, w)| {
-                            trump.compare_effective(n.first_card().card, w.first_card().card)
-                                == Ordering::Greater
-                        });
-                        if all_greater {
+                        let greater = match throw_eval_policy {
+                            ThrowEvaluationPolicy::All => {
+                                m.iter().zip(winner.1.iter()).all(|(n, w)| {
+                                    trump
+                                        .compare_effective(n.first_card().card, w.first_card().card)
+                                        == Ordering::Greater
+                                })
+                            }
+                            ThrowEvaluationPolicy::Highest => {
+                                let n_max = m
+                                    .iter()
+                                    .map(|u| u.last_card())
+                                    .max()
+                                    .expect("trick format cannot be empty");
+                                let w_max = winner
+                                    .1
+                                    .iter()
+                                    .map(|u| u.last_card())
+                                    .max()
+                                    .expect("trick format cannot be empty");
+                                trump.compare_effective(n_max.card, w_max.card) == Ordering::Greater
+                            }
+                        };
+                        if greater {
                             winner = (idx, m);
                         }
                     }
@@ -613,7 +680,7 @@ impl UnitLike {
         trump: Trump,
         iter: impl IntoIterator<Item = Card>,
         units: impl Iterator<Item = UnitLike> + Clone,
-        allow_breaking_larger_tuples: bool,
+        trick_draw_policy: TrickDrawPolicy,
     ) -> (bool, Units) {
         let mut counts = BTreeMap::new();
         for card in iter.into_iter() {
@@ -621,7 +688,12 @@ impl UnitLike {
             *counts.entry(card).or_insert(0) += 1;
         }
 
-        check_format_inner(&mut counts, 0, units, allow_breaking_larger_tuples)
+        check_format_inner(
+            &mut counts,
+            0,
+            units,
+            trick_draw_policy != TrickDrawPolicy::LongerTuplesProtected,
+        )
     }
 }
 
@@ -750,13 +822,21 @@ fn check_format_inner(
         }) => {
             let mut potential_starts = Units::new();
             for (card, count) in &*counts {
-                potential_starts.extend(find_tractors_from_start(
-                    *card,
-                    *count,
-                    counts,
-                    width,
-                    length as usize,
-                ));
+                potential_starts.extend(
+                    find_tractors_from_start(*card, *count, counts, width, length as usize)
+                        .into_iter()
+                        .map(|t| match t {
+                            // The tractors we find might actually be wider
+                            // (higher count) than requested, so let's downgrade
+                            // the start accordingly.
+                            TrickUnit::Tractor { members, .. } => TrickUnit::Tractor {
+                                members,
+                                count: width,
+                            },
+                            // This is unreachable, but let's defensively handle it.
+                            r @ TrickUnit::Repeated { .. } => r,
+                        }),
+                );
             }
             for tractor in potential_starts {
                 if !allow_breaking_larger_tuples && breaks_longer_tuple(counts, &tractor) {
@@ -940,7 +1020,10 @@ mod tests {
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
 
-    use super::{OrderedCard, Trick, TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike};
+    use super::{
+        OrderedCard, ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded, TrickError,
+        TrickFormat, TrickUnit, UnitLike,
+    };
 
     const TRUMP: Trump = Trump::Standard {
         number: Number::Four,
@@ -980,7 +1063,7 @@ mod tests {
                     HashSet::from_iter(vec![$(vec![$(vec![$($y),+]),+]),+])
                 );
                 for u in units {
-                    let (found, play) = UnitLike::check_play(TRUMP, cards.iter().copied(), u.iter().map(UnitLike::from), true);
+                    let (found, play) = UnitLike::check_play(TRUMP, cards.iter().copied(), u.iter().map(UnitLike::from), TrickDrawPolicy::NoProtections);
                     assert!(found);
                     assert_eq!(
                         u.iter().map(UnitLike::from).collect::<HashSet<_>>(),
@@ -1016,10 +1099,42 @@ mod tests {
         hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[S_2], true).unwrap();
-        trick.play_cards(P2, &mut hands, &[S_5], true).unwrap();
-        trick.play_cards(P3, &mut hands, &[S_3], true).unwrap();
-        trick.play_cards(P4, &mut hands, &[S_5], true).unwrap();
+        trick
+            .play_cards(
+                P1,
+                &mut hands,
+                &[S_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &[S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
         let TrickEnded {
             winner: winner_id,
             points,
@@ -1040,10 +1155,42 @@ mod tests {
         hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[S_2], true).unwrap();
-        trick.play_cards(P2, &mut hands, &[S_4], true).unwrap();
-        trick.play_cards(P3, &mut hands, &[S_3], true).unwrap();
-        trick.play_cards(P4, &mut hands, &[S_5], true).unwrap();
+        trick
+            .play_cards(
+                P1,
+                &mut hands,
+                &[S_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &[S_4],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
         let TrickEnded {
             winner: winner_id,
             points,
@@ -1064,10 +1211,42 @@ mod tests {
         hands.add(P4, vec![S_3, S_4, S_5]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick.play_cards(P1, &mut hands, &[S_2, S_2], true).unwrap();
-        trick.play_cards(P2, &mut hands, &[S_3, S_4], true).unwrap();
-        trick.play_cards(P3, &mut hands, &[S_5, S_5], true).unwrap();
-        trick.play_cards(P4, &mut hands, &[S_3, S_5], true).unwrap();
+        trick
+            .play_cards(
+                P1,
+                &mut hands,
+                &[S_2, S_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &[S_3, S_4],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_5, S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_3, S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
         let TrickEnded {
             winner: winner_id,
             points,
@@ -1089,16 +1268,40 @@ mod tests {
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
         trick
-            .play_cards(P1, &mut hands, &[S_2, S_2, S_3, S_3], true)
+            .play_cards(
+                P1,
+                &mut hands,
+                &[S_2, S_2, S_3, S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[S_6, S_6, S_7, S_7], true)
+            .play_cards(
+                P2,
+                &mut hands,
+                &[S_6, S_6, S_7, S_7],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[S_2, S_5, S_5, S_5], true)
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_2, S_5, S_5, S_5],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P4, &mut hands, &[S_6, S_6, S_6, S_6], true)
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_6, S_6, S_6, S_6],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         let TrickEnded {
             winner: winner_id,
@@ -1120,16 +1323,40 @@ mod tests {
         hands.add(P4, vec![S_4, S_4, S_4, S_4]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
         trick
-            .play_cards(P1, &mut hands, &[H_8, H_8, H_7, H_2], true)
+            .play_cards(
+                P1,
+                &mut hands,
+                &[H_8, H_8, H_7, H_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[H_2, S_2, S_2, S_2], true)
+            .play_cards(
+                P2,
+                &mut hands,
+                &[H_2, S_2, S_2, S_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[S_2, S_2, S_3, S_4], true)
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_2, S_2, S_3, S_4],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P4, &mut hands, &[S_4, S_4, S_4, S_4], true)
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_4, S_4, S_4, S_4],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         let TrickEnded {
             winner: winner_id,
@@ -1151,11 +1378,41 @@ mod tests {
         hands.add(P4, vec![S_4, S_4, S_4, H_3]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
         trick
-            .play_cards(P1, &mut hands, &[H_8, H_8, H_7, H_2], true)
+            .play_cards(
+                P1,
+                &mut hands,
+                &[H_8, H_8, H_7, H_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
-        trick.play_cards(P2, &mut hands, &[H_2], true).unwrap();
-        trick.play_cards(P3, &mut hands, &[S_3], true).unwrap();
-        trick.play_cards(P4, &mut hands, &[H_3], true).unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &[H_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &[H_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
         let TrickEnded {
             winner: winner_id,
             points,
@@ -1178,16 +1435,40 @@ mod tests {
         hands.add(P4, vec![H_3, H_3, H_3, H_3, H_3]).unwrap();
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
         trick
-            .play_cards(P1, &mut hands, &[S_Q, S_Q, S_K, S_K, S_A], true)
+            .play_cards(
+                P1,
+                &mut hands,
+                &[S_Q, S_Q, S_K, S_K, S_A],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P2, &mut hands, &[S_2, S_3, S_3, S_5, H_3], true)
+            .play_cards(
+                P2,
+                &mut hands,
+                &[S_2, S_3, S_3, S_5, H_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P3, &mut hands, &[S_A, S_A, H_3, H_3, H_3], true)
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_A, S_A, H_3, H_3, H_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         trick
-            .play_cards(P4, &mut hands, &[H_3, H_3, H_3, H_3, H_3], true)
+            .play_cards(
+                P4,
+                &mut hands,
+                &[H_3, H_3, H_3, H_3, H_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
             .unwrap();
         let TrickEnded {
             winner: winner_id,
@@ -1334,17 +1615,17 @@ mod tests {
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2], true));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], true));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2], false));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], false));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], false));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
 
         // Check that we don't break longer tuples if that's not required
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_3, S_5], false));
-        assert!(!tf.is_legal_play(&hand, &[S_3, S_5], true));
+        assert!(tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::LongerTuplesProtected));
+        assert!(!tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::NoProtections));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1356,10 +1637,10 @@ mod tests {
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], true));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], false));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], false));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections,));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections,));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections,));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections,));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1369,12 +1650,28 @@ mod tests {
                 card: oc!(S_3),
             }],
         };
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3, S_5], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3, S_5], false));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3, S_5],
+            TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3, S_5],
+            TrickDrawPolicy::NoProtections
+        ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2, S_5], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2, S_5], false));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2, S_5],
+            TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2, S_5],
+            TrickDrawPolicy::NoProtections
+        ));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1384,23 +1681,47 @@ mod tests {
                 members: smallvec![oc!(S_2), oc!(S_3)],
             }],
         };
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3], true));
-        assert!(tf.is_legal_play(&hand, &[S_3, S_3, S_5, S_5], true));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], false));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3], false));
-        assert!(tf.is_legal_play(&hand, &[S_3, S_3, S_5, S_5], false));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_3, S_3, S_5, S_5], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_3, S_5, S_5],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5], true));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], false));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5], false));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_5],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
         // This play is tenuously legal, since the 2222 is protected by the 355 is not, and the
         // trick-format is 2233. Normally we would expect that the 2233 is required, but the player
         // has decided to break the 22 but *not* play the 55.
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3], false));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_3],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1417,10 +1738,37 @@ mod tests {
             ],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], true));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], false));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], false));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+    }
+
+    #[test]
+    fn test_protected_wider_tractor() {
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: smallvec![TrickUnit::Tractor {
+                members: smallvec![oc!(S_6), oc!(S_7)],
+                count: 2,
+            },],
+        };
+        let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
+        assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
     }
 
     #[test]
@@ -1441,10 +1789,42 @@ mod tests {
         hands.add(P3, p3_hand.clone()).unwrap();
         hands.add(P4, p4_hand.clone()).unwrap();
         let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
-        trick.play_cards(P1, &mut hands, &p1_hand, true).unwrap();
-        trick.play_cards(P2, &mut hands, &p2_hand, true).unwrap();
-        trick.play_cards(P3, &mut hands, &p3_hand, true).unwrap();
-        trick.play_cards(P4, &mut hands, &p4_hand, true).unwrap();
+        trick
+            .play_cards(
+                P1,
+                &mut hands,
+                &p1_hand,
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &p2_hand,
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &p3_hand,
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &p4_hand,
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
         let TrickEnded {
             winner: winner_id,
             points,
@@ -1470,7 +1850,10 @@ mod tests {
         let p3_hand = vec![S_2, S_6, S_J, S_Q, H_K, C_K, C_10, Card::SmallJoker];
         let p4_hand = vec![C_4, C_6, C_7, S_3, S_3, Card::BigJoker, C_5, C_8];
 
-        for break_tuples in &[true, false] {
+        for policy in &[
+            TrickDrawPolicy::NoProtections,
+            TrickDrawPolicy::LongerTuplesProtected,
+        ] {
             let mut hands = Hands::new(vec![P1, P2, P3, P4]);
 
             hands.add(P1, p1_hand.clone()).unwrap();
@@ -1485,7 +1868,8 @@ mod tests {
                     P1,
                     &mut hands,
                     &[S_7, S_7, S_8, S_8, S_9, S_9],
-                    *break_tuples,
+                    *policy,
+                    ThrowEvaluationPolicy::All,
                 )
                 .unwrap();
             // This play should not succeed, because P2 also has S_K, S_K which is a pair.
@@ -1493,14 +1877,16 @@ mod tests {
                 P2,
                 &mut hands,
                 &[S_4, S_10, S_A, H_K, D_K, C_K],
-                *break_tuples,
+                *policy,
+                ThrowEvaluationPolicy::All,
             ) {
                 trick
                     .play_cards(
                         P2,
                         &mut hands,
                         &[S_4, S_10, S_A, H_K, S_K, S_K],
-                        *break_tuples,
+                        *policy,
+                        ThrowEvaluationPolicy::All,
                     )
                     .unwrap();
             } else {
@@ -1511,7 +1897,8 @@ mod tests {
                     P3,
                     &mut hands,
                     &[S_2, S_6, S_J, S_Q, H_K, C_K],
-                    *break_tuples,
+                    *policy,
+                    ThrowEvaluationPolicy::All,
                 )
                 .unwrap();
             trick
@@ -1519,9 +1906,80 @@ mod tests {
                     P4,
                     &mut hands,
                     &[C_4, C_6, C_7, S_3, S_3, Card::BigJoker],
-                    *break_tuples,
+                    *policy,
+                    ThrowEvaluationPolicy::All,
                 )
                 .unwrap();
         }
+    }
+
+    #[test]
+    fn test_throw_evaluation_policy_highest_card() {
+        let trump = Trump::Standard {
+            number: Number::King,
+            suit: Suit::Spades,
+        };
+
+        let p1_hand = vec![C_4, C_6];
+        let p2_hand = vec![S_2, S_3];
+        let p3_hand = vec![S_3, S_4];
+        let p4_hand = vec![S_2, Card::BigJoker];
+
+        let run = |policy: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+
+            hands.add(P1, p1_hand.clone()).unwrap();
+            hands.add(P2, p2_hand.clone()).unwrap();
+            hands.add(P3, p3_hand.clone()).unwrap();
+            hands.add(P4, p4_hand.clone()).unwrap();
+
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &p1_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &p2_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &p3_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &p4_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            let TrickEnded { winner, .. } = trick.complete().unwrap();
+            winner
+        };
+
+        // P4 beats P3's highest card, but one of P3's cards beats P4's lowest card.
+
+        // In the "all" case, P3 retains the "winner" status.
+        assert_eq!(run(ThrowEvaluationPolicy::All), P3);
+        // In the "highest" cas, P4 wins because P4 played a higher card.
+        assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
     }
 }

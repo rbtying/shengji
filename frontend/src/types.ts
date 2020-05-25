@@ -76,6 +76,7 @@ export interface IPropagatedState {
   kitty_bid_policy: 'FirstCard' | 'FirstCardOfLevelOrHighest';
   throw_penalty: 'None' | 'TenPointsPerAttempt';
   trick_draw_policy: 'NoProtections' | 'LongerTuplesProtected';
+  throw_evaluation_policy: 'All' | 'Highest';
   hide_played_cards: boolean;
 }
 
