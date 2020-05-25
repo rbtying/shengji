@@ -29,11 +29,20 @@ const ChangeLog = () => {
         style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
-        <p>5/24/2020:</p>
+        <p>5/25/2020:</p>
         <ul>
           <li>
-            Add game result statistics tracking.
+            Fix bug in longest-tuple-protected mode where tractors of longer
+            tuples would erroneously get drawn out.
           </li>
+          <li>
+            Add support for throw evaluation based on the highest card in the
+            throw.
+          </li>
+        </ul>
+        <p>5/24/2020:</p>
+        <ul>
+          <li>Add game result statistics tracking.</li>
         </ul>
         <p>5/13/2020:</p>
         <ul>

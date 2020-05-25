@@ -148,6 +148,10 @@ impl InteractiveGame {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
             }
+            (Message::SetThrowEvaluationPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting throw evaluation policy"; "policy" => format!("{:?}", policy));
+                state.set_throw_evaluation_policy(policy)?
+            }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -260,6 +264,7 @@ pub enum Message {
     SetKittyBidPolicy(KittyBidPolicy),
     SetTrickDrawPolicy(TrickDrawPolicy),
     SetThrowPenalty(ThrowPenalty),
+    SetThrowEvaluationPolicy(ThrowEvaluationPolicy),
     StartGame,
     DrawCard,
     RevealCard,
