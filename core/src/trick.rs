@@ -1763,7 +1763,7 @@ mod tests {
             },],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
-        // assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
