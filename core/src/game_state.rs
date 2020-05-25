@@ -8,7 +8,7 @@ use url::Url;
 
 use crate::hands::Hands;
 use crate::message::MessageVariant;
-use crate::trick::{Trick, TrickEnded};
+use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 macro_rules! bail_unwrap {
@@ -41,6 +41,7 @@ pub enum GameModeSettings {
     Tractor,
     FindingFriends { num_friends: Option<usize> },
 }
+
 impl GameModeSettings {
     pub fn variant(self) -> &'static str {
         match self {
@@ -103,19 +104,6 @@ impl Default for KittyBidPolicy {
         KittyBidPolicy::FirstCard
     }
 }
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum TrickDrawPolicy {
-    NoProtections,
-    LongerTuplesProtected,
-}
-
-impl Default for TrickDrawPolicy {
-    fn default() -> Self {
-        TrickDrawPolicy::NoProtections
-    }
-}
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -142,6 +130,8 @@ pub struct PropagatedState {
     kitty_bid_policy: KittyBidPolicy,
     #[serde(default)]
     trick_draw_policy: TrickDrawPolicy,
+    #[serde(default)]
+    throw_evaluation_policy: ThrowEvaluationPolicy,
 }
 
 impl PropagatedState {
@@ -381,6 +371,18 @@ impl PropagatedState {
         if policy != self.trick_draw_policy {
             self.trick_draw_policy = policy;
             Ok(vec![MessageVariant::TrickDrawPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_throw_evaluation_policy(
+        &mut self,
+        policy: ThrowEvaluationPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.throw_evaluation_policy {
+            self.throw_evaluation_policy = policy;
+            Ok(vec![MessageVariant::ThrowEvaluationPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -705,15 +707,9 @@ impl PlayPhase {
     }
 
     pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
-        Ok(self.trick.can_play_cards(
-            id,
-            &self.hands,
-            cards,
-            match self.propagated.trick_draw_policy {
-                TrickDrawPolicy::NoProtections => true,
-                TrickDrawPolicy::LongerTuplesProtected => false,
-            },
-        )?)
+        Ok(self
+            .trick
+            .can_play_cards(id, &self.hands, cards, self.propagated.trick_draw_policy)?)
     }
 
     pub fn play_cards(
@@ -725,10 +721,8 @@ impl PlayPhase {
             id,
             &mut self.hands,
             cards,
-            match self.propagated.trick_draw_policy {
-                TrickDrawPolicy::NoProtections => true,
-                TrickDrawPolicy::LongerTuplesProtected => false,
-            },
+            self.propagated.trick_draw_policy,
+            self.propagated.throw_evaluation_policy,
         )?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {
@@ -754,7 +748,9 @@ impl PlayPhase {
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
-        Ok(self.trick.take_back(id, &mut self.hands)?)
+        Ok(self
+            .trick
+            .take_back(id, &mut self.hands, self.propagated.throw_evaluation_policy)?)
     }
 
     pub fn finish_trick(&mut self) -> Result<Vec<MessageVariant>, Error> {

@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
     AdvancementPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult,
-    ThrowPenalty, TrickDrawPolicy,
+    ThrowPenalty,
 };
+use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -92,6 +93,9 @@ pub enum MessageVariant {
     },
     TrickDrawPolicySet {
         policy: TrickDrawPolicy,
+    },
+    ThrowEvaluationPolicySet {
+        policy: ThrowEvaluationPolicy,
     },
     RevealedCardFromKitty,
     GameFinished {
