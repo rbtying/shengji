@@ -822,13 +822,21 @@ fn check_format_inner(
         }) => {
             let mut potential_starts = Units::new();
             for (card, count) in &*counts {
-                potential_starts.extend(find_tractors_from_start(
-                    *card,
-                    *count,
-                    counts,
-                    width,
-                    length as usize,
-                ));
+                potential_starts.extend(
+                    find_tractors_from_start(*card, *count, counts, width, length as usize)
+                        .into_iter()
+                        .map(|t| match t {
+                            // The tractors we find might actually be wider
+                            // (higher count) than requested, so let's downgrade
+                            // the start accordingly.
+                            TrickUnit::Tractor { members, .. } => TrickUnit::Tractor {
+                                members,
+                                count: width,
+                            },
+                            // This is unreachable, but let's defensively handle it.
+                            r @ TrickUnit::Repeated { .. } => r,
+                        }),
+                );
             }
             for tractor in potential_starts {
                 if !allow_breaking_larger_tuples && breaks_longer_tuple(counts, &tractor) {
@@ -1717,6 +1725,25 @@ mod tests {
     }
 
     #[test]
+    fn test_protected_wider_tractor() {
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: smallvec![TrickUnit::Tractor {
+                members: smallvec![oc!(S_6), oc!(S_7)],
+                count: 2,
+            },],
+        };
+        let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
+        // assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+    }
+
+    #[test]
     fn test_play_throw_tractor_with_other_tractor_in_game() {
         let trump = Trump::Standard {
             number: Number::Four,
@@ -1856,5 +1883,75 @@ mod tests {
                 )
                 .unwrap();
         }
+    }
+
+    #[test]
+    fn test_throw_evaluation_policy_highest_card() {
+        let trump = Trump::Standard {
+            number: Number::King,
+            suit: Suit::Spades,
+        };
+
+        let p1_hand = vec![C_4, C_6];
+        let p2_hand = vec![S_2, S_3];
+        let p3_hand = vec![S_3, S_4];
+        let p4_hand = vec![S_2, Card::BigJoker];
+
+        let run = |policy: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+
+            hands.add(P1, p1_hand.clone()).unwrap();
+            hands.add(P2, p2_hand.clone()).unwrap();
+            hands.add(P3, p3_hand.clone()).unwrap();
+            hands.add(P4, p4_hand.clone()).unwrap();
+
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &p1_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &p2_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &p3_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &p4_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                )
+                .unwrap();
+            let TrickEnded { winner, .. } = trick.complete().unwrap();
+            winner
+        };
+
+        // P4 beats P3's highest card, but one of P3's cards beats P4's lowest card.
+
+        // In the "all" case, P3 retains the "winner" status.
+        assert_eq!(run(ThrowEvaluationPolicy::All), P3);
+        // In the "highest" cas, P4 wins because P4 played a higher card.
+        assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
     }
 }
