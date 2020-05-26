@@ -75,29 +75,31 @@ const gameFinishedHandler: WebsocketHandler = (
     message.Broadcast.data.variant.type === 'GameFinished'
   ) {
     const ownResult = message.Broadcast.data.variant.result[state.name];
-    const gameStatistics = state.gameStatistics;
+    if (ownResult) {
+      const gameStatistics = state.gameStatistics;
 
-    const newGameStatistics = {...gameStatistics};
-    newGameStatistics.gamesPlayed++;
-    if (ownResult.is_defending) {
-      newGameStatistics.gamesPlayedAsDefending++;
-      if (ownResult.is_landlord) {
-        newGameStatistics.gamesPlayedAsLandlord++;
-      }
-    }
-
-    if (ownResult.won_game) {
-      newGameStatistics.gamesWon++;
+      const newGameStatistics = {...gameStatistics};
+      newGameStatistics.gamesPlayed++;
       if (ownResult.is_defending) {
-        newGameStatistics.gamesWonAsDefending++;
+        newGameStatistics.gamesPlayedAsDefending++;
         if (ownResult.is_landlord) {
-          newGameStatistics.gamesWonAsLandlord++;
+          newGameStatistics.gamesPlayedAsLandlord++;
         }
       }
-    }
 
-    newGameStatistics.ranksUp += ownResult.ranks_up;
-    return {gameStatistics: newGameStatistics};
+      if (ownResult.won_game) {
+        newGameStatistics.gamesWon++;
+        if (ownResult.is_defending) {
+          newGameStatistics.gamesWonAsDefending++;
+          if (ownResult.is_landlord) {
+            newGameStatistics.gamesWonAsLandlord++;
+          }
+        }
+      }
+
+      newGameStatistics.ranksUp += ownResult.ranks_up;
+      return {gameStatistics: newGameStatistics};
+    }
   }
   return null;
 };
