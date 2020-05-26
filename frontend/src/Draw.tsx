@@ -264,10 +264,12 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             Bid using {players[this.props.state.propagated.landlord].level}'s in
             the same suit, or jokers
           </p>
-        ) : (
+        ) : players[player_id] ? (
           <p>
             Bid using {players[player_id].level}'s in the same suit, or jokers
           </p>
+        ) : (
+          <div />
         )}
         <Cards
           cardsInHand={cards_not_bid}
