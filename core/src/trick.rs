@@ -815,6 +815,11 @@ fn check_format_inner(
     mut units: impl Iterator<Item = UnitLike> + Clone,
     allow_breaking_larger_tuples: bool,
 ) -> (bool, Units) {
+    let all_single_repeated = units.clone().all(|u| match u {
+        UnitLike::Repeated { count: 1, .. } => true,
+        _ => false,
+    });
+
     match units.next() {
         Some(UnitLike::Tractor {
             length,
@@ -868,10 +873,11 @@ fn check_format_inner(
             for card in viable_repeated {
                 let repeated = TrickUnit::Repeated { count, card };
                 if !allow_breaking_larger_tuples
-                    // If there's only one card left, we should allow breaking longer tuples, since
-                    // this implies that we have already tried to match all of the stricter
+                    // If there's only single repeated units left, we should
+                    // allow breaking longer tuples, since this implies that we
+                    // have already tried to match all of the stricter
                     // requirements and failed.
-                    && count > 1
+                    && !all_single_repeated
                     && breaks_longer_tuple(counts, &repeated)
                 {
                     // Check if the play involves breaking any longer tuples
@@ -1767,6 +1773,44 @@ mod tests {
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+    }
+
+    #[test]
+    fn test_protected_tractor_triple() {
+        const HEART_TRUMP: Trump = Trump::Standard {
+            number: Number::Four,
+            suit: Suit::Hearts,
+        };
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Spades,
+            trump: HEART_TRUMP,
+            units: smallvec![
+                TrickUnit::Tractor {
+                    members: smallvec![oc!(S_9, HEART_TRUMP), oc!(S_9, HEART_TRUMP)],
+                    count: 2,
+                },
+                TrickUnit::Repeated {
+                    card: oc!(S_K, HEART_TRUMP),
+                    count: 1,
+                }
+            ],
+        };
+        let hand = Card::count(vec![S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8]);
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_3, S_5, S_10, S_J, S_Q],
+            TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_6, S_8, S_8, S_8],
+            TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_5, S_10, S_J, S_Q],
             TrickDrawPolicy::LongerTuplesProtected
         ));
     }

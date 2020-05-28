@@ -1595,4 +1595,50 @@ mod tests {
         assert!(draw.bid(p3, Card::SmallJoker, 2));
         assert!(!draw.bid(p1, cards::H_2, 2));
     }
+
+    #[test]
+    fn test_tuple_protection_case() {
+        use cards::*;
+
+        let mut init = InitializePhase::new();
+        init.set_trick_draw_policy(crate::trick::TrickDrawPolicy::LongerTuplesProtected)
+            .unwrap();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        let mut draw = init.start().unwrap();
+
+        let p1_hand = vec![S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
+        let p2_hand = vec![S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
+        let p3_hand = vec![S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8, C_6, C_7];
+        let p4_hand = vec![S_6, S_6, S_6, C_8, C_9, C_10, C_J, C_Q, C_K, C_A, C_A];
+
+        let mut deck = vec![];
+        for i in 0..11 {
+            deck.push(p1_hand[i]);
+            deck.push(p2_hand[i]);
+            deck.push(p3_hand[i]);
+            deck.push(p4_hand[i]);
+        }
+        deck.reverse();
+        draw.deck = deck;
+        draw.position = 0;
+
+        for _ in 0..11 {
+            draw.draw_card(p1).unwrap();
+            draw.draw_card(p2).unwrap();
+            draw.draw_card(p3).unwrap();
+            draw.draw_card(p4).unwrap();
+        }
+
+        assert!(draw.bid(p1, cards::H_2, 1));
+
+        let exchange = draw.advance(p1).unwrap();
+        let mut play = exchange.advance(p1).unwrap();
+        play.play_cards(p1, &[S_9, S_9, S_10, S_10, S_K]).unwrap();
+        play.play_cards(p2, &[S_3, S_3, S_5, S_5, S_7]).unwrap();
+        play.play_cards(p3, &[S_3, S_5, S_10, S_J, S_Q]).unwrap();
+        play.play_cards(p4, &[S_6, S_6, S_6, C_8, C_9]).unwrap();
+    }
 }
