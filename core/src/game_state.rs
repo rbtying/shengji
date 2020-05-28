@@ -1564,7 +1564,7 @@ mod tests {
     }
 
     #[test]
-    fn reinforce_bid() {
+    fn test_bid_sequence() {
         let mut init = InitializePhase::new();
         let p1 = init.add_player("p1".into()).unwrap().0;
         let p2 = init.add_player("p2".into()).unwrap().0;
