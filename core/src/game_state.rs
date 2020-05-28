@@ -1319,9 +1319,14 @@ impl DrawPhase {
                     if let Some(existing_bid) = self.bids.last() {
                         if new_bid.count > existing_bid.count {
                             valid_bids.push(new_bid);
-                        } else if new_bid.count == existing_bid.count && new_bid.count > 1 {
-                            if let Card::Suited { .. } = existing_bid.card {
-                                valid_bids.push(new_bid);
+                        } else if new_bid.count == existing_bid.count {
+                            match (new_bid.card, existing_bid.card) {
+                                (Card::BigJoker, Card::BigJoker) => (),
+                                (Card::BigJoker, _) => valid_bids.push(new_bid),
+                                (Card::SmallJoker, Card::BigJoker)
+                                | (Card::SmallJoker, Card::SmallJoker) => (),
+                                (Card::SmallJoker, _) => valid_bids.push(new_bid),
+                                _ => (),
                             }
                         }
                     } else {
@@ -1559,7 +1564,7 @@ mod tests {
     }
 
     #[test]
-    fn reinforce_bid() {
+    fn test_bid_sequence() {
         let mut init = InitializePhase::new();
         let p1 = init.add_player("p1".into()).unwrap().0;
         let p2 = init.add_player("p2".into()).unwrap().0;
@@ -1570,11 +1575,11 @@ mod tests {
         draw.deck = vec![
             cards::S_2,
             Card::SmallJoker,
-            cards::C_2,
+            Card::BigJoker,
             cards::H_2,
             cards::S_2,
             Card::SmallJoker,
-            cards::C_2,
+            Card::BigJoker,
             cards::H_2,
         ];
         draw.position = 0;
@@ -1590,9 +1595,8 @@ mod tests {
 
         assert!(draw.bid(p1, cards::H_2, 1));
         assert!(draw.bid(p1, cards::H_2, 2));
-        assert!(draw.bid(p2, cards::C_2, 2));
-        assert!(draw.bid(p1, cards::H_2, 2));
         assert!(draw.bid(p3, Card::SmallJoker, 2));
+        assert!(draw.bid(p2, Card::BigJoker, 2));
         assert!(!draw.bid(p1, cards::H_2, 2));
     }
 
