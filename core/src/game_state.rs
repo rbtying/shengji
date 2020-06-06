@@ -1075,6 +1075,9 @@ impl ExchangePhase {
                         self.trump.number().as_str()
                     )
                 }
+                if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
+                    bail!("you can't pick a trump suit as your friend")
+                }
                 if friend.skip >= self.num_decks {
                     bail!("need to pick a card that exists!")
                 }
