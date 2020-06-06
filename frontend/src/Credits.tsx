@@ -29,6 +29,12 @@ const ChangeLog = () => {
         style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
+        <p>6/5/2020:</p>
+        <ul>
+          <li>
+            Fix a bug (#35) so as to disallow picking trump cards as friend.
+          </li>
+        </ul>
         <p>5/25/2020:</p>
         <ul>
           <li>
