@@ -121,9 +121,9 @@ impl InteractiveGame {
                 info!(logger, "Setting hide played cards"; "hide_played_cards" => hide_played_cards);
                 vec![state.hide_played_cards(hide_played_cards)?]
             }
-            (Message::SetGameMode(ref game_mode), GameState::Initialize(ref mut state)) => {
+            (Message::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
-                state.set_game_mode(game_mode.clone())?
+                state.set_game_mode(game_mode)?
             }
             (Message::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty penalty"; "penalty" => format!("{:?}", kitty_penalty));

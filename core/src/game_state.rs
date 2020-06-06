@@ -528,7 +528,7 @@ impl GameState {
                     .filter(|p| p.id == level_id)
                     .flat_map(|p| hands.cards(id, p.level).ok())
                     .next()
-                    .unwrap_or_else(|| vec![])
+                    .unwrap_or_default()
             }
             GameState::Exchange(ExchangePhase {
                 ref hands, trump, ..
