@@ -52,7 +52,7 @@ const FriendSelect = (props: Props) => {
   }
 
   preloadedCards.forEach((c) => {
-    if (c.number !== null && c.number !== rank &&  (props.trump.Standard == null || c.typ != props.trump.Standard.suit) ) {
+    if (c.number !== null && c.number !== rank &&  (props.trump.Standard == null || c.typ !== props.trump.Standard.suit) ) {
       cardOptions.push({
         label: `${c.number}${c.typ}`,
         value: c.value,
