@@ -90,6 +90,8 @@ const Play = (props: Props) => {
       <Trick
         trick={playPhase.trick}
         players={playPhase.propagated.players}
+        landlord={playPhase.landlord}
+        landlords_team={playPhase.landlords_team}
         showTrickInPlayerOrder={props.showTrickInPlayerOrder}
       />
       <AutoPlayButton
