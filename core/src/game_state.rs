@@ -451,6 +451,7 @@ impl PropagatedState {
 pub struct Friend {
     card: Card,
     skip: usize,
+    initial_skip: usize,
     player_id: Option<PlayerID>,
 }
 
