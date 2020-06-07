@@ -17,22 +17,12 @@ const Friends = (props: Props) => {
           if (!friend.card) {
             return null;
           }
-          if (friend.skip === 0) {
-            return (
-              <p key={idx}>
-                The next person to play <InlineCard card={friend.card} /> is a
-                friend
-              </p>
-            );
-          } else {
-            return (
-              <p key={idx}>
-                {friend.skip} <InlineCard card={friend.card} /> can be played
-                before the next person to play <InlineCard card={friend.card} />{' '}
-                is a friend
-              </p>
-            );
-          }
+          return (
+            <p key={idx}>
+              The person to play {nth(friend.skip+1)} <InlineCard card={friend.card} /> is a
+              friend
+            </p>
+          );
         })}
       </div>
     );
@@ -40,5 +30,7 @@ const Friends = (props: Props) => {
     return null;
   }
 };
+
+function nth(n:number){return n+[,'st','nd','rd'][n/10%10^1&&n%10]||'th'}
 
 export default Friends;
