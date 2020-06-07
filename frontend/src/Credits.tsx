@@ -34,7 +34,7 @@ const ChangeLog = () => {
           <li>
             (#127)  Simplify friend selection description.
           </li>
-        </ul>        
+        </ul>
         <p>6/6/2020:</p>
         <ul>
           <li>
