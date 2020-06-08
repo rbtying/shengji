@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, Friend, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
+    AdvancementPolicy, FriendSelection, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
     KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
@@ -272,7 +272,7 @@ pub enum Message {
     PickUpKitty,
     MoveCardToKitty(Card),
     MoveCardToHand(Card),
-    SetFriends(Vec<Friend>),
+    SetFriends(Vec<FriendSelection>),
     BeginPlay,
     PlayCards(Vec<Card>),
     EndTrick,

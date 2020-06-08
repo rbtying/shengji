@@ -129,7 +129,6 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
-                  x.initial_skip = x.skip;
                   new_friends[idx] = x;
                   this.setState({friends: new_friends});
                   this.fixFriends();

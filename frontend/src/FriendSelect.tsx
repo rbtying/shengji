@@ -8,7 +8,7 @@ import {cardLookup} from './util/cardHelpers';
 
 type FriendSelection = {
   card: string;
-  skip: number;
+  initial_skip: number;
 };
 type Props = {
   friend: FriendSelection;
@@ -27,7 +27,7 @@ const FriendSelect = (props: Props) => {
   ) => {
     props.onChange({
       card: props.friend.card,
-      skip: props.friend.skip,
+      initial_skip: props.friend.initial_skip,
       ...transform(value),
     });
   };
@@ -36,7 +36,7 @@ const FriendSelect = (props: Props) => {
     card: select.value,
   }));
   const handleOrdinalChange = handleChange((select) => ({
-    skip: parseInt(select.value, 10),
+    initial_skip: parseInt(select.value, 10),
   }));
 
   const rank = props.trump.Standard
@@ -77,10 +77,10 @@ const FriendSelect = (props: Props) => {
       >
         <Select
           value={
-            props.friend.skip !== null
+            props.friend.initial_skip !== null
               ? {
-                  value: `${props.friend.skip}`,
-                  label: `#${props.friend.skip + 1}`,
+                  value: `${props.friend.initial_skip}`,
+                  label: `#${props.friend.initial_skip + 1}`,
                 }
               : {}
           }

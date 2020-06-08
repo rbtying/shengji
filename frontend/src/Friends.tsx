@@ -21,7 +21,7 @@ const Friends = (props: Props) => {
           return (
             <p key={idx}>
               The person to play the {nth(friend.initial_skip + 1)} <InlineCard card={friend.card} /> is a
-              friend. {(props.showPlayed) ? friend.initial_skip - friend.skip + ' played in previous hands' : ''}
+              friend. {(props.showPlayed) ? friend.initial_skip - friend.skip + ' played in previous tricks' : ''}
             </p>
           );
         })}
