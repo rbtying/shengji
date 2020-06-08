@@ -26,9 +26,21 @@ const ChangeLog = () => {
         onRequestClose={() => setModalOpen(false)}
         shouldCloseOnOverlayClick
         shouldCloseOnEsc
-        style={{content: contentStyle}}
+        style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/7/2020:</p>
+        <ul>
+          <li>
+            (#127)  Simplify friend selection description.
+          </li>
+        </ul>
+        <p>6/6/2020:</p>
+        <ul>
+          <li>
+            (#125)  Highlight all members of the landlord's team in the trick view.
+          </li>
+        </ul>
         <p>6/5/2020:</p>
         <ul>
           <li>
@@ -90,7 +102,7 @@ const Credits = () => (
       GitHub
     </a>
     !
-    <span style={{float: 'right'}}>
+    <span style={{ float: 'right' }}>
       <ChangeLog />
     </span>
   </p>

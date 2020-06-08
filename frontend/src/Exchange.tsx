@@ -42,6 +42,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             friends.push({
               card: '',
               skip: 0,
+              initial_skip: 0,
               player_id: null,
             });
           }
@@ -124,7 +125,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           <Trump trump={this.props.state.trump} />
           {this.props.state.game_mode !== 'Tractor' ? (
             <div>
-              <Friends gameMode={this.props.state.game_mode} />
+              <Friends gameMode={this.props.state.game_mode} showPlayed={false} />
               {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];

@@ -99,6 +99,7 @@ export interface IFindingFriends {
 export interface IFriend {
   card: string;
   skip: number;
+  initial_skip: number;
   player_id: number | null;
 }
 

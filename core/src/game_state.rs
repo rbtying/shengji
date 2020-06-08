@@ -451,7 +451,14 @@ impl PropagatedState {
 pub struct Friend {
     card: Card,
     skip: usize,
+    initial_skip: usize,
     player_id: Option<PlayerID>,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+pub struct FriendSelection {
+    card: Card,
+    initial_skip: usize,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1051,7 +1058,7 @@ impl ExchangePhase {
     pub fn set_friends(
         &mut self,
         id: PlayerID,
-        iter: impl IntoIterator<Item = Friend>,
+        iter: impl IntoIterator<Item = FriendSelection>,
     ) -> Result<(), Error> {
         if self.landlord != id {
             bail!("not the landlord")
@@ -1065,10 +1072,10 @@ impl ExchangePhase {
             if num_friends != friend_set.len() {
                 bail!("incorrect number of friends")
             }
+
+            friends.clear();
+
             for friend in friend_set.iter() {
-                if friend.player_id.is_some() {
-                    bail!("you can't pick your friend on purpose")
-                }
                 if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
                     bail!(
                         "you can't pick a joker or a {} as your friend",
@@ -1078,12 +1085,17 @@ impl ExchangePhase {
                 if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
                     bail!("you can't pick a trump suit as your friend")
                 }
-                if friend.skip >= self.num_decks {
+                if friend.initial_skip >= self.num_decks {
                     bail!("need to pick a card that exists!")
                 }
+                friends.push(Friend {
+                    card: friend.card,
+                    initial_skip: friend.initial_skip,
+                    skip: friend.initial_skip,
+                    player_id: None,
+                });
             }
-            friends.clear();
-            friends.extend(friend_set);
+
             Ok(())
         } else {
             bail!("not playing finding friends")
