@@ -1,6 +1,7 @@
 #![deny(warnings)]
 
 use std::collections::HashMap;
+use std::io::ErrorKind;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
@@ -173,7 +174,9 @@ async fn main() {
             }
         }
         Err(e) => {
-            error!(init_logger, "Failed to open dump"; "error" => format!("{:?}", e));
+            if e.kind() != ErrorKind::NotFound {
+                error!(init_logger, "Failed to open dump"; "error" => format!("{:?}", e));
+            }
         }
     }
     info!(init_logger, "Loaded games from state dump"; "num_games" => game_state.len());
