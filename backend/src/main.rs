@@ -174,8 +174,7 @@ async fn main() {
             }
         }
         Err(e) => {
-            if let ErrorKind::NotFound = e.kind() {
-            } else {
+            if e.kind() != ErrorKind::NotFound {
                 error!(init_logger, "Failed to open dump"; "error" => format!("{:?}", e));
             }
         }
