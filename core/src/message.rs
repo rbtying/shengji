@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
-    AdvancementPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult,
-    ThrowPenalty, FriendSelectionPolicy
+    AdvancementPolicy, FriendSelectionPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty,
+    PlayerGameFinishedResult, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
