@@ -313,7 +313,7 @@ impl PropagatedState {
 
     pub fn set_friend_selection_policy(
         &mut self,
-        policy: &String,
+        policy: &str,
     ) -> Result<Option<MessageVariant>, Error> {
         match policy.as_ref() {
             "Unrestricted" => self.friend_selection_policy = FriendSelectionPolicy::Unrestricted,
