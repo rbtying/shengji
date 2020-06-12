@@ -102,15 +102,9 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
             }
-            (
-                Message::SetFriendSelectionPolicy(ref policy),
-                GameState::Initialize(ref mut state),
-            ) => {
-                info!(logger, "Setting friend selection policy"; "policy" => policy);
-                state
-                    .set_friend_selection_policy(policy)?
-                    .into_iter()
-                    .collect()
+            (Message::SetFriendSelectionPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting friend selection policy"; "policy" => format!("{:?}", policy));
+                state.set_friend_selection_policy(policy)?
             }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
@@ -263,7 +257,7 @@ pub enum Message {
     SetChatLink(Option<String>),
     SetNumDecks(Option<usize>),
     SetKittySize(Option<usize>),
-    SetFriendSelectionPolicy(String),
+    SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),

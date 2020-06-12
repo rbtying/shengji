@@ -313,18 +313,17 @@ impl PropagatedState {
 
     pub fn set_friend_selection_policy(
         &mut self,
-        policy: &str,
-    ) -> Result<Option<MessageVariant>, Error> {
-        match policy {
-            "Unrestricted" => self.friend_selection_policy = FriendSelectionPolicy::Unrestricted,
-            "HighestCardNotAllowed" => {
-                self.friend_selection_policy = FriendSelectionPolicy::HighestCardNotAllowed
-            }
-            _ => bail!("Unsupported friend selection policy"),
-        }
-        Ok(Some(MessageVariant::FriendSelectionPolicySet {
-            policy: self.friend_selection_policy,
-        }))
+        policy: FriendSelectionPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        // if policy != self.throw_evaluation_policy {
+        //     self.throw_evaluation_policy = policy;
+        //     Ok(vec![MessageVariant::ThrowEvaluationPolicySet { policy }])
+        // } else {
+        //     Ok(vec![])
+        // }
+
+        self.friend_selection_policy = policy;
+        Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1123,15 +1122,11 @@ impl ExchangePhase {
                 if let FriendSelectionPolicy::HighestCardNotAllowed =
                     self.propagated.friend_selection_policy
                 {
-                    if (self.trump.number() == Number::Ace
-                        && friend.card.number() == Some(Number::King))
-                        || (self.trump.number() != Number::Ace
-                            && friend.card.number() == Some(Number::Ace))
-                    {
-                        bail!(
-                            "you can't pick the highest card {} as your friend",
-                            friend.card.number().unwrap().as_str()
-                        )
+                    match (self.trump.number(), friend.card.number()) {
+                        (Number::Ace, Some(Number::King)) | (_, Some(Number::Ace)) => {
+                            bail!("you can't pick the highest card as your friend")
+                        }
+                        _ => (),
                     }
                 }
                 friends.push(Friend {
