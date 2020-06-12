@@ -315,13 +315,6 @@ impl PropagatedState {
         &mut self,
         policy: FriendSelectionPolicy,
     ) -> Result<Vec<MessageVariant>, Error> {
-        // if policy != self.throw_evaluation_policy {
-        //     self.throw_evaluation_policy = policy;
-        //     Ok(vec![MessageVariant::ThrowEvaluationPolicySet { policy }])
-        // } else {
-        //     Ok(vec![])
-        // }
-
         self.friend_selection_policy = policy;
         Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
     }
