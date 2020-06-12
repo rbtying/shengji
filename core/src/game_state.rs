@@ -311,7 +311,10 @@ impl PropagatedState {
         }))
     }
 
-    pub fn set_friend_selection_policy(&mut self, policy: &String) -> Result<Option<MessageVariant>, Error> {
+    pub fn set_friend_selection_policy(
+        &mut self,
+        policy: &String,
+    ) -> Result<Option<MessageVariant>, Error> {
         match policy.as_ref() {
             "Unrestricted" => self.friend_selection_policy = FriendSelectionPolicy::Unrestricted,
             "HighestCardNotAllowed" => {
@@ -1117,20 +1120,19 @@ impl ExchangePhase {
                     bail!("need to pick a card that exists!")
                 }
 
-                match self.propagated.friend_selection_policy {
-                    FriendSelectionPolicy::HighestCardNotAllowed => {
-                        if (self.trump.number() == Number::Ace
-                            && friend.card.number() == Some(Number::King))
-                            || (self.trump.number() != Number::Ace
-                                && friend.card.number() == Some(Number::Ace))
-                        {
-                            bail!(
-                                "you can't pick the highest card {} as your friend",
-                                friend.card.number().unwrap().as_str()
-                            )
-                        }
-                    },
-                    _ => (),
+                if let FriendSelectionPolicy::HighestCardNotAllowed =
+                    self.propagated.friend_selection_policy
+                {
+                    if (self.trump.number() == Number::Ace
+                        && friend.card.number() == Some(Number::King))
+                        || (self.trump.number() != Number::Ace
+                            && friend.card.number() == Some(Number::Ace))
+                    {
+                        bail!(
+                            "you can't pick the highest card {} as your friend",
+                            friend.card.number().unwrap().as_str()
+                        )
+                    }
                 }
                 friends.push(Friend {
                     card: friend.card,
