@@ -87,7 +87,7 @@ const Initialize = (props: Props) => {
           SetFriendSelectionPolicy: evt.target.value,
         },
       });
-    } 
+    }
   };
 
   const setKittyPenalty = (evt: any) => {
@@ -322,7 +322,7 @@ const Initialize = (props: Props) => {
               <option value="HighestCardNotAllowed">Highest card not allowed</option>
             </select>
           </label>
-        </div>        
+        </div>
         <div>
           <label>
             Point visibility:{' '}
