@@ -315,7 +315,7 @@ impl PropagatedState {
         &mut self,
         policy: &str,
     ) -> Result<Option<MessageVariant>, Error> {
-        match policy.as_ref() {
+        match policy {
             "Unrestricted" => self.friend_selection_policy = FriendSelectionPolicy::Unrestricted,
             "HighestCardNotAllowed" => {
                 self.friend_selection_policy = FriendSelectionPolicy::HighestCardNotAllowed
