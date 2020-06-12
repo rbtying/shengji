@@ -79,6 +79,17 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setFriendSelectionPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== '') {
+      send({
+        Action: {
+          SetFriendSelectionPolicy: evt.target.value,
+        },
+      });
+    } 
+  };
+
   const setKittyPenalty = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== '') {
@@ -300,6 +311,18 @@ const Initialize = (props: Props) => {
             </select>
           </label>
         </div>
+        <div>
+          <label>
+            Friend Selection Restriction:{' '}
+            <select
+              value={props.state.propagated.friend_selection_policy}
+              onChange={setFriendSelectionPolicy}
+            >
+              <option value="Unrestricted">Unrestricted</option>
+              <option value="HighestCardNotAllowed">Highest card not allowed</option>
+            </select>
+          </label>
+        </div>        
         <div>
           <label>
             Point visibility:{' '}

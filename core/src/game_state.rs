@@ -104,12 +104,27 @@ impl Default for KittyBidPolicy {
         KittyBidPolicy::FirstCard
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum FriendSelectionPolicy {
+    Unrestricted,
+    HighestCardNotAllowed,
+}
+
+impl Default for FriendSelectionPolicy {
+    fn default() -> Self {
+        FriendSelectionPolicy::Unrestricted
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
     #[serde(default)]
     hide_landlord_points: bool,
     kitty_size: Option<usize>,
+    #[serde(default)]
+    friend_selection_policy: FriendSelectionPolicy,
     num_decks: Option<usize>,
     max_player_id: usize,
     pub players: Vec<Player>,
@@ -293,6 +308,19 @@ impl PropagatedState {
         }
         Ok(Some(MessageVariant::KittySizeSet {
             size: self.kitty_size,
+        }))
+    }
+
+    pub fn set_friend_selection_policy(&mut self, policy: &String) -> Result<Option<MessageVariant>, Error> {
+        match policy.as_ref() {
+            "Unrestricted" => self.friend_selection_policy = FriendSelectionPolicy::Unrestricted,
+            "HighestCardNotAllowed" => {
+                self.friend_selection_policy = FriendSelectionPolicy::HighestCardNotAllowed
+            }
+            _ => bail!("Unsupported friend selection policy"),
+        }
+        Ok(Some(MessageVariant::FriendSelectionPolicySet {
+            policy: self.friend_selection_policy,
         }))
     }
 
@@ -1087,6 +1115,22 @@ impl ExchangePhase {
                 }
                 if friend.initial_skip >= self.num_decks {
                     bail!("need to pick a card that exists!")
+                }
+
+                match self.propagated.friend_selection_policy {
+                    FriendSelectionPolicy::HighestCardNotAllowed => {
+                        if (self.trump.number() == Number::Ace
+                            && friend.card.number() == Some(Number::King))
+                            || (self.trump.number() != Number::Ace
+                                && friend.card.number() == Some(Number::Ace))
+                        {
+                            bail!(
+                                "you can't pick the highest card {} as your friend",
+                                friend.card.number().unwrap().as_str()
+                            )
+                        }
+                    },
+                    _ => (),
                 }
                 friends.push(Friend {
                     card: friend.card,
