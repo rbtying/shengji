@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, FriendSelection, GameModeSettings, GameState, InitializePhase,
-    KittyBidPolicy, KittyPenalty, ThrowPenalty,
+    AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings, GameState,
+    InitializePhase, KittyBidPolicy, KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -101,6 +101,10 @@ impl InteractiveGame {
             (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
+            }
+            (Message::SetFriendSelectionPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting friend selection policy"; "policy" => format!("{:?}", policy));
+                state.set_friend_selection_policy(policy)?
             }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
@@ -253,6 +257,7 @@ pub enum Message {
     SetChatLink(Option<String>),
     SetNumDecks(Option<usize>),
     SetKittySize(Option<usize>),
+    SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),
@@ -316,6 +321,8 @@ impl BroadcastMessage {
             AdvancementPolicySet { policy: AdvancementPolicy::DefendPoints } => format!("{} required players to defend on points", n?),
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
             NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),

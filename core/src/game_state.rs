@@ -104,12 +104,27 @@ impl Default for KittyBidPolicy {
         KittyBidPolicy::FirstCard
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum FriendSelectionPolicy {
+    Unrestricted,
+    HighestCardNotAllowed,
+}
+
+impl Default for FriendSelectionPolicy {
+    fn default() -> Self {
+        FriendSelectionPolicy::Unrestricted
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
     #[serde(default)]
     hide_landlord_points: bool,
     kitty_size: Option<usize>,
+    #[serde(default)]
+    friend_selection_policy: FriendSelectionPolicy,
     num_decks: Option<usize>,
     max_player_id: usize,
     pub players: Vec<Player>,
@@ -294,6 +309,14 @@ impl PropagatedState {
         Ok(Some(MessageVariant::KittySizeSet {
             size: self.kitty_size,
         }))
+    }
+
+    pub fn set_friend_selection_policy(
+        &mut self,
+        policy: FriendSelectionPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.friend_selection_policy = policy;
+        Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1087,6 +1110,17 @@ impl ExchangePhase {
                 }
                 if friend.initial_skip >= self.num_decks {
                     bail!("need to pick a card that exists!")
+                }
+
+                if let FriendSelectionPolicy::HighestCardNotAllowed =
+                    self.propagated.friend_selection_policy
+                {
+                    match (self.trump.number(), friend.card.number()) {
+                        (Number::Ace, Some(Number::King)) | (_, Some(Number::Ace)) => {
+                            bail!("you can't pick the highest card as your friend")
+                        }
+                        _ => (),
+                    }
                 }
                 friends.push(Friend {
                     card: friend.card,

@@ -139,6 +139,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                     key={idx}
                     friend={friend}
                     trump={this.props.state.trump}
+                    friend_selection_policy={this.props.state.propagated.friend_selection_policy}
                     num_decks={this.props.state.num_decks}
                   />
                 );

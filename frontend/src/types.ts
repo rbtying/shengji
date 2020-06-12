@@ -65,6 +65,7 @@ export interface IPropagatedState {
   game_mode: IGameModeSettings;
   hide_landlord_points: boolean | null;
   kitty_size: number | null;
+  friend_selection_policy: 'Unrestricted' | 'HighestCardNotAllowed';
   num_decks: number | null;
   max_player_id: number;
   players: IPlayer[];
