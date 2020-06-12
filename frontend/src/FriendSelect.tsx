@@ -55,7 +55,7 @@ const FriendSelect = (props: Props) => {
 
   preloadedCards.forEach((c) => {
     if (c.number !== null && c.number !== rank && (props.trump.Standard == null || c.typ !== props.trump.Standard.suit)) {
-      //exclude highest card
+      // exclude highest card
       if (((props.friend_selection_policy === 'HighestCardNotAllowed') && ((rank !== 'A' && c.number !== 'A') || (rank === 'A' && c.number !== 'K'))) || (props.friend_selection_policy === 'Unrestricted')) {
         cardOptions.push({
           label: `${c.number}${c.typ}`,
