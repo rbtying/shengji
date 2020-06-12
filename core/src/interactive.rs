@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase,
-    KittyBidPolicy, KittyPenalty, ThrowPenalty,
+    AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings, GameState,
+    InitializePhase, KittyBidPolicy, KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -102,9 +102,15 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
             }
-            (Message::SetFriendSelectionPolicy(ref policy), GameState::Initialize(ref mut state)) => {
+            (
+                Message::SetFriendSelectionPolicy(ref policy),
+                GameState::Initialize(ref mut state),
+            ) => {
                 info!(logger, "Setting friend selection policy"; "policy" => policy);
-                state.set_friend_selection_policy(policy)?.into_iter().collect()
+                state
+                    .set_friend_selection_policy(policy)?
+                    .into_iter()
+                    .collect()
             }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
