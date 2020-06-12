@@ -322,7 +322,7 @@ impl BroadcastMessage {
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),
-            FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card from being selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
             NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),
