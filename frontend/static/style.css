@@ -31,9 +31,10 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .hand p { margin: 0; text-align: center; }
 .hand .unselected-cards { padding: 0 10px; }
 .hand .selected-cards { padding: 0 10px; }
-.next { color: #00f }
-.landlord { background: #ddd }
-.landlord .card { background: #ddd }
+.next { color: #b30ba6; }
+.you {border: 3px solid #0575ff;}
+.landlord { background: #4a9a7a }
+.landlord .card { background: #4a9a7a }
 .player { border: 1px #000 solid; padding: 10px; }
 .observer { border: 1px #222 dashed; color: #222; }
 .chat { min-width: 225px; width: 20%; border: 1px #eee solid; float: right; margin-top: 20px; }
@@ -45,9 +46,10 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .labeled-play { display: inline-block; padding: 10px; border: 1px solid #000; }
 .labeled-play .label { text-align: center }
 .labeled-play .card { cursor: default; }
-.labeled-play.winning { background: #efefef; }
-.labeled-play.winning .card { background: #efefef; }
-.labeled-play.winning.landlord { background: #ddd; }
+.labeled-play.you {border: 3px solid #0575ff;}
+/* .labeled-play.winning { background: #efed9fa6; } */
+.labeled-play.winning .card { background: #efed9f; }
+.labeled-play.winning.landlord { background: #4a9a7a; }
 .labeled-play .more .card { font-size: 6em; }
 .labeled-play .play { display: inline-block; }
 .trump { margin: 10px 0; }
