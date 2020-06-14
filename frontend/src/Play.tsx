@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IPlayPhase } from './types';
+import {IPlayPhase} from './types';
 import Header from './Header';
 import Beeper from './Beeper';
 import Trump from './Trump';
@@ -12,7 +12,7 @@ import Players from './Players';
 import ArrayUtils from './util/array';
 import AutoPlayButton from './AutoPlayButton';
 import BeepButton from './BeepButton';
-import { WebsocketContext } from './WebsocketProvider';
+import {WebsocketContext} from './WebsocketProvider';
 
 type Props = {
   playPhase: IPlayPhase;
@@ -25,20 +25,20 @@ type Props = {
 };
 
 const Play = (props: Props) => {
-  const { send } = React.useContext(WebsocketContext);
+  const {send} = React.useContext(WebsocketContext);
   const [selected, setSelected] = React.useState<string[]>([]);
 
   const playCards = () => {
-    send({ Action: { PlayCards: selected } });
+    send({Action: {PlayCards: selected}});
     setSelected([]);
   };
 
   const sendEvent = (event: {}) => () => send(event);
-  const takeBackCards = sendEvent({ Action: 'TakeBackCards' });
-  const endTrick = sendEvent({ Action: 'EndTrick' });
-  const startNewGame = sendEvent({ Action: 'StartNewGame' });
+  const takeBackCards = sendEvent({Action: 'TakeBackCards'});
+  const endTrick = sendEvent({Action: 'EndTrick'});
+  const startNewGame = sendEvent({Action: 'StartNewGame'});
 
-  const { playPhase } = props;
+  const {playPhase} = props;
 
   // TODO: instead of telling who the player is by checking the name, pass in
   // the Player object
@@ -124,7 +124,7 @@ const Play = (props: Props) => {
         <div>
           <p>Previous trick</p>
           <Trick
-            trick={playPhase.trick}
+            trick={playPhase.last_trick}
             players={playPhase.propagated.players}
             landlord={playPhase.landlord}
             landlords_team={playPhase.landlords_team}

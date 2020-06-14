@@ -125,7 +125,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           <Trump trump={this.props.state.trump} />
           {this.props.state.game_mode !== 'Tractor' ? (
             <div>
-              <Friends gameMode={this.props.state.game_mode} showPlayed={false} />
+              <Friends
+                gameMode={this.props.state.game_mode}
+                showPlayed={false}
+              />
               {this.state.friends.map((friend, idx) => {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
@@ -139,7 +142,9 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                     key={idx}
                     friend={friend}
                     trump={this.props.state.trump}
-                    friend_selection_policy={this.props.state.propagated.friend_selection_policy}
+                    friend_selection_policy={
+                      this.props.state.propagated.friend_selection_policy
+                    }
                     num_decks={this.props.state.num_decks}
                   />
                 );
