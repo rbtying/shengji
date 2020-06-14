@@ -29,6 +29,18 @@ const ChangeLog = () => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/13/2020:</p>
+        <ul>
+          <li>
+            (#133)  Improve trick list to show landlord, better coloring of team and winning trick.
+          </li>
+        </ul>
+        <p>6/12/2020:</p>
+        <ul>
+          <li>
+            (#131)  Add option to disallow using highest non-trump card to select friend.
+          </li>
+        </ul>
         <p>6/7/2020:</p>
         <ul>
           <li>

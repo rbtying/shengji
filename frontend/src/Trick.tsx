@@ -9,12 +9,14 @@ type Props = {
   landlord?: number | null;
   landlords_team?: number[];
   trick: ITrick;
+  next?: number | null;
+  name: string;
   showTrickInPlayerOrder: boolean;
 };
 const Trick = (props: Props) => {
   const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
     String(p.id),
-    p.name,
+    (p.id === props.landlord) ? (p.name + ' \uD83D\uDC37') : (p.name),
   ]);
   const blankCards =
     props.trick.played_cards.length > 0
@@ -54,14 +56,18 @@ const Trick = (props: Props) => {
             : '', {
           landlord:
             id === props.landlord || props.landlords_team?.includes(id),
+          piggy:
+            id === props.landlord,
         });
 
         return (
           <LabeledPlay
             key={id}
+            id={id}
             label={namesById[id] + suffix}
             className={className}
             cards={cards}
+            next={props.next}
             moreCards={playedByID[id]?.bad_throw_cards}
           />
         );

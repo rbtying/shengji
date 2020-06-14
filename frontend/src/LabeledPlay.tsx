@@ -3,12 +3,18 @@ import classNames from 'classnames';
 import Card from './Card';
 
 type Props = {
+  id?: number | null;
   className?: string;
   cards: string[];
   moreCards?: string[];
   label: string;
+  next?: number | null;
 };
 const LabeledPlay = (props: Props) => {
+  const className = classNames('label', {
+    next: props.id === props.next,
+  });
+
   return (
     <div className={classNames('labeled-play', props.className)}>
       <div className="play">
@@ -23,7 +29,7 @@ const LabeledPlay = (props: Props) => {
           ))}
         </div>
       ) : null}
-      <div className="label">{props.label}</div>
+      <div className={className}>{props.label}</div>
     </div>
   );
 };
