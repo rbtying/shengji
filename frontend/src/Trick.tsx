@@ -1,6 +1,6 @@
 import * as React from 'react';
 import classNames from 'classnames';
-import { IPlayer, ITrick, IPlayedCards } from './types';
+import {IPlayer, ITrick, IPlayedCards} from './types';
 import LabeledPlay from './LabeledPlay';
 import ArrayUtils from './util/array';
 
@@ -16,7 +16,7 @@ type Props = {
 const Trick = (props: Props) => {
   const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
     String(p.id),
-    (p.id === props.landlord) ? (p.name + ' \uD83D\uDC37') : (p.name),
+    p.id === props.landlord ? p.name + ' \uD83D\uDC37' : p.name,
   ]);
   const blankCards =
     props.trick.played_cards.length > 0
@@ -27,7 +27,7 @@ const Trick = (props: Props) => {
       ? props.trick.played_cards[0].better_player
       : null;
 
-  const playedByID: { [id: number]: IPlayedCards } = {};
+  const playedByID: {[id: number]: IPlayedCards} = {};
   let playOrder: number[] = [];
 
   props.trick.played_cards.forEach((played) => {
@@ -49,16 +49,18 @@ const Trick = (props: Props) => {
         const cards = playedByID[id]?.cards || blankCards;
         const suffix = winning ? ' (!)' : better ? ' (-)' : '';
 
-        const className = classNames(winning
-          ? 'winning'
-          : props.trick.player_queue[0] === id
+        const className = classNames(
+          winning
+            ? 'winning'
+            : props.trick.player_queue[0] === id
             ? 'notify'
-            : '', {
-          landlord:
-            id === props.landlord || props.landlords_team?.includes(id),
-          piggy:
-            id === props.landlord,
-        });
+            : '',
+          {
+            landlord:
+              id === props.landlord || props.landlords_team?.includes(id),
+            piggy: id === props.landlord,
+          },
+        );
 
         return (
           <LabeledPlay

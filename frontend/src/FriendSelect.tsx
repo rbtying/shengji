@@ -1,10 +1,10 @@
 import * as React from 'react';
 import Select from 'react-select';
-import { ITrump } from './types';
+import {ITrump} from './types';
 import ArrayUtils from './util/array';
 import preloadedCards from './preloadedCards';
 import InlineCard from './InlineCard';
-import { cardLookup } from './util/cardHelpers';
+import {cardLookup} from './util/cardHelpers';
 
 type FriendSelection = {
   card: string;
@@ -45,18 +45,26 @@ const FriendSelect = (props: Props) => {
     : props.trump.NoTrump.number;
 
   const cardOptions: Option[] = [];
-  const currentValue: { [s: string]: any } = {};
+  const currentValue: {[s: string]: any} = {};
   if (props.friend.card !== '') {
     const c = cardLookup[props.friend.card];
     currentValue.label = `${c.number}${c.typ}`;
     currentValue.value = c.value;
   }
 
-
   preloadedCards.forEach((c) => {
-    if (c.number !== null && c.number !== rank && (props.trump.Standard == null || c.typ !== props.trump.Standard.suit)) {
+    if (
+      c.number !== null &&
+      c.number !== rank &&
+      (props.trump.Standard == null || c.typ !== props.trump.Standard.suit)
+    ) {
       // exclude highest card
-      if (((props.friend_selection_policy === 'HighestCardNotAllowed') && ((rank !== 'A' && c.number !== 'A') || (rank === 'A' && c.number !== 'K'))) || (props.friend_selection_policy === 'Unrestricted')) {
+      if (
+        (props.friend_selection_policy === 'HighestCardNotAllowed' &&
+          ((rank !== 'A' && c.number !== 'A') ||
+            (rank === 'A' && c.number !== 'K'))) ||
+        props.friend_selection_policy === 'Unrestricted'
+      ) {
         cardOptions.push({
           label: `${c.number}${c.typ}`,
           value: c.value,
@@ -67,31 +75,31 @@ const FriendSelect = (props: Props) => {
 
   return (
     <div className="friend-select">
-      <div style={{ width: '100px', display: 'inline-block' }}>
+      <div style={{width: '100px', display: 'inline-block'}}>
         <Select
           value={currentValue}
           onChange={handleCardChange}
           options={cardOptions}
-          formatOptionLabel={({ value }) =>
+          formatOptionLabel={({value}) =>
             value ? <InlineCard card={value} /> : value
           }
         />
       </div>
       <div
-        style={{ width: '100px', display: 'inline-block', marginLeft: '10px' }}
+        style={{width: '100px', display: 'inline-block', marginLeft: '10px'}}
       >
         <Select
           value={
             props.friend.initial_skip !== null
               ? {
-                value: `${props.friend.initial_skip}`,
-                label: `#${props.friend.initial_skip + 1}`,
-              }
+                  value: `${props.friend.initial_skip}`,
+                  label: `#${props.friend.initial_skip + 1}`,
+                }
               : {}
           }
           onChange={handleOrdinalChange}
           options={ArrayUtils.range(props.num_decks, (idx) => {
-            return { value: `${idx}`, label: `#${idx + 1}` };
+            return {value: `${idx}`, label: `#${idx + 1}`};
           })}
         />
       </div>

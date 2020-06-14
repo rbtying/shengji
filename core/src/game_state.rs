@@ -24,7 +24,7 @@ macro_rules! bail_unwrap {
 pub struct Player {
     pub id: PlayerID,
     pub name: String,
-    level: Number,
+    pub(crate) level: Number,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -889,6 +889,75 @@ impl PlayPhase {
         self.hands.is_empty() && self.trick.played_cards().is_empty()
     }
 
+    pub fn compute_player_level_deltas<'a, 'b: 'a>(
+        players: impl Iterator<Item = &'b mut Player>,
+        non_landlord_level_bump: usize,
+        landlord_level_bump: usize,
+        landlords_team: &'a [PlayerID],
+        landlord_won: bool,
+        landlord: PlayerID,
+        advancement_policy: AdvancementPolicy,
+    ) -> Vec<MessageVariant> {
+        let mut msgs = vec![];
+
+        let result = players
+            .map(|player| {
+                let is_defending = landlords_team.contains(&player.id);
+                let bump = if is_defending {
+                    landlord_level_bump
+                } else {
+                    non_landlord_level_bump
+                };
+                let mut num_advances = 0;
+                let mut was_blocked = false;
+
+                for bump_idx in 0..bump {
+                    match advancement_policy {
+                        AdvancementPolicy::Unrestricted => (),
+                        AdvancementPolicy::DefendPoints => match player.level.points() {
+                            None => (),
+                            Some(_) if is_defending && bump_idx == 0 => (),
+                            Some(_) => {
+                                was_blocked = true;
+                                break;
+                            }
+                        },
+                    }
+
+                    if let Some(next_level) = player.level.successor() {
+                        player.level = next_level;
+                        num_advances += 1;
+                    }
+                }
+                if num_advances > 0 {
+                    msgs.push(MessageVariant::RankAdvanced {
+                        player: player.id,
+                        new_rank: player.level,
+                    });
+                }
+                if was_blocked {
+                    msgs.push(MessageVariant::AdvancementBlocked {
+                        player: player.id,
+                        rank: player.level,
+                    });
+                }
+
+                (
+                    player.name.to_string(),
+                    PlayerGameFinishedResult {
+                        won_game: landlord_won == is_defending,
+                        is_defending,
+                        is_landlord: landlord == player.id,
+                        ranks_up: num_advances,
+                    },
+                )
+            })
+            .collect();
+
+        msgs.push(MessageVariant::GameFinished { result });
+        msgs
+    }
+
     pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
@@ -917,65 +986,19 @@ impl PlayPhase {
         let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
             Self::compute_level_deltas(self.num_decks, non_landlords_points);
 
-        let mut game_result = HashMap::new();
-
         let mut propagated = self.propagated.clone();
-        for player in &mut propagated.players {
-            let is_defending = self.landlords_team.contains(&player.id);
-            let bump = if is_defending {
-                landlord_level_bump
-            } else {
-                non_landlord_level_bump
-            };
-            let mut num_advances = 0;
-            let mut was_blocked = false;
 
-            for _ in 0..bump {
-                match self.propagated.advancement_policy {
-                    AdvancementPolicy::DefendPoints
-                        if !is_defending && player.level.points().is_some() =>
-                    {
-                        was_blocked = true;
-                        break;
-                    }
-                    AdvancementPolicy::Unrestricted | AdvancementPolicy::DefendPoints => (),
-                }
+        msgs.extend(Self::compute_player_level_deltas(
+            propagated.players.iter_mut(),
+            non_landlord_level_bump,
+            landlord_level_bump,
+            &self.landlords_team[..],
+            landlord_won,
+            self.landlord,
+            propagated.advancement_policy,
+        ));
 
-                if let Some(next_level) = player.level.successor() {
-                    player.level = next_level;
-                    num_advances += 1;
-                }
-            }
-            if num_advances > 0 {
-                msgs.push(MessageVariant::RankAdvanced {
-                    player: player.id,
-                    new_rank: player.level,
-                });
-            }
-            if was_blocked {
-                msgs.push(MessageVariant::AdvancementBlocked {
-                    player: player.id,
-                    rank: player.level,
-                });
-            }
-
-            game_result.insert(
-                player.name.to_string(),
-                PlayerGameFinishedResult {
-                    won_game: landlord_won == is_defending,
-                    is_defending,
-                    is_landlord: self.landlord == player.id,
-                    ranks_up: num_advances,
-                },
-            );
-        }
-
-        msgs.push(MessageVariant::GameFinished {
-            result: game_result,
-        });
-
-        let landlord_idx = bail_unwrap!(self
-            .propagated
+        let landlord_idx = bail_unwrap!(propagated
             .players
             .iter()
             .position(|p| p.id == self.landlord));
@@ -988,7 +1011,7 @@ impl PlayPhase {
         };
 
         msgs.push(MessageVariant::NewLandlordForNextGame {
-            landlord: self.propagated.players[next_landlord_idx].id,
+            landlord: propagated.players[next_landlord_idx].id,
         });
         propagated.set_landlord(Some(next_landlord))?;
         propagated.num_games_finished += 1;
@@ -1586,9 +1609,9 @@ impl DerefMut for InitializePhase {
 
 #[cfg(test)]
 mod tests {
-    use super::{InitializePhase, PlayPhase};
+    use super::{AdvancementPolicy, InitializePhase, PlayPhase, Player};
 
-    use crate::types::{cards, Card};
+    use crate::types::{cards, Card, Number, PlayerID};
 
     #[test]
     fn test_level_deltas() {
@@ -1610,6 +1633,80 @@ mod tests {
         assert_eq!(PlayPhase::compute_level_deltas(2, 235), (3, 0, false));
         assert_eq!(PlayPhase::compute_level_deltas(2, 240), (4, 0, false));
         assert_eq!(PlayPhase::compute_level_deltas(2, 280), (5, 0, false));
+    }
+
+    #[test]
+    fn test_player_level_deltas() {
+        let mut players = vec![
+            Player {
+                id: PlayerID(0),
+                name: "p1".into(),
+                level: Number::Four,
+            },
+            Player {
+                id: PlayerID(1),
+                name: "p2".into(),
+                level: Number::Four,
+            },
+            Player {
+                id: PlayerID(2),
+                name: "p3".into(),
+                level: Number::Four,
+            },
+            Player {
+                id: PlayerID(3),
+                name: "p4".into(),
+                level: Number::Four,
+            },
+        ];
+        let mut players_ = players.clone();
+
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
+            // Pretend both sides are leveling up somehow.
+            2,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            PlayerID(0),
+            AdvancementPolicy::Unrestricted,
+        );
+        for p in &players {
+            assert_eq!(p.level, Number::Six);
+        }
+
+        let _ = PlayPhase::compute_player_level_deltas(
+            players_.iter_mut(),
+            // Pretend both sides are leveling up somehow.
+            2,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            PlayerID(0),
+            AdvancementPolicy::DefendPoints,
+        );
+        for p in &players_ {
+            assert_eq!(p.level, Number::Five);
+        }
+
+        // Advance again!
+        let _ = PlayPhase::compute_player_level_deltas(
+            players_.iter_mut(),
+            // Pretend both sides are leveling up somehow.
+            2,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            PlayerID(0),
+            AdvancementPolicy::DefendPoints,
+        );
+        for p in &players_ {
+            if p.id == PlayerID(0) || p.id == PlayerID(2) {
+                assert_eq!(p.level, Number::Seven);
+            } else {
+                assert_eq!(p.level, Number::Five);
+            }
+        }
     }
 
     #[test]

@@ -26,31 +26,40 @@ const ChangeLog = () => {
         onRequestClose={() => setModalOpen(false)}
         shouldCloseOnOverlayClick
         shouldCloseOnEsc
-        style={{ content: contentStyle }}
+        style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
+        <p>6/14/2020:</p>
+        <ul>
+          <li>Fix bug where previous-trick showed current trick.</li>
+          <li>
+            (#134) Fix bug where defend-points allowed defending team to skip
+            defending points.
+          </li>
+        </ul>
         <p>6/13/2020:</p>
         <ul>
           <li>
-            (#133)  Improve trick list to show landlord, better coloring of team and winning trick.
+            (#133) Improve trick list to show landlord, better coloring of team
+            and winning trick.
           </li>
         </ul>
         <p>6/12/2020:</p>
         <ul>
           <li>
-            (#131)  Add option to disallow using highest non-trump card to select friend.
+            (#131) Add option to disallow using highest non-trump card to select
+            friend.
           </li>
         </ul>
         <p>6/7/2020:</p>
         <ul>
-          <li>
-            (#127)  Simplify friend selection description.
-          </li>
+          <li>(#127) Simplify friend selection description.</li>
         </ul>
         <p>6/6/2020:</p>
         <ul>
           <li>
-            (#125)  Highlight all members of the landlord's team in the trick view.
+            (#125) Highlight all members of the landlord's team in the trick
+            view.
           </li>
         </ul>
         <p>6/5/2020:</p>
@@ -114,7 +123,7 @@ const Credits = () => (
       GitHub
     </a>
     !
-    <span style={{ float: 'right' }}>
+    <span style={{float: 'right'}}>
       <ChangeLog />
     </span>
   </p>
