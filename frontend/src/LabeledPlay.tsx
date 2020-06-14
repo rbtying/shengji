@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import Card from './Card';
 
 type Props = {
-  id: number;
+  id?: number | null;
   className?: string;
   cards: string[];
   moreCards?: string[];
