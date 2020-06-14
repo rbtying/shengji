@@ -32,7 +32,7 @@ const ChangeLog = () => {
         <p>6/13/2020:</p>
         <ul>
           <li>
-            (#133)  Improve trick list to show landlord, player self, better coloring of team and winning trick.
+            (#133)  Improve trick list to show landlord, better coloring of team and winning trick.
           </li>
         </ul>
         <p>6/12/2020:</p>
