@@ -29,6 +29,10 @@ const ChangeLog = () => {
         style={{content: contentStyle}}
       >
         <h2>Change Log</h2>
+        <p>6/17/2020:</p>
+        <ul>
+          <li>Fix bug where points display was highlighted blue.</li>
+        </ul>
         <p>6/14/2020:</p>
         <ul>
           <li>Fix bug where previous-trick showed current trick.</li>
