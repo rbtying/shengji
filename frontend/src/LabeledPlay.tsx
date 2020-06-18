@@ -12,7 +12,7 @@ type Props = {
 };
 const LabeledPlay = (props: Props) => {
   const className = classNames('label', {
-    next: props.id === props.next,
+    next: props.next !== null && props.id === props.next,
   });
 
   return (
