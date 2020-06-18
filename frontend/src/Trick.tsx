@@ -16,7 +16,7 @@ type Props = {
 const Trick = (props: Props) => {
   const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
     String(p.id),
-    p.id === props.landlord ? p.name + ' \uD83D\uDC37' : p.name,
+    p.name,
   ]);
   const blankCards =
     props.trick.played_cards.length > 0
@@ -58,7 +58,6 @@ const Trick = (props: Props) => {
           {
             landlord:
               id === props.landlord || props.landlords_team?.includes(id),
-            piggy: id === props.landlord,
           },
         );
 
@@ -66,7 +65,7 @@ const Trick = (props: Props) => {
           <LabeledPlay
             key={id}
             id={id}
-            label={namesById[id] + suffix}
+            label={namesById[id] + (id === props.landlord ? ' (当庄)' : '' )+ suffix}
             className={className}
             cards={cards}
             next={props.next}
