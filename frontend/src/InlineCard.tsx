@@ -1,6 +1,10 @@
 import * as React from "react";
-import { unicodeToCard, cardToUnicodeSuit, SuitCard } from "./util/cardHelpers";
 import styled from "styled-components";
+import {
+  cardToUnicodeSuit,
+  ISuitCard,
+  unicodeToCard,
+} from "./util/cardHelpers";
 
 const InlineCardBase = styled.span`
   padding-left: 0.1em;
@@ -18,7 +22,7 @@ const LittleJoker = Suit("🃟");
 const BigJoker = Suit("🃏");
 const Unknown = Suit("🂠");
 
-const suitComponent = (suitCard: SuitCard) => {
+const suitComponent = (suitCard: ISuitCard) => {
   switch (suitCard.suit) {
     case "diamonds":
       return Diamonds;

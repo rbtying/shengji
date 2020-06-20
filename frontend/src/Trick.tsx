@@ -1,10 +1,12 @@
 import * as React from "react";
+
 import classNames from "classnames";
-import { IPlayer, ITrick, IPlayedCards } from "./types";
+
 import LabeledPlay from "./LabeledPlay";
+import { IPlayedCards, IPlayer, ITrick } from "./types";
 import ArrayUtils from "./util/array";
 
-type Props = {
+interface IProps {
   players: IPlayer[];
   landlord?: number | null;
   landlords_team?: number[];
@@ -12,8 +14,8 @@ type Props = {
   next?: number | null;
   name: string;
   showTrickInPlayerOrder: boolean;
-};
-const Trick = (props: Props) => {
+}
+const Trick = (props: IProps) => {
   const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
     String(p.id),
     p.name,
@@ -28,11 +30,38 @@ const Trick = (props: Props) => {
       : null;
 
   const playedByID: { [id: number]: IPlayedCards } = {};
+  const cardsFromMappingByID: { [id: number]: string[][] } = {};
   let playOrder: number[] = [];
 
-  props.trick.played_cards.forEach((played) => {
+  props.trick.played_cards.forEach((played, idx) => {
     playOrder.push(played.id);
     playedByID[played.id] = played;
+    const m = props.trick.played_card_mappings[idx];
+    if (m && m.length > 0) {
+      // We should coalesce blocks of `Repeated` of count 1 together, since
+      // that displays more nicely.
+      const mapping: string[][] = [];
+      const singles: string[] = [];
+
+      m.forEach((mm) => {
+        if (mm.Repeated && mm.Repeated.count === 1) {
+          singles.push(mm.Repeated.card.card);
+        } else if (mm.Repeated) {
+          mapping.push(
+            ArrayUtils.range(mm.Repeated.count, (_) => mm.Repeated.card.card)
+          );
+        } else if (mm.Tractor) {
+          mapping.push(
+            mm.Tractor.members.flatMap((mmm) =>
+              ArrayUtils.range(mm.Tractor.count, (_) => mmm.card)
+            )
+          );
+        }
+      });
+      mapping.push(singles);
+
+      cardsFromMappingByID[played.id] = mapping;
+    }
   });
 
   if (props.showTrickInPlayerOrder) {
@@ -69,6 +98,7 @@ const Trick = (props: Props) => {
               namesById[id] + (id === props.landlord ? " (当庄)" : "") + suffix
             }
             className={className}
+            groupedCards={cardsFromMappingByID[id]}
             cards={cards}
             next={props.next}
             moreCards={playedByID[id]?.bad_throw_cards}
