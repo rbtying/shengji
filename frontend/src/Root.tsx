@@ -1,19 +1,19 @@
-import * as React from 'react';
-import classNames from 'classnames';
-import Errors from './Errors';
-import Initialize from './Initialize';
-import Draw from './Draw';
-import Exchange from './Exchange';
-import JoinRoom from './JoinRoom';
-import {AppStateContext} from './AppStateProvider';
-import {TimerContext} from './TimerProvider';
-import Credits from './Credits';
-import Chat from './Chat';
-import Play from './Play';
+import * as React from "react";
+import classNames from "classnames";
+import Errors from "./Errors";
+import Initialize from "./Initialize";
+import Draw from "./Draw";
+import Exchange from "./Exchange";
+import JoinRoom from "./JoinRoom";
+import { AppStateContext } from "./AppStateProvider";
+import { TimerContext } from "./TimerProvider";
+import Credits from "./Credits";
+import Chat from "./Chat";
+import Play from "./Play";
 
 const Root = () => {
   const send = (window as any).send;
-  const {state, updateState} = React.useContext(AppStateContext);
+  const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
   if (state.connected) {
     if (state.game_state === null) {
@@ -22,15 +22,15 @@ const Root = () => {
           <Errors errors={state.errors} />
           <div className="game">
             <h1>
-              升级 / <span className="red">Tractor</span> / 找朋友 /{' '}
+              升级 / <span className="red">Tractor</span> / 找朋友 /{" "}
               <span className="red">Finding Friends</span>
             </h1>
             <JoinRoom
               name={state.name}
               room_name={state.roomName}
-              setName={(name: string) => updateState({name})}
+              setName={(name: string) => updateState({ name })}
               setRoomName={(roomName: string) => {
-                updateState({roomName});
+                updateState({ roomName });
                 window.location.hash = roomName;
               }}
             />
@@ -47,8 +47,8 @@ const Root = () => {
       return (
         <div
           className={classNames(
-            state.settings.fourColor ? 'four-color' : '',
-            state.settings.showCardLabels ? 'always-show-labels' : '',
+            state.settings.fourColor ? "four-color" : "",
+            state.settings.showCardLabels ? "always-show-labels" : ""
           )}
         >
           <Errors errors={state.errors} />
@@ -59,8 +59,8 @@ const Root = () => {
                 className="reset-link"
                 onClick={(evt) => {
                   evt.preventDefault();
-                  if (window.confirm('Do you really want to reset the game?')) {
-                    send({Action: 'ResetGame'});
+                  if (window.confirm("Do you really want to reset the game?")) {
+                    send({ Action: "ResetGame" });
                   }
                 }}
               >

@@ -1,12 +1,12 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
-import * as React from 'react';
-import Trump from './Trump';
-import FriendSelect from './FriendSelect';
-import Card from './Card';
-import Header from './Header';
-import Friends from './Friends';
-import Players from './Players';
-import {IExchangePhase, IFriend} from './types';
+import * as React from "react";
+import Trump from "./Trump";
+import FriendSelect from "./FriendSelect";
+import Card from "./Card";
+import Header from "./Header";
+import Friends from "./Friends";
+import Players from "./Players";
+import { IExchangePhase, IFriend } from "./types";
 
 type IExchangeProps = {
   state: IExchangePhase;
@@ -31,7 +31,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 
   fixFriends() {
-    if (this.props.state.game_mode !== 'Tractor') {
+    if (this.props.state.game_mode !== "Tractor") {
       const game_mode = this.props.state.game_mode.FindingFriends;
       const num_friends = game_mode.num_friends;
       const prop_friends = game_mode.friends;
@@ -40,7 +40,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           const friends = [...this.state.friends];
           while (friends.length < num_friends) {
             friends.push({
-              card: '',
+              card: "",
               skip: 0,
               initial_skip: 0,
               player_id: null,
@@ -49,14 +49,14 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           while (friends.length > num_friends) {
             friends.pop();
           }
-          this.setState({friends});
+          this.setState({ friends });
         } else {
-          this.setState({friends: prop_friends});
+          this.setState({ friends: prop_friends });
         }
       }
     } else {
       if (this.state.friends.length !== 0) {
-        this.setState({friends: []});
+        this.setState({ friends: [] });
       }
     }
   }
@@ -70,22 +70,22 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   }
 
   moveCardToKitty(card: string) {
-    (window as any).send({Action: {MoveCardToKitty: card}});
+    (window as any).send({ Action: { MoveCardToKitty: card } });
   }
 
   moveCardToHand(card: string) {
-    (window as any).send({Action: {MoveCardToHand: card}});
+    (window as any).send({ Action: { MoveCardToHand: card } });
   }
 
   startGame(evt: any) {
     evt.preventDefault();
-    (window as any).send({Action: 'BeginPlay'});
+    (window as any).send({ Action: "BeginPlay" });
   }
 
   pickFriends(evt: any) {
     evt.preventDefault();
     if (
-      this.props.state.game_mode !== 'Tractor' &&
+      this.props.state.game_mode !== "Tractor" &&
       this.props.state.game_mode.FindingFriends.num_friends ===
         this.state.friends.length
     ) {
@@ -123,7 +123,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             name={this.props.name}
           />
           <Trump trump={this.props.state.trump} />
-          {this.props.state.game_mode !== 'Tractor' ? (
+          {this.props.state.game_mode !== "Tractor" ? (
             <div>
               <Friends
                 gameMode={this.props.state.game_mode}
@@ -133,7 +133,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                 const onChange = (x: IFriend) => {
                   const new_friends = [...this.state.friends];
                   new_friends[idx] = x;
-                  this.setState({friends: new_friends});
+                  this.setState({ friends: new_friends });
                   this.fixFriends();
                 };
                 return (
@@ -163,7 +163,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             ))}
           </div>
           <h2>
-            Discarded cards {this.props.state.kitty.length} /{' '}
+            Discarded cards {this.props.state.kitty.length} /{" "}
             {this.props.state.kitty_size}
           </h2>
           <div className="kitty">

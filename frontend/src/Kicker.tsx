@@ -1,5 +1,5 @@
-import * as React from 'react';
-import {IPlayer} from './types';
+import * as React from "react";
+import { IPlayer } from "./types";
 
 type Props = {
   onKick: (playerId: number) => void;
@@ -9,15 +9,15 @@ const Kicker = (props: Props) => {
   const [selection, setSelection] = React.useState<number | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelection(e.target.value === '' ? null : parseInt(e.target.value, 10));
+    setSelection(e.target.value === "" ? null : parseInt(e.target.value, 10));
   };
 
   return (
     <div className="kicker">
       <label>
-        Kick player:{' '}
+        Kick player:{" "}
         <select
-          value={selection === null ? '' : selection}
+          value={selection === null ? "" : selection}
           onChange={handleChange}
         >
           <option value="" />

@@ -1,22 +1,22 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import * as ReactModal from 'react-modal';
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import * as ReactModal from "react-modal";
 
-import AppStateProvider from './AppStateProvider';
-import WebsocketProvider from './WebsocketProvider';
-import TimerProvider from './TimerProvider';
-import Root from './Root';
+import AppStateProvider from "./AppStateProvider";
+import WebsocketProvider from "./WebsocketProvider";
+import TimerProvider from "./TimerProvider";
+import Root from "./Root";
 
 const bootstrap = () => {
   if (window.location.hash.length !== 17) {
     const arr = new Uint8Array(8);
     window.crypto.getRandomValues(arr);
-    const r = Array.from(arr, (d) => ('0' + d.toString(16)).substr(-2)).join(
-      '',
+    const r = Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join(
+      ""
     );
     window.location.hash = r;
   }
-  const root = document.getElementById('root');
+  const root = document.getElementById("root");
   ReactModal.setAppElement(root);
   ReactDOM.render(
     <TimerProvider>
@@ -26,7 +26,7 @@ const bootstrap = () => {
         </WebsocketProvider>
       </AppStateProvider>
     </TimerProvider>,
-    root,
+    root
   );
 };
 

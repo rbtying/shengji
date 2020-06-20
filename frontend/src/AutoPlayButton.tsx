@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 type Props = {
   onSubmit: () => void;
@@ -51,16 +51,16 @@ const AutoPlayButton = (props: Props) => {
     } else if (autoplay !== null) {
       setAutoplay(null);
     } else {
-      setAutoplay({observedWinner: currentWinner});
+      setAutoplay({ observedWinner: currentWinner });
     }
   };
   return (
     <button onClick={handleClick} disabled={!canSubmit}>
       {isCurrentPlayerTurn
-        ? 'Play selected cards'
+        ? "Play selected cards"
         : autoplay
         ? "Don't autoplay selected cards"
-        : 'Autoplay selected cards'}
+        : "Autoplay selected cards"}
     </button>
   );
 };

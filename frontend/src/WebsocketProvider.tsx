@@ -1,20 +1,20 @@
-import * as React from 'react';
-import { AppStateContext } from './AppStateProvider';
-import websocketHandler from './websocketHandler';
-import { TimerContext } from './TimerProvider';
+import * as React from "react";
+import { AppStateContext } from "./AppStateProvider";
+import websocketHandler from "./websocketHandler";
+import { TimerContext } from "./TimerProvider";
 
 type Context = {
   send: (value: any) => void;
 };
 
 export const WebsocketContext = React.createContext<Context>({
-  send: () => { },
+  send: () => {},
 });
 
 const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
   const { state, updateState } = React.useContext(AppStateContext);
   const { setTimeout, clearTimeout } = React.useContext(TimerContext);
-  // const [timer, setTimer] = React.useState<number | null>(null);
+  const [timer, setTimer] = React.useState<number | null>(null);
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
 
   // Because state/updateState are passed in and change every time something
@@ -24,12 +24,10 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
   // https://reactjs.org/docs/hooks-faq.html#why-am-i-seeing-stale-props-or-state-inside-my-function
   const stateRef = React.useRef(state);
   const updateStateRef = React.useRef(updateState);
-  // const timerRef = React.useRef(timer);
-  // const setTimerRef = React.useRef(setTimer);
+  const timerRef = React.useRef(timer);
+  const setTimerRef = React.useRef(setTimer);
   const setTimeoutRef = React.useRef(setTimeout);
   const clearTimeoutRef = React.useRef(clearTimeout);
-
-  const [timerList, setTimerList] = React.useState([]);
 
   React.useEffect(() => {
     stateRef.current = state;
@@ -41,44 +39,35 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
     clearTimeoutRef.current = clearTimeout;
   }, [setTimeout, clearTimeout]);
 
-  // React.useEffect(() => {
-  //   timerRef.current = timer;
-  //   setTimerRef.current = setTimer;
-  // }, [timer, setTimerRef]);
+  React.useEffect(() => {
+    timerRef.current = timer;
+    setTimerRef.current = setTimer;
+  }, [timer, setTimerRef]);
 
   React.useEffect(() => {
     const uri =
-      (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+      (location.protocol === "https:" ? "wss://" : "ws://") +
       location.host +
       location.pathname +
-      (location.pathname.endsWith('/') ? 'api' : '/api');
+      (location.pathname.endsWith("/") ? "api" : "/api");
 
     const ws = new WebSocket(uri);
     setWebsocket(ws);
 
-    ws.addEventListener('open', () =>
-      updateStateRef.current({ connected: true }),
+    ws.addEventListener("open", () =>
+      updateStateRef.current({ connected: true })
     );
-    ws.addEventListener('close', () =>
-      updateStateRef.current({ connected: false }),
+    ws.addEventListener("close", () =>
+      updateStateRef.current({ connected: false })
     );
-    ws.addEventListener('message', (event: MessageEvent) => {
-      // console.log("ws response received : " + event.data);
-
-      if (timerList.length > 0) {
-        const timer = timerList.shift();
-        // console.log("clear timer from receive: " + timer);
-        clearTimeoutRef.current(timer);
+    ws.addEventListener("message", (event: MessageEvent) => {
+      if (timerRef.current !== null) {
+        clearTimeoutRef.current(timerRef.current);
       }
-      // if (timerRef.current !== null) {
-      //   console.log("clear timer from receive: " + timerRef.current);
-      //   clearTimeoutRef.current(timerRef.current);
-      // }
-
-      // setTimerRef.current(null);
+      setTimerRef.current(null);
 
       const message = JSON.parse(event.data);
-      if (message === 'Kicked') {
+      if (message === "Kicked") {
         ws.close();
       } else {
         updateStateRef.current({
@@ -88,34 +77,28 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
       }
     });
 
-    // return () => {
-    //   if (timerRef.current !== null) {
-    //     clearTimeoutRef.current(timerRef.current);
-    //   }
-    // };
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeoutRef.current(timerRef.current);
+      }
+    };
   }, []);
 
   const send = (value: any) => {
-    // if (timerRef.current !== null) {
-    //   clearTimeoutRef.current(timerRef.current);
-    //   console.log("clear timer from send: " + timerRef.current);
-    // }
+    if (timerRef.current !== null) {
+      clearTimeoutRef.current(timerRef.current);
+    }
     // We expect a response back from the server within 5 seconds. Otherwise,
     // we should assume we have lost our websocket connection.
-    const id = setTimeoutRef.current(() => {
-      updateStateRef.current({ connected: false });
+
+    const localTimerRef = setTimeoutRef.current(() => {
+      if (timerRef.current === localTimerRef) {
+        updateStateRef.current({ connected: false });
+      }
     }, 5000);
-    // setTimerRef.current(
-    //   id
-    // );
-    // console.log("set timer from send: " + id);
-    const currentTimerList = timerList;
-    currentTimerList.push(id);
-    setTimerList(currentTimerList);
-    // websocket?.send(JSON.stringify({...value, header_senderName: stateRef.current.name, header_timerId: id}));
-    // console.log("send data: " + JSON.stringify({...value, shengji_header_senderName: stateRef.current.name, shengji_header_timerId: id}));
+
+    setTimerRef.current(localTimerRef);
     websocket?.send(JSON.stringify(value));
-    // console.log("send data: " + JSON.stringify(value));
   };
   // TODO(read this from consumers instead of globals)
   (window as any).send = send;

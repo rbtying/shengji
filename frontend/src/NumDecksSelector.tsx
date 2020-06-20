@@ -1,5 +1,5 @@
-import * as React from 'react';
-import ArrayUtils from './util/array';
+import * as React from "react";
+import ArrayUtils from "./util/array";
 
 type Props = {
   numPlayers: number;
@@ -10,16 +10,16 @@ type Props = {
 const NumDecksSelector = (props: Props) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newNumDecks =
-      e.target.value === '' ? null : parseInt(e.target.value, 10);
+      e.target.value === "" ? null : parseInt(e.target.value, 10);
     props.onChange(newNumDecks);
   };
 
   return (
     <div className="num-decks-picker">
       <label>
-        Number of decks:{' '}
+        Number of decks:{" "}
         <select
-          value={props.numDecks === null ? '' : props.numDecks}
+          value={props.numDecks === null ? "" : props.numDecks}
           onChange={handleChange}
         >
           <option value="">default</option>

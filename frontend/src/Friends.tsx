@@ -1,12 +1,12 @@
-import * as React from 'react';
-import {IGameMode} from './types';
-import InlineCard from './InlineCard';
+import * as React from "react";
+import { IGameMode } from "./types";
+import InlineCard from "./InlineCard";
 
-type Props = {gameMode: IGameMode; showPlayed: boolean};
+type Props = { gameMode: IGameMode; showPlayed: boolean };
 
 const Friends = (props: Props) => {
-  const {gameMode} = props;
-  if (gameMode !== 'Tractor') {
+  const { gameMode } = props;
+  if (gameMode !== "Tractor") {
     return (
       <div className="pending-friends">
         {gameMode.FindingFriends.friends.map((friend, idx) => {
@@ -19,13 +19,13 @@ const Friends = (props: Props) => {
           }
           return (
             <p key={idx}>
-              The person to play the {nth(friend.initial_skip + 1)}{' '}
-              <InlineCard card={friend.card} /> is a friend.{' '}
+              The person to play the {nth(friend.initial_skip + 1)}{" "}
+              <InlineCard card={friend.card} /> is a friend.{" "}
               {props.showPlayed
                 ? friend.initial_skip -
                   friend.skip +
-                  ' played in previous tricks'
-                : ''}
+                  " played in previous tricks"
+                : ""}
             </p>
           );
         })}
@@ -39,8 +39,8 @@ const Friends = (props: Props) => {
 function nth(n: number) {
   return (
     n +
-    (['st', 'nd', 'rd'][(((((n < 0 ? -n : n) + 90) % 100) - 10) % 10) - 1] ||
-      'th')
+    (["st", "nd", "rd"][(((((n < 0 ? -n : n) + 90) % 100) - 10) % 10) - 1] ||
+      "th")
   );
 }
 

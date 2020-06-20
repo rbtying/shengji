@@ -1,5 +1,5 @@
-import * as React from 'react';
-import {TimerContext} from './TimerProvider';
+import * as React from "react";
+import { TimerContext } from "./TimerProvider";
 
 type Props = {
   timeout: number;
@@ -7,7 +7,7 @@ type Props = {
 };
 
 const Timeout = (props: Props): null => {
-  const {setTimeout, clearTimeout} = React.useContext(TimerContext);
+  const { setTimeout, clearTimeout } = React.useContext(TimerContext);
   React.useEffect(() => {
     const timeout = setTimeout(props.callback, props.timeout);
     return () => clearTimeout(timeout);

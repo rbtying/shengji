@@ -1,15 +1,15 @@
-import * as React from 'react';
-import {ITrump} from './types';
-import InlineCard from './InlineCard';
-import preloadedCards from './preloadedCards';
+import * as React from "react";
+import { ITrump } from "./types";
+import InlineCard from "./InlineCard";
+import preloadedCards from "./preloadedCards";
 
-type Props = {trump: ITrump};
+type Props = { trump: ITrump };
 const Trump = (props: Props) => {
-  const {trump} = props;
+  const { trump } = props;
   if (trump.Standard) {
-    const {suit, number: rank} = trump.Standard;
+    const { suit, number: rank } = trump.Standard;
     const card = preloadedCards.filter(
-      (v) => v.typ === suit && v.number === rank,
+      (v) => v.typ === suit && v.number === rank
     )[0].value;
     return (
       <div className="trump">

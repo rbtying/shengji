@@ -28,6 +28,8 @@
     "react-is": "^16.13.1",
     "react-tooltip": "^4.2.7"
   },
+  "prettier": {
+  },
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch --mode=development",

@@ -1,8 +1,8 @@
-import * as React from 'react';
-import {IPlayer} from './types';
-import classNames from 'classnames';
-import {MovePlayerLeft, MovePlayerRight} from './MovePlayerButton';
-import {WebsocketContext} from './WebsocketProvider';
+import * as React from "react";
+import { IPlayer } from "./types";
+import classNames from "classnames";
+import { MovePlayerLeft, MovePlayerRight } from "./MovePlayerButton";
+import { WebsocketContext } from "./WebsocketProvider";
 
 type Props = {
   players: IPlayer[];
@@ -24,14 +24,14 @@ const Players = (props: Props) => {
     next,
     name,
   } = props;
-  const {send} = React.useContext(WebsocketContext);
+  const { send } = React.useContext(WebsocketContext);
 
   return (
     <table className="players">
       <tbody>
         <tr>
           {players.map((player) => {
-            const className = classNames('player', {
+            const className = classNames("player", {
               next: player.id === next,
               landlord:
                 player.id === landlord || landlords_team?.includes(player.id),
@@ -41,10 +41,10 @@ const Players = (props: Props) => {
             let descriptor = `${player.name} (rank ${player.level})`;
 
             if (player.id === landlord) {
-              descriptor = descriptor + ' (当庄)';
+              descriptor = descriptor + " (当庄)";
             }
             if (player.name === name) {
-              descriptor = descriptor + ' (You!)';
+              descriptor = descriptor + " (You!)";
             }
 
             return (
@@ -53,16 +53,16 @@ const Players = (props: Props) => {
                 {movable && (
                   <span
                     style={{
-                      textAlign: 'center',
-                      width: '100%',
-                      display: 'block',
+                      textAlign: "center",
+                      width: "100%",
+                      display: "block",
                     }}
                   >
                     <MovePlayerLeft players={players} player={player} />
                     <span
-                      style={{cursor: 'pointer'}}
+                      style={{ cursor: "pointer" }}
                       onClick={(evt) => {
-                        send({Action: {MakeObserver: player.id}});
+                        send({ Action: { MakeObserver: player.id } });
                       }}
                     >
                       ✔️
@@ -74,30 +74,30 @@ const Players = (props: Props) => {
             );
           })}
           {observers.map((player) => {
-            const className = classNames('player observer', {movable});
+            const className = classNames("player observer", { movable });
             let descriptor = `${player.name} (rank ${player.level})`;
 
             if (player.name === name) {
-              descriptor = descriptor + ' (You!)';
+              descriptor = descriptor + " (You!)";
             }
 
             return (
               <td key={player.id} className={className}>
-                <span style={{textDecoration: 'line-through'}}>
+                <span style={{ textDecoration: "line-through" }}>
                   {descriptor}
                 </span>
                 {movable && (
                   <span
                     style={{
-                      textAlign: 'center',
-                      width: '100%',
-                      display: 'block',
+                      textAlign: "center",
+                      width: "100%",
+                      display: "block",
                     }}
                   >
                     <span
-                      style={{cursor: 'pointer'}}
+                      style={{ cursor: "pointer" }}
                       onClick={(evt) => {
-                        send({Action: {MakePlayer: player.id}});
+                        send({ Action: { MakePlayer: player.id } });
                       }}
                     >
                       💤

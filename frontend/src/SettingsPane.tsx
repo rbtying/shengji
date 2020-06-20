@@ -1,6 +1,6 @@
-import * as React from 'react';
-import {Settings} from './state/Settings';
-import styled from 'styled-components';
+import * as React from "react";
+import { Settings } from "./state/Settings";
+import styled from "styled-components";
 
 const Row = styled.div`
   display: table-row;
@@ -20,27 +20,27 @@ type Props = {
 };
 
 const SettingsPane = (props: Props) => {
-  const {settings} = props;
+  const { settings } = props;
   const handleChange = (partialSettings: Partial<Settings>) => () =>
-    props.onChangeSettings({...props.settings, ...partialSettings});
+    props.onChangeSettings({ ...props.settings, ...partialSettings });
 
-  const [link, setLink] = React.useState<string>('');
+  const [link, setLink] = React.useState<string>("");
 
   const setChatLink = (event: React.SyntheticEvent) => {
     event.preventDefault();
     if (link.length > 0) {
-      (window as any).send({Action: {SetChatLink: link}});
+      (window as any).send({ Action: { SetChatLink: link } });
     } else {
-      (window as any).send({Action: {SetChatLink: null}});
+      (window as any).send({ Action: { SetChatLink: null } });
     }
-    setLink('');
+    setLink("");
   };
 
   const editor = (
-    <div style={{marginBottom: '15px'}}>
+    <div style={{ marginBottom: "15px" }}>
       <input
         type="text"
-        style={{width: '150px'}}
+        style={{ width: "150px" }}
         value={link}
         onChange={(evt) => {
           evt.preventDefault();
@@ -54,7 +54,7 @@ const SettingsPane = (props: Props) => {
 
   return (
     <div className="settings">
-      <div style={{display: 'table'}}>
+      <div style={{ display: "table" }}>
         <Row>
           <LabelCell>four-color mode</LabelCell>
           <Cell>
@@ -62,7 +62,7 @@ const SettingsPane = (props: Props) => {
               name="four-color-mode"
               type="checkbox"
               checked={settings.fourColor}
-              onChange={handleChange({fourColor: !settings.fourColor})}
+              onChange={handleChange({ fourColor: !settings.fourColor })}
             />
           </Cell>
         </Row>
@@ -86,7 +86,9 @@ const SettingsPane = (props: Props) => {
               name="show-last-trick"
               type="checkbox"
               checked={settings.showLastTrick}
-              onChange={handleChange({showLastTrick: !settings.showLastTrick})}
+              onChange={handleChange({
+                showLastTrick: !settings.showLastTrick,
+              })}
             />
           </Cell>
         </Row>
@@ -97,7 +99,7 @@ const SettingsPane = (props: Props) => {
               name="beep-on-turn"
               type="checkbox"
               checked={settings.beepOnTurn}
-              onChange={handleChange({beepOnTurn: !settings.beepOnTurn})}
+              onChange={handleChange({ beepOnTurn: !settings.beepOnTurn })}
             />
           </Cell>
         </Row>
@@ -142,7 +144,7 @@ const SettingsPane = (props: Props) => {
         </Row>
       </div>
       <hr />
-      <div style={{display: 'table'}}>
+      <div style={{ display: "table" }}>
         <Row>
           <LabelCell>chat link</LabelCell>
           <Cell>{editor}</Cell>

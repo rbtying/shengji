@@ -1,9 +1,9 @@
-import * as React from 'react';
+import * as React from "react";
 
 type Props = {
   width?: string;
 };
-const PaperPlane = ({width = '100%'}: Props) => (
+const PaperPlane = ({ width = "100%" }: Props) => (
   <svg
     focusable="false"
     role="img"
