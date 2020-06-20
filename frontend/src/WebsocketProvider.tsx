@@ -90,11 +90,14 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
     }
     // We expect a response back from the server within 5 seconds. Otherwise,
     // we should assume we have lost our websocket connection.
-    setTimerRef.current(
-      setTimeoutRef.current(() => {
+
+    const localTimerRef = setTimeoutRef.current(() => {
+      if (timerRef.current === localTimerRef) {
         updateStateRef.current({ connected: false });
-      }, 5000)
-    );
+      }
+    }, 5000);
+
+    setTimerRef.current(localTimerRef);
     websocket?.send(JSON.stringify(value));
   };
   // TODO(read this from consumers instead of globals)
