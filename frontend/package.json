@@ -26,6 +26,8 @@
     "tslint": "^6.1.1",
     "typescript": "^3.8.3"
   },
+  "prettier": {
+  },
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch --mode=development",
