@@ -1,7 +1,7 @@
-import * as React from 'react';
-import {AppStateContext} from './AppStateProvider';
-import websocketHandler from './websocketHandler';
-import {TimerContext} from './TimerProvider';
+import * as React from "react";
+import { AppStateContext } from "./AppStateProvider";
+import websocketHandler from "./websocketHandler";
+import { TimerContext } from "./TimerProvider";
 
 type Context = {
   send: (value: any) => void;
@@ -12,8 +12,8 @@ export const WebsocketContext = React.createContext<Context>({
 });
 
 const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
-  const {state, updateState} = React.useContext(AppStateContext);
-  const {setTimeout, clearTimeout} = React.useContext(TimerContext);
+  const { state, updateState } = React.useContext(AppStateContext);
+  const { setTimeout, clearTimeout } = React.useContext(TimerContext);
   const [timer, setTimer] = React.useState<number | null>(null);
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
 
@@ -46,28 +46,28 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
 
   React.useEffect(() => {
     const uri =
-      (location.protocol === 'https:' ? 'wss://' : 'ws://') +
+      (location.protocol === "https:" ? "wss://" : "ws://") +
       location.host +
       location.pathname +
-      (location.pathname.endsWith('/') ? 'api' : '/api');
+      (location.pathname.endsWith("/") ? "api" : "/api");
 
     const ws = new WebSocket(uri);
     setWebsocket(ws);
 
-    ws.addEventListener('open', () =>
-      updateStateRef.current({connected: true}),
+    ws.addEventListener("open", () =>
+      updateStateRef.current({ connected: true })
     );
-    ws.addEventListener('close', () =>
-      updateStateRef.current({connected: false}),
+    ws.addEventListener("close", () =>
+      updateStateRef.current({ connected: false })
     );
-    ws.addEventListener('message', (event: MessageEvent) => {
+    ws.addEventListener("message", (event: MessageEvent) => {
       if (timerRef.current !== null) {
         clearTimeoutRef.current(timerRef.current);
       }
       setTimerRef.current(null);
 
       const message = JSON.parse(event.data);
-      if (message === 'Kicked') {
+      if (message === "Kicked") {
         ws.close();
       } else {
         updateStateRef.current({
@@ -92,8 +92,8 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
     // we should assume we have lost our websocket connection.
     setTimerRef.current(
       setTimeoutRef.current(() => {
-        updateStateRef.current({connected: false});
-      }, 5000),
+        updateStateRef.current({ connected: false });
+      }, 5000)
     );
     websocket?.send(JSON.stringify(value));
   };
@@ -101,7 +101,7 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
   (window as any).send = send;
 
   return (
-    <WebsocketContext.Provider value={{send}}>
+    <WebsocketContext.Provider value={{ send }}>
       {props.children}
     </WebsocketContext.Provider>
   );

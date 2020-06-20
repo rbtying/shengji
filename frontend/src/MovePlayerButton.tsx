@@ -1,6 +1,6 @@
-import * as React from 'react';
-import {IPlayer} from './types';
-import {WebsocketContext} from './WebsocketProvider';
+import * as React from "react";
+import { IPlayer } from "./types";
+import { WebsocketContext } from "./WebsocketProvider";
 
 type Props = {
   players: IPlayer[];
@@ -8,10 +8,10 @@ type Props = {
 };
 
 const MovePlayerButton = (relative: number, children: string) => (
-  props: Props,
+  props: Props
 ) => {
-  const {players, player} = props;
-  const {send} = React.useContext(WebsocketContext);
+  const { players, player } = props;
+  const { send } = React.useContext(WebsocketContext);
 
   const movePlayer = () => {
     const index = players.findIndex((p) => p === player);
@@ -22,11 +22,11 @@ const MovePlayerButton = (relative: number, children: string) => (
       player,
       ...withoutPlayer.slice(newIndex, withoutPlayer.length),
     ];
-    send({Action: {ReorderPlayers: newPlayers.map((p) => p.id)}});
+    send({ Action: { ReorderPlayers: newPlayers.map((p) => p.id) } });
   };
 
   return <button onClick={movePlayer}>{children}</button>;
 };
 
-export const MovePlayerLeft = MovePlayerButton(-1, '<');
-export const MovePlayerRight = MovePlayerButton(1, '>');
+export const MovePlayerLeft = MovePlayerButton(-1, "<");
+export const MovePlayerRight = MovePlayerButton(1, ">");

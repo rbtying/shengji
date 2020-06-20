@@ -1,14 +1,14 @@
-import * as React from 'react';
-import LandlordSelector from './LandlordSelector';
-import NumDecksSelector from './NumDecksSelector';
-import RankSelector from './RankSelector';
-import Kicker from './Kicker';
-import ArrayUtils from './util/array';
-import {IInitializePhase} from './types';
-import {WebsocketContext} from './WebsocketProvider';
-import {IPlayer} from './types';
-import Header from './Header';
-import Players from './Players';
+import * as React from "react";
+import LandlordSelector from "./LandlordSelector";
+import NumDecksSelector from "./NumDecksSelector";
+import RankSelector from "./RankSelector";
+import Kicker from "./Kicker";
+import ArrayUtils from "./util/array";
+import { IInitializePhase } from "./types";
+import { WebsocketContext } from "./WebsocketProvider";
+import { IPlayer } from "./types";
+import Header from "./Header";
+import Players from "./Players";
 
 type Props = {
   state: IInitializePhase;
@@ -17,11 +17,11 @@ type Props = {
 };
 
 const Initialize = (props: Props) => {
-  const {send} = React.useContext(WebsocketContext);
+  const { send } = React.useContext(WebsocketContext);
   const setGameMode = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value === 'Tractor') {
-      send({Action: {SetGameMode: 'Tractor'}});
+    if (evt.target.value === "Tractor") {
+      send({ Action: { SetGameMode: "Tractor" } });
     } else {
       send({
         Action: {
@@ -37,7 +37,7 @@ const Initialize = (props: Props) => {
 
   const setNumFriends = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value === '') {
+    if (evt.target.value === "") {
       send({
         Action: {
           SetGameMode: {
@@ -63,7 +63,7 @@ const Initialize = (props: Props) => {
 
   const setKittySize = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       const size = parseInt(evt.target.value, 10);
       send({
         Action: {
@@ -81,7 +81,7 @@ const Initialize = (props: Props) => {
 
   const setFriendSelectionPolicy = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetFriendSelectionPolicy: evt.target.value,
@@ -92,7 +92,7 @@ const Initialize = (props: Props) => {
 
   const setKittyPenalty = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetKittyPenalty: evt.target.value,
@@ -109,7 +109,7 @@ const Initialize = (props: Props) => {
 
   const setKittyBidPolicy = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetKittyBidPolicy: evt.target.value,
@@ -120,7 +120,7 @@ const Initialize = (props: Props) => {
 
   const setTrickDrawPolicy = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetTrickDrawPolicy: evt.target.value,
@@ -131,7 +131,7 @@ const Initialize = (props: Props) => {
 
   const setThrowEvaluationPolicy = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetThrowEvaluationPolicy: evt.target.value,
@@ -142,7 +142,7 @@ const Initialize = (props: Props) => {
 
   const setAdvancementPolicy = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetAdvancementPolicy: evt.target.value,
@@ -151,7 +151,7 @@ const Initialize = (props: Props) => {
     } else {
       send({
         Action: {
-          SetAdvancementPolicy: 'Unrestricted',
+          SetAdvancementPolicy: "Unrestricted",
         },
       });
     }
@@ -159,7 +159,7 @@ const Initialize = (props: Props) => {
 
   const setThrowPenalty = (evt: any) => {
     evt.preventDefault();
-    if (evt.target.value !== '') {
+    if (evt.target.value !== "") {
       send({
         Action: {
           SetThrowPenalty: evt.target.value,
@@ -176,27 +176,27 @@ const Initialize = (props: Props) => {
 
   const setHideLandlordsPoints = (evt: any) => {
     evt.preventDefault();
-    send({Action: {SetHideLandlordsPoints: evt.target.value === 'hide'}});
+    send({ Action: { SetHideLandlordsPoints: evt.target.value === "hide" } });
   };
 
   const setHidePlayedCards = (evt: any) => {
     evt.preventDefault();
-    send({Action: {SetHidePlayedCards: evt.target.value === 'hide'}});
+    send({ Action: { SetHidePlayedCards: evt.target.value === "hide" } });
   };
 
   const startGame = (evt: any) => {
     evt.preventDefault();
-    send({Action: 'StartGame'});
+    send({ Action: "StartGame" });
   };
 
   const modeAsString =
-    props.state.propagated.game_mode === 'Tractor'
-      ? 'Tractor'
-      : 'FindingFriends';
+    props.state.propagated.game_mode === "Tractor"
+      ? "Tractor"
+      : "FindingFriends";
   const numFriends =
-    props.state.propagated.game_mode === 'Tractor' ||
+    props.state.propagated.game_mode === "Tractor" ||
     props.state.propagated.game_mode.FindingFriends.num_friends === null
-      ? ''
+      ? ""
       : props.state.propagated.game_mode.FindingFriends.num_friends;
   const decksEffective =
     props.state.propagated.num_decks ||
@@ -208,11 +208,11 @@ const Initialize = (props: Props) => {
   }
 
   let currentPlayer = props.state.propagated.players.find(
-    (p: IPlayer) => p.name === props.name,
+    (p: IPlayer) => p.name === props.name
   );
   if (!currentPlayer) {
     currentPlayer = props.state.propagated.observers.find(
-      (p) => p.name === props.name,
+      (p) => p.name === props.name
     );
   }
 
@@ -231,7 +231,7 @@ const Initialize = (props: Props) => {
         name={props.name}
       />
       <p>
-        Send link to other players to allow them to join the game:{' '}
+        Send link to other players to allow them to join the game:{" "}
         <a href={window.location.href} target="_blank">
           <code>{window.location.href}</code>
         </a>
@@ -243,13 +243,13 @@ const Initialize = (props: Props) => {
       )}
       <Kicker
         players={props.state.propagated.players}
-        onKick={(playerId: number) => send({Kick: playerId})}
+        onKick={(playerId: number) => send({ Kick: playerId })}
       />
       <div className="game-settings">
         <h3>Game settings</h3>
         <div>
           <label>
-            Game mode:{' '}
+            Game mode:{" "}
             <select value={modeAsString} onChange={setGameMode}>
               <option value="Tractor">升级 / Tractor</option>
               <option value="FindingFriends">找朋友 / Finding Friends</option>
@@ -257,21 +257,21 @@ const Initialize = (props: Props) => {
           </label>
         </div>
         <div>
-          {props.state.propagated.game_mode !== 'Tractor' ? (
+          {props.state.propagated.game_mode !== "Tractor" ? (
             <label>
-              Number of friends:{' '}
+              Number of friends:{" "}
               <select value={numFriends} onChange={setNumFriends}>
                 <option value="">default</option>
                 {ArrayUtils.range(
                   Math.max(
                     Math.floor(props.state.propagated.players.length / 2) - 1,
-                    0,
+                    0
                   ),
                   (idx) => (
                     <option value={idx + 1} key={idx}>
                       {idx + 1}
                     </option>
-                  ),
+                  )
                 )}
               </select>
             </label>
@@ -281,14 +281,14 @@ const Initialize = (props: Props) => {
           numPlayers={props.state.propagated.players.length}
           numDecks={props.state.propagated.num_decks}
           onChange={(newNumDecks: number | null) =>
-            send({Action: {SetNumDecks: newNumDecks}})
+            send({ Action: { SetNumDecks: newNumDecks } })
           }
         />
         <div>
           <label>
-            Number of cards in the bottom:{' '}
+            Number of cards in the bottom:{" "}
             <select
-              value={props.state.propagated.kitty_size || ''}
+              value={props.state.propagated.kitty_size || ""}
               onChange={setKittySize}
             >
               <option value="">default</option>
@@ -313,7 +313,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Friend Selection Restriction:{' '}
+            Friend Selection Restriction:{" "}
             <select
               value={props.state.propagated.friend_selection_policy}
               onChange={setFriendSelectionPolicy}
@@ -327,10 +327,10 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Point visibility:{' '}
+            Point visibility:{" "}
             <select
               value={
-                props.state.propagated.hide_landlord_points ? 'hide' : 'show'
+                props.state.propagated.hide_landlord_points ? "hide" : "show"
               }
               onChange={setHideLandlordsPoints}
             >
@@ -341,9 +341,9 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Played card visibility (in chat):{' '}
+            Played card visibility (in chat):{" "}
             <select
-              value={props.state.propagated.hide_played_cards ? 'hide' : 'show'}
+              value={props.state.propagated.hide_played_cards ? "hide" : "show"}
               onChange={setHidePlayedCards}
             >
               <option value="show">Show played cards in chat</option>
@@ -353,7 +353,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Rank advancement policy:{' '}
+            Rank advancement policy:{" "}
             <select
               value={props.state.propagated.advancement_policy}
               onChange={setAdvancementPolicy}
@@ -367,7 +367,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Trump policy for cards revealed from the bottom:{' '}
+            Trump policy for cards revealed from the bottom:{" "}
             <select
               value={props.state.propagated.kitty_bid_policy}
               onChange={setKittyBidPolicy}
@@ -381,7 +381,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Penalty for points left in the bottom:{' '}
+            Penalty for points left in the bottom:{" "}
             <select
               value={props.state.propagated.kitty_penalty}
               onChange={setKittyPenalty}
@@ -395,7 +395,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Penalty for incorrect throws:{' '}
+            Penalty for incorrect throws:{" "}
             <select
               value={props.state.propagated.throw_penalty}
               onChange={setThrowPenalty}
@@ -409,7 +409,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Card protection policy:{' '}
+            Card protection policy:{" "}
             <select
               value={props.state.propagated.trick_draw_policy}
               onChange={setTrickDrawPolicy}
@@ -423,7 +423,7 @@ const Initialize = (props: Props) => {
         </div>
         <div>
           <label>
-            Multi-throw evaluation policy:{' '}
+            Multi-throw evaluation policy:{" "}
             <select
               value={props.state.propagated.throw_evaluation_policy}
               onChange={setThrowEvaluationPolicy}
@@ -442,12 +442,14 @@ const Initialize = (props: Props) => {
           players={props.state.propagated.players}
           landlordId={props.state.propagated.landlord}
           onChange={(newLandlord: number | null) =>
-            send({Action: {SetLandlord: newLandlord}})
+            send({ Action: { SetLandlord: newLandlord } })
           }
         />
         <RankSelector
           rank={currentPlayer.level}
-          onChangeRank={(newRank: string) => send({Action: {SetRank: newRank}})}
+          onChangeRank={(newRank: string) =>
+            send({ Action: { SetRank: newRank } })
+          }
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
-import * as React from 'react';
-import ArrayUtils from './util/array';
-import styled from 'styled-components';
+import * as React from "react";
+import ArrayUtils from "./util/array";
+import styled from "styled-components";
 
 const Container = styled.div`
   position: relative;

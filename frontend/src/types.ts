@@ -51,8 +51,8 @@ export interface IPlayPhase {
   game_mode: IGameMode;
   propagated: IPropagatedState;
   hands: IHands;
-  points: {[id: number]: string[]};
-  penalties: {[id: number]: number};
+  points: { [id: number]: string[] };
+  penalties: { [id: number]: number };
   kitty: string[];
   landlord: number;
   landlords_team: number[];
@@ -65,32 +65,32 @@ export interface IPropagatedState {
   game_mode: IGameModeSettings;
   hide_landlord_points: boolean | null;
   kitty_size: number | null;
-  friend_selection_policy: 'Unrestricted' | 'HighestCardNotAllowed';
+  friend_selection_policy: "Unrestricted" | "HighestCardNotAllowed";
   num_decks: number | null;
   max_player_id: number;
   players: IPlayer[];
   observers: IPlayer[];
   landlord: number | null;
   chat_link: string | null;
-  advancement_policy: 'Unrestricted' | 'DefendPoints';
-  kitty_penalty: 'Times' | 'Power';
-  kitty_bid_policy: 'FirstCard' | 'FirstCardOfLevelOrHighest';
-  throw_penalty: 'None' | 'TenPointsPerAttempt';
-  trick_draw_policy: 'NoProtections' | 'LongerTuplesProtected';
-  throw_evaluation_policy: 'All' | 'Highest';
+  advancement_policy: "Unrestricted" | "DefendPoints";
+  kitty_penalty: "Times" | "Power";
+  kitty_bid_policy: "FirstCard" | "FirstCardOfLevelOrHighest";
+  throw_penalty: "None" | "TenPointsPerAttempt";
+  trick_draw_policy: "NoProtections" | "LongerTuplesProtected";
+  throw_evaluation_policy: "All" | "Highest";
   hide_played_cards: boolean;
 }
 
 export interface IHands {
-  hands: {[playerId: number]: {[card: string]: number}};
+  hands: { [playerId: number]: { [card: string]: number } };
   level: number;
   trump: ITrump | null;
 }
 
-export type IGameMode = 'Tractor' | {FindingFriends: IFindingFriends};
+export type IGameMode = "Tractor" | { FindingFriends: IFindingFriends };
 export type IGameModeSettings =
-  | 'Tractor'
-  | {FindingFriends: {num_friends: number}};
+  | "Tractor"
+  | { FindingFriends: { num_friends: number } };
 
 export interface IFindingFriends {
   num_friends: number;
@@ -134,10 +134,10 @@ export interface IPlayedCards {
 
 export type ITrump =
   | {
-      Standard: {suit: string; number: string};
+      Standard: { suit: string; number: string };
       NoTrump: null;
     }
   | {
       Standard: null;
-      NoTrump: {number: string};
+      NoTrump: { number: string };
     };

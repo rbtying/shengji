@@ -1,9 +1,9 @@
-import * as React from 'react';
+import * as React from "react";
 
 type Props = {
   width?: string;
 };
-const BarChart = ({width = '100%'}: Props) => (
+const BarChart = ({ width = "100%" }: Props) => (
   <svg
     focusable="false"
     role="img"

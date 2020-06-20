@@ -1,5 +1,5 @@
-import * as React from 'react';
-import {IPlayer} from './types';
+import * as React from "react";
+import { IPlayer } from "./types";
 
 type Props = {
   landlordId: number | null;
@@ -8,7 +8,7 @@ type Props = {
 };
 const LandlordSelector = (props: Props) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value === '') {
+    if (e.target.value === "") {
       props.onChange(null);
     } else {
       props.onChange(parseInt(e.target.value, 10));
@@ -18,9 +18,9 @@ const LandlordSelector = (props: Props) => {
   return (
     <div className="landlord-picker">
       <label>
-        Current leader:{' '}
+        Current leader:{" "}
         <select
-          value={props.landlordId === null ? '' : props.landlordId}
+          value={props.landlordId === null ? "" : props.landlordId}
           onChange={handleChange}
         >
           <option value="">winner of the bid</option>

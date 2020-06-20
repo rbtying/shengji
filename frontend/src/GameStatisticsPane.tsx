@@ -1,6 +1,6 @@
-import * as React from 'react';
-import {GameStatistics} from './state/GameStatistics';
-import styled from 'styled-components';
+import * as React from "react";
+import { GameStatistics } from "./state/GameStatistics";
+import styled from "styled-components";
 
 const Row = styled.div`
   display: table-row;
@@ -17,16 +17,16 @@ const Cell = styled.div`
 
 const percentage = (numerator: number, denominator: number) => {
   if (denominator > 0) {
-    return ((numerator / denominator) * 100).toFixed(2) + '%';
+    return ((numerator / denominator) * 100).toFixed(2) + "%";
   }
-  return 'n/a';
+  return "n/a";
 };
 
 const ranksPerGame = (ranks: number, numGames: number) => {
   if (numGames > 0) {
     return (ranks / numGames).toFixed(3);
   }
-  return 'n/a';
+  return "n/a";
 };
 
 type RowProps = {
@@ -35,7 +35,7 @@ type RowProps = {
   numWon: number;
 };
 
-const GameStatisticsRow = ({label, numPlayed, numWon}: RowProps) => {
+const GameStatisticsRow = ({ label, numPlayed, numWon }: RowProps) => {
   return (
     <Row>
       <LabelCell>{label}</LabelCell>
@@ -51,7 +51,7 @@ type Props = {
 };
 
 const GameStatisticsPane = (props: Props) => {
-  const {gameStatistics} = props;
+  const { gameStatistics } = props;
 
   const gamesPlayedAsAttacking =
     gameStatistics.gamesPlayed - gameStatistics.gamesPlayedAsDefending;
@@ -61,7 +61,7 @@ const GameStatisticsPane = (props: Props) => {
   return (
     <div className="gameStatistics">
       <h3>win statistics</h3>
-      <div style={{display: 'table'}}>
+      <div style={{ display: "table" }}>
         <Row>
           <Cell />
           <LabelCell>played</LabelCell>
@@ -69,28 +69,28 @@ const GameStatisticsPane = (props: Props) => {
           <LabelCell>percentage</LabelCell>
         </Row>
         <GameStatisticsRow
-          label={'attacking'}
+          label={"attacking"}
           numPlayed={gamesPlayedAsAttacking}
           numWon={gamesWonAsAttacking}
         />
         <GameStatisticsRow
-          label={'defending'}
+          label={"defending"}
           numPlayed={gameStatistics.gamesPlayedAsDefending}
           numWon={gameStatistics.gamesWonAsDefending}
         />
         <GameStatisticsRow
-          label={'as landlord'}
+          label={"as landlord"}
           numPlayed={gameStatistics.gamesPlayedAsLandlord}
           numWon={gameStatistics.gamesWonAsLandlord}
         />
         <GameStatisticsRow
-          label={'total'}
+          label={"total"}
           numPlayed={gameStatistics.gamesPlayed}
           numWon={gameStatistics.gamesWon}
         />
       </div>
       <h3>rank up statistics</h3>
-      <div style={{display: 'table'}}>
+      <div style={{ display: "table" }}>
         <Row>
           <LabelCell>ranks/game</LabelCell>
           <Cell>

@@ -1,7 +1,7 @@
-import * as React from 'react';
-import ChatMessage, {Message} from './ChatMessage';
-import ChatInput from './ChatInput';
-import {WebsocketContext} from './WebsocketProvider';
+import * as React from "react";
+import ChatMessage, { Message } from "./ChatMessage";
+import ChatInput from "./ChatInput";
+import { WebsocketContext } from "./WebsocketProvider";
 
 type Props = {
   messages: Message[];
@@ -9,7 +9,7 @@ type Props = {
 
 const Chat = (props: Props) => {
   const anchor = React.useRef(null);
-  const {send} = React.useContext(WebsocketContext);
+  const { send } = React.useContext(WebsocketContext);
 
   React.useEffect(() => {
     if (anchor.current) {
@@ -21,12 +21,12 @@ const Chat = (props: Props) => {
         rect.bottom <= (window.innerHeight || html.clientHeight) &&
         rect.right <= (window.innerWidth || html.clientWidth);
       if (isVisible) {
-        anchor.current?.scrollIntoView({block: 'nearest', inline: 'start'});
+        anchor.current?.scrollIntoView({ block: "nearest", inline: "start" });
       }
     }
   }, [props.messages]);
 
-  const handleSubmit = (message: string) => send({Message: message});
+  const handleSubmit = (message: string) => send({ Message: message });
 
   return (
     <div className="chat">

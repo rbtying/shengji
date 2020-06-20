@@ -1,16 +1,16 @@
-import * as React from 'react';
-import {IPlayer} from './types';
-import ArrayUtils from './util/array';
-import ObjectUtils from './util/object';
-import LabeledPlay from './LabeledPlay';
-import classNames from 'classnames';
-import {cardLookup} from './util/cardHelpers';
+import * as React from "react";
+import { IPlayer } from "./types";
+import ArrayUtils from "./util/array";
+import ObjectUtils from "./util/object";
+import LabeledPlay from "./LabeledPlay";
+import classNames from "classnames";
+import { cardLookup } from "./util/cardHelpers";
 
 type Props = {
   players: IPlayer[];
   numDecks: number;
-  points: {[playerId: number]: string[]};
-  penalties: {[playerId: number]: number};
+  points: { [playerId: number]: string[] };
+  penalties: { [playerId: number]: number };
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
@@ -18,13 +18,13 @@ type Props = {
 
 const Points = (props: Props) => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
-    ArrayUtils.sum(cards.map((card) => cardLookup[card].points)),
+    ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
     props.players
       .filter((p) => !props.landlordTeam.includes(p.id))
-      .map((p) => pointsPerPlayer[p.id]),
+      .map((p) => pointsPerPlayer[p.id])
   );
 
   let nonLandlordPointsWithPenalties = nonLandlordPoints;
@@ -36,7 +36,7 @@ const Points = (props: Props) => {
       } else {
         nonLandlordPointsWithPenalties = Math.max(
           0,
-          nonLandlordPoints - penalty,
+          nonLandlordPoints - penalty
         );
       }
     }
@@ -46,7 +46,7 @@ const Points = (props: Props) => {
   const playerPointElements = props.players.map((player) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
     const cards =
-      props.points[player.id].length > 0 ? props.points[player.id] : ['🂠'];
+      props.points[player.id].length > 0 ? props.points[player.id] : ["🂠"];
     const penalty = props.penalties[player.id] || 0;
 
     if (props.hideLandlordPoints && onLandlordTeam) {
@@ -55,7 +55,7 @@ const Points = (props: Props) => {
       return (
         <LabeledPlay
           key={player.id}
-          className={classNames({landlord: onLandlordTeam})}
+          className={classNames({ landlord: onLandlordTeam })}
           label={`${player.name}: ${pointsPerPlayer[player.id] - penalty}分`}
           cards={cards}
         />
@@ -67,7 +67,7 @@ const Points = (props: Props) => {
   const landlord = props.players.find((p) => p.id === props.landlord);
 
   const segment = props.numDecks * 20;
-  let thresholdStr = '';
+  let thresholdStr = "";
 
   if (nonLandlordPointsWithPenalties === 0) {
     thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
@@ -90,7 +90,7 @@ const Points = (props: Props) => {
       5 * segment
     }分)`;
   } else {
-    thresholdStr = 'The attacking team will go up 3 levels.';
+    thresholdStr = "The attacking team will go up 3 levels.";
   }
 
   return (

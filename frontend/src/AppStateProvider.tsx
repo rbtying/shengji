@@ -1,10 +1,10 @@
-import * as React from 'react';
-import {Message} from './ChatMessage';
-import gameStatistics, {GameStatistics} from './state/GameStatistics';
-import settings, {Settings} from './state/Settings';
-import {IGameState} from './types';
-import {State, combineState, noPersistence} from './State';
-import {stringLocalStorageState} from './localStorageState';
+import * as React from "react";
+import { Message } from "./ChatMessage";
+import gameStatistics, { GameStatistics } from "./state/GameStatistics";
+import settings, { Settings } from "./state/Settings";
+import { IGameState } from "./types";
+import { State, combineState, noPersistence } from "./State";
+import { stringLocalStorageState } from "./localStorageState";
 
 export type AppState = {
   settings: Settings;
@@ -23,7 +23,7 @@ const appState: State<AppState> = combineState({
   gameStatistics,
   connected: noPersistence(() => false),
   roomName: noPersistence(() => window.location.hash.slice(1)),
-  name: stringLocalStorageState('name'),
+  name: stringLocalStorageState("name"),
   game_state: noPersistence(() => null),
   cards: noPersistence(() => []),
   errors: noPersistence(() => []),
@@ -51,13 +51,13 @@ const AppStateProvider = (props: Props) => {
   });
   const updateState = (newState: Partial<AppState>) => {
     setState((s) => {
-      const combined = {...s, ...newState};
+      const combined = { ...s, ...newState };
       appState.persist(state, combined);
       return combined;
     });
   };
   return (
-    <AppStateContext.Provider value={{state, updateState}}>
+    <AppStateContext.Provider value={{ state, updateState }}>
       {props.children}
     </AppStateContext.Provider>
   );

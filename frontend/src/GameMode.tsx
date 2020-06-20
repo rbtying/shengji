@@ -1,5 +1,5 @@
-import * as React from 'react';
-import {IGameModeSettings, IGameMode} from './types';
+import * as React from "react";
+import { IGameModeSettings, IGameMode } from "./types";
 
 type Props = {
   gameMode: IGameModeSettings | IGameMode;
@@ -10,7 +10,7 @@ const GameMode = (props: Props) => {
       rules
     </a>
   );
-  if (props.gameMode === 'Tractor') {
+  if (props.gameMode === "Tractor") {
     return (
       <span>
         升级 / <span className="red">Tractor</span> ({rules})
