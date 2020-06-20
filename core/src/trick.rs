@@ -314,6 +314,12 @@ pub struct PlayedCards {
 pub struct Trick {
     player_queue: VecDeque<PlayerID>,
     played_cards: Vec<PlayedCards>,
+    /// A parallel array to `played_cards` which contains the units corresponding to played cards
+    /// that match the `trick_format`, or `None` if they don't match.
+    ///
+    /// TODO: remove default deserialization attribute in a few days.
+    #[serde(default)]
+    played_card_mappings: Vec<Option<Units>>,
     current_winner: Option<PlayerID>,
     trick_format: Option<TrickFormat>,
     trump: Trump,
@@ -321,11 +327,13 @@ pub struct Trick {
 
 impl Trick {
     pub fn new(trump: Trump, players: impl IntoIterator<Item = PlayerID>) -> Self {
+        let player_queue = players.into_iter().collect::<VecDeque<_>>();
         Trick {
-            player_queue: players.into_iter().collect(),
-            played_cards: vec![],
+            played_cards: Vec::with_capacity(player_queue.len()),
+            played_card_mappings: Vec::with_capacity(player_queue.len()),
             current_winner: None,
             trick_format: None,
+            player_queue,
             trump,
         }
     }
@@ -453,7 +461,6 @@ impl Trick {
                 }
             }
 
-            cards.sort_by(|a, b| self.trump.compare(*a, *b));
             let (cards, bad_throw_cards, better_player) =
                 if let Some((better_player, forced_unit)) = invalid {
                     let forced_cards: Vec<Card> = match forced_unit {
@@ -500,6 +507,14 @@ impl Trick {
         hands.remove(id, cards.iter().cloned())?;
 
         self.player_queue.pop_front();
+
+        debug_assert!(self.trick_format.is_some());
+        self.played_card_mappings.push(
+            self.trick_format
+                .as_ref()
+                .and_then(|tf| tf.matches(&cards).ok()),
+        );
+
         self.played_cards.push(PlayedCards {
             id,
             cards,
@@ -527,6 +542,8 @@ impl Trick {
     ) -> Result<(), TrickError> {
         if self.played_cards.last().map(|p| p.id) == Some(id) {
             let played = self.played_cards.pop().unwrap();
+            self.played_card_mappings.pop();
+
             hands.add(id, played.cards).unwrap();
             self.player_queue.push_front(id);
             if self.played_cards.is_empty() {

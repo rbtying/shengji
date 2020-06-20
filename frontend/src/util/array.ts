@@ -42,8 +42,8 @@ const range = <T>(count: number, fn: (idx: number) => T): T[] =>
     .map((_, idx) => fn(idx));
 
 export default {
-  sum,
+  mapObject,
   minus,
   range,
-  mapObject,
+  sum,
 };

@@ -5,7 +5,7 @@
     "target": "es5",
     "jsx": "react",
     "allowJs": true,
-    "lib": ["dom", "es6", "es2017", "esnext.asynciterable"],
+    "lib": ["dom", "es6", "es2017", "esnext.asynciterable", "esnext.array"],
     "noUnusedLocals": true
   },
   "include": ["src"],

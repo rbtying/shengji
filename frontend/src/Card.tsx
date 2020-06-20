@@ -1,15 +1,16 @@
 import * as React from "react";
-import classNames from "classnames";
-import { cardLookup } from "./util/cardHelpers";
-import InlineCard from "./InlineCard";
 
-type Props = {
+import classNames from "classnames";
+import InlineCard from "./InlineCard";
+import { cardLookup } from "./util/cardHelpers";
+
+interface IProps {
   card: string;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
-};
+}
 
-const Card = (props: Props) => {
+const Card = (props: IProps) => {
   const cardInfo = cardLookup[props.card];
   if (!cardInfo) {
     return (

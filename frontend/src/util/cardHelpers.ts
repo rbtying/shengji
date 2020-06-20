@@ -1,6 +1,6 @@
 import preloadedCards from "../preloadedCards";
-import ArrayUtils from "../util/array";
 import { ICardInfo } from "../types";
+import ArrayUtils from "../util/array";
 
 export const cardLookup = ArrayUtils.mapObject(
   preloadedCards,
@@ -9,8 +9,8 @@ export const cardLookup = ArrayUtils.mapObject(
 
 // prettier-ignore
 type Rank = (
-  | 'A' | '2' | '3' | '4' | '5' | '6' | '7'
-  | '8' | '9' | '10' | 'J' | 'Q' | 'K'
+  | "A" | "2" | "3" | "4" | "5" | "6" | "7"
+  | "8" | "9" | "10" | "J" | "Q" | "K"
 );
 type Suit = "diamonds" | "clubs" | "hearts" | "spades";
 
@@ -27,14 +27,14 @@ const suitToFilledUnicode: { [key in Suit]: string } = {
   spades: "♠",
 };
 
-export type SuitCard = {
+export interface ISuitCard {
   type: "suit_card";
   rank: Rank;
   suit: Suit;
-};
+}
 
 type Card =
-  | SuitCard
+  | ISuitCard
   | { type: "big_joker" }
   | { type: "little_joker" }
   | { type: "unknown" };
@@ -69,15 +69,15 @@ export const unicodeToCard = (unicode: string): Card => {
     return { type: "big_joker" };
   } else {
     return {
-      type: "suit_card",
-      suit: cardInfoToSuit(cardInfo),
       rank: cardInfo.number as Rank,
+      suit: cardInfoToSuit(cardInfo),
+      type: "suit_card",
     };
   }
 };
 
 export const cardToUnicodeSuit = (
-  card: SuitCard,
+  card: ISuitCard,
   fill: boolean = true
 ): string => {
   const table = fill ? suitToFilledUnicode : suitToUnicode;
