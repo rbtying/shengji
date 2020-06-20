@@ -93,7 +93,7 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
 
     const localTimerRef = setTimeoutRef.current(() => {
       if (timerRef.current === localTimerRef) {
-        updateStateRef.current({connected: false});
+        updateStateRef.current({ connected: false });
       }
     }, 5000);
 
