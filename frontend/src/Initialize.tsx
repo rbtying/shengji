@@ -1,10 +1,11 @@
 import * as React from "react";
+import ReactTooltip from 'react-tooltip';
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
-import { IInitializePhase } from "./types";
+import { IInitializePhase, IPropagatedState } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 import { IPlayer } from "./types";
 import Header from "./Header";
@@ -215,6 +216,188 @@ const Initialize = (props: Props) => {
       (p) => p.name === props.name
     );
   }
+
+  const saveGameSettings = (evt: any) => {
+    evt.preventDefault();
+    localStorage.setItem('gameSettingsInLocalStorage', JSON.stringify(props.state.propagated));
+  };
+
+  const loadGameSettings = (evt: any) => {
+    evt.preventDefault();
+    const settings = localStorage.getItem('gameSettingsInLocalStorage');
+    if (settings !== null) {
+      const gameSettings: IPropagatedState = JSON.parse(settings);
+      for (const [key, value] of Object.entries(gameSettings)) {
+        switch (key) {
+          case 'game_mode':
+            if (value === 'Tractor') {
+              send({
+                Action: {
+                  SetGameMode: 'Tractor'
+                }
+              });
+            } else {
+              send({
+                Action: {
+                  SetGameMode: {
+                    FindingFriends: {
+                      num_friends: value.num_friends,
+                    },
+                  },
+                },
+              });
+            }
+            break;
+          case 'num_decks':
+            send({
+              Action: {
+                SetNumDecks: value
+              },
+            })
+            break;
+          case 'kitty_size':
+            send({
+              Action: {
+                SetKittySize: value,
+              },
+            });
+            break;
+          case 'friend_selection_policy':
+            send({
+              Action: {
+                SetFriendSelectionPolicy: value,
+              },
+            });
+            break;
+          case 'hide_landlord_points':
+            send({
+              Action: {
+                SetHideLandlordsPoints: value
+              },
+            });
+            break;
+          case 'hide_played_cards':
+            send({ Action: { SetHidePlayedCards: value } });
+            break;
+          case 'advancement_policy':
+            send({
+              Action: {
+                SetAdvancementPolicy: value,
+              },
+            });
+            break;
+          case 'kitty_bid_policy':
+            send({
+              Action: {
+                SetKittyBidPolicy: value,
+              },
+            });
+            break;
+          case 'kitty_penalty':
+            send({
+              Action: {
+                SetKittyPenalty: value,
+              },
+            });
+            break;
+          case 'throw_penalty':
+            send({
+              Action: {
+                SetThrowPenalty: value,
+              },
+            });
+            break;
+          case 'trick_draw_policy':
+            send({
+              Action: {
+                SetTrickDrawPolicy: value,
+              },
+            });
+            break;
+          case 'throw_evaluation_policy':
+            send({
+              Action: {
+                SetThrowEvaluationPolicy: value,
+              },
+            });
+            break;
+        }
+      }
+    }
+  }
+
+  const resetGameSettings = (evt: any) => {
+    evt.preventDefault();
+
+    send({
+      Action: {
+        SetGameMode: 'Tractor'
+      }
+    });
+
+    send({
+      Action: {
+        SetNumDecks: null
+      },
+    })
+
+    send({
+      Action: {
+        SetKittySize: null,
+      },
+    });
+
+    send({
+      Action: {
+        SetFriendSelectionPolicy: 'Unrestricted',
+      },
+    });
+
+    send({
+      Action: {
+        SetHideLandlordsPoints: false
+      },
+    });
+
+    send({ Action: { SetHidePlayedCards: false } });
+
+    send({
+      Action: {
+        SetAdvancementPolicy: 'Unrestricted',
+      },
+    });
+
+    send({
+      Action: {
+        SetKittyBidPolicy: 'FirstCard',
+      },
+    });
+
+    send({
+      Action: {
+        SetKittyPenalty: 'Times',
+      },
+    });
+
+    send({
+      Action: {
+        SetThrowPenalty: 'None',
+      },
+    });
+
+    send({
+      Action: {
+        SetTrickDrawPolicy: 'NoProtections',
+      },
+    });
+
+    send({
+      Action: {
+        SetThrowEvaluationPolicy: 'All',
+      },
+    });
+
+  };
 
   return (
     <div>
@@ -437,6 +620,18 @@ const Initialize = (props: Props) => {
             </select>
           </label>
         </div>
+        <button data-tip data-for="saveTip" onClick={saveGameSettings} >Save</button>
+        <ReactTooltip id="saveTip" place="top" effect="solid">
+          Save game settings
+        </ReactTooltip>
+        <button data-tip data-for="loadTip" onClick={loadGameSettings} >Load</button>
+        <ReactTooltip id="loadTip" place="top" effect="solid">
+          Load saved game settings
+        </ReactTooltip>
+        <button data-tip data-for="resetTip" onClick={resetGameSettings} >Reset</button>
+        <ReactTooltip id="resetTip" place="top" effect="solid">
+          Reset game settings to defaults
+        </ReactTooltip>
         <h3>Continuation settings</h3>
         <LandlordSelector
           players={props.state.propagated.players}
