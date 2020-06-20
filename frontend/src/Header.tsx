@@ -1,8 +1,8 @@
-import * as React from 'react';
-import GameMode from './GameMode';
-import GameStatisticsButton from './GameStatisticsButton';
-import SettingsButton from './SettingsButton';
-import {IGameModeSettings} from './types';
+import * as React from "react";
+import GameMode from "./GameMode";
+import GameStatisticsButton from "./GameStatisticsButton";
+import SettingsButton from "./SettingsButton";
+import { IGameModeSettings } from "./types";
 
 type Props = {
   gameMode: IGameModeSettings;
@@ -19,7 +19,7 @@ const Header = (props: Props) => (
     </h1>
     {props.chatLink ? (
       <p>
-        Join the chat at{' '}
+        Join the chat at{" "}
         <a href={props.chatLink} target="_blank">
           {props.chatLink}
         </a>

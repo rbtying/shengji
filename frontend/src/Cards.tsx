@@ -1,7 +1,7 @@
-import * as React from 'react';
-import Card from './Card';
-import classNames from 'classnames';
-import ArrayUtils from './util/array';
+import * as React from "react";
+import Card from "./Card";
+import classNames from "classnames";
+import ArrayUtils from "./util/array";
 
 type Props = {
   cardsInHand: string[];
@@ -11,7 +11,7 @@ type Props = {
 };
 
 const Cards = (props: Props) => {
-  const {cardsInHand, selectedCards, notifyEmpty} = props;
+  const { cardsInHand, selectedCards, notifyEmpty } = props;
   const handleSelect = (card: string) => () => {
     props.onSelect([...selectedCards, card]);
   };
@@ -32,7 +32,7 @@ const Cards = (props: Props) => {
           <Card key={idx} onClick={handleUnselect(c)} card={c} />
         ))}
         {selectedCards.length === 0 && (
-          <Card card="🂠" className={classNames({notify: notifyEmpty})} />
+          <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
         )}
       </div>
       <div className="unselected-cards">

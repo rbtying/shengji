@@ -1,11 +1,11 @@
-import * as React from 'react';
-import * as ReactModal from 'react-modal';
+import * as React from "react";
+import * as ReactModal from "react-modal";
 
 const contentStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
 };
 
 const ChangeLog = () => {
@@ -26,7 +26,7 @@ const ChangeLog = () => {
         onRequestClose={() => setModalOpen(false)}
         shouldCloseOnOverlayClick
         shouldCloseOnEsc
-        style={{content: contentStyle}}
+        style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
         <p>6/17/2020:</p>
@@ -115,19 +115,19 @@ const ChangeLog = () => {
 
 const Credits = () => (
   <p>
-    Made by Robert Ying, Abra Shen, and other{' '}
+    Made by Robert Ying, Abra Shen, and other{" "}
     <a
       href="https://github.com/rbtying/shengji/graphs/contributors"
       target="_blank"
     >
       friends
     </a>
-    . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{' '}
+    . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{" "}
     <a href="https://github.com/rbtying/shengji" target="_blank">
       GitHub
     </a>
     !
-    <span style={{float: 'right'}}>
+    <span style={{ float: "right" }}>
       <ChangeLog />
     </span>
   </p>

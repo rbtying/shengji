@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 type Props = {
   rank: string;
@@ -12,7 +12,7 @@ const allRanks = [
 ]
 const RankSelector = (props: Props) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value !== '') {
+    if (e.target.value !== "") {
       props.onChangeRank(e.target.value);
     }
   };
@@ -20,7 +20,7 @@ const RankSelector = (props: Props) => {
   return (
     <div className="rank-picker">
       <label>
-        Your rank:{' '}
+        Your rank:{" "}
         <select value={props.rank} onChange={handleChange}>
           {allRanks.map((rank) => (
             <option value={rank} key={rank}>

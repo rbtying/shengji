@@ -3,7 +3,7 @@
 //
 // Relies on timer-worker.js to service the underlying timing requests.
 
-import * as React from 'react';
+import * as React from "react";
 
 type Context = {
   setTimeout: (fn: () => void, delay: number) => number;
@@ -22,18 +22,18 @@ export const TimerContext = React.createContext<Context>({
 const _TimerProvider: React.FunctionComponent<{}> = (props) => {
   const [worker, setWorker] = React.useState<Worker | null>(null);
   const timeoutId = React.useRef(0);
-  const callbacks = React.useRef<{[id: number]: () => void}>({});
+  const callbacks = React.useRef<{ [id: number]: () => void }>({});
 
   React.useEffect(() => {
-    const timerWorker = new Worker('timer-worker.js');
+    const timerWorker = new Worker("timer-worker.js");
 
-    timerWorker.addEventListener('message', (evt) => {
+    timerWorker.addEventListener("message", (evt) => {
       const data = evt.data;
       const id = data.id as number;
       if (callbacks.current[id]) {
         callbacks.current[id]();
       }
-      if (data.variant === 'timeout') {
+      if (data.variant === "timeout") {
         delete callbacks.current[id];
       }
     });
@@ -49,13 +49,13 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     const id = timeoutId.current;
     callbacks.current[id] = fn;
     if (worker !== null) {
-      worker.postMessage({command: 'setTimeout', id, timeout: delay});
+      worker.postMessage({ command: "setTimeout", id, timeout: delay });
     }
     return id;
   };
 
   const clearTimeout = (id: number) => {
-    worker.postMessage({command: 'clearTimeout', id});
+    worker.postMessage({ command: "clearTimeout", id });
     delete callbacks.current[id];
   };
 
@@ -65,21 +65,21 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     const id = timeoutId.current;
     callbacks.current[id] = fn;
     if (worker !== null) {
-      worker.postMessage({command: 'setInterval', id, interval});
+      worker.postMessage({ command: "setInterval", id, interval });
     }
     return id;
   };
 
   const clearInterval = (id: number) => {
     if (worker !== null) {
-      worker.postMessage({command: 'clearInterval', id});
+      worker.postMessage({ command: "clearInterval", id });
     }
     delete callbacks.current[id];
   };
 
   return (
     <TimerContext.Provider
-      value={{setTimeout, clearTimeout, setInterval, clearInterval}}
+      value={{ setTimeout, clearTimeout, setInterval, clearInterval }}
     >
       {props.children}
     </TimerContext.Provider>

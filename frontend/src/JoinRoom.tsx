@@ -1,6 +1,6 @@
-import * as React from 'react';
-import {WebsocketContext} from './WebsocketProvider';
-import LabeledPlay from './LabeledPlay';
+import * as React from "react";
+import { WebsocketContext } from "./WebsocketProvider";
+import LabeledPlay from "./LabeledPlay";
 
 interface Props {
   name: string;
@@ -11,7 +11,7 @@ interface Props {
 
 const JoinRoom = (props: Props) => {
   const [editable, setEditable] = React.useState<boolean>(false);
-  const {send} = React.useContext(WebsocketContext);
+  const { send } = React.useContext(WebsocketContext);
 
   const handleChange = (event: any) => props.setName(event.target.value.trim());
 
@@ -50,12 +50,12 @@ const JoinRoom = (props: Props) => {
 
   return (
     <div>
-      <LabeledPlay cards={['🃟', '🃟', '🃏', '🃏']} label={null}></LabeledPlay>
+      <LabeledPlay cards={["🃟", "🃟", "🃏", "🃏"]} label={null}></LabeledPlay>
       <form className="join-room" onSubmit={handleSubmit}>
         <div>
           <h2>
             <label>
-              <strong>Room Name:</strong>{' '}
+              <strong>Room Name:</strong>{" "}
               {editable ? editableRoomName : nonEditableRoomName} (
               <a href="rules" target="_blank">
                 rules
@@ -66,7 +66,7 @@ const JoinRoom = (props: Props) => {
         </div>
         <div>
           <label>
-            <strong>Player Name:</strong>{' '}
+            <strong>Player Name:</strong>{" "}
             <input
               type="text"
               placeholder="Enter your name here"

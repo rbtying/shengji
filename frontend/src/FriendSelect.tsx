@@ -1,10 +1,10 @@
-import * as React from 'react';
-import Select from 'react-select';
-import {ITrump} from './types';
-import ArrayUtils from './util/array';
-import preloadedCards from './preloadedCards';
-import InlineCard from './InlineCard';
-import {cardLookup} from './util/cardHelpers';
+import * as React from "react";
+import Select from "react-select";
+import { ITrump } from "./types";
+import ArrayUtils from "./util/array";
+import preloadedCards from "./preloadedCards";
+import InlineCard from "./InlineCard";
+import { cardLookup } from "./util/cardHelpers";
 
 type FriendSelection = {
   card: string;
@@ -24,7 +24,7 @@ type Option = {
 
 const FriendSelect = (props: Props) => {
   const handleChange = (transform: (e: Option) => Partial<FriendSelection>) => (
-    value: Option,
+    value: Option
   ) => {
     props.onChange({
       card: props.friend.card,
@@ -45,8 +45,8 @@ const FriendSelect = (props: Props) => {
     : props.trump.NoTrump.number;
 
   const cardOptions: Option[] = [];
-  const currentValue: {[s: string]: any} = {};
-  if (props.friend.card !== '') {
+  const currentValue: { [s: string]: any } = {};
+  if (props.friend.card !== "") {
     const c = cardLookup[props.friend.card];
     currentValue.label = `${c.number}${c.typ}`;
     currentValue.value = c.value;
@@ -60,10 +60,10 @@ const FriendSelect = (props: Props) => {
     ) {
       // exclude highest card
       if (
-        (props.friend_selection_policy === 'HighestCardNotAllowed' &&
-          ((rank !== 'A' && c.number !== 'A') ||
-            (rank === 'A' && c.number !== 'K'))) ||
-        props.friend_selection_policy === 'Unrestricted'
+        (props.friend_selection_policy === "HighestCardNotAllowed" &&
+          ((rank !== "A" && c.number !== "A") ||
+            (rank === "A" && c.number !== "K"))) ||
+        props.friend_selection_policy === "Unrestricted"
       ) {
         cardOptions.push({
           label: `${c.number}${c.typ}`,
@@ -75,18 +75,18 @@ const FriendSelect = (props: Props) => {
 
   return (
     <div className="friend-select">
-      <div style={{width: '100px', display: 'inline-block'}}>
+      <div style={{ width: "100px", display: "inline-block" }}>
         <Select
           value={currentValue}
           onChange={handleCardChange}
           options={cardOptions}
-          formatOptionLabel={({value}) =>
+          formatOptionLabel={({ value }) =>
             value ? <InlineCard card={value} /> : value
           }
         />
       </div>
       <div
-        style={{width: '100px', display: 'inline-block', marginLeft: '10px'}}
+        style={{ width: "100px", display: "inline-block", marginLeft: "10px" }}
       >
         <Select
           value={
@@ -99,7 +99,7 @@ const FriendSelect = (props: Props) => {
           }
           onChange={handleOrdinalChange}
           options={ArrayUtils.range(props.num_decks, (idx) => {
-            return {value: `${idx}`, label: `#${idx + 1}`};
+            return { value: `${idx}`, label: `#${idx + 1}` };
           })}
         />
       </div>

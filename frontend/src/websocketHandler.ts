@@ -1,5 +1,5 @@
-import {AppState} from './AppStateProvider';
-import beep from './beep';
+import { AppState } from "./AppStateProvider";
+import beep from "./beep";
 
 const truncate = (length: number) => <T>(array: T[]): T[] => {
   if (array.length > length) {
@@ -12,12 +12,12 @@ const truncateMessages = truncate(100);
 
 type WebsocketHandler = (
   state: AppState,
-  message: any,
+  message: any
 ) => Partial<AppState> | null;
 
 const messageHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.Message) {
-    return {messages: truncateMessages([...state.messages, message.Message])};
+    return { messages: truncateMessages([...state.messages, message.Message]) };
   } else {
     return null;
   }
@@ -26,12 +26,12 @@ const messageHandler: WebsocketHandler = (state: AppState, message: any) => {
 const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.Broadcast) {
     const newMessage = {
-      from: 'GAME',
+      from: "GAME",
       message: message.Broadcast.message,
       data: message.Broadcast.data,
       from_game: true,
     };
-    return {messages: truncateMessages([...state.messages, newMessage])};
+    return { messages: truncateMessages([...state.messages, newMessage]) };
   } else {
     return null;
   }
@@ -39,7 +39,7 @@ const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 const errorHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.Error) {
-    return {errors: [...state.errors, message.Error]};
+    return { errors: [...state.errors, message.Error] };
   } else {
     return null;
   }
@@ -47,7 +47,7 @@ const errorHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
   if (message.State) {
-    return {game_state: message.State.state, cards: message.State.cards};
+    return { game_state: message.State.state, cards: message.State.cards };
   } else {
     return null;
   }
@@ -55,7 +55,7 @@ const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 let lastBeeped = performance.now();
 const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message === 'Beep') {
+  if (message === "Beep") {
     const now = performance.now();
     // Rate-limit beeps to prevent annoyance.
     if (now - lastBeeped >= 1000) {
@@ -68,17 +68,17 @@ const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 const gameFinishedHandler: WebsocketHandler = (
   state: AppState,
-  message: any,
+  message: any
 ) => {
   if (
     message.Broadcast &&
-    message.Broadcast.data.variant.type === 'GameFinished'
+    message.Broadcast.data.variant.type === "GameFinished"
   ) {
     const ownResult = message.Broadcast.data.variant.result[state.name];
     if (ownResult) {
       const gameStatistics = state.gameStatistics;
 
-      const newGameStatistics = {...gameStatistics};
+      const newGameStatistics = { ...gameStatistics };
       newGameStatistics.gamesPlayed++;
       if (ownResult.is_defending) {
         newGameStatistics.gamesPlayedAsDefending++;
@@ -98,7 +98,7 @@ const gameFinishedHandler: WebsocketHandler = (
       }
 
       newGameStatistics.ranksUp += ownResult.ranks_up;
-      return {gameStatistics: newGameStatistics};
+      return { gameStatistics: newGameStatistics };
     }
   }
   return null;
@@ -117,8 +117,8 @@ const composedHandlers: WebsocketHandler = (state: AppState, message: any) => {
   let partials = {};
   allHandlers.forEach((h) => {
     const partial = h(state, message);
-    partials = {...partials, ...partial};
-    state = {...state, ...partial};
+    partials = { ...partials, ...partial };
+    state = { ...state, ...partial };
   });
   return partials;
 };

@@ -1,4 +1,4 @@
-import memoize from './memoize';
+import memoize from "./memoize";
 
 const getContext = memoize(() => new window.AudioContext());
 
@@ -9,7 +9,7 @@ const beep = (vol: number, freq: number, duration: number) => {
     const u = beepContext.createGain();
     v.connect(u);
     v.frequency.value = freq;
-    v.type = 'square';
+    v.type = "square";
     u.connect(beepContext.destination);
     u.gain.value = vol * 0.01;
     v.start(beepContext.currentTime);

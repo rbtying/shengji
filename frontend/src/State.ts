@@ -1,4 +1,4 @@
-import ObjectUtils from './util/object';
+import ObjectUtils from "./util/object";
 
 export type State<T> = {
   loadDefault: () => T;
@@ -13,7 +13,7 @@ export const noPersistence = <T>(loadDefault: () => T): State<T> => {
 };
 
 export const combineState = <S extends {}>(
-  object: {[K in keyof S]: State<S[K]>},
+  object: { [K in keyof S]: State<S[K]> }
 ): State<S> => {
   return {
     loadDefault: (): any =>

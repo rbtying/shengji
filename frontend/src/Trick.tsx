@@ -1,8 +1,8 @@
-import * as React from 'react';
-import classNames from 'classnames';
-import {IPlayer, ITrick, IPlayedCards} from './types';
-import LabeledPlay from './LabeledPlay';
-import ArrayUtils from './util/array';
+import * as React from "react";
+import classNames from "classnames";
+import { IPlayer, ITrick, IPlayedCards } from "./types";
+import LabeledPlay from "./LabeledPlay";
+import ArrayUtils from "./util/array";
 
 type Props = {
   players: IPlayer[];
@@ -20,14 +20,14 @@ const Trick = (props: Props) => {
   ]);
   const blankCards =
     props.trick.played_cards.length > 0
-      ? Array(props.trick.played_cards[0].cards.length).fill('🂠')
-      : ['🂠'];
+      ? Array(props.trick.played_cards[0].cards.length).fill("🂠")
+      : ["🂠"];
   const betterPlayer =
     props.trick.played_cards.length > 0
       ? props.trick.played_cards[0].better_player
       : null;
 
-  const playedByID: {[id: number]: IPlayedCards} = {};
+  const playedByID: { [id: number]: IPlayedCards } = {};
   let playOrder: number[] = [];
 
   props.trick.played_cards.forEach((played) => {
@@ -47,25 +47,27 @@ const Trick = (props: Props) => {
         const winning = props.trick.current_winner === id;
         const better = betterPlayer === id;
         const cards = playedByID[id]?.cards || blankCards;
-        const suffix = winning ? ' (!)' : better ? ' (-)' : '';
+        const suffix = winning ? " (!)" : better ? " (-)" : "";
 
         const className = classNames(
           winning
-            ? 'winning'
+            ? "winning"
             : props.trick.player_queue[0] === id
-            ? 'notify'
-            : '',
+            ? "notify"
+            : "",
           {
             landlord:
               id === props.landlord || props.landlords_team?.includes(id),
-          },
+          }
         );
 
         return (
           <LabeledPlay
             key={id}
             id={id}
-            label={namesById[id] + (id === props.landlord ? ' (当庄)' : '' )+ suffix}
+            label={
+              namesById[id] + (id === props.landlord ? " (当庄)" : "") + suffix
+            }
             className={className}
             cards={cards}
             next={props.next}

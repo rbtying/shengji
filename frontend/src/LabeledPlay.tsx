@@ -1,6 +1,6 @@
-import * as React from 'react';
-import classNames from 'classnames';
-import Card from './Card';
+import * as React from "react";
+import classNames from "classnames";
+import Card from "./Card";
 
 type Props = {
   id?: number | null;
@@ -11,12 +11,15 @@ type Props = {
   next?: number | null;
 };
 const LabeledPlay = (props: Props) => {
-  const className = classNames('label', {
-    next: props.next !== undefined && props.next !== null && props.id === props.next,
+  const className = classNames("label", {
+    next:
+      props.next !== undefined &&
+      props.next !== null &&
+      props.id === props.next,
   });
 
   return (
-    <div className={classNames('labeled-play', props.className)}>
+    <div className={classNames("labeled-play", props.className)}>
       <div className="play">
         {props.cards.map((card, idx) => (
           <Card card={card} key={idx} />
