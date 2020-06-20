@@ -1,5 +1,5 @@
 import * as React from "react";
-import ReactTooltip from 'react-tooltip';
+import ReactTooltip from "react-tooltip";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
@@ -196,7 +196,7 @@ const Initialize = (props: Props) => {
       : "FindingFriends";
   const numFriends =
     props.state.propagated.game_mode === "Tractor" ||
-      props.state.propagated.game_mode.FindingFriends.num_friends === null
+    props.state.propagated.game_mode.FindingFriends.num_friends === null
       ? ""
       : props.state.propagated.game_mode.FindingFriends.num_friends;
   const decksEffective =
@@ -219,22 +219,25 @@ const Initialize = (props: Props) => {
 
   const saveGameSettings = (evt: any) => {
     evt.preventDefault();
-    localStorage.setItem('gameSettingsInLocalStorage', JSON.stringify(props.state.propagated));
+    localStorage.setItem(
+      "gameSettingsInLocalStorage",
+      JSON.stringify(props.state.propagated)
+    );
   };
 
   const loadGameSettings = (evt: any) => {
     evt.preventDefault();
-    const settings = localStorage.getItem('gameSettingsInLocalStorage');
+    const settings = localStorage.getItem("gameSettingsInLocalStorage");
     if (settings !== null) {
       const gameSettings: IPropagatedState = JSON.parse(settings);
       for (const [key, value] of Object.entries(gameSettings)) {
         switch (key) {
-          case 'game_mode':
-            if (value === 'Tractor') {
+          case "game_mode":
+            if (value === "Tractor") {
               send({
                 Action: {
-                  SetGameMode: 'Tractor'
-                }
+                  SetGameMode: "Tractor",
+                },
               });
             } else {
               send({
@@ -248,73 +251,73 @@ const Initialize = (props: Props) => {
               });
             }
             break;
-          case 'num_decks':
+          case "num_decks":
             send({
               Action: {
-                SetNumDecks: value
+                SetNumDecks: value,
               },
-            })
+            });
             break;
-          case 'kitty_size':
+          case "kitty_size":
             send({
               Action: {
                 SetKittySize: value,
               },
             });
             break;
-          case 'friend_selection_policy':
+          case "friend_selection_policy":
             send({
               Action: {
                 SetFriendSelectionPolicy: value,
               },
             });
             break;
-          case 'hide_landlord_points':
+          case "hide_landlord_points":
             send({
               Action: {
-                SetHideLandlordsPoints: value
+                SetHideLandlordsPoints: value,
               },
             });
             break;
-          case 'hide_played_cards':
+          case "hide_played_cards":
             send({ Action: { SetHidePlayedCards: value } });
             break;
-          case 'advancement_policy':
+          case "advancement_policy":
             send({
               Action: {
                 SetAdvancementPolicy: value,
               },
             });
             break;
-          case 'kitty_bid_policy':
+          case "kitty_bid_policy":
             send({
               Action: {
                 SetKittyBidPolicy: value,
               },
             });
             break;
-          case 'kitty_penalty':
+          case "kitty_penalty":
             send({
               Action: {
                 SetKittyPenalty: value,
               },
             });
             break;
-          case 'throw_penalty':
+          case "throw_penalty":
             send({
               Action: {
                 SetThrowPenalty: value,
               },
             });
             break;
-          case 'trick_draw_policy':
+          case "trick_draw_policy":
             send({
               Action: {
                 SetTrickDrawPolicy: value,
               },
             });
             break;
-          case 'throw_evaluation_policy':
+          case "throw_evaluation_policy":
             send({
               Action: {
                 SetThrowEvaluationPolicy: value,
@@ -324,22 +327,22 @@ const Initialize = (props: Props) => {
         }
       }
     }
-  }
+  };
 
   const resetGameSettings = (evt: any) => {
     evt.preventDefault();
 
     send({
       Action: {
-        SetGameMode: 'Tractor'
-      }
+        SetGameMode: "Tractor",
+      },
     });
 
     send({
       Action: {
-        SetNumDecks: null
+        SetNumDecks: null,
       },
-    })
+    });
 
     send({
       Action: {
@@ -349,13 +352,13 @@ const Initialize = (props: Props) => {
 
     send({
       Action: {
-        SetFriendSelectionPolicy: 'Unrestricted',
+        SetFriendSelectionPolicy: "Unrestricted",
       },
     });
 
     send({
       Action: {
-        SetHideLandlordsPoints: false
+        SetHideLandlordsPoints: false,
       },
     });
 
@@ -363,40 +366,39 @@ const Initialize = (props: Props) => {
 
     send({
       Action: {
-        SetAdvancementPolicy: 'Unrestricted',
+        SetAdvancementPolicy: "Unrestricted",
       },
     });
 
     send({
       Action: {
-        SetKittyBidPolicy: 'FirstCard',
+        SetKittyBidPolicy: "FirstCard",
       },
     });
 
     send({
       Action: {
-        SetKittyPenalty: 'Times',
+        SetKittyPenalty: "Times",
       },
     });
 
     send({
       Action: {
-        SetThrowPenalty: 'None',
+        SetThrowPenalty: "None",
       },
     });
 
     send({
       Action: {
-        SetTrickDrawPolicy: 'NoProtections',
+        SetTrickDrawPolicy: "NoProtections",
       },
     });
 
     send({
       Action: {
-        SetThrowEvaluationPolicy: 'All',
+        SetThrowEvaluationPolicy: "All",
       },
     });
-
   };
 
   return (
@@ -422,8 +424,8 @@ const Initialize = (props: Props) => {
       {props.state.propagated.players.length >= 4 ? (
         <button onClick={startGame}>Start game</button>
       ) : (
-          <h2>Waiting for players...</h2>
-        )}
+        <h2>Waiting for players...</h2>
+      )}
       <Kicker
         players={props.state.propagated.players}
         onKick={(playerId: number) => send({ Kick: playerId })}
@@ -620,15 +622,21 @@ const Initialize = (props: Props) => {
             </select>
           </label>
         </div>
-        <button data-tip data-for="saveTip" onClick={saveGameSettings} >Save</button>
+        <button data-tip data-for="saveTip" onClick={saveGameSettings}>
+          Save
+        </button>
         <ReactTooltip id="saveTip" place="top" effect="solid">
           Save game settings
         </ReactTooltip>
-        <button data-tip data-for="loadTip" onClick={loadGameSettings} >Load</button>
+        <button data-tip data-for="loadTip" onClick={loadGameSettings}>
+          Load
+        </button>
         <ReactTooltip id="loadTip" place="top" effect="solid">
           Load saved game settings
         </ReactTooltip>
-        <button data-tip data-for="resetTip" onClick={resetGameSettings} >Reset</button>
+        <button data-tip data-for="resetTip" onClick={resetGameSettings}>
+          Reset
+        </button>
         <ReactTooltip id="resetTip" place="top" effect="solid">
           Reset game settings to defaults
         </ReactTooltip>
