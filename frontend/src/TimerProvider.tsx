@@ -51,10 +51,13 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     if (worker !== null) {
       worker.postMessage({command: 'setTimeout', id, timeout: delay});
     }
+    // console.log("TimerProvider set timeout: " + id);
+    // console.trace();
     return id;
   };
 
   const clearTimeout = (id: number) => {
+    // console.log("TimerProvider clear timeout: " + id);
     worker.postMessage({command: 'clearTimeout', id});
     delete callbacks.current[id];
   };
