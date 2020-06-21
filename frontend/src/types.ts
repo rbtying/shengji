@@ -2,6 +2,7 @@ export interface IPlayer {
   id: number;
   name: string;
   level: string;
+  metalevel: number;
 }
 
 export interface IGameState {
@@ -121,6 +122,7 @@ export interface IPlayer {
 export interface ITrick {
   player_queue: number[];
   played_cards: IPlayedCards[];
+  played_card_mappings: ICardMapping[];
   current_winner: number | null;
   trump: ITrump;
 }
@@ -130,6 +132,24 @@ export interface IPlayedCards {
   cards: string[];
   bad_throw_cards: string[];
   better_player: number | null;
+}
+
+export type ICardMapping = ITrickUnit[] | null;
+
+export interface ITrickUnit {
+  Repeated?: {
+    card: IOrderedCard;
+    count: number;
+  };
+  Tractor?: {
+    members: IOrderedCard[];
+    count: number;
+  };
+}
+
+export interface IOrderedCard {
+  card: string;
+  // elided fields
 }
 
 export type ITrump =
