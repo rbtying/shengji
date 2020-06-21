@@ -1,5 +1,6 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
+import Picker from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
@@ -19,6 +20,7 @@ type Props = {
 
 const Initialize = (props: Props) => {
   const { send } = React.useContext(WebsocketContext);
+  const [showPicker, setShowPicker] = React.useState(false);
   const setGameMode = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
@@ -190,6 +192,13 @@ const Initialize = (props: Props) => {
     send({ Action: "StartGame" });
   };
 
+  const setEmoji = (evt: any, emojiObject: any) => {
+    evt.preventDefault();
+    send({
+      Action: { SetLandlordEmoji: emojiObject ? emojiObject.emoji : null },
+    });
+  };
+
   const modeAsString =
     props.state.propagated.game_mode === "Tractor"
       ? "Tractor"
@@ -318,6 +327,13 @@ const Initialize = (props: Props) => {
             send({
               Action: {
                 SetThrowEvaluationPolicy: value,
+              },
+            });
+            break;
+          case "landlord_emoji":
+            send({
+              Action: {
+                SetLandlordEmoji: value,
               },
             });
             break;
@@ -578,24 +594,69 @@ const Initialize = (props: Props) => {
             </select>
           </label>
         </div>
-        <button data-tip data-for="saveTip" onClick={saveGameSettings}>
-          Save
-        </button>
-        <ReactTooltip id="saveTip" place="top" effect="solid">
-          Save game settings
-        </ReactTooltip>
-        <button data-tip data-for="loadTip" onClick={loadGameSettings}>
-          Load
-        </button>
-        <ReactTooltip id="loadTip" place="top" effect="solid">
-          Load saved game settings
-        </ReactTooltip>
-        <button data-tip data-for="resetTip" onClick={resetGameSettings}>
-          Reset
-        </button>
-        <ReactTooltip id="resetTip" place="top" effect="solid">
-          Reset game settings to defaults
-        </ReactTooltip>
+        <div>
+          <label>
+            Landlord Emoji:{" "}
+            {props.state.propagated.landlord_emoji
+              ? props.state.propagated.landlord_emoji
+              : "当庄"}{" "}
+            <button
+              className="normal"
+              onClick={() => {
+                showPicker ? setShowPicker(false) : setShowPicker(true);
+              }}
+            >
+              {showPicker ? "Hide" : "Pick"}
+            </button>
+            <button
+              className="normal"
+              onClick={() => {
+                send({ Action: { SetLandlordEmoji: null } });
+              }}
+            >
+              Default
+            </button>
+            {showPicker ? <Picker onEmojiClick={setEmoji} /> : null}
+          </label>
+        </div>
+        <div>
+          <label>
+            Setting Management:
+            <button
+              className="normal"
+              data-tip
+              data-for="saveTip"
+              onClick={saveGameSettings}
+            >
+              Save
+            </button>
+            <ReactTooltip id="saveTip" place="top" effect="solid">
+              Save game settings
+            </ReactTooltip>
+            <button
+              className="normal"
+              data-tip
+              data-for="loadTip"
+              onClick={loadGameSettings}
+            >
+              Load
+            </button>
+            <ReactTooltip id="loadTip" place="top" effect="solid">
+              Load saved game settings
+            </ReactTooltip>
+            <button
+              className="normal"
+              data-tip
+              data-for="resetTip"
+              onClick={resetGameSettings}
+            >
+              Reset
+            </button>
+            <ReactTooltip id="resetTip" place="top" effect="solid">
+              Reset game settings to defaults
+            </ReactTooltip>
+          </label>
+        </div>
         <h3>Continuation settings</h3>
         <LandlordSelector
           players={props.state.propagated.players}

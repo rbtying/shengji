@@ -111,6 +111,17 @@ impl InteractiveGame {
                 state.set_landlord(landlord)?;
                 vec![MessageVariant::SetLandlord { landlord }]
             }
+            (Message::SetLandlordEmoji(ref emoji), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting landlord emoji"; "emoji" => emoji);
+                state.set_landlord_emoji(emoji.clone())?;
+                vec![MessageVariant::SetLandlordEmoji {
+                    emoji: if let Some(a) = emoji {
+                        a.to_string()
+                    } else {
+                        "(当庄)".to_string()
+                    },
+                }]
+            }
             (
                 Message::SetHideLandlordsPoints(hide_landlord_points),
                 GameState::Initialize(ref mut state),
@@ -263,6 +274,7 @@ pub enum Message {
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Number),
     SetLandlord(Option<PlayerID>),
+    SetLandlordEmoji(Option<String>),
     SetGameMode(GameModeSettings),
     SetAdvancementPolicy(AdvancementPolicy),
     SetKittyPenalty(KittyPenalty),
@@ -341,6 +353,7 @@ impl BroadcastMessage {
             SetCardVisibility { visible: false } => format!("{} hid the played cards from the chat", n?),
             SetLandlord { landlord: None } => format!("{} set the leader to the winner of the bid", n?),
             SetLandlord { landlord: Some(landlord) } => format!("{} set the leader to {}", n?, player_name(landlord)?),
+            SetLandlordEmoji { ref emoji } => format!("{} set landlord emoji to {}", n?, *emoji),
             SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
             MadeBid { card, count } => format!("{} bid {} {:?}", n?, count, card),
             KittyPenaltySet { kitty_penalty: KittyPenalty::Times } => format!("{} set the penalty for points in the bottom to twice the size of the last trick", n?),

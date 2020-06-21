@@ -80,6 +80,7 @@ export interface IPropagatedState {
   trick_draw_policy: "NoProtections" | "LongerTuplesProtected";
   throw_evaluation_policy: "All" | "Highest";
   hide_played_cards: boolean;
+  landlord_emoji: string | null;
 }
 
 export interface IHands {

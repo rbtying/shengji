@@ -91,6 +91,7 @@ const Play = (props: Props) => {
         trick={playPhase.trick}
         players={playPhase.propagated.players}
         landlord={playPhase.landlord}
+        landlord_emoji={playPhase.propagated.landlord_emoji}
         landlords_team={playPhase.landlords_team}
         next={nextPlayer}
         name={props.name}
@@ -127,6 +128,7 @@ const Play = (props: Props) => {
             trick={playPhase.last_trick}
             players={playPhase.propagated.players}
             landlord={playPhase.landlord}
+            landlord_emoji={playPhase.propagated.landlord_emoji}
             landlords_team={playPhase.landlords_team}
             name={props.name}
             showTrickInPlayerOrder={props.showTrickInPlayerOrder}

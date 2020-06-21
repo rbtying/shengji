@@ -32,6 +32,7 @@ const ChangeLog = () => {
         <p>6/21/2020:</p>
         <ul>
           <li>(#145) Save, load, reset game settings</li>
+          <li>(#154) Landlord emoji option</li>
         </ul>
         <p>6/20/2020:</p>
         <ul>
