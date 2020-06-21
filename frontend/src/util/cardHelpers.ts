@@ -58,10 +58,10 @@ export const unicodeToCard = (unicode: string): Card => {
   if (unicode === "🂠") {
     return { type: "unknown" };
   }
-  const cardInfo = cardLookup[unicode];
-  if (!cardInfo) {
+  if (!(unicode in cardLookup)) {
     throw new Error(`Invalid card string: ${unicode}`);
   }
+  const cardInfo = cardLookup[unicode];
 
   if (unicode === "🃟") {
     return { type: "little_joker" };

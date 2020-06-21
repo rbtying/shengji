@@ -1,9 +1,9 @@
 import * as React from "react";
 
-type Props = {
+interface IProps {
   width?: string;
-};
-const BarChart = ({ width = "100%" }: Props) => (
+}
+const BarChart = ({ width = "100%" }: IProps): JSX.Element => (
   <svg
     focusable="false"
     role="img"

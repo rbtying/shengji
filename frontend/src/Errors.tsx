@@ -2,11 +2,11 @@ import * as React from "react";
 import { AppStateContext } from "./AppStateProvider";
 import Timeout from "./Timeout";
 
-type Props = {
+interface IProps {
   errors: string[];
-};
+}
 
-const Errors = (props: Props) => {
+const Errors = (props: IProps): JSX.Element => {
   const { updateState } = React.useContext(AppStateContext);
   return (
     <div className="errors">

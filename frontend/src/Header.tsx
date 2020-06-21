@@ -4,12 +4,12 @@ import GameStatisticsButton from "./GameStatisticsButton";
 import SettingsButton from "./SettingsButton";
 import { IGameModeSettings } from "./types";
 
-type Props = {
+interface IProps {
   gameMode: IGameModeSettings;
   chatLink?: string | null;
-};
+}
 
-const Header = (props: Props) => (
+const Header = (props: IProps): JSX.Element => (
   <div>
     <h1>
       <GameMode gameMode={props.gameMode} />
@@ -17,10 +17,10 @@ const Header = (props: Props) => (
       <SettingsButton />
       <GameStatisticsButton />
     </h1>
-    {props.chatLink ? (
+    {props.chatLink !== undefined && props.chatLink !== null ? (
       <p>
         Join the chat at{" "}
-        <a href={props.chatLink} target="_blank">
+        <a href={props.chatLink} target="_blank" rel="noreferrer">
           {props.chatLink}
         </a>
       </p>

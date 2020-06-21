@@ -1,44 +1,17 @@
 import * as React from "react";
-import { IGameMode } from "./types";
+import { IBroadcastMessage } from "./types";
 import InlineCard from "./InlineCard";
 import classNames from "classnames";
 import ArrayUtil from "./util/array";
 
-type MessageVariant =
-  | { type: "GameModeSet"; game_mode: IGameMode }
-  | { type: "JoinedGame"; player: number }
-  | { type: "JoinedTeam"; player: number }
-  | { type: "KittySizeSet"; size: number | null }
-  | { type: "LeftGame"; name: string }
-  | { type: "MadeBid"; card: string; count: number }
-  | { type: "NewLandlordForNextGame"; landlord: number }
-  | { type: "NumDecksSet"; num_decks: number | null }
-  | { type: "NumFriendsSet"; num_friends: number | null }
-  | { type: "PlayedCards"; cards: string[] }
-  | { type: "PointsInKitty"; points: number; multiplier: number }
-  | { type: "RankAdvanced"; player: number; new_rank: number }
-  | { type: "ResettingGame" }
-  | { type: "SetDefendingPointVisibility"; visible: boolean }
-  | { type: "SetLandlord"; landlord: number | null }
-  | { type: "SetRank"; rank: string }
-  | { type: "StartingGame" }
-  | { type: "TookBackPlay" }
-  | { type: "TrickWon"; winner: number; points: number };
-
-type BroadcastMessage = {
-  actor: number;
-  actor_name: string;
-  variant: MessageVariant;
-};
-
-export type Message = {
+export interface IMessage {
   from: string;
   message: string;
   from_game?: boolean;
-  data?: BroadcastMessage;
-};
+  data?: IBroadcastMessage;
+}
 
-const renderMessage = (message: Message) => {
+const renderMessage = (message: IMessage): JSX.Element => {
   const variant = message.data?.variant;
   switch (variant?.type) {
     case "MadeBid":
@@ -51,12 +24,12 @@ const renderMessage = (message: Message) => {
         </span>
       );
     case "PlayedCards":
-      const cards = variant.cards.map((card, i) => (
-        <InlineCard card={card} key={i} />
-      ));
       return (
         <span>
-          {message.data.actor_name} played {cards}
+          {message.data.actor_name} played{" "}
+          {variant.cards.map((card, i) => (
+            <InlineCard card={card} key={i} />
+          ))}
         </span>
       );
     default:
@@ -64,10 +37,10 @@ const renderMessage = (message: Message) => {
   }
 };
 
-type Props = {
-  message: Message;
-};
-const ChatMessage = (props: Props) => {
+interface IProps {
+  message: IMessage;
+}
+const ChatMessage = (props: IProps): JSX.Element => {
   const { message } = props;
   return (
     <p className={classNames("message", { "game-message": message.from_game })}>

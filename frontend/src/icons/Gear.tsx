@@ -1,9 +1,9 @@
 import * as React from "react";
 
-type Props = {
+interface IProps {
   width?: string;
-};
-const Gear = ({ width = "100%" }: Props) => (
+}
+const Gear = ({ width = "100%" }: IProps): JSX.Element => (
   <svg
     focusable="false"
     role="img"

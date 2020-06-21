@@ -10,15 +10,15 @@ interface IProps {
   onClick?: (event: React.MouseEvent) => void;
 }
 
-const Card = (props: IProps) => {
-  const cardInfo = cardLookup[props.card];
-  if (!cardInfo) {
+const Card = (props: IProps): JSX.Element => {
+  if (!(props.card in cardLookup)) {
     return (
       <span className={classNames("card", "unknown", props.className)}>
         {props.card}
       </span>
     );
   } else {
+    const cardInfo = cardLookup[props.card];
     return (
       <span
         className={classNames("card", cardInfo.typ, props.className)}

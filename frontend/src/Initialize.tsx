@@ -6,22 +6,22 @@ import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
-import { IInitializePhase, IPropagatedState } from "./types";
+import { IInitializePhase, IPlayer, IPropagatedState } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
-import { IPlayer } from "./types";
+
 import Header from "./Header";
 import Players from "./Players";
 
-type Props = {
+interface IProps {
   state: IInitializePhase;
   cards: string[];
   name: string;
-};
+}
 
-const Initialize = (props: Props) => {
+const Initialize = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
-  const [showPicker, setShowPicker] = React.useState(false);
-  const setGameMode = (evt: any) => {
+  const [showPicker, setShowPicker] = React.useState<boolean>(false);
+  const setGameMode = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
       send({ Action: { SetGameMode: "Tractor" } });
@@ -38,7 +38,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setNumFriends = (evt: any) => {
+  const setNumFriends = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value === "") {
       send({
@@ -64,7 +64,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittySize = (evt: any) => {
+  const setKittySize = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       const size = parseInt(evt.target.value, 10);
@@ -82,7 +82,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setFriendSelectionPolicy = (evt: any) => {
+  const setFriendSelectionPolicy = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -93,7 +93,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittyPenalty = (evt: any) => {
+  const setKittyPenalty = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -110,7 +110,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittyBidPolicy = (evt: any) => {
+  const setKittyBidPolicy = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -121,7 +121,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setTrickDrawPolicy = (evt: any) => {
+  const setTrickDrawPolicy = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -132,7 +132,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setThrowEvaluationPolicy = (evt: any) => {
+  const setThrowEvaluationPolicy = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -143,7 +143,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setAdvancementPolicy = (evt: any) => {
+  const setAdvancementPolicy = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -160,7 +160,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setThrowPenalty = (evt: any) => {
+  const setThrowPenalty = (evt: any): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -177,17 +177,17 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setHideLandlordsPoints = (evt: any) => {
+  const setHideLandlordsPoints = (evt: any): void => {
     evt.preventDefault();
     send({ Action: { SetHideLandlordsPoints: evt.target.value === "hide" } });
   };
 
-  const setHidePlayedCards = (evt: any) => {
+  const setHidePlayedCards = (evt: any): void => {
     evt.preventDefault();
     send({ Action: { SetHidePlayedCards: evt.target.value === "hide" } });
   };
 
-  const startGame = (evt: any) => {
+  const startGame = (evt: any): void => {
     evt.preventDefault();
     send({ Action: "StartGame" });
   };
@@ -209,8 +209,11 @@ const Initialize = (props: Props) => {
       ? ""
       : props.state.propagated.game_mode.FindingFriends.num_friends;
   const decksEffective =
-    props.state.propagated.num_decks ||
-    Math.floor(props.state.propagated.players.length / 2);
+    props.state.propagated.num_decks !== undefined &&
+    props.state.propagated.num_decks !== null &&
+    props.state.propagated.num_decks > 0
+      ? props.state.propagated.num_decks
+      : Math.floor(props.state.propagated.players.length / 2);
   let kittyOffset =
     (decksEffective * 54) % props.state.propagated.players.length;
   if (kittyOffset === 0) {
@@ -220,7 +223,7 @@ const Initialize = (props: Props) => {
   let currentPlayer = props.state.propagated.players.find(
     (p: IPlayer) => p.name === props.name
   );
-  if (!currentPlayer) {
+  if (currentPlayer === undefined) {
     currentPlayer = props.state.propagated.observers.find(
       (p) => p.name === props.name
     );
@@ -389,7 +392,7 @@ const Initialize = (props: Props) => {
       />
       <p>
         Send link to other players to allow them to join the game:{" "}
-        <a href={window.location.href} target="_blank">
+        <a href={window.location.href} target="_blank" rel="noreferrer">
           <code>{window.location.href}</code>
         </a>
       </p>
@@ -445,7 +448,12 @@ const Initialize = (props: Props) => {
           <label>
             Number of cards in the bottom:{" "}
             <select
-              value={props.state.propagated.kitty_size || ""}
+              value={
+                props.state.propagated.kitty_size !== undefined &&
+                props.state.propagated.kitty_size !== null
+                  ? props.state.propagated.kitty_size
+                  : ""
+              }
               onChange={setKittySize}
             >
               <option value="">default</option>
@@ -491,8 +499,8 @@ const Initialize = (props: Props) => {
               }
               onChange={setHideLandlordsPoints}
             >
-              <option value="show">Show all players' points</option>
-              <option value="hide">Hide defending team's points</option>
+              <option value="show">Show all players&apos; points</option>
+              <option value="hide">Hide defending team&apos;s points</option>
             </select>
           </label>
         </div>

@@ -1,5 +1,6 @@
 import { AppState } from "./AppStateProvider";
 import beep from "./beep";
+import { IGameMessage, IGameMessageUnion } from "./types";
 
 const truncate = (length: number) => <T>(array: T[]): T[] => {
   if (array.length > length) {
@@ -12,19 +13,25 @@ const truncateMessages = truncate(100);
 
 type WebsocketHandler = (
   state: AppState,
-  message: any
+  message: IGameMessageUnion
 ) => Partial<AppState> | null;
 
-const messageHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message.Message) {
+const messageHandler: WebsocketHandler = (
+  state: AppState,
+  message: IGameMessageUnion
+) => {
+  if (message.Message !== undefined) {
     return { messages: truncateMessages([...state.messages, message.Message]) };
   } else {
     return null;
   }
 };
 
-const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message.Broadcast) {
+const broadcastHandler: WebsocketHandler = (
+  state: AppState,
+  message: IGameMessageUnion
+) => {
+  if (message.Broadcast !== undefined) {
     const newMessage = {
       from: "GAME",
       message: message.Broadcast.message,
@@ -37,16 +44,22 @@ const broadcastHandler: WebsocketHandler = (state: AppState, message: any) => {
   }
 };
 
-const errorHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message.Error) {
+const errorHandler: WebsocketHandler = (
+  state: AppState,
+  message: IGameMessageUnion
+) => {
+  if (message.Error !== undefined) {
     return { errors: [...state.errors, message.Error] };
   } else {
     return null;
   }
 };
 
-const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
-  if (message.State) {
+const stateHandler: WebsocketHandler = (
+  _: AppState,
+  message: IGameMessageUnion
+) => {
+  if (message.State !== undefined) {
     return { game_state: message.State.state, cards: message.State.cards };
   } else {
     return null;
@@ -54,7 +67,7 @@ const stateHandler: WebsocketHandler = (state: AppState, message: any) => {
 };
 
 let lastBeeped = performance.now();
-const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
+const beepHandler = (message: IGameMessage): void => {
   if (message === "Beep") {
     const now = performance.now();
     // Rate-limit beeps to prevent annoyance.
@@ -68,14 +81,14 @@ const beepHandler: WebsocketHandler = (state: AppState, message: any) => {
 
 const gameFinishedHandler: WebsocketHandler = (
   state: AppState,
-  message: any
+  message: IGameMessageUnion
 ) => {
   if (
-    message.Broadcast &&
+    message.Broadcast !== undefined &&
     message.Broadcast.data.variant.type === "GameFinished"
   ) {
-    const ownResult = message.Broadcast.data.variant.result[state.name];
-    if (ownResult) {
+    if (state.name in message.Broadcast.data.variant.result) {
+      const ownResult = message.Broadcast.data.variant.result[state.name];
       const gameStatistics = state.gameStatistics;
 
       const newGameStatistics = { ...gameStatistics };
@@ -109,18 +122,23 @@ const allHandlers: WebsocketHandler[] = [
   broadcastHandler,
   errorHandler,
   stateHandler,
-  beepHandler,
   gameFinishedHandler,
 ];
 
-const composedHandlers: WebsocketHandler = (state: AppState, message: any) => {
+const composedHandlers = (
+  state: AppState,
+  message: IGameMessage
+): Partial<AppState> => {
   let partials = {};
-  allHandlers.forEach((h) => {
-    const partial = h(state, message);
-    partials = { ...partials, ...partial };
-    state = { ...state, ...partial };
-  });
+  if (message !== "Beep") {
+    allHandlers.forEach((h) => {
+      const partial = h(state, message);
+      partials = { ...partials, ...partial };
+      state = { ...state, ...partial };
+    });
+  }
+  beepHandler(message);
   return partials;
 };
 
-export default composedHandlers as WebsocketHandler;
+export default composedHandlers;

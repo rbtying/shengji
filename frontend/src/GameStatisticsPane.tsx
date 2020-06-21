@@ -15,27 +15,31 @@ const Cell = styled.div`
   display: table-cell;
 `;
 
-const percentage = (numerator: number, denominator: number) => {
+const percentage = (numerator: number, denominator: number): string => {
   if (denominator > 0) {
     return ((numerator / denominator) * 100).toFixed(2) + "%";
   }
   return "n/a";
 };
 
-const ranksPerGame = (ranks: number, numGames: number) => {
+const ranksPerGame = (ranks: number, numGames: number): string => {
   if (numGames > 0) {
     return (ranks / numGames).toFixed(3);
   }
   return "n/a";
 };
 
-type RowProps = {
+interface RowIProps {
   label: string;
   numPlayed: number;
   numWon: number;
-};
+}
 
-const GameStatisticsRow = ({ label, numPlayed, numWon }: RowProps) => {
+const GameStatisticsRow = ({
+  label,
+  numPlayed,
+  numWon,
+}: RowIProps): JSX.Element => {
   return (
     <Row>
       <LabelCell>{label}</LabelCell>
@@ -46,11 +50,11 @@ const GameStatisticsRow = ({ label, numPlayed, numWon }: RowProps) => {
   );
 };
 
-type Props = {
+interface IProps {
   gameStatistics: GameStatistics;
-};
+}
 
-const GameStatisticsPane = (props: Props) => {
+const GameStatisticsPane = (props: IProps): JSX.Element => {
   const { gameStatistics } = props;
 
   const gamesPlayedAsAttacking =

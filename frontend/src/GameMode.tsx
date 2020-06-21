@@ -1,10 +1,10 @@
 import * as React from "react";
 import { IGameModeSettings, IGameMode } from "./types";
 
-type Props = {
+interface IProps {
   gameMode: IGameModeSettings | IGameMode;
-};
-const GameMode = (props: Props) => {
+}
+const GameMode = (props: IProps): JSX.Element => {
   const rules = (
     <a href="rules" target="_blank">
       rules

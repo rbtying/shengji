@@ -1,13 +1,13 @@
 import * as React from "react";
 import { IPlayer } from "./types";
 
-type Props = {
+interface IProps {
   landlordId: number | null;
   onChange: (newLandlord: number | null) => void;
   players: IPlayer[];
-};
-const LandlordSelector = (props: Props) => {
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+}
+const LandlordSelector = (props: IProps): JSX.Element => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     if (e.target.value === "") {
       props.onChange(null);
     } else {

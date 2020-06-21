@@ -7,13 +7,13 @@ import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
 import BeepButton from "./BeepButton";
 
-type IDrawProps = {
+interface IDrawProps {
   state: IDrawPhase;
   name: string;
   cards: string[];
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
-};
+}
 interface IDrawState {
   selected: string[];
   autodraw: boolean;
@@ -37,84 +37,86 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     this.onAutodrawClicked = this.onAutodrawClicked.bind(this);
   }
 
-  setSelected(new_selected: string[]) {
-    this.setState({ selected: new_selected });
+  setSelected(newSelected: string[]): void {
+    this.setState({ selected: newSelected });
   }
 
-  makeBid(evt: any) {
+  makeBid(evt: any): void {
     evt.preventDefault();
     const counts: { [card: string]: number } = {};
-    this.state.selected.forEach((c) => (counts[c] = (counts[c] || 0) + 1));
+    this.state.selected.forEach(
+      (c) => (counts[c] = (counts[c] !== undefined ? counts[c] : 0) + 1)
+    );
     if (Object.keys(counts).length !== 1) {
       return;
     }
 
-    const players: { [player_id: number]: IPlayer } = {};
+    const players: { [playerId: number]: IPlayer } = {};
     this.props.state.propagated.players.forEach((p) => {
       players[p.id] = p;
     });
 
     for (const c in counts) {
-      let already_bid = 0;
+      let alreadyBid = 0;
       this.props.state.bids.forEach((bid) => {
         if (players[bid.id].name === this.props.name && bid.card === c) {
-          already_bid = already_bid < bid.count ? bid.count : already_bid;
+          alreadyBid = alreadyBid < bid.count ? bid.count : alreadyBid;
         }
       });
 
-      (window as any).send({ Action: { Bid: [c, counts[c] + already_bid] } });
+      (window as any).send({ Action: { Bid: [c, counts[c] + alreadyBid] } });
       this.setSelected([]);
     }
   }
 
-  takeBackBid(evt: any) {
+  takeBackBid(evt: any): void {
     evt.preventDefault();
     (window as any).send({ Action: "TakeBackBid" });
   }
 
-  drawCard() {
-    const can_draw =
+  drawCard(): void {
+    const canDraw =
       this.props.state.propagated.players[this.props.state.position].name ===
       this.props.name;
-    if (this.timeout) {
+    if (this.timeout !== null) {
       this.props.clearTimeout(this.timeout);
       this.timeout = null;
     }
-    if (can_draw) {
+    if (canDraw) {
       (window as any).send({ Action: "DrawCard" });
     }
   }
 
-  pickUpKitty(evt: any) {
+  pickUpKitty(evt: any): void {
     evt.preventDefault();
     (window as any).send({ Action: "PickUpKitty" });
   }
 
-  revealCard(evt: any) {
+  revealCard(evt: any): void {
     evt.preventDefault();
     (window as any).send({ Action: "RevealCard" });
   }
 
-  onAutodrawClicked(evt: any) {
+  onAutodrawClicked(evt: React.ChangeEvent<HTMLInputElement>): void {
     this.setState({
       autodraw: evt.target.checked,
     });
     if (evt.target.checked) {
       this.drawCard();
     } else {
-      if (this.timeout) {
+      if (this.timeout !== null) {
         clearTimeout(this.timeout);
         this.timeout = null;
       }
     }
   }
 
-  render() {
-    const can_draw =
+  render(): JSX.Element {
+    const canDraw =
       this.props.state.propagated.players[this.props.state.position].name ===
         this.props.name && this.props.state.deck.length > 0;
     if (
-      can_draw &&
+      canDraw &&
       !this.could_draw &&
       this.timeout === null &&
       this.state.autodraw
@@ -123,7 +125,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         this.drawCard();
       }, 250);
     }
-    this.could_draw = can_draw;
+    this.could_draw = canDraw;
 
     let next = this.props.state.propagated.players[this.props.state.position]
       .id;
@@ -134,30 +136,30 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       next = this.props.state.bids[this.props.state.bids.length - 1].id;
     }
 
-    const players: { [player_id: number]: IPlayer } = {};
-    let player_id = -1;
+    const players: { [playerId: number]: IPlayer } = {};
+    let playerId = -1;
     this.props.state.propagated.players.forEach((p) => {
       players[p.id] = p;
       if (p.name === this.props.name) {
-        player_id = p.id;
+        playerId = p.id;
       }
     });
 
-    const my_bids: { [card: string]: number } = {};
+    const myBids: { [card: string]: number } = {};
     this.props.state.bids.forEach((bid) => {
-      if (player_id === bid.id) {
-        const existing_bid = my_bids[bid.card] || 0;
-        my_bids[bid.card] = existing_bid < bid.count ? bid.count : existing_bid;
+      if (playerId === bid.id) {
+        const existingBid = bid.card in myBids ? myBids[bid.card] : 0;
+        myBids[bid.card] = existingBid < bid.count ? bid.count : existingBid;
       }
     });
-    const cards_not_bid = [...this.props.cards];
+    const cardsNotBid = [...this.props.cards];
 
-    Object.keys(my_bids).forEach((card) => {
-      const count = my_bids[card] || 0;
+    Object.keys(myBids).forEach((card) => {
+      const count = card in myBids ? myBids[card] : 0;
       for (let i = 0; i < count; i = i + 1) {
-        const card_idx = cards_not_bid.indexOf(card);
-        if (card_idx >= 0) {
-          cards_not_bid.splice(card_idx, 1);
+        const cardIdx = cardsNotBid.indexOf(card);
+        if (cardIdx >= 0) {
+          cardsNotBid.splice(cardIdx, 1);
         }
       }
     });
@@ -203,7 +205,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             evt.preventDefault();
             this.drawCard();
           }}
-          disabled={!can_draw}
+          disabled={!canDraw}
         >
           Draw card
         </button>
@@ -227,7 +229,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           disabled={
             this.props.state.bids.length === 0 ||
             this.props.state.bids[this.props.state.bids.length - 1].id !==
-              player_id
+              playerId
           }
         >
           Take back bid
@@ -239,10 +241,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             (this.props.state.bids.length === 0 &&
               this.props.state.autobid === null) ||
             (this.props.state.propagated.landlord !== null &&
-              this.props.state.propagated.landlord !== player_id) ||
+              this.props.state.propagated.landlord !== playerId) ||
             (this.props.state.propagated.landlord === null &&
               this.props.state.bids[this.props.state.bids.length - 1].id !==
-                player_id)
+                playerId)
           }
         >
           Pick up cards from the bottom
@@ -261,18 +263,19 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         <BeepButton />
         {this.props.state.propagated.landlord !== null ? (
           <p>
-            Bid using {players[this.props.state.propagated.landlord].level}'s in
-            the same suit, or jokers
+            Bid using {players[this.props.state.propagated.landlord].level}
+            &apos;s in the same suit, or jokers
           </p>
-        ) : players[player_id] ? (
+        ) : players[playerId] !== undefined ? (
           <p>
-            Bid using {players[player_id].level}'s in the same suit, or jokers
+            Bid using {players[playerId].level}&apos;s in the same suit, or
+            jokers
           </p>
         ) : (
           <div />
         )}
         <Cards
-          cardsInHand={cards_not_bid}
+          cardsInHand={cardsNotBid}
           selectedCards={this.state.selected}
           onSelect={this.setSelected}
         />

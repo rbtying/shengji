@@ -1,9 +1,9 @@
 import ObjectUtils from "./util/object";
 
-export type State<T> = {
+export interface State<T> {
   loadDefault: () => T;
   persist: (before: T, after: T) => void;
-};
+}
 
 export const noPersistence = <T>(loadDefault: () => T): State<T> => {
   return {
