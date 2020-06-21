@@ -350,13 +350,7 @@ const Initialize = (props: Props) => {
       .then((res) => res.json())
       .then(
         (result) => {
-          let gameSettings: IPropagatedState;
-          try {
-            gameSettings = JSON.parse(result);
-            setGameSettings(gameSettings);
-          } catch (err) {
-            gameSettings = null;
-          }
+          setGameSettings(result);
         },
 
         (error) => {}
