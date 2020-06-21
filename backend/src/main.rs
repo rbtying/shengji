@@ -244,7 +244,7 @@ async fn main() {
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
 
-    let default_settings = warp::path("default_settings").and_then(default_propagated);
+    let default_settings = warp::path("default_settings.json").and_then(default_propagated);
     let routes = index
         .or(js)
         .or(js_map)

@@ -362,7 +362,7 @@ const Initialize = (props: Props) => {
   const resetGameSettings = (evt: any) => {
     evt.preventDefault();
 
-    fetch("/default_settings")
+    fetch("default_settings.json")
       .then((res) => res.json())
       .then(
         (result) => {
