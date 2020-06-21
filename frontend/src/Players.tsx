@@ -63,6 +63,7 @@ const Players = (props: IProps) => {
                   <span
                     style={{
                       display: "block",
+                      marginTop: "6px",
                       textAlign: "center",
                       width: "100%",
                     }}
