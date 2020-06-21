@@ -9,7 +9,7 @@ import ArrayUtils from "./util/array";
 interface IProps {
   players: IPlayer[];
   landlord?: number | null;
-  landlord_emoji: string;
+  landlord_suffix: string;
   landlords_team?: number[];
   trick: ITrick;
   next?: number | null;
@@ -97,7 +97,7 @@ const Trick = (props: IProps) => {
             id={id}
             label={
               namesById[id] +
-              (id === props.landlord ? " " + props.landlord_emoji : "") +
+              (id === props.landlord ? " " + props.landlord_suffix : "") +
               suffix
             }
             className={className}
