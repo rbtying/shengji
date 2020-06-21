@@ -70,6 +70,10 @@ const Play = (props: Props) => {
   const canFinish =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
 
+  const landlordSuffix = playPhase.propagated.landlord_emoji
+    ? playPhase.propagated.landlord_emoji
+    : "(当庄)";
+
   return (
     <div>
       {shouldBeBeeping ? <Beeper /> : null}
@@ -91,6 +95,7 @@ const Play = (props: Props) => {
         trick={playPhase.trick}
         players={playPhase.propagated.players}
         landlord={playPhase.landlord}
+        landlord_suffix={landlordSuffix}
         landlords_team={playPhase.landlords_team}
         next={nextPlayer}
         name={props.name}
@@ -127,6 +132,7 @@ const Play = (props: Props) => {
             trick={playPhase.last_trick}
             players={playPhase.propagated.players}
             landlord={playPhase.landlord}
+            landlord_suffix={landlordSuffix}
             landlords_team={playPhase.landlords_team}
             name={props.name}
             showTrickInPlayerOrder={props.showTrickInPlayerOrder}

@@ -1,5 +1,6 @@
 body { font-family: sans-serif; font-size: 95%; margin: 0 20px; }
 button { padding: 10px; cursor: pointer; margin: 10px; line-height: 1em; }
+button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .players button { padding: 2.5px; margin: 0 5px; }
 .player { border: 1px #000 solid; padding: 10px; line-height: 1em; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }

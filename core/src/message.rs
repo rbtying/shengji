@@ -78,6 +78,9 @@ pub enum MessageVariant {
     SetLandlord {
         landlord: Option<PlayerID>,
     },
+    SetLandlordEmoji {
+        emoji: String,
+    },
     SetRank {
         rank: Number,
     },

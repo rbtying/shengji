@@ -159,6 +159,8 @@ pub struct PropagatedState {
     pub players: Vec<Player>,
     pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
+    #[serde(default)]
+    landlord_emoji: Option<String>,
     chat_link: Option<String>,
     #[serde(default)]
     advancement_policy: AdvancementPolicy,
@@ -350,6 +352,14 @@ impl PropagatedState {
                 }
             }
             None => self.landlord = None,
+        }
+        Ok(())
+    }
+
+    pub fn set_landlord_emoji(&mut self, emoji: Option<String>) -> Result<(), Error> {
+        match emoji {
+            Some(emoji) => self.landlord_emoji = Some(emoji),
+            None => self.landlord_emoji = None,
         }
         Ok(())
     }

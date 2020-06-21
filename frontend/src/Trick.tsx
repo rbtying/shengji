@@ -9,6 +9,7 @@ import ArrayUtils from "./util/array";
 interface IProps {
   players: IPlayer[];
   landlord?: number | null;
+  landlord_suffix: string;
   landlords_team?: number[];
   trick: ITrick;
   next?: number | null;
@@ -95,7 +96,9 @@ const Trick = (props: IProps) => {
             key={id}
             id={id}
             label={
-              namesById[id] + (id === props.landlord ? " (当庄)" : "") + suffix
+              namesById[id] +
+              (id === props.landlord ? " " + props.landlord_suffix : "") +
+              suffix
             }
             className={className}
             groupedCards={cardsFromMappingByID[id]}

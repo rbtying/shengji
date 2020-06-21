@@ -1,10 +1,12 @@
 import * as React from "react";
+import ReactTooltip from "react-tooltip";
+import Picker from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
-import { IInitializePhase } from "./types";
+import { IInitializePhase, IPropagatedState } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 import { IPlayer } from "./types";
 import Header from "./Header";
@@ -18,6 +20,7 @@ type Props = {
 
 const Initialize = (props: Props) => {
   const { send } = React.useContext(WebsocketContext);
+  const [showPicker, setShowPicker] = React.useState(false);
   const setGameMode = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
@@ -189,6 +192,13 @@ const Initialize = (props: Props) => {
     send({ Action: "StartGame" });
   };
 
+  const setEmoji = (evt: any, emojiObject: any) => {
+    evt.preventDefault();
+    send({
+      Action: { SetLandlordEmoji: emojiObject ? emojiObject.emoji : null },
+    });
+  };
+
   const modeAsString =
     props.state.propagated.game_mode === "Tractor"
       ? "Tractor"
@@ -215,6 +225,153 @@ const Initialize = (props: Props) => {
       (p) => p.name === props.name
     );
   }
+
+  const saveGameSettings = (evt: any) => {
+    evt.preventDefault();
+    localStorage.setItem(
+      "gameSettingsInLocalStorage",
+      JSON.stringify(props.state.propagated)
+    );
+  };
+
+  const setGameSettings = (gameSettings: IPropagatedState) => {
+    if (gameSettings !== null) {
+      let kittySizeSet = false;
+      let kittySize = null;
+      for (const [key, value] of Object.entries(gameSettings)) {
+        switch (key) {
+          case "game_mode":
+            send({
+              Action: {
+                SetGameMode: value,
+              },
+            });
+            break;
+          case "num_decks":
+            send({
+              Action: {
+                SetNumDecks: value,
+              },
+            });
+            if (kittySizeSet) {
+              // reset the size again, as setting deck numn resets kitty_size to default
+              send({
+                Action: {
+                  SetKittySize: kittySize,
+                },
+              });
+            }
+            break;
+          case "kitty_size":
+            send({
+              Action: {
+                SetKittySize: value,
+              },
+            });
+            kittySizeSet = true;
+            kittySize = value;
+            break;
+          case "friend_selection_policy":
+            send({
+              Action: {
+                SetFriendSelectionPolicy: value,
+              },
+            });
+            break;
+          case "hide_landlord_points":
+            send({
+              Action: {
+                SetHideLandlordsPoints: value,
+              },
+            });
+            break;
+          case "hide_played_cards":
+            send({ Action: { SetHidePlayedCards: value } });
+            break;
+          case "advancement_policy":
+            send({
+              Action: {
+                SetAdvancementPolicy: value,
+              },
+            });
+            break;
+          case "kitty_bid_policy":
+            send({
+              Action: {
+                SetKittyBidPolicy: value,
+              },
+            });
+            break;
+          case "kitty_penalty":
+            send({
+              Action: {
+                SetKittyPenalty: value,
+              },
+            });
+            break;
+          case "throw_penalty":
+            send({
+              Action: {
+                SetThrowPenalty: value,
+              },
+            });
+            break;
+          case "trick_draw_policy":
+            send({
+              Action: {
+                SetTrickDrawPolicy: value,
+              },
+            });
+            break;
+          case "throw_evaluation_policy":
+            send({
+              Action: {
+                SetThrowEvaluationPolicy: value,
+              },
+            });
+            break;
+          case "landlord_emoji":
+            send({
+              Action: {
+                SetLandlordEmoji: value,
+              },
+            });
+            break;
+        }
+      }
+    }
+  };
+
+  const loadGameSettings = (evt: any) => {
+    evt.preventDefault();
+    const settings = localStorage.getItem("gameSettingsInLocalStorage");
+    if (settings !== null) {
+      let gameSettings: IPropagatedState;
+      try {
+        gameSettings = JSON.parse(settings);
+        setGameSettings(gameSettings);
+      } catch (err) {
+        localStorage.setItem(
+          "gameSettingsInLocalStorage",
+          JSON.stringify(props.state.propagated)
+        );
+      }
+    }
+  };
+
+  const resetGameSettings = (evt: any) => {
+    evt.preventDefault();
+
+    fetch("default_settings.json")
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          setGameSettings(result);
+        },
+
+        (error) => {}
+      );
+  };
 
   return (
     <div>
@@ -435,6 +592,69 @@ const Initialize = (props: Props) => {
                 Subsequent throw must beat highest card to win
               </option>
             </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Landlord Emoji:{" "}
+            {props.state.propagated.landlord_emoji
+              ? props.state.propagated.landlord_emoji
+              : "当庄"}{" "}
+            <button
+              className="normal"
+              onClick={() => {
+                showPicker ? setShowPicker(false) : setShowPicker(true);
+              }}
+            >
+              {showPicker ? "Hide" : "Pick"}
+            </button>
+            <button
+              className="normal"
+              onClick={() => {
+                send({ Action: { SetLandlordEmoji: null } });
+              }}
+            >
+              Default
+            </button>
+            {showPicker ? <Picker onEmojiClick={setEmoji} /> : null}
+          </label>
+        </div>
+        <div>
+          <label>
+            Setting Management:
+            <button
+              className="normal"
+              data-tip
+              data-for="saveTip"
+              onClick={saveGameSettings}
+            >
+              Save
+            </button>
+            <ReactTooltip id="saveTip" place="top" effect="solid">
+              Save game settings
+            </ReactTooltip>
+            <button
+              className="normal"
+              data-tip
+              data-for="loadTip"
+              onClick={loadGameSettings}
+            >
+              Load
+            </button>
+            <ReactTooltip id="loadTip" place="top" effect="solid">
+              Load saved game settings
+            </ReactTooltip>
+            <button
+              className="normal"
+              data-tip
+              data-for="resetTip"
+              onClick={resetGameSettings}
+            >
+              Reset
+            </button>
+            <ReactTooltip id="resetTip" place="top" effect="solid">
+              Reset game settings to defaults
+            </ReactTooltip>
           </label>
         </div>
         <h3>Continuation settings</h3>
