@@ -1,6 +1,7 @@
 body { font-family: sans-serif; font-size: 95%; margin: 0 20px; }
-button { padding: 10px; cursor: pointer; margin: 10px; }
+button { padding: 10px; cursor: pointer; margin: 10px; line-height: 1em; }
 .players button { padding: 2.5px; margin: 0 5px; }
+.player { border: 1px #000 solid; padding: 10px; line-height: 1em; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
 .trick { padding: 10px; }
 .card { font-size: 8em; display: inline-block; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; position: relative; }
@@ -34,7 +35,6 @@ button { padding: 10px; cursor: pointer; margin: 10px; }
 .next { color: blue; font-weight: bold; }
 .landlord { background: #ddd; }
 .landlord .card { background: #ddd; }
-.player { border: 1px #000 solid; padding: 10px; }
 .observer { border: 1px #222 dashed; color: #222; }
 .chat { min-width: 225px; width: 20%; border: 1px #eee solid; float: right; margin-top: 20px; }
 .game { min-width: 690px; min-height: 660px; width: 70%; display: inline-block; }
