@@ -225,31 +225,18 @@ const Initialize = (props: Props) => {
     );
   };
 
-  const loadGameSettings = (evt: any) => {
-    evt.preventDefault();
-    const settings = localStorage.getItem("gameSettingsInLocalStorage");
-    if (settings !== null) {
-      const gameSettings: IPropagatedState = JSON.parse(settings);
+  const setGameSettings = (gameSettings: IPropagatedState) => {
+    if (gameSettings !== null) {
+      let kitty_size_set = false;
+      let kitty_size = null;
       for (const [key, value] of Object.entries(gameSettings)) {
         switch (key) {
           case "game_mode":
-            if (value === "Tractor") {
-              send({
-                Action: {
-                  SetGameMode: "Tractor",
-                },
-              });
-            } else {
-              send({
-                Action: {
-                  SetGameMode: {
-                    FindingFriends: {
-                      num_friends: value.num_friends,
-                    },
-                  },
-                },
-              });
-            }
+            send({
+              Action: {
+                SetGameMode: value,
+              },
+            });
             break;
           case "num_decks":
             send({
@@ -257,6 +244,14 @@ const Initialize = (props: Props) => {
                 SetNumDecks: value,
               },
             });
+            if (kitty_size_set) {
+              // reset the size again, as setting deck numn resets kitty_size to default
+              send({
+                Action: {
+                  SetKittySize: kitty_size,
+                },
+              });
+            }
             break;
           case "kitty_size":
             send({
@@ -264,6 +259,8 @@ const Initialize = (props: Props) => {
                 SetKittySize: value,
               },
             });
+            kitty_size_set = true;
+            kitty_size = value;
             break;
           case "friend_selection_policy":
             send({
@@ -329,76 +326,40 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const loadGameSettings = (evt: any) => {
+    evt.preventDefault();
+    const settings = localStorage.getItem("gameSettingsInLocalStorage");
+    console.log(settings);
+    if (settings !== null) {
+      let gameSettings: IPropagatedState;
+      try {
+        gameSettings = JSON.parse(settings);
+        setGameSettings(gameSettings);
+      } catch (err) {
+        localStorage.setItem(
+          "gameSettingsInLocalStorage",
+          JSON.stringify(props.state.propagated)
+        );
+      }
+    }
+  };
+
   const resetGameSettings = (evt: any) => {
     evt.preventDefault();
 
-    send({
-      Action: {
-        SetGameMode: "Tractor",
-      },
-    });
+    fetch("/default_settings")
+      .then((res) => res.json())
+      .then(
+        (result) => {
+          let gameSettings: IPropagatedState;
+          try {
+            gameSettings = JSON.parse(result);
+            setGameSettings(gameSettings);
+          } catch (err) {}
+        },
 
-    send({
-      Action: {
-        SetNumDecks: null,
-      },
-    });
-
-    send({
-      Action: {
-        SetKittySize: null,
-      },
-    });
-
-    send({
-      Action: {
-        SetFriendSelectionPolicy: "Unrestricted",
-      },
-    });
-
-    send({
-      Action: {
-        SetHideLandlordsPoints: false,
-      },
-    });
-
-    send({ Action: { SetHidePlayedCards: false } });
-
-    send({
-      Action: {
-        SetAdvancementPolicy: "Unrestricted",
-      },
-    });
-
-    send({
-      Action: {
-        SetKittyBidPolicy: "FirstCard",
-      },
-    });
-
-    send({
-      Action: {
-        SetKittyPenalty: "Times",
-      },
-    });
-
-    send({
-      Action: {
-        SetThrowPenalty: "None",
-      },
-    });
-
-    send({
-      Action: {
-        SetTrickDrawPolicy: "NoProtections",
-      },
-    });
-
-    send({
-      Action: {
-        SetThrowEvaluationPolicy: "All",
-      },
-    });
+        (error) => {}
+      );
   };
 
   return (

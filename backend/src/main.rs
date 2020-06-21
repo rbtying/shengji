@@ -141,6 +141,8 @@ async fn main() {
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => DUMP_PATH));
 
+    let game_defaults = game_state::PropagatedState::default();
+
     match tokio::fs::File::open(DUMP_PATH).await {
         Ok(mut f) => {
             let mut data = vec![];
@@ -243,6 +245,12 @@ async fn main() {
     let game_stats = warp::path("stats")
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
+
+    let game_default_filter = warp::any().map(move || game_defaults.clone());
+    let game_default_settings = warp::path("default_settings")
+        .and(game_default_filter.clone())
+        .and_then(get_default_game_settings);
+
     let routes = index
         .or(js)
         .or(js_map)
@@ -252,7 +260,8 @@ async fn main() {
         .or(api)
         .or(rules)
         .or(dump_state)
-        .or(game_stats);
+        .or(game_stats)
+        .or(game_default_settings);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -330,6 +339,12 @@ async fn get_stats(
         num_active_games: games.len(),
         sha: env!("VERGEN_SHA"),
     }))
+}
+
+async fn get_default_game_settings(
+    setting: game_state::PropagatedState,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    Ok(warp::reply::json(&setting))
 }
 
 #[allow(clippy::cognitive_complexity)]
