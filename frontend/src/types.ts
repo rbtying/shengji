@@ -2,6 +2,7 @@ export interface IPlayer {
   id: number;
   name: string;
   level: string;
+  metalevel: number;
 }
 
 export interface IGameState {

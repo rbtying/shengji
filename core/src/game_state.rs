@@ -24,7 +24,36 @@ macro_rules! bail_unwrap {
 pub struct Player {
     pub id: PlayerID,
     pub name: String,
-    pub(crate) level: Number,
+    level: Number,
+    metalevel: usize,
+}
+
+impl Player {
+    pub fn new(id: PlayerID, name: String) -> Player {
+        Player {
+            id,
+            name,
+            level: Number::Two,
+            metalevel: 1,
+        }
+    }
+
+    pub fn rank(&self) -> Number {
+        self.level
+    }
+
+    pub fn set_rank(&mut self, level: Number) {
+        self.level = level;
+    }
+
+    pub fn advance(&mut self) {
+        if let Some(next_level) = self.level.successor() {
+            self.level = next_level;
+        } else {
+            self.metalevel += 1;
+            self.level = Number::Two;
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -188,11 +217,7 @@ impl PropagatedState {
         let mut msgs = vec![MessageVariant::JoinedGame { player: id }];
 
         self.max_player_id += 1;
-        self.players.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
+        self.players.push(Player::new(id, name));
 
         msgs.extend(self.num_players_changed()?);
         Ok((id, msgs))
@@ -223,11 +248,7 @@ impl PropagatedState {
         }
 
         self.max_player_id += 1;
-        self.observers.push(Player {
-            id,
-            name,
-            level: Number::Two,
-        });
+        self.observers.push(Player::new(id, name));
         Ok(id)
     }
 
@@ -462,7 +483,7 @@ impl PropagatedState {
     pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
         match self.players.iter_mut().find(|p| p.id == player_id) {
             Some(ref mut player) => {
-                player.level = level;
+                player.set_rank(level);
             }
             None => bail!("player not found"),
         }
@@ -913,8 +934,13 @@ impl PlayPhase {
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
+                        // Player *must* defend on Ace and win to advance.
+                        _ if player.rank() == Number::Ace && !(is_defending && bump_idx == 0) => {
+                            was_blocked = true;
+                            break;
+                        }
                         AdvancementPolicy::Unrestricted => (),
-                        AdvancementPolicy::DefendPoints => match player.level.points() {
+                        AdvancementPolicy::DefendPoints => match player.rank().points() {
                             None => (),
                             Some(_) if is_defending && bump_idx == 0 => (),
                             Some(_) => {
@@ -924,21 +950,19 @@ impl PlayPhase {
                         },
                     }
 
-                    if let Some(next_level) = player.level.successor() {
-                        player.level = next_level;
-                        num_advances += 1;
-                    }
+                    player.advance();
+                    num_advances += 1;
                 }
                 if num_advances > 0 {
                     msgs.push(MessageVariant::RankAdvanced {
                         player: player.id,
-                        new_rank: player.level,
+                        new_rank: player.rank(),
                     });
                 }
                 if was_blocked {
                     msgs.push(MessageVariant::AdvancementBlocked {
                         player: player.id,
-                        rank: player.level,
+                        rank: player.rank(),
                     });
                 }
 
@@ -1312,7 +1336,7 @@ impl DrawPhase {
             .players
             .iter()
             .find(|p| p.id == id)
-            .map(|p| p.level)
+            .map(|p| p.rank())
             .ok_or_else(|| anyhow!("can't find landlord level?"))?;
 
         let card = self.kitty[self.revealed_cards];
@@ -1375,7 +1399,7 @@ impl DrawPhase {
                     .players
                     .iter()
                     .find(|p| p.id == bid_player_id)
-                    .map(|p| p.level);
+                    .map(|p| p.rank());
                 if !card.is_joker() && card.number() != bid_level {
                     continue;
                 }
@@ -1456,7 +1480,7 @@ impl DrawPhase {
                 .iter()
                 .find(|p| p.id == landlord)
                 .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
-                .level;
+                .rank();
             let trump = match winning_bid.card {
                 Card::Unknown => bail!("can't bid with unknown cards!"),
                 Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
@@ -1572,7 +1596,7 @@ impl InitializePhase {
             .unwrap_or(rng.next_u32() as usize % self.propagated.players.len());
 
         let level = if self.propagated.landlord.is_some() {
-            Some(self.propagated.players[position].level)
+            Some(self.propagated.players[position].rank())
         } else {
             None
         };
@@ -1642,21 +1666,25 @@ mod tests {
                 id: PlayerID(0),
                 name: "p1".into(),
                 level: Number::Four,
+                metalevel: 0,
             },
             Player {
                 id: PlayerID(1),
                 name: "p2".into(),
                 level: Number::Four,
+                metalevel: 0,
             },
             Player {
                 id: PlayerID(2),
                 name: "p3".into(),
                 level: Number::Four,
+                metalevel: 0,
             },
             Player {
                 id: PlayerID(3),
                 name: "p4".into(),
                 level: Number::Four,
+                metalevel: 0,
             },
         ];
         let mut players_ = players.clone();
@@ -1672,7 +1700,7 @@ mod tests {
             AdvancementPolicy::Unrestricted,
         );
         for p in &players {
-            assert_eq!(p.level, Number::Six);
+            assert_eq!(p.rank(), Number::Six);
         }
 
         let _ = PlayPhase::compute_player_level_deltas(
@@ -1686,7 +1714,7 @@ mod tests {
             AdvancementPolicy::DefendPoints,
         );
         for p in &players_ {
-            assert_eq!(p.level, Number::Five);
+            assert_eq!(p.rank(), Number::Five);
         }
 
         // Advance again!
@@ -1702,9 +1730,9 @@ mod tests {
         );
         for p in &players_ {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
-                assert_eq!(p.level, Number::Seven);
+                assert_eq!(p.rank(), Number::Seven);
             } else {
-                assert_eq!(p.level, Number::Five);
+                assert_eq!(p.rank(), Number::Five);
             }
         }
     }

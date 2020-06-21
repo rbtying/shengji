@@ -29,6 +29,11 @@ const ChangeLog = () => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/20/2020:</p>
+        <ul>
+          <li>Add the ability to wrap-around after defending on "A".</li>
+          <li>Show throw breakdowns in the UI to make throws more obvious.</li>
+        </ul>
         <p>6/17/2020:</p>
         <ul>
           <li>Fix bug where points display was highlighted blue.</li>
