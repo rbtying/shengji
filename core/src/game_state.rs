@@ -159,6 +159,7 @@ pub struct PropagatedState {
     pub players: Vec<Player>,
     pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
+    #[serde(default)]
     landlord_emoji: Option<String>,
     chat_link: Option<String>,
     #[serde(default)]
