@@ -283,6 +283,8 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
         }
     }
 
+    drop(games);
+
     let logger = ROOT_LOGGER.new(o!(
         "dump_path" => DUMP_PATH,
         "num_games" => state_dump.len(),
@@ -569,6 +571,7 @@ async fn user_disconnected(
             g.remove(&room);
         }
     }
+    drop(g);
     info!(logger, "Websocket disconnected";
         "room" => room,
         "parent_span" => format!("{}:{}", room, parent),
