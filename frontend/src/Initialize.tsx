@@ -227,8 +227,8 @@ const Initialize = (props: Props) => {
 
   const setGameSettings = (gameSettings: IPropagatedState) => {
     if (gameSettings !== null) {
-      let kitty_size_set = false;
-      let kitty_size = null;
+      let kittySizeSet = false;
+      let kittySize = null;
       for (const [key, value] of Object.entries(gameSettings)) {
         switch (key) {
           case "game_mode":
@@ -244,11 +244,11 @@ const Initialize = (props: Props) => {
                 SetNumDecks: value,
               },
             });
-            if (kitty_size_set) {
+            if (kittySizeSet) {
               // reset the size again, as setting deck numn resets kitty_size to default
               send({
                 Action: {
-                  SetKittySize: kitty_size,
+                  SetKittySize: kittySize,
                 },
               });
             }
@@ -259,8 +259,8 @@ const Initialize = (props: Props) => {
                 SetKittySize: value,
               },
             });
-            kitty_size_set = true;
-            kitty_size = value;
+            kittySizeSet = true;
+            kittySize = value;
             break;
           case "friend_selection_policy":
             send({
@@ -329,7 +329,6 @@ const Initialize = (props: Props) => {
   const loadGameSettings = (evt: any) => {
     evt.preventDefault();
     const settings = localStorage.getItem("gameSettingsInLocalStorage");
-    console.log(settings);
     if (settings !== null) {
       let gameSettings: IPropagatedState;
       try {
@@ -355,7 +354,9 @@ const Initialize = (props: Props) => {
           try {
             gameSettings = JSON.parse(result);
             setGameSettings(gameSettings);
-          } catch (err) {}
+          } catch (err) {
+            gameSettings = null;
+          }
         },
 
         (error) => {}
