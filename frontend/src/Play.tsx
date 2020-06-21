@@ -128,7 +128,6 @@ const Play = (props: Props) => {
             players={playPhase.propagated.players}
             landlord={playPhase.landlord}
             landlords_team={playPhase.landlords_team}
-            next={nextPlayer}
             name={props.name}
             showTrickInPlayerOrder={props.showTrickInPlayerOrder}
           />
