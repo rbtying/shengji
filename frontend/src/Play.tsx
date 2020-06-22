@@ -72,9 +72,12 @@ const Play = (props: IProps): JSX.Element => {
   const canFinish =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
 
-  const landlordSuffix = playPhase.propagated.landlord_emoji
-    ? playPhase.propagated.landlord_emoji
-    : "(当庄)";
+  const landlordSuffix =
+    playPhase.propagated.landlord_emoji !== undefined &&
+    playPhase.propagated.landlord_emoji !== null &&
+    playPhase.propagated.landlord_emoji !== ""
+      ? playPhase.propagated.landlord_emoji
+      : "(当庄)";
 
   return (
     <div>

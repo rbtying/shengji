@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
-import Picker from "emoji-picker-react";
+import Picker, { IEmojiData } from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
@@ -21,7 +21,7 @@ interface IProps {
 const Initialize = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const [showPicker, setShowPicker] = React.useState<boolean>(false);
-  const setGameMode = (evt: any): void => {
+  const setGameMode = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
       send({ Action: { SetGameMode: "Tractor" } });
@@ -38,7 +38,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setNumFriends = (evt: any): void => {
+  const setNumFriends = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value === "") {
       send({
@@ -64,7 +64,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setKittySize = (evt: any): void => {
+  const setKittySize = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       const size = parseInt(evt.target.value, 10);
@@ -82,7 +82,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setFriendSelectionPolicy = (evt: any): void => {
+  const setFriendSelectionPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -93,7 +95,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setKittyPenalty = (evt: any): void => {
+  const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -110,7 +112,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setKittyBidPolicy = (evt: any): void => {
+  const setKittyBidPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -121,7 +125,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setTrickDrawPolicy = (evt: any): void => {
+  const setTrickDrawPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -132,7 +138,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setThrowEvaluationPolicy = (evt: any): void => {
+  const setThrowEvaluationPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -143,7 +151,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setAdvancementPolicy = (evt: any): void => {
+  const setAdvancementPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -160,7 +170,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setThrowPenalty = (evt: any): void => {
+  const setThrowPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -177,25 +187,34 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setHideLandlordsPoints = (evt: any): void => {
+  const setHideLandlordsPoints = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     send({ Action: { SetHideLandlordsPoints: evt.target.value === "hide" } });
   };
 
-  const setHidePlayedCards = (evt: any): void => {
+  const setHidePlayedCards = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     send({ Action: { SetHidePlayedCards: evt.target.value === "hide" } });
   };
 
-  const startGame = (evt: any): void => {
+  const startGame = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     send({ Action: "StartGame" });
   };
 
-  const setEmoji = (evt: any, emojiObject: any) => {
+  const setEmoji = (evt: MouseEvent, emojiObject: IEmojiData | null): void => {
     evt.preventDefault();
     send({
-      Action: { SetLandlordEmoji: emojiObject ? emojiObject.emoji : null },
+      Action: {
+        SetLandlordEmoji:
+          emojiObject !== undefined && emojiObject !== null
+            ? emojiObject.emoji
+            : null,
+      },
     });
   };
 
@@ -229,7 +248,7 @@ const Initialize = (props: IProps): JSX.Element => {
     );
   }
 
-  const saveGameSettings = (evt: any) => {
+  const saveGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     localStorage.setItem(
       "gameSettingsInLocalStorage",
@@ -237,7 +256,7 @@ const Initialize = (props: IProps): JSX.Element => {
     );
   };
 
-  const setGameSettings = (gameSettings: IPropagatedState) => {
+  const setGameSettings = (gameSettings: IPropagatedState): void => {
     if (gameSettings !== null) {
       let kittySizeSet = false;
       let kittySize = null;
@@ -345,7 +364,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const loadGameSettings = (evt: any) => {
+  const loadGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     const settings = localStorage.getItem("gameSettingsInLocalStorage");
     if (settings !== null) {
@@ -362,18 +381,16 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const resetGameSettings = (evt: any) => {
+  const resetGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
 
-    fetch("default_settings.json")
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          setGameSettings(result);
-        },
+    const fetchAsync = async (): Promise<void> => {
+      const fetchResult = await fetch("default_settings.json");
+      const fetchJSON = await fetchResult.json();
+      setGameSettings(fetchJSON);
+    };
 
-        (error) => {}
-      );
+    fetchAsync().catch((e) => console.error(e));
   };
 
   return (
@@ -605,7 +622,9 @@ const Initialize = (props: IProps): JSX.Element => {
         <div>
           <label>
             Landlord Emoji:{" "}
-            {props.state.propagated.landlord_emoji
+            {props.state.propagated.landlord_emoji !== null &&
+            props.state.propagated.landlord_emoji !== undefined &&
+            props.state.propagated.landlord_emoji !== ""
               ? props.state.propagated.landlord_emoji
               : "当庄"}{" "}
             <button
