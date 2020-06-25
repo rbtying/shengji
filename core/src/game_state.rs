@@ -1510,11 +1510,7 @@ impl DrawPhase {
                     self.propagated.landlord.unwrap_or(winning_bid.id)
                 }
                 FirstLandlordSelectionPolicy::ByFirstBid => {
-                    if self.propagated.landlord.is_none() {
-                        self.propagated.landlord.unwrap_or(first_bid.id)
-                    } else {
-                        self.propagated.landlord.unwrap_or(winning_bid.id)
-                    }
+                    self.propagated.landlord.unwrap_or(first_bid.id)
                 }
             };
 
