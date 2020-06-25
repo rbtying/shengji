@@ -1505,17 +1505,18 @@ impl DrawPhase {
         } else {
             let winning_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.last().copied()));
             let first_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.first().copied()));
-            let landlord;
-
-            if self.propagated.first_landlord_selection_policy
-                == FirstLandlordSelectionPolicy::ByWinningBid
-            {
-                landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
-            } else if self.propagated.landlord.is_none() {
-                landlord = self.propagated.landlord.unwrap_or(first_bid.id);
-            } else {
-                landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
-            }
+            let landlord = match self.propagated.first_landlord_selection_policy {
+                FirstLandlordSelectionPolicy::ByWinningBid => {
+                    self.propagated.landlord.unwrap_or(winning_bid.id)
+                }
+                FirstLandlordSelectionPolicy::ByFirstBid => {
+                    if self.propagated.landlord.is_none() {
+                        self.propagated.landlord.unwrap_or(first_bid.id)
+                    } else {
+                        self.propagated.landlord.unwrap_or(winning_bid.id)
+                    }
+                }
+            };
 
             if id != landlord {
                 bail!("only the leader can advance the game");
