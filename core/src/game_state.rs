@@ -1511,12 +1511,12 @@ impl DrawPhase {
                 == FirstLandlordSelectionPolicy::ByWinningBid
             {
                 landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
-            } else if let None = self.propagated.landlord {
+            } else if self.propagated.landlord.is_none() {
                 landlord = self.propagated.landlord.unwrap_or(first_bid.id);
             } else {
                 landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
             }
-            
+
             if id != landlord {
                 bail!("only the leader can advance the game");
             }
