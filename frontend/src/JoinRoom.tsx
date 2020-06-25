@@ -2,23 +2,24 @@ import * as React from "react";
 import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
 
-interface Props {
+interface IProps {
   name: string;
   room_name: string;
   setName: (name: string) => void;
   setRoomName: (name: string) => void;
 }
 
-const JoinRoom = (props: Props) => {
+const JoinRoom = (props: IProps): JSX.Element => {
   const [editable, setEditable] = React.useState<boolean>(false);
   const { send } = React.useContext(WebsocketContext);
 
-  const handleChange = (event: any) => props.setName(event.target.value.trim());
+  const handleChange = (event: any): void =>
+    props.setName(event.target.value.trim());
 
-  const handleRoomChange = (event: any) =>
+  const handleRoomChange = (event: any): void =>
     props.setRoomName(event.target.value.trim());
 
-  const handleSubmit = (event: any) => {
+  const handleSubmit = (event: any): void => {
     event.preventDefault();
     if (props.name.length > 0 && props.room_name.length === 16) {
       send({

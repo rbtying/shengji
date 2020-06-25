@@ -6,7 +6,7 @@ import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
 
-type Props = {
+interface IProps {
   players: IPlayer[];
   numDecks: number;
   points: { [playerId: number]: string[] };
@@ -14,9 +14,9 @@ type Props = {
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
-};
+}
 
-const Points = (props: Props) => {
+const Points = (props: IProps): JSX.Element => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
@@ -47,7 +47,8 @@ const Points = (props: Props) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
     const cards =
       props.points[player.id].length > 0 ? props.points[player.id] : ["🂠"];
-    const penalty = props.penalties[player.id] || 0;
+    const penalty =
+      player.id in props.penalties ? props.penalties[player.id] : 0;
 
     if (props.hideLandlordPoints && onLandlordTeam) {
       return null;
@@ -101,7 +102,7 @@ const Points = (props: Props) => {
           ? nonLandlordPoints
           : `${nonLandlordPoints} + ${penaltyDelta}`}
         分{props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
-        from {landlord.name}'s team. {thresholdStr}
+        from {landlord.name}&apos;s team. {thresholdStr}
       </p>
       {playerPointElements}
     </div>

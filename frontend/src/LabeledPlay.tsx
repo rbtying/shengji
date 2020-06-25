@@ -12,7 +12,7 @@ interface IProps {
   label: string;
   next?: number | null;
 }
-const LabeledPlay = (props: IProps) => {
+const LabeledPlay = (props: IProps): JSX.Element => {
   const className = classNames("label", {
     next:
       props.next !== undefined &&
@@ -23,18 +23,24 @@ const LabeledPlay = (props: IProps) => {
   const cards = props.cards.map((card, idx) => <Card card={card} key={idx} />);
 
   const groupedCards =
-    props.groupedCards?.map((c, gidx) => (
-      <div className="card-group" key={gidx}>
-        {c.map((card, idx) => (
-          <Card card={card} key={gidx + "-" + idx} />
-        ))}
-      </div>
-    )) || cards;
+    props.groupedCards !== undefined
+      ? props.groupedCards.map(
+          (c, gidx): JSX.Element => (
+            <div className="card-group" key={gidx}>
+              {c.map(
+                (card, idx): JSX.Element => (
+                  <Card card={card} key={`${gidx}-${idx}`} />
+                )
+              )}
+            </div>
+          )
+        )
+      : cards;
 
   return (
     <div className={classNames("labeled-play", props.className)}>
       <div className="play">{groupedCards}</div>
-      {props.moreCards && props.moreCards.length > 0 ? (
+      {props.moreCards !== undefined && props.moreCards.length > 0 ? (
         <div className="play more">
           {props.moreCards.map((card, idx) => (
             <Card card={card} key={idx} />

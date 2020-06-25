@@ -15,11 +15,12 @@ interface IProps {
   name: string;
 }
 
-const Players = (props: IProps) => {
+const Players = (props: IProps): JSX.Element => {
   const {
     players,
     observers,
     landlord,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     landlords_team,
     movable,
     next,
@@ -27,11 +28,15 @@ const Players = (props: IProps) => {
   } = props;
   const { send } = React.useContext(WebsocketContext);
 
-  const makeDescriptor = (p: IPlayer) => {
+  const makeDescriptor = (p: IPlayer): Array<JSX.Element | string> => {
     if (p.metalevel <= 1) {
       return [`${p.name} (rank ${p.level})`];
     } else {
-      return [`${p.name} (rank ${p.level}`, <sup>{p.metalevel}</sup>, ")"];
+      return [
+        `${p.name} (rank ${p.level}`,
+        <sup key={`meta-${p.id}`}>{p.metalevel}</sup>,
+        ")",
+      ];
     }
   };
 
@@ -100,6 +105,7 @@ const Players = (props: IProps) => {
                   <span
                     style={{
                       display: "block",
+                      marginTop: "6px",
                       textAlign: "center",
                       width: "100%",
                     }}

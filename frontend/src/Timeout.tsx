@@ -1,10 +1,10 @@
 import * as React from "react";
 import { TimerContext } from "./TimerProvider";
 
-type Props = {
+interface Props {
   timeout: number;
   callback: () => void;
-};
+}
 
 const Timeout = (props: Props): null => {
   const { setTimeout, clearTimeout } = React.useContext(TimerContext);

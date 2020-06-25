@@ -2,8 +2,8 @@ import memoize from "./memoize";
 
 const getContext = memoize(() => new window.AudioContext());
 
-const beep = (vol: number, freq: number, duration: number) => {
-  if (window.AudioContext) {
+const beep = (vol: number, freq: number, duration: number): void => {
+  if (window.AudioContext !== undefined) {
     const beepContext = getContext();
     const v = beepContext.createOscillator();
     const u = beepContext.createGain();

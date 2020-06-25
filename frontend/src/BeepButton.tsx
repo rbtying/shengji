@@ -1,7 +1,7 @@
 import * as React from "react";
 import { WebsocketContext } from "./WebsocketProvider";
 
-const BeepButton = () => {
+const BeepButton = (): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
 
   return (

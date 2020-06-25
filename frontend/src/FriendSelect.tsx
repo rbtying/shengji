@@ -6,23 +6,23 @@ import preloadedCards from "./preloadedCards";
 import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 
-type FriendSelection = {
+interface FriendSelection {
   card: string;
   initial_skip: number;
-};
-type Props = {
+}
+interface IProps {
   friend: FriendSelection;
   trump: ITrump;
   num_decks: number;
   friend_selection_policy: string;
   onChange: (input: FriendSelection) => void;
-};
-type Option = {
+}
+interface Option {
   value: string;
   label: string;
-};
+}
 
-const FriendSelect = (props: Props) => {
+const FriendSelect = (props: IProps): JSX.Element => {
   const handleChange = (transform: (e: Option) => Partial<FriendSelection>) => (
     value: Option
   ) => {
@@ -40,9 +40,10 @@ const FriendSelect = (props: Props) => {
     initial_skip: parseInt(select.value, 10),
   }));
 
-  const rank = props.trump.Standard
-    ? props.trump.Standard.number
-    : props.trump.NoTrump.number;
+  const rank =
+    props.trump.Standard !== undefined
+      ? props.trump.Standard.number
+      : props.trump.NoTrump.number;
 
   const cardOptions: Option[] = [];
   const currentValue: { [s: string]: any } = {};
@@ -81,7 +82,11 @@ const FriendSelect = (props: Props) => {
           onChange={handleCardChange}
           options={cardOptions}
           formatOptionLabel={({ value }) =>
-            value ? <InlineCard card={value} /> : value
+            value !== undefined && value !== null && value !== "" ? (
+              <InlineCard card={value} />
+            ) : (
+              value
+            )
           }
         />
       </div>

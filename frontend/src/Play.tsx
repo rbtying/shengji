@@ -14,7 +14,7 @@ import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 
-type Props = {
+interface IProps {
   playPhase: IPlayPhase;
   name: string;
   cards: string[];
@@ -22,13 +22,13 @@ type Props = {
   showLastTrick: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
   showTrickInPlayerOrder: boolean;
-};
+}
 
-const Play = (props: Props) => {
+const Play = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const [selected, setSelected] = React.useState<string[]>([]);
 
-  const playCards = () => {
+  const playCards = (): void => {
     send({ Action: { PlayCards: selected } });
     setSelected([]);
   };
@@ -45,7 +45,7 @@ const Play = (props: Props) => {
   let currentPlayer = playPhase.propagated.players.find(
     (p) => p.name === props.name
   );
-  if (!currentPlayer) {
+  if (currentPlayer === undefined) {
     currentPlayer = playPhase.propagated.observers.find(
       (p) => p.name === props.name
     );
@@ -55,10 +55,12 @@ const Play = (props: Props) => {
     playPhase.trick.played_cards[playPhase.trick.played_cards.length - 1];
 
   const isCurrentPlayerTurn = currentPlayer.id === nextPlayer;
-  const canPlay = lastPlay
-    ? selected.length === lastPlay.cards.length
-    : selected.length > 0;
-  const canTakeBack = lastPlay && currentPlayer.id === lastPlay.id;
+  const canPlay =
+    lastPlay !== undefined
+      ? selected.length === lastPlay.cards.length
+      : selected.length > 0;
+  const canTakeBack =
+    lastPlay !== undefined && currentPlayer.id === lastPlay.id;
 
   const shouldBeBeeping = props.beepOnTurn && isCurrentPlayerTurn;
 
@@ -70,9 +72,12 @@ const Play = (props: Props) => {
   const canFinish =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
 
-  const landlordSuffix = playPhase.propagated.landlord_emoji
-    ? playPhase.propagated.landlord_emoji
-    : "(当庄)";
+  const landlordSuffix =
+    playPhase.propagated.landlord_emoji !== undefined &&
+    playPhase.propagated.landlord_emoji !== null &&
+    playPhase.propagated.landlord_emoji !== ""
+      ? playPhase.propagated.landlord_emoji
+      : "(当庄)";
 
   return (
     <div>
@@ -125,7 +130,9 @@ const Play = (props: Props) => {
         onSelect={setSelected}
         notifyEmpty={isCurrentPlayerTurn}
       />
-      {playPhase.last_trick && props.showLastTrick ? (
+      {playPhase.last_trick !== undefined &&
+      playPhase.last_trick !== null &&
+      props.showLastTrick ? (
         <div>
           <p>Previous trick</p>
           <Trick

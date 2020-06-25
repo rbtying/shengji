@@ -11,7 +11,7 @@ import Credits from "./Credits";
 import Chat from "./Chat";
 import Play from "./Play";
 
-const Root = () => {
+const Root = (): JSX.Element => {
   const send = (window as any).send;
   const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
@@ -53,7 +53,7 @@ const Root = () => {
         >
           <Errors errors={state.errors} />
           <div className="game">
-            {state.game_state.Initialize ? null : (
+            {state.game_state.Initialize !== undefined ? null : (
               <a
                 href={window.location.href}
                 className="reset-link"
@@ -67,14 +67,14 @@ const Root = () => {
                 Reset game
               </a>
             )}
-            {state.game_state.Initialize ? (
+            {state.game_state.Initialize !== undefined ? (
               <Initialize
                 state={state.game_state.Initialize}
                 cards={cards}
                 name={state.name}
               />
             ) : null}
-            {state.game_state.Draw ? (
+            {state.game_state.Draw !== undefined ? (
               <Draw
                 state={state.game_state.Draw}
                 cards={cards}
@@ -83,14 +83,14 @@ const Root = () => {
                 clearTimeout={timerContext.clearTimeout}
               />
             ) : null}
-            {state.game_state.Exchange ? (
+            {state.game_state.Exchange !== undefined ? (
               <Exchange
                 state={state.game_state.Exchange}
                 cards={cards}
                 name={state.name}
               />
             ) : null}
-            {state.game_state.Play ? (
+            {state.game_state.Play !== undefined ? (
               <Play
                 playPhase={state.game_state.Play}
                 cards={cards}

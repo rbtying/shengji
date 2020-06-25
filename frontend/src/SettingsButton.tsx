@@ -13,7 +13,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const SettingsButton = () => {
+const SettingsButton = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const { state, updateState } = React.useContext(AppStateContext);
   return (

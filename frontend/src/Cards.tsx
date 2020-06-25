@@ -3,14 +3,14 @@ import Card from "./Card";
 import classNames from "classnames";
 import ArrayUtils from "./util/array";
 
-type Props = {
+interface IProps {
   cardsInHand: string[];
   selectedCards: string[];
   onSelect: (selected: string[]) => void;
   notifyEmpty?: boolean;
-};
+}
 
-const Cards = (props: Props) => {
+const Cards = (props: IProps): JSX.Element => {
   const { cardsInHand, selectedCards, notifyEmpty } = props;
   const handleSelect = (card: string) => () => {
     props.onSelect([...selectedCards, card]);

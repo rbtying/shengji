@@ -3,12 +3,12 @@ import beep from "./beep";
 import { TimerContext } from "./TimerProvider";
 
 // Plays a beep sound as long as the component is mounted.
-type Props = {
+interface Props {
   beeper?: () => void;
   interval?: number;
-};
+}
 
-const defaultBeeper = () => beep(3, 440, 200);
+const defaultBeeper = (): void => beep(3, 440, 200);
 
 const Beeper = ({ beeper = defaultBeeper, interval = 5000 }: Props): null => {
   const { setInterval, clearInterval } = React.useContext(TimerContext);

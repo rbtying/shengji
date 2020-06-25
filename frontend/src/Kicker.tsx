@@ -1,14 +1,14 @@
 import * as React from "react";
 import { IPlayer } from "./types";
 
-type Props = {
+interface IProps {
   onKick: (playerId: number) => void;
   players: IPlayer[];
-};
-const Kicker = (props: Props) => {
+}
+const Kicker = (props: IProps): JSX.Element => {
   const [selection, setSelection] = React.useState<number | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     setSelection(e.target.value === "" ? null : parseInt(e.target.value, 10));
   };
 
