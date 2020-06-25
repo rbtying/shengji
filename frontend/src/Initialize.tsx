@@ -95,7 +95,9 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setFirstLandlordSelectionPolicy = (evt: any) => {
+  const setFirstLandlordSelectionPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
