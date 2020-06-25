@@ -241,8 +241,13 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             (this.props.state.propagated.landlord !== null &&
               this.props.state.propagated.landlord !== player_id) ||
             (this.props.state.propagated.landlord === null &&
-              this.props.state.bids[this.props.state.bids.length - 1].id !==
-                player_id)
+              ((this.props.state.propagated.first_landlord_selection_policy ===
+                "ByWinningBid" &&
+                this.props.state.bids[this.props.state.bids.length - 1].id !==
+                  player_id) ||
+                (this.props.state.propagated.first_landlord_selection_policy ===
+                  "ByFirstBid" &&
+                  this.props.state.bids[0].id !== player_id)))
           }
         >
           Pick up cards from the bottom

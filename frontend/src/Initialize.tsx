@@ -93,6 +93,17 @@ const Initialize = (props: Props) => {
     }
   };
 
+  const setFirstLandlordSelectionPolicy = (evt: any) => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetFirstLandlordSelectionPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setKittyPenalty = (evt: any) => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -275,6 +286,13 @@ const Initialize = (props: Props) => {
             send({
               Action: {
                 SetFriendSelectionPolicy: value,
+              },
+            });
+            break;
+          case "first_landlord_selection_policy":
+            send({
+              Action: {
+                SetFirstLandlordSelectionPolicy: value,
               },
             });
             break;
@@ -464,6 +482,22 @@ const Initialize = (props: Props) => {
                 value={kittyOffset + 3 * props.state.propagated.players.length}
               >
                 {kittyOffset + 3 * props.state.propagated.players.length} cards
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            First Landlord Selection:{" "}
+            <select
+              value={props.state.propagated.first_landlord_selection_policy}
+              onChange={setFirstLandlordSelectionPolicy}
+            >
+              <option value="ByWinningBid">
+                Winning bid decides both landlord and trump
+              </option>
+              <option value="ByFirstBid">
+                First bid decides landlord, winning bid decides trump
               </option>
             </select>
           </label>

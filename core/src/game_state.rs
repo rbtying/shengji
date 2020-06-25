@@ -146,6 +146,18 @@ impl Default for FriendSelectionPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum FirstLandlordSelectionPolicy {
+    ByWinningBid,
+    ByFirstBid,
+}
+
+impl Default for FirstLandlordSelectionPolicy {
+    fn default() -> Self {
+        FirstLandlordSelectionPolicy::ByWinningBid
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -178,6 +190,8 @@ pub struct PropagatedState {
     trick_draw_policy: TrickDrawPolicy,
     #[serde(default)]
     throw_evaluation_policy: ThrowEvaluationPolicy,
+    #[serde(default)]
+    first_landlord_selection_policy: FirstLandlordSelectionPolicy,
 }
 
 impl PropagatedState {
@@ -340,6 +354,16 @@ impl PropagatedState {
     ) -> Result<Vec<MessageVariant>, Error> {
         self.friend_selection_policy = policy;
         Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
+    }
+
+    pub fn set_first_landlord_selection_policy(
+        &mut self,
+        policy: FirstLandlordSelectionPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.first_landlord_selection_policy = policy;
+        Ok(vec![MessageVariant::FirstLandlordSelectionPolicySet {
+            policy,
+        }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1480,7 +1504,20 @@ impl DrawPhase {
             bail!("nobody has bid yet")
         } else {
             let winning_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.last().copied()));
-            let landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
+            let first_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.first().copied()));
+            let landlord;
+
+            if self.propagated.first_landlord_selection_policy
+                == FirstLandlordSelectionPolicy::ByWinningBid
+            {
+                landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
+            } else {
+                if let None = self.propagated.landlord {
+                    landlord = self.propagated.landlord.unwrap_or(first_bid.id);
+                } else {
+                    landlord = self.propagated.landlord.unwrap_or(winning_bid.id);
+                }
+            }
             if id != landlord {
                 bail!("only the leader can advance the game");
             }
