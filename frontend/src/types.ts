@@ -124,6 +124,7 @@ export interface IPropagatedState {
   hide_landlord_points: boolean | null;
   kitty_size: number | null;
   friend_selection_policy: "Unrestricted" | "HighestCardNotAllowed";
+  first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
   num_decks: number | null;
   max_player_id: number;
   players: IPlayer[];

@@ -95,6 +95,19 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setFirstLandlordSelectionPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetFirstLandlordSelectionPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -300,6 +313,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "first_landlord_selection_policy":
+            send({
+              Action: {
+                SetFirstLandlordSelectionPolicy: value,
+              },
+            });
+            break;
           case "hide_landlord_points":
             send({
               Action: {
@@ -489,6 +509,22 @@ const Initialize = (props: IProps): JSX.Element => {
                 value={kittyOffset + 3 * props.state.propagated.players.length}
               >
                 {kittyOffset + 3 * props.state.propagated.players.length} cards
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            First Landlord Selection:{" "}
+            <select
+              value={props.state.propagated.first_landlord_selection_policy}
+              onChange={setFirstLandlordSelectionPolicy}
+            >
+              <option value="ByWinningBid">
+                Winning bid decides both landlord and trump
+              </option>
+              <option value="ByFirstBid">
+                First bid decides landlord, winning bid decides trump
               </option>
             </select>
           </label>
