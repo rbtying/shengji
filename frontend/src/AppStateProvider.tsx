@@ -1,12 +1,12 @@
 import * as React from "react";
-import { Message } from "./ChatMessage";
+import { IMessage } from "./ChatMessage";
 import gameStatistics, { GameStatistics } from "./state/GameStatistics";
 import settings, { Settings } from "./state/Settings";
 import { IGameState } from "./types";
 import { State, combineState, noPersistence } from "./State";
 import { stringLocalStorageState } from "./localStorageState";
 
-export type AppState = {
+export interface AppState {
   settings: Settings;
   gameStatistics: GameStatistics;
   connected: boolean;
@@ -15,8 +15,8 @@ export type AppState = {
   game_state: IGameState | null;
   cards: string[];
   errors: string[];
-  messages: Message[];
-};
+  messages: IMessage[];
+}
 
 const appState: State<AppState> = combineState({
   settings,
@@ -30,10 +30,10 @@ const appState: State<AppState> = combineState({
   messages: noPersistence(() => []),
 });
 
-type Context = {
+interface Context {
   state: AppState;
   updateState: (newState: Partial<AppState>) => void;
-};
+}
 
 export const AppStateContext = React.createContext<Context>({
   state: appState.loadDefault(),
@@ -42,14 +42,14 @@ export const AppStateContext = React.createContext<Context>({
 
 export const AppStateConsumer = AppStateContext.Consumer;
 
-type Props = {
+interface IProps {
   children: React.ReactNode;
-};
-const AppStateProvider = (props: Props) => {
+}
+const AppStateProvider = (props: IProps): JSX.Element => {
   const [state, setState] = React.useState<AppState>(() => {
     return appState.loadDefault();
   });
-  const updateState = (newState: Partial<AppState>) => {
+  const updateState = (newState: Partial<AppState>): void => {
     setState((s) => {
       const combined = { ...s, ...newState };
       appState.persist(state, combined);

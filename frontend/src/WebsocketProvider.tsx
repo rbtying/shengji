@@ -3,15 +3,19 @@ import { AppStateContext } from "./AppStateProvider";
 import websocketHandler from "./websocketHandler";
 import { TimerContext } from "./TimerProvider";
 
-type Context = {
+interface Context {
   send: (value: any) => void;
-};
+}
 
 export const WebsocketContext = React.createContext<Context>({
   send: () => {},
 });
 
-const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
+interface IProps {
+  children: JSX.Element[] | JSX.Element;
+}
+
+const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   const { state, updateState } = React.useContext(AppStateContext);
   const { setTimeout, clearTimeout } = React.useContext(TimerContext);
   const [timer, setTimer] = React.useState<number | null>(null);
@@ -84,7 +88,7 @@ const WebsocketProvider: React.FunctionComponent<{}> = (props) => {
     };
   }, []);
 
-  const send = (value: any) => {
+  const send = (value: any): void => {
     if (timerRef.current !== null) {
       clearTimeoutRef.current(timerRef.current);
     }

@@ -7,7 +7,7 @@ import WebsocketProvider from "./WebsocketProvider";
 import TimerProvider from "./TimerProvider";
 import Root from "./Root";
 
-const bootstrap = () => {
+const bootstrap = (): void => {
   if (window.location.hash.length !== 17) {
     const arr = new Uint8Array(8);
     window.crypto.getRandomValues(arr);

@@ -8,11 +8,11 @@ import Friends from "./Friends";
 import Players from "./Players";
 import { IExchangePhase, IFriend } from "./types";
 
-type IExchangeProps = {
+interface IExchangeProps {
   state: IExchangePhase;
   name: string;
   cards: string[];
-};
+}
 interface IExchangeState {
   friends: IFriend[];
 }
@@ -30,15 +30,15 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     this.fixFriends = this.fixFriends.bind(this);
   }
 
-  fixFriends() {
+  fixFriends(): void {
     if (this.props.state.game_mode !== "Tractor") {
-      const game_mode = this.props.state.game_mode.FindingFriends;
-      const num_friends = game_mode.num_friends;
-      const prop_friends = game_mode.friends;
-      if (num_friends !== this.state.friends.length) {
-        if (prop_friends.length !== num_friends) {
+      const gameMode = this.props.state.game_mode.FindingFriends;
+      const numFriends = gameMode.num_friends;
+      const propFriends = gameMode.friends;
+      if (numFriends !== this.state.friends.length) {
+        if (propFriends.length !== numFriends) {
           const friends = [...this.state.friends];
-          while (friends.length < num_friends) {
+          while (friends.length < numFriends) {
             friends.push({
               card: "",
               skip: 0,
@@ -46,12 +46,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               player_id: null,
             });
           }
-          while (friends.length > num_friends) {
+          while (friends.length > numFriends) {
             friends.pop();
           }
           this.setState({ friends });
         } else {
-          this.setState({ friends: prop_friends });
+          this.setState({ friends: propFriends });
         }
       }
     } else {
@@ -61,28 +61,28 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     }
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fixFriends();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     this.fixFriends();
   }
 
-  moveCardToKitty(card: string) {
+  moveCardToKitty(card: string): void {
     (window as any).send({ Action: { MoveCardToKitty: card } });
   }
 
-  moveCardToHand(card: string) {
+  moveCardToHand(card: string): void {
     (window as any).send({ Action: { MoveCardToHand: card } });
   }
 
-  startGame(evt: any) {
+  startGame(evt: any): void {
     evt.preventDefault();
     (window as any).send({ Action: "BeginPlay" });
   }
 
-  pickFriends(evt: any) {
+  pickFriends(evt: any): void {
     evt.preventDefault();
     if (
       this.props.state.game_mode !== "Tractor" &&
@@ -99,15 +99,15 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     }
   }
 
-  render() {
-    let landlord_idx = 0;
+  render(): JSX.Element {
+    let landlordIdx = 0;
     this.props.state.propagated.players.forEach((player, idx) => {
       if (player.id === this.props.state.landlord) {
-        landlord_idx = idx;
+        landlordIdx = idx;
       }
     });
     if (
-      this.props.state.propagated.players[landlord_idx].name === this.props.name
+      this.props.state.propagated.players[landlordIdx].name === this.props.name
     ) {
       return (
         <div>
@@ -130,10 +130,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                 showPlayed={false}
               />
               {this.state.friends.map((friend, idx) => {
-                const onChange = (x: IFriend) => {
-                  const new_friends = [...this.state.friends];
-                  new_friends[idx] = x;
-                  this.setState({ friends: new_friends });
+                const onChange = (x: IFriend): void => {
+                  const newFriends = [...this.state.friends];
+                  newFriends[idx] = x;
+                  this.setState({ friends: newFriends });
                   this.fixFriends();
                 };
                 return (

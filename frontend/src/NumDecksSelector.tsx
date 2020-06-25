@@ -1,14 +1,14 @@
 import * as React from "react";
 import ArrayUtils from "./util/array";
 
-type Props = {
+interface IProps {
   numPlayers: number;
   numDecks: number | null;
   onChange: (newNumDecks: number | null) => void;
-};
+}
 
-const NumDecksSelector = (props: Props) => {
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+const NumDecksSelector = (props: IProps): JSX.Element => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const newNumDecks =
       e.target.value === "" ? null : parseInt(e.target.value, 10);
     props.onChange(newNumDecks);

@@ -8,7 +8,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const ChangeLog = () => {
+const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   return (
     <>
@@ -36,7 +36,7 @@ const ChangeLog = () => {
         </ul>
         <p>6/20/2020:</p>
         <ul>
-          <li>Add the ability to wrap-around after defending on "A".</li>
+          <li>Add the ability to wrap-around after defending on A.</li>
           <li>Show throw breakdowns in the UI to make throws more obvious.</li>
         </ul>
         <p>6/17/2020:</p>
@@ -72,8 +72,8 @@ const ChangeLog = () => {
         <p>6/6/2020:</p>
         <ul>
           <li>
-            (#125) Highlight all members of the landlord's team in the trick
-            view.
+            (#125) Highlight all members of the landlord&apos;s team in the
+            trick view.
           </li>
         </ul>
         <p>6/5/2020:</p>
@@ -123,17 +123,22 @@ const ChangeLog = () => {
   );
 };
 
-const Credits = () => (
+const Credits = (): JSX.Element => (
   <p>
     Made by Robert Ying, Abra Shen, and other{" "}
     <a
       href="https://github.com/rbtying/shengji/graphs/contributors"
       target="_blank"
+      rel="noreferrer"
     >
       friends
     </a>
     . Consider buying us boba via Venmo at @Robert-Ying, or contributing on{" "}
-    <a href="https://github.com/rbtying/shengji" target="_blank">
+    <a
+      href="https://github.com/rbtying/shengji"
+      target="_blank"
+      rel="noreferrer"
+    >
       GitHub
     </a>
     !

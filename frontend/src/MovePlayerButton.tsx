@@ -2,10 +2,10 @@ import * as React from "react";
 import { IPlayer } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 
-type Props = {
+interface Props {
   players: IPlayer[];
   player: IPlayer;
-};
+}
 
 const MovePlayerButton = (relative: number, children: string) => (
   props: Props
@@ -13,7 +13,7 @@ const MovePlayerButton = (relative: number, children: string) => (
   const { players, player } = props;
   const { send } = React.useContext(WebsocketContext);
 
-  const movePlayer = () => {
+  const movePlayer = (): void => {
     const index = players.findIndex((p) => p === player);
     const newIndex = (index + relative) % players.length;
     const withoutPlayer = players.filter((p) => p !== player);

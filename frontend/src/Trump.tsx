@@ -3,10 +3,12 @@ import { ITrump } from "./types";
 import InlineCard from "./InlineCard";
 import preloadedCards from "./preloadedCards";
 
-type Props = { trump: ITrump };
-const Trump = (props: Props) => {
+interface IProps {
+  trump: ITrump;
+}
+const Trump = (props: IProps): JSX.Element => {
   const { trump } = props;
-  if (trump.Standard) {
+  if (trump.Standard !== undefined) {
     const { suit, number: rank } = trump.Standard;
     const card = preloadedCards.filter(
       (v) => v.typ === suit && v.number === rank

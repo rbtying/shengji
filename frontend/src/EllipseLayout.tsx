@@ -18,10 +18,11 @@ const ItemContainer = styled.div`
   left: 50%;
 `;
 
-type Props = {
+interface IProps {
   style?: React.CSSProperties;
-};
-const EllipseLayout: React.FunctionComponent<Props> = (props) => {
+  children: JSX.Element[];
+}
+const EllipseLayout: React.FunctionComponent<IProps> = (props: IProps) => {
   const childrenCount = React.Children.count(props.children);
   const step = (2 * Math.PI) / childrenCount;
   const angles = ArrayUtils.range(childrenCount, (i) => i * step);

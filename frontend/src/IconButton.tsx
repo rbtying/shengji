@@ -15,7 +15,9 @@ const Button = styled.button`
   }
 `;
 
-const IconButton = (props: React.ComponentProps<typeof Button>) => {
+const IconButton = (
+  props: React.ComponentProps<typeof Button>
+): JSX.Element => {
   return <Button {...props} />;
 };
 export default IconButton;

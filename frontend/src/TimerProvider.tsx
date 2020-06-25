@@ -5,24 +5,28 @@
 
 import * as React from "react";
 
-type Context = {
+interface Context {
   setTimeout: (fn: () => void, delay: number) => number;
   clearTimeout: (id: number) => void;
   setInterval: (fn: () => void, interval: number) => number;
   clearInterval: (id: number) => void;
-};
+}
 
 export const TimerContext = React.createContext<Context>({
-  setTimeout: (fn, delay) => 0,
-  clearTimeout: (id) => {},
-  setInterval: (fn, interval) => 0,
-  clearInterval: (id) => {},
+  setTimeout: (_fn, _delay) => 0,
+  clearTimeout: (_id) => {},
+  setInterval: (_fn, _interval) => 0,
+  clearInterval: (_id) => {},
 });
 
-const _TimerProvider: React.FunctionComponent<{}> = (props) => {
+interface IProps {
+  children: JSX.Element[] | JSX.Element;
+}
+
+const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   const [worker, setWorker] = React.useState<Worker | null>(null);
   const timeoutId = React.useRef(0);
-  const callbacks = React.useRef<{ [id: number]: () => void }>({});
+  const callbacks = React.useRef<Map<number, () => void>>(new Map());
 
   React.useEffect(() => {
     const timerWorker = new Worker("timer-worker.js");
@@ -30,11 +34,11 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     timerWorker.addEventListener("message", (evt) => {
       const data = evt.data;
       const id = data.id as number;
-      if (callbacks.current[id]) {
-        callbacks.current[id]();
+      if (callbacks.current.has(id)) {
+        callbacks.current.get(id)();
       }
       if (data.variant === "timeout") {
-        delete callbacks.current[id];
+        callbacks.current.delete(id);
       }
     });
     setWorker(timerWorker);
@@ -43,38 +47,41 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
     };
   }, []);
 
-  const setTimeout = (fn: () => void, delay: number) => {
+  const setTimeout = (fn: () => void, delay: number | undefined): number => {
     timeoutId.current += 1;
-    delay = delay || 0;
+    delay = delay === undefined ? 0 : delay;
     const id = timeoutId.current;
-    callbacks.current[id] = fn;
+    callbacks.current.set(id, fn);
     if (worker !== null) {
       worker.postMessage({ command: "setTimeout", id, timeout: delay });
     }
     return id;
   };
 
-  const clearTimeout = (id: number) => {
+  const clearTimeout = (id: number): void => {
     worker.postMessage({ command: "clearTimeout", id });
-    delete callbacks.current[id];
+    callbacks.current.delete(id);
   };
 
-  const setInterval = (fn: () => void, interval: number) => {
+  const setInterval = (
+    fn: () => void,
+    interval: number | undefined
+  ): number => {
     timeoutId.current += 1;
-    interval = interval || 0;
+    interval = interval === undefined ? 0 : interval;
     const id = timeoutId.current;
-    callbacks.current[id] = fn;
+    callbacks.current.set(id, fn);
     if (worker !== null) {
       worker.postMessage({ command: "setInterval", id, interval });
     }
     return id;
   };
 
-  const clearInterval = (id: number) => {
+  const clearInterval = (id: number): void => {
     if (worker !== null) {
       worker.postMessage({ command: "clearInterval", id });
     }
-    delete callbacks.current[id];
+    callbacks.current.delete(id);
   };
 
   return (
@@ -86,7 +93,7 @@ const _TimerProvider: React.FunctionComponent<{}> = (props) => {
   );
 };
 
-const TimerProvider: React.FunctionComponent<{}> = (props) => (
+const TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => (
   <_TimerProvider>{props.children}</_TimerProvider>
 );
 

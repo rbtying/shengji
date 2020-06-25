@@ -1,27 +1,27 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
-import Picker from "emoji-picker-react";
+import Picker, { IEmojiData } from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
-import { IInitializePhase, IPropagatedState } from "./types";
+import { IInitializePhase, IPlayer, IPropagatedState } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
-import { IPlayer } from "./types";
+
 import Header from "./Header";
 import Players from "./Players";
 
-type Props = {
+interface IProps {
   state: IInitializePhase;
   cards: string[];
   name: string;
-};
+}
 
-const Initialize = (props: Props) => {
+const Initialize = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
-  const [showPicker, setShowPicker] = React.useState(false);
-  const setGameMode = (evt: any) => {
+  const [showPicker, setShowPicker] = React.useState<boolean>(false);
+  const setGameMode = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
       send({ Action: { SetGameMode: "Tractor" } });
@@ -38,7 +38,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setNumFriends = (evt: any) => {
+  const setNumFriends = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value === "") {
       send({
@@ -64,7 +64,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittySize = (evt: any) => {
+  const setKittySize = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       const size = parseInt(evt.target.value, 10);
@@ -82,7 +82,9 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setFriendSelectionPolicy = (evt: any) => {
+  const setFriendSelectionPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -104,7 +106,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittyPenalty = (evt: any) => {
+  const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -121,7 +123,9 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setKittyBidPolicy = (evt: any) => {
+  const setKittyBidPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -132,7 +136,9 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setTrickDrawPolicy = (evt: any) => {
+  const setTrickDrawPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -143,7 +149,9 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setThrowEvaluationPolicy = (evt: any) => {
+  const setThrowEvaluationPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -154,7 +162,9 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setAdvancementPolicy = (evt: any) => {
+  const setAdvancementPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -171,7 +181,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setThrowPenalty = (evt: any) => {
+  const setThrowPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
@@ -188,25 +198,34 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const setHideLandlordsPoints = (evt: any) => {
+  const setHideLandlordsPoints = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     send({ Action: { SetHideLandlordsPoints: evt.target.value === "hide" } });
   };
 
-  const setHidePlayedCards = (evt: any) => {
+  const setHidePlayedCards = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     send({ Action: { SetHidePlayedCards: evt.target.value === "hide" } });
   };
 
-  const startGame = (evt: any) => {
+  const startGame = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     send({ Action: "StartGame" });
   };
 
-  const setEmoji = (evt: any, emojiObject: any) => {
+  const setEmoji = (evt: MouseEvent, emojiObject: IEmojiData | null): void => {
     evt.preventDefault();
     send({
-      Action: { SetLandlordEmoji: emojiObject ? emojiObject.emoji : null },
+      Action: {
+        SetLandlordEmoji:
+          emojiObject !== undefined && emojiObject !== null
+            ? emojiObject.emoji
+            : null,
+      },
     });
   };
 
@@ -220,8 +239,11 @@ const Initialize = (props: Props) => {
       ? ""
       : props.state.propagated.game_mode.FindingFriends.num_friends;
   const decksEffective =
-    props.state.propagated.num_decks ||
-    Math.floor(props.state.propagated.players.length / 2);
+    props.state.propagated.num_decks !== undefined &&
+    props.state.propagated.num_decks !== null &&
+    props.state.propagated.num_decks > 0
+      ? props.state.propagated.num_decks
+      : Math.floor(props.state.propagated.players.length / 2);
   let kittyOffset =
     (decksEffective * 54) % props.state.propagated.players.length;
   if (kittyOffset === 0) {
@@ -231,13 +253,13 @@ const Initialize = (props: Props) => {
   let currentPlayer = props.state.propagated.players.find(
     (p: IPlayer) => p.name === props.name
   );
-  if (!currentPlayer) {
+  if (currentPlayer === undefined) {
     currentPlayer = props.state.propagated.observers.find(
       (p) => p.name === props.name
     );
   }
 
-  const saveGameSettings = (evt: any) => {
+  const saveGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     localStorage.setItem(
       "gameSettingsInLocalStorage",
@@ -245,7 +267,7 @@ const Initialize = (props: Props) => {
     );
   };
 
-  const setGameSettings = (gameSettings: IPropagatedState) => {
+  const setGameSettings = (gameSettings: IPropagatedState): void => {
     if (gameSettings !== null) {
       let kittySizeSet = false;
       let kittySize = null;
@@ -360,7 +382,7 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const loadGameSettings = (evt: any) => {
+  const loadGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     const settings = localStorage.getItem("gameSettingsInLocalStorage");
     if (settings !== null) {
@@ -377,18 +399,16 @@ const Initialize = (props: Props) => {
     }
   };
 
-  const resetGameSettings = (evt: any) => {
+  const resetGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
 
-    fetch("default_settings.json")
-      .then((res) => res.json())
-      .then(
-        (result) => {
-          setGameSettings(result);
-        },
+    const fetchAsync = async (): Promise<void> => {
+      const fetchResult = await fetch("default_settings.json");
+      const fetchJSON = await fetchResult.json();
+      setGameSettings(fetchJSON);
+    };
 
-        (error) => {}
-      );
+    fetchAsync().catch((e) => console.error(e));
   };
 
   return (
@@ -407,7 +427,7 @@ const Initialize = (props: Props) => {
       />
       <p>
         Send link to other players to allow them to join the game:{" "}
-        <a href={window.location.href} target="_blank">
+        <a href={window.location.href} target="_blank" rel="noreferrer">
           <code>{window.location.href}</code>
         </a>
       </p>
@@ -463,7 +483,12 @@ const Initialize = (props: Props) => {
           <label>
             Number of cards in the bottom:{" "}
             <select
-              value={props.state.propagated.kitty_size || ""}
+              value={
+                props.state.propagated.kitty_size !== undefined &&
+                props.state.propagated.kitty_size !== null
+                  ? props.state.propagated.kitty_size
+                  : ""
+              }
               onChange={setKittySize}
             >
               <option value="">default</option>
@@ -525,8 +550,8 @@ const Initialize = (props: Props) => {
               }
               onChange={setHideLandlordsPoints}
             >
-              <option value="show">Show all players' points</option>
-              <option value="hide">Hide defending team's points</option>
+              <option value="show">Show all players&apos; points</option>
+              <option value="hide">Hide defending team&apos;s points</option>
             </select>
           </label>
         </div>
@@ -631,7 +656,9 @@ const Initialize = (props: Props) => {
         <div>
           <label>
             Landlord Emoji:{" "}
-            {props.state.propagated.landlord_emoji
+            {props.state.propagated.landlord_emoji !== null &&
+            props.state.propagated.landlord_emoji !== undefined &&
+            props.state.propagated.landlord_emoji !== ""
               ? props.state.propagated.landlord_emoji
               : "当庄"}{" "}
             <button

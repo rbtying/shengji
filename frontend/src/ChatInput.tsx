@@ -26,12 +26,12 @@ const Input = styled.input`
   flex: 1;
 `;
 
-type Props = {
+interface IProps {
   onSubmit: (value: string) => void;
-};
-const ChatInput = (props: Props) => {
+}
+const ChatInput = (props: IProps): JSX.Element => {
   const [draft, setDraft] = React.useState<string>("");
-  const handleSubmit = (event: React.SyntheticEvent) => {
+  const handleSubmit = (event: React.SyntheticEvent): void => {
     event.preventDefault();
     if (draft.length > 0) {
       props.onSubmit(draft);

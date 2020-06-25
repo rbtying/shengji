@@ -1,7 +1,7 @@
 import { State, combineState } from "../State";
 import { numberLocalStorageState } from "../localStorageState";
 
-export type GameStatistics = {
+export interface GameStatistics {
   gamesPlayed: number;
   gamesPlayedAsDefending: number;
   gamesPlayedAsLandlord: number;
@@ -9,7 +9,7 @@ export type GameStatistics = {
   gamesWonAsDefending: number;
   gamesWonAsLandlord: number;
   ranksUp: number;
-};
+}
 
 const gamesPlayed: State<number> = numberLocalStorageState("games_played");
 const gamesPlayedAsDefending: State<number> = numberLocalStorageState(

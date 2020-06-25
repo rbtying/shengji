@@ -1,3 +1,60 @@
+export type IGameMessage = "Beep" | IGameMessageUnion;
+export interface IGameMessageUnion {
+  Broadcast?: IGameMessageBroadcast;
+  Error?: string;
+  Message?: IGameMessageMessage;
+  State?: IGameMessageState;
+}
+
+export interface IGameMessageMessage {
+  from: string;
+  message: string;
+}
+export interface IGameMessageBroadcast {
+  data: IBroadcastMessage;
+  message: string;
+}
+export interface IGameMessageState {
+  state: IGameState;
+  cards: string[];
+}
+export interface IBroadcastMessage {
+  actor: number;
+  actor_name: string;
+  variant: MessageVariant;
+}
+export type MessageVariant =
+  | { type: "GameModeSet"; game_mode: IGameMode }
+  | { type: "JoinedGame"; player: number }
+  | { type: "JoinedTeam"; player: number }
+  | { type: "KittySizeSet"; size: number | null }
+  | { type: "LeftGame"; name: string }
+  | { type: "MadeBid"; card: string; count: number }
+  | { type: "NewLandlordForNextGame"; landlord: number }
+  | { type: "NumDecksSet"; num_decks: number | null }
+  | { type: "NumFriendsSet"; num_friends: number | null }
+  | { type: "PlayedCards"; cards: string[] }
+  | { type: "PointsInKitty"; points: number; multiplier: number }
+  | { type: "RankAdvanced"; player: number; new_rank: number }
+  | { type: "ResettingGame" }
+  | { type: "SetDefendingPointVisibility"; visible: boolean }
+  | { type: "SetLandlord"; landlord: number | null }
+  | { type: "SetRank"; rank: string }
+  | { type: "StartingGame" }
+  | { type: "TookBackPlay" }
+  | { type: "TrickWon"; winner: number; points: number }
+  | {
+      type: "GameFinished";
+      result: {
+        [player_name: string]: {
+          won_game: boolean;
+          is_defending: boolean;
+          is_landlord: boolean;
+          ranks_up: number;
+        };
+      };
+    };
+
 export interface IPlayer {
   id: number;
   name: string;
@@ -113,12 +170,6 @@ export interface ICardInfo {
   typ: string;
   number: string | null;
   points: number;
-}
-
-export interface IPlayer {
-  id: number;
-  name: string;
-  level: string;
 }
 
 export interface ITrick {
