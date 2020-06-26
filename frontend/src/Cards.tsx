@@ -41,11 +41,28 @@ const Cards = (props: IProps): JSX.Element => {
           (unicodeToCard(card).type === "suit_card" &&
             cardLookup[card].number === level)
       )
-    : null;
+    : [];
+
+  let bidCardComponent;
   if (separateBidCards) {
     unselected = ArrayUtils.minus(unselected, bidCards);
+    if (bidCards.length === 0) {
+      bidCardComponent = null;
+    } else {
+      bidCardComponent = (
+        <div className="unselected-cards">
+          <div>Available Bid Cards</div>
+          {bidCards.map((c, idx) => (
+            <Card key={idx} onClick={handleSelect(c)} card={c} />
+          ))}
+        </div>
+      );
+    }
+  } else {
+    bidCardComponent = null;
   }
 
+  console.log("bidCards: " + JSON.stringify(bidCards));
   return (
     <div className="hand">
       <div className="selected-cards">
@@ -56,13 +73,7 @@ const Cards = (props: IProps): JSX.Element => {
           <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
         )}
       </div>
-      <div className="unselected-cards">
-        {bidCards == null
-          ? null
-          : bidCards.map((c, idx) => (
-              <Card key={idx} onClick={handleSelect(c)} card={c} />
-            ))}
-      </div>
+      {bidCardComponent}
       <div className="unselected-cards">
         {unselected.map((c, idx) => (
           <Card key={idx} onClick={handleSelect(c)} card={c} />
