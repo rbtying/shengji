@@ -390,6 +390,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "bid_policy":
+            send({
+              Action: {
+                SetBidPolicy: value,
+              },
+            });
+            break;
         }
       }
     }
