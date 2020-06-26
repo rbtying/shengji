@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
-    KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult, ThrowPenalty,
+    AdvancementPolicy, BidPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
+    GameModeSettings, KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
@@ -53,6 +53,9 @@ pub enum MessageVariant {
     },
     FirstLandlordSelectionPolicySet {
         policy: FirstLandlordSelectionPolicy,
+    },
+    BidPolicySet {
+        policy: BidPolicy,
     },
     NumDecksSet {
         num_decks: Option<usize>,

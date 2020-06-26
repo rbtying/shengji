@@ -158,6 +158,18 @@ impl Default for FirstLandlordSelectionPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum BidPolicy {
+    JokerOrGreaterLength,
+    GreaterLength,
+}
+
+impl Default for BidPolicy {
+    fn default() -> Self {
+        BidPolicy::JokerOrGreaterLength
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -192,6 +204,8 @@ pub struct PropagatedState {
     throw_evaluation_policy: ThrowEvaluationPolicy,
     #[serde(default)]
     first_landlord_selection_policy: FirstLandlordSelectionPolicy,
+    #[serde(default)]
+    bid_policy: BidPolicy,
 }
 
 impl PropagatedState {
@@ -364,6 +378,11 @@ impl PropagatedState {
         Ok(vec![MessageVariant::FirstLandlordSelectionPolicySet {
             policy,
         }])
+    }
+
+    pub fn set_bid_policy(&mut self, policy: BidPolicy) -> Result<Vec<MessageVariant>, Error> {
+        self.bid_policy = policy;
+        Ok(vec![MessageVariant::BidPolicySet { policy }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1452,10 +1471,20 @@ impl DrawPhase {
                         } else if new_bid.count == existing_bid.count {
                             match (new_bid.card, existing_bid.card) {
                                 (Card::BigJoker, Card::BigJoker) => (),
-                                (Card::BigJoker, _) => valid_bids.push(new_bid),
+                                (Card::BigJoker, _) => {
+                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
+                                    {
+                                        valid_bids.push(new_bid)
+                                    }
+                                }
                                 (Card::SmallJoker, Card::BigJoker)
                                 | (Card::SmallJoker, Card::SmallJoker) => (),
-                                (Card::SmallJoker, _) => valid_bids.push(new_bid),
+                                (Card::SmallJoker, _) => {
+                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
+                                    {
+                                        valid_bids.push(new_bid)
+                                    }
+                                }
                                 _ => (),
                             }
                         }

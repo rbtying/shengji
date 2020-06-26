@@ -108,6 +108,17 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setBidPolicy = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -531,6 +542,23 @@ const Initialize = (props: IProps): JSX.Element => {
         </div>
         <div>
           <label>
+            Bid Policy:{" "}
+            <select
+              value={props.state.propagated.bid_policy}
+              onChange={setBidPolicy}
+            >
+              <option value="JokerOrGreaterLength">
+                Joker bids to outbid non-joker bids with the same number of
+                cards
+              </option>
+              <option value="GreaterLength">
+                All bids must have more cards than the previous bids
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
             Friend Selection Restriction:{" "}
             <select
               value={props.state.propagated.friend_selection_policy}
@@ -673,6 +701,7 @@ const Initialize = (props: IProps): JSX.Element => {
             </button>
             <button
               className="normal"
+              disabled={props.state.propagated.landlord_emoji == null}
               onClick={() => {
                 send({ Action: { SetLandlordEmoji: null } });
               }}
