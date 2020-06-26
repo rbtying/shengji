@@ -31,10 +31,7 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>6/26/2020:</p>
         <ul>
-          <li>
-            (#160) add game option to restrict joker bids to overbid with higher
-            length
-          </li>
+          <li>(#160) add game option to allow outbid only with more cards</li>
         </ul>
         <p>6/25/2020:</p>
         <ul>
