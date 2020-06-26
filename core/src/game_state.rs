@@ -159,14 +159,14 @@ impl Default for FirstLandlordSelectionPolicy {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum JokerOverbidSelectionPolicy {
-    AllowEqualOrGreaterLength,
-    AllowOnlyGreaterLength,
+pub enum BidPolicy {
+    JokerOrGreaterLength,
+    GreaterLength,
 }
 
-impl Default for JokerOverbidSelectionPolicy {
+impl Default for BidPolicy {
     fn default() -> Self {
-        JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+        BidPolicy::JokerOrGreaterLength
     }
 }
 
@@ -205,7 +205,7 @@ pub struct PropagatedState {
     #[serde(default)]
     first_landlord_selection_policy: FirstLandlordSelectionPolicy,
     #[serde(default)]
-    joker_overbid_selection_policy: JokerOverbidSelectionPolicy,
+    bid_policy: BidPolicy,
 }
 
 impl PropagatedState {
@@ -380,12 +380,12 @@ impl PropagatedState {
         }])
     }
 
-    pub fn set_joker_overbid_selection_policy(
+    pub fn set_bid_policy(
         &mut self,
-        policy: JokerOverbidSelectionPolicy,
+        policy: BidPolicy,
     ) -> Result<Vec<MessageVariant>, Error> {
-        self.joker_overbid_selection_policy = policy;
-        Ok(vec![MessageVariant::JokerOverbidSelectionPolicySet {
+        self.bid_policy = policy;
+        Ok(vec![MessageVariant::BidPolicySet {
             policy,
         }])
     }
@@ -1477,8 +1477,8 @@ impl DrawPhase {
                             match (new_bid.card, existing_bid.card) {
                                 (Card::BigJoker, Card::BigJoker) => (),
                                 (Card::BigJoker, _) => {
-                                    if self.propagated.joker_overbid_selection_policy
-                                        == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+                                    if self.propagated.bid_policy
+                                        == BidPolicy::JokerOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
                                     }
@@ -1486,8 +1486,8 @@ impl DrawPhase {
                                 (Card::SmallJoker, Card::BigJoker)
                                 | (Card::SmallJoker, Card::SmallJoker) => (),
                                 (Card::SmallJoker, _) => {
-                                    if self.propagated.joker_overbid_selection_policy
-                                        == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+                                    if self.propagated.bid_policy
+                                        == BidPolicy::JokerOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
                                     }

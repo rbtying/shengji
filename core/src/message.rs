@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
-    JokerOverbidSelectionPolicy, KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult,
+    BidPolicy, KittyBidPolicy, KittyPenalty, PlayerGameFinishedResult,
     ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -55,8 +55,8 @@ pub enum MessageVariant {
     FirstLandlordSelectionPolicySet {
         policy: FirstLandlordSelectionPolicy,
     },
-    JokerOverbidSelectionPolicySet {
-        policy: JokerOverbidSelectionPolicy,
+    BidPolicySet {
+        policy: BidPolicy,
     },
     NumDecksSet {
         num_decks: Option<usize>,

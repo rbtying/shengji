@@ -108,14 +108,12 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setJokerOverbidSelectionPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
+  const setBidPolicy = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
         Action: {
-          SetJokerOverbidSelectionPolicy: evt.target.value,
+          SetBidPolicy: evt.target.value,
         },
       });
     }
@@ -544,17 +542,17 @@ const Initialize = (props: IProps): JSX.Element => {
         </div>
         <div>
           <label>
-            Joker Overbid Selection:{" "}
+            Bid Policy:{" "}
             <select
-              value={props.state.propagated.joker_overbid_selection_policy}
-              onChange={setJokerOverbidSelectionPolicy}
+              value={props.state.propagated.bid_policy}
+              onChange={setBidPolicy}
             >
-              <option value="AllowEqualOrGreaterLength">
-                Joker overid can be of the same or greater suit length of
-                current bid when current bid length is 2 or higher
+              <option value="JokerOrGreaterLength">
+                Joker bids to outbid non-joker bids with the same number of
+                cards
               </option>
-              <option value="AllowOnlyGreaterLength">
-                Joker overid can be of only greater suit length of current bid
+              <option value="GreaterLength">
+                All bids to have more cards than the previous bids
               </option>
             </select>
           </label>
