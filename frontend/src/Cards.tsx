@@ -51,7 +51,9 @@ const Cards = (props: IProps): JSX.Element => {
     } else {
       bidCardComponent = (
         <div className="unselected-cards">
-          <div>Available Bid Cards</div>
+          <div>
+            <label>Available Bid Cards</label>
+          </div>
           {bidCards.map((c, idx) => (
             <Card key={idx} onClick={handleSelect(c)} card={c} />
           ))}
@@ -62,7 +64,6 @@ const Cards = (props: IProps): JSX.Element => {
     bidCardComponent = null;
   }
 
-  console.log("bidCards: " + JSON.stringify(bidCards));
   return (
     <div className="hand">
       <div className="selected-cards">
