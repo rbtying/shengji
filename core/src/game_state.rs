@@ -1481,8 +1481,6 @@ impl DrawPhase {
                                         == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
-                                    } else {
-                                        ()
                                     }
                                 }
                                 (Card::SmallJoker, Card::BigJoker)
@@ -1492,8 +1490,6 @@ impl DrawPhase {
                                         == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
-                                    } else {
-                                        ()
                                     }
                                 }
                                 _ => (),
