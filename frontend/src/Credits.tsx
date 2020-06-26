@@ -29,6 +29,20 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/25/2020:</p>
+        <ul>
+          <li>
+            (#158) add user option to display bid cards in separate row in Draw
+            stage
+          </li>
+        </ul>
+        <p>6/24/2020:</p>
+        <ul>
+          <li>
+            (#156) add FirstLandlordSelectionPolicy to set the first bidder as
+            landlord when no landlord is selected
+          </li>
+        </ul>
         <p>6/21/2020:</p>
         <ul>
           <li>(#145) Save, load, reset game settings</li>

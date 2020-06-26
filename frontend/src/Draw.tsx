@@ -11,6 +11,7 @@ interface IDrawProps {
   state: IDrawPhase;
   name: string;
   cards: string[];
+  separateBidCards: boolean;
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
 }
@@ -164,6 +165,9 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       }
     });
 
+    const landlord = this.props.state.propagated.landlord;
+    const level =
+      landlord == null ? players[playerId].level : players[landlord].level;
     return (
       <div>
         <Header
@@ -173,7 +177,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         <Players
           players={this.props.state.propagated.players}
           observers={this.props.state.propagated.observers}
-          landlord={this.props.state.propagated.landlord}
+          landlord={landlord}
           next={next}
           name={this.props.name}
         />
@@ -240,9 +244,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             this.props.state.deck.length > 0 ||
             (this.props.state.bids.length === 0 &&
               this.props.state.autobid === null) ||
-            (this.props.state.propagated.landlord !== null &&
-              this.props.state.propagated.landlord !== playerId) ||
-            (this.props.state.propagated.landlord === null &&
+            (landlord !== null && landlord !== playerId) ||
+            (landlord === null &&
               ((this.props.state.propagated.first_landlord_selection_policy ===
                 "ByWinningBid" &&
                 this.props.state.bids[this.props.state.bids.length - 1].id !==
@@ -283,6 +286,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           cardsInHand={cardsNotBid}
           selectedCards={this.state.selected}
           onSelect={this.setSelected}
+          separateBidCards={this.props.separateBidCards}
+          level={level}
         />
         <LabeledPlay cards={this.props.state.kitty} label="底牌" />
       </div>

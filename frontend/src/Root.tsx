@@ -81,6 +81,7 @@ const Root = (): JSX.Element => {
                 name={state.name}
                 setTimeout={timerContext.setTimeout}
                 clearTimeout={timerContext.clearTimeout}
+                separateBidCards={state.settings.separateBidCards}
               />
             ) : null}
             {state.game_state.Exchange !== undefined ? (

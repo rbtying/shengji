@@ -2,16 +2,25 @@ import * as React from "react";
 import Card from "./Card";
 import classNames from "classnames";
 import ArrayUtils from "./util/array";
+import { cardLookup, unicodeToCard } from "./util/cardHelpers";
 
 interface IProps {
   cardsInHand: string[];
   selectedCards: string[];
   onSelect: (selected: string[]) => void;
   notifyEmpty?: boolean;
+  separateBidCards?: boolean;
+  level?: string;
 }
 
 const Cards = (props: IProps): JSX.Element => {
-  const { cardsInHand, selectedCards, notifyEmpty } = props;
+  const {
+    cardsInHand,
+    selectedCards,
+    notifyEmpty,
+    separateBidCards,
+    level,
+  } = props;
   const handleSelect = (card: string) => () => {
     props.onSelect([...selectedCards, card]);
   };
@@ -23,7 +32,37 @@ const Cards = (props: IProps): JSX.Element => {
     }
   };
 
-  const unselected = ArrayUtils.minus(cardsInHand, selectedCards);
+  let unselected = ArrayUtils.minus(cardsInHand, selectedCards);
+  const bidCards = separateBidCards
+    ? unselected.filter(
+        (card) =>
+          unicodeToCard(card).type === "big_joker" ||
+          unicodeToCard(card).type === "little_joker" ||
+          (unicodeToCard(card).type === "suit_card" &&
+            cardLookup[card].number === level)
+      )
+    : [];
+
+  let bidCardComponent;
+  if (separateBidCards) {
+    unselected = ArrayUtils.minus(unselected, bidCards);
+    if (bidCards.length === 0) {
+      bidCardComponent = null;
+    } else {
+      bidCardComponent = (
+        <div className="unselected-cards">
+          <div>
+            <label>Available Bid Cards</label>
+          </div>
+          {bidCards.map((c, idx) => (
+            <Card key={idx} onClick={handleSelect(c)} card={c} />
+          ))}
+        </div>
+      );
+    }
+  } else {
+    bidCardComponent = null;
+  }
 
   return (
     <div className="hand">
@@ -35,6 +74,7 @@ const Cards = (props: IProps): JSX.Element => {
           <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
         )}
       </div>
+      {bidCardComponent}
       <div className="unselected-cards">
         {unselected.map((c, idx) => (
           <Card key={idx} onClick={handleSelect(c)} card={c} />
