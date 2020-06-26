@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameState, InitializePhase, BidPolicy, KittyBidPolicy,
+    AdvancementPolicy, BidPolicy, FirstLandlordSelectionPolicy, FriendSelection,
+    FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
     KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
@@ -114,10 +114,7 @@ impl InteractiveGame {
                 info!(logger, "Setting first landlord selection policy"; "policy" => format!("{:?}", policy));
                 state.set_first_landlord_selection_policy(policy)?
             }
-            (
-                Message::SetBidPolicy(policy),
-                GameState::Initialize(ref mut state),
-            ) => {
+            (Message::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_policy(policy)?
             }

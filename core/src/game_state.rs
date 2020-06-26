@@ -380,14 +380,9 @@ impl PropagatedState {
         }])
     }
 
-    pub fn set_bid_policy(
-        &mut self,
-        policy: BidPolicy,
-    ) -> Result<Vec<MessageVariant>, Error> {
+    pub fn set_bid_policy(&mut self, policy: BidPolicy) -> Result<Vec<MessageVariant>, Error> {
         self.bid_policy = policy;
-        Ok(vec![MessageVariant::BidPolicySet {
-            policy,
-        }])
+        Ok(vec![MessageVariant::BidPolicySet { policy }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1477,8 +1472,7 @@ impl DrawPhase {
                             match (new_bid.card, existing_bid.card) {
                                 (Card::BigJoker, Card::BigJoker) => (),
                                 (Card::BigJoker, _) => {
-                                    if self.propagated.bid_policy
-                                        == BidPolicy::JokerOrGreaterLength
+                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
                                     }
@@ -1486,8 +1480,7 @@ impl DrawPhase {
                                 (Card::SmallJoker, Card::BigJoker)
                                 | (Card::SmallJoker, Card::SmallJoker) => (),
                                 (Card::SmallJoker, _) => {
-                                    if self.propagated.bid_policy
-                                        == BidPolicy::JokerOrGreaterLength
+                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
                                     {
                                         valid_bids.push(new_bid)
                                     }
