@@ -552,7 +552,7 @@ const Initialize = (props: IProps): JSX.Element => {
                 cards
               </option>
               <option value="GreaterLength">
-                All bids to have more cards than the previous bids
+                All bids must have more cards than the previous bids
               </option>
             </select>
           </label>
