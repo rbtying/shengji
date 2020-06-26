@@ -284,7 +284,6 @@ const Initialize = (props: IProps): JSX.Element => {
     if (gameSettings !== null) {
       let kittySizeSet = false;
       let kittySize = null;
-      console.log(gameSettings);
       for (const [key, value] of Object.entries(gameSettings)) {
         switch (key) {
           case "game_mode":
