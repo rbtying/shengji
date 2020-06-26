@@ -142,6 +142,19 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>separate bid cards in Draw stage</LabelCell>
+          <Cell>
+            <input
+              name="separate_bid_cards"
+              type="checkbox"
+              checked={settings.separateBidCards}
+              onChange={handleChange({
+                separateBidCards: !settings.separateBidCards,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>
