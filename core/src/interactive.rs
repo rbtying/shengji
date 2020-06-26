@@ -4,7 +4,8 @@ use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameState, InitializePhase, KittyBidPolicy, KittyPenalty, ThrowPenalty,
+    GameModeSettings, GameState, InitializePhase, JokerOverbidSelectionPolicy, KittyBidPolicy,
+    KittyPenalty, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -112,6 +113,13 @@ impl InteractiveGame {
             ) => {
                 info!(logger, "Setting first landlord selection policy"; "policy" => format!("{:?}", policy));
                 state.set_first_landlord_selection_policy(policy)?
+            }
+            (
+                Message::SetJokerOverbidSelectionPolicy(policy),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting joker overbid selection policy"; "policy" => format!("{:?}", policy));
+                state.set_joker_overbid_selection_policy(policy)?
             }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
@@ -277,6 +285,7 @@ pub enum Message {
     SetKittySize(Option<usize>),
     SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetFirstLandlordSelectionPolicy(FirstLandlordSelectionPolicy),
+    SetJokerOverbidSelectionPolicy(JokerOverbidSelectionPolicy),
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),
@@ -345,6 +354,8 @@ impl BroadcastMessage {
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid} => format!("{} set winning bid to decide both landlord and trump", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
+            JokerOverbidSelectionPolicySet { policy: JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength} => format!("{} set joker overid can be of the same or greater suit length of current bid when current bid length is 2 or higher", n?),
+            JokerOverbidSelectionPolicySet { policy: JokerOverbidSelectionPolicy::AllowOnlyGreaterLength} => format!("{} set Joker overid can be of only greater suit length of current bid", n?),            
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
             NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),

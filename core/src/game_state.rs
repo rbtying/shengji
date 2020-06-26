@@ -158,6 +158,18 @@ impl Default for FirstLandlordSelectionPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum JokerOverbidSelectionPolicy {
+    AllowEqualOrGreaterLength,
+    AllowOnlyGreaterLength,
+}
+
+impl Default for JokerOverbidSelectionPolicy {
+    fn default() -> Self {
+        JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -192,6 +204,8 @@ pub struct PropagatedState {
     throw_evaluation_policy: ThrowEvaluationPolicy,
     #[serde(default)]
     first_landlord_selection_policy: FirstLandlordSelectionPolicy,
+    #[serde(default)]
+    joker_overbid_selection_policy: JokerOverbidSelectionPolicy,
 }
 
 impl PropagatedState {
@@ -362,6 +376,16 @@ impl PropagatedState {
     ) -> Result<Vec<MessageVariant>, Error> {
         self.first_landlord_selection_policy = policy;
         Ok(vec![MessageVariant::FirstLandlordSelectionPolicySet {
+            policy,
+        }])
+    }
+
+    pub fn set_joker_overbid_selection_policy(
+        &mut self,
+        policy: JokerOverbidSelectionPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.joker_overbid_selection_policy = policy;
+        Ok(vec![MessageVariant::JokerOverbidSelectionPolicySet {
             policy,
         }])
     }
@@ -1452,10 +1476,26 @@ impl DrawPhase {
                         } else if new_bid.count == existing_bid.count {
                             match (new_bid.card, existing_bid.card) {
                                 (Card::BigJoker, Card::BigJoker) => (),
-                                (Card::BigJoker, _) => valid_bids.push(new_bid),
+                                (Card::BigJoker, _) => {
+                                    if self.propagated.joker_overbid_selection_policy
+                                        == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+                                    {
+                                        valid_bids.push(new_bid)
+                                    } else {
+                                        ()
+                                    }
+                                }
                                 (Card::SmallJoker, Card::BigJoker)
                                 | (Card::SmallJoker, Card::SmallJoker) => (),
-                                (Card::SmallJoker, _) => valid_bids.push(new_bid),
+                                (Card::SmallJoker, _) => {
+                                    if self.propagated.joker_overbid_selection_policy
+                                        == JokerOverbidSelectionPolicy::AllowEqualOrGreaterLength
+                                    {
+                                        valid_bids.push(new_bid)
+                                    } else {
+                                        ()
+                                    }
+                                }
                                 _ => (),
                             }
                         }

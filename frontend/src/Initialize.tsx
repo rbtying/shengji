@@ -108,6 +108,19 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setJokerOverbidSelectionPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetJokerOverbidSelectionPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -531,6 +544,23 @@ const Initialize = (props: IProps): JSX.Element => {
         </div>
         <div>
           <label>
+            Joker Overbid Selection:{" "}
+            <select
+              value={props.state.propagated.joker_overbid_selection_policy}
+              onChange={setJokerOverbidSelectionPolicy}
+            >
+              <option value="AllowEqualOrGreaterLength">
+                Joker overid can be of the same or greater suit length of
+                current bid when current bid length is 2 or higher
+              </option>
+              <option value="AllowOnlyGreaterLength">
+                Joker overid can be of only greater suit length of current bid
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
             Friend Selection Restriction:{" "}
             <select
               value={props.state.propagated.friend_selection_policy}
@@ -673,6 +703,7 @@ const Initialize = (props: IProps): JSX.Element => {
             </button>
             <button
               className="normal"
+              disabled={props.state.propagated.landlord_emoji == null}
               onClick={() => {
                 send({ Action: { SetLandlordEmoji: null } });
               }}

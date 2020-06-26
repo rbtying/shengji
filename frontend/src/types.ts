@@ -125,6 +125,9 @@ export interface IPropagatedState {
   kitty_size: number | null;
   friend_selection_policy: "Unrestricted" | "HighestCardNotAllowed";
   first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
+  joker_overbid_selection_policy:
+    | "AllowEqualOrGreaterLength"
+    | "AllowOnlyGreaterLength";
   num_decks: number | null;
   max_player_id: number;
   players: IPlayer[];
