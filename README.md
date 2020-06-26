@@ -39,7 +39,7 @@ To format frontend code:
 yarn prettier --check
 
 # Fix files, will overwrite files
-yarn prettier --fix
+yarn prettier --write
 ```
 
 ## Lint
