@@ -90,9 +90,7 @@ const Play = (props: IProps): JSX.Element => {
     bonusLevel =
       playPhase.propagated.bonus_level_policy ===
         "BonusLevelForSmallerLandlordTeam" &&
-      landlordTeamSize < configFriendTeamSize
-        ? true
-        : false;
+      landlordTeamSize < configFriendTeamSize;
   }
   return (
     <div>
