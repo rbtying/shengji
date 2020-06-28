@@ -178,7 +178,7 @@ pub enum BonusLevelPolicy {
 
 impl Default for BonusLevelPolicy {
     fn default() -> Self {
-        BonusLevelPolicy::NoBonusLevel
+        BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
     }
 }
 
@@ -1086,12 +1086,39 @@ impl PlayPhase {
             }
         }
 
+        let mut smaller_landlord_team = false;
+
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = self.game_mode
+        {
+            let actual_team_size: usize;
+            let mut setting_team_size: usize = 0;
+
+            actual_team_size = num_friends;
+
+            if let GameModeSettings::FindingFriends { num_friends } = self.propagated.game_mode {
+                if let Some(size) = num_friends {
+                    setting_team_size = size;
+                } else {
+                    setting_team_size = self.propagated.players.len() / 2;
+                }
+            }
+
+            if actual_team_size < setting_team_size {
+                smaller_landlord_team = true;
+            } else {
+                smaller_landlord_team = false;
+            }
+        }
+
         let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
             Self::compute_level_deltas(
                 self.num_decks,
                 non_landlords_points,
                 self.propagated.bonus_level_policy,
-                self.landlords_team.len() < self.propagated.players.len() / 2,
+                smaller_landlord_team,
             );
 
         let mut propagated = self.propagated.clone();

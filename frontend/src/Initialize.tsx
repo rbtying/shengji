@@ -651,12 +651,12 @@ const Initialize = (props: IProps): JSX.Element => {
               value={props.state.propagated.bonus_level_policy}
               onChange={setBonusLevelPolicy}
             >
-              <option value="NoBonusLevel">
-                No bonus level for landlord team
-              </option>
               <option value="BonusLevelForSmallerLandlordTeam">
                 Landlord team gets a bonus level for successfully defending its
                 game with less than normal team size
+              </option>
+              <option value="NoBonusLevel">
+                No bonus level for landlord team
               </option>
             </select>
           </label>
