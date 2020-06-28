@@ -170,6 +170,18 @@ impl Default for BidPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum BonusLevelPolicy {
+    NoBonusLevel,
+    BonusLevelForSmallerLandlordTeam,
+}
+
+impl Default for BonusLevelPolicy {
+    fn default() -> Self {
+        BonusLevelPolicy::NoBonusLevel
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -206,6 +218,8 @@ pub struct PropagatedState {
     first_landlord_selection_policy: FirstLandlordSelectionPolicy,
     #[serde(default)]
     bid_policy: BidPolicy,
+    #[serde(default)]
+    bonus_level_policy: BonusLevelPolicy,
 }
 
 impl PropagatedState {
@@ -492,6 +506,18 @@ impl PropagatedState {
         if policy != self.advancement_policy {
             self.advancement_policy = policy;
             Ok(vec![MessageVariant::AdvancementPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_bonus_level_policy(
+        &mut self,
+        policy: BonusLevelPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.bonus_level_policy {
+            self.bonus_level_policy = policy;
+            Ok(vec![MessageVariant::BonusLevelPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -1061,7 +1087,12 @@ impl PlayPhase {
         }
 
         let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
-            Self::compute_level_deltas(self.num_decks, non_landlords_points);
+            Self::compute_level_deltas(
+                self.num_decks,
+                non_landlords_points,
+                self.propagated.bonus_level_policy,
+                self.landlords_team.len() < self.propagated.players.len() / 2,
+            );
 
         let mut propagated = self.propagated.clone();
 
@@ -1109,20 +1140,32 @@ impl PlayPhase {
     pub fn compute_level_deltas(
         num_decks: usize,
         non_landlords_points: isize,
+        bonus_level_policy: BonusLevelPolicy,
+        smaller_landlord_team_size: bool,
     ) -> (usize, usize, bool) {
         let point_segments = (num_decks * 20) as isize;
         let landlord_won = non_landlords_points < 2 * point_segments;
+        let bonus_level;
+
+        if landlord_won
+            && bonus_level_policy == BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
+            && smaller_landlord_team_size
+        {
+            bonus_level = 1;
+        } else {
+            bonus_level = 0;
+        };
 
         if landlord_won && non_landlords_points <= 0 {
             (
                 0,
-                (3 - non_landlords_points / point_segments) as usize,
+                bonus_level + ((3 - non_landlords_points / point_segments) as usize),
                 true,
             )
         } else if landlord_won {
             (
                 0,
-                (2 - non_landlords_points / point_segments) as usize,
+                bonus_level + ((2 - non_landlords_points / point_segments) as usize),
                 true,
             )
         } else {
@@ -1705,30 +1748,111 @@ impl DerefMut for InitializePhase {
 
 #[cfg(test)]
 mod tests {
-    use super::{AdvancementPolicy, InitializePhase, PlayPhase, Player};
+    use super::{AdvancementPolicy, BonusLevelPolicy, InitializePhase, PlayPhase, Player};
 
     use crate::types::{cards, Card, Number, PlayerID};
 
     #[test]
     fn test_level_deltas() {
-        assert_eq!(PlayPhase::compute_level_deltas(2, -80), (0, 5, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, -40), (0, 4, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, -35), (0, 3, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 0), (0, 3, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 5), (0, 2, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 35), (0, 2, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 40), (0, 1, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 75), (0, 1, true));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 80), (0, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 115), (0, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 120), (1, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 155), (1, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 160), (2, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 195), (2, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 200), (3, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 235), (3, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 240), (4, 0, false));
-        assert_eq!(PlayPhase::compute_level_deltas(2, 280), (5, 0, false));
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, -80, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 5, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, -40, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 4, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, -35, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 3, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 0, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 3, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 5, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 2, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 35, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 2, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 40, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 1, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 75, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 1, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 80, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 115, BonusLevelPolicy::NoBonusLevel, false),
+            (0, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 120, BonusLevelPolicy::NoBonusLevel, false),
+            (1, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 155, BonusLevelPolicy::NoBonusLevel, false),
+            (1, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 160, BonusLevelPolicy::NoBonusLevel, false),
+            (2, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 195, BonusLevelPolicy::NoBonusLevel, false),
+            (2, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 200, BonusLevelPolicy::NoBonusLevel, false),
+            (3, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 235, BonusLevelPolicy::NoBonusLevel, false),
+            (3, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 240, BonusLevelPolicy::NoBonusLevel, false),
+            (4, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(2, 280, BonusLevelPolicy::NoBonusLevel, false),
+            (5, 0, false)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(
+                2,
+                0,
+                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
+                true
+            ),
+            (0, 4, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(
+                3,
+                0,
+                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
+                true
+            ),
+            (0, 4, true)
+        );
+        assert_eq!(
+            PlayPhase::compute_level_deltas(
+                3,
+                50,
+                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
+                true
+            ),
+            (0, 3, true)
+        );
     }
 
     #[test]

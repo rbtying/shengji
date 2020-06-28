@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, BidPolicy, FirstLandlordSelectionPolicy, FriendSelection,
+    AdvancementPolicy, BidPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
     FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
     KittyPenalty, ThrowPenalty,
 };
@@ -171,6 +171,10 @@ impl InteractiveGame {
                 info!(logger, "Setting advancement policy"; "policy" => format!("{:?}", policy));
                 state.set_advancement_policy(policy)?
             }
+            (Message::SetBonusLevelPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting bonus level policy"; "policy" => format!("{:?}", policy));
+                state.set_bonus_level_policy(policy)?
+            }
             (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
@@ -291,6 +295,7 @@ pub enum Message {
     SetLandlordEmoji(Option<String>),
     SetGameMode(GameModeSettings),
     SetAdvancementPolicy(AdvancementPolicy),
+    SetBonusLevelPolicy(BonusLevelPolicy),
     SetKittyPenalty(KittyPenalty),
     SetKittyBidPolicy(KittyBidPolicy),
     SetTrickDrawPolicy(TrickDrawPolicy),
@@ -345,6 +350,8 @@ impl BroadcastMessage {
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),
             AdvancementPolicySet { policy: AdvancementPolicy::DefendPoints } => format!("{} required players to defend on points", n?),
+            BonusLevelPolicySet { policy: BonusLevelPolicy::NoBonusLevel } => format!("{} allowed no bonus level for landlord team", n?),
+            BonusLevelPolicySet { policy: BonusLevelPolicy::BonusLevelForSmallerLandlordTeam } => format!("{} allowed landlord team to get a bonus level for successfully defending its game with less than normal team size", n?),            
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),

@@ -29,6 +29,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/27/2020:</p>
+        <ul>
+          <li>
+            (#163) add game option to reward a bonus level for landlord team
+            with less than normal team size
+          </li>
+        </ul>
         <p>6/26/2020:</p>
         <ul>
           <li>(#160) add game option to allow outbid only with more cards</li>
