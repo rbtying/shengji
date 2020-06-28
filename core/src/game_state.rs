@@ -1090,21 +1090,13 @@ impl PlayPhase {
 
         if let GameMode::FindingFriends {
             num_friends,
-            friends: _,
-        } = self.game_mode
+            friends,
+        } = &self.game_mode
         {
             let actual_team_size: usize;
-            let mut setting_team_size: usize = 0;
+            let setting_team_size = *num_friends + 1;
 
-            actual_team_size = num_friends;
-
-            if let GameModeSettings::FindingFriends { num_friends } = self.propagated.game_mode {
-                if let Some(size) = num_friends {
-                    setting_team_size = size;
-                } else {
-                    setting_team_size = self.propagated.players.len() / 2;
-                }
-            }
+            actual_team_size = friends.len();
 
             if actual_team_size < setting_team_size {
                 smaller_landlord_team = true;

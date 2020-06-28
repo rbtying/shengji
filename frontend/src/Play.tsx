@@ -79,6 +79,21 @@ const Play = (props: IProps): JSX.Element => {
       ? playPhase.propagated.landlord_emoji
       : "(当庄)";
 
+  const landlordTeamSize = playPhase.landlords_team.length;
+  let configFriendTeamSize = 0;
+  let bonusLevel = false;
+  if (playPhase.game_mode !== "Tractor") {
+    configFriendTeamSize =
+      playPhase.game_mode.FindingFriends.num_friends != null
+        ? playPhase.game_mode.FindingFriends.num_friends + 1
+        : playPhase.propagated.players.length / 2;
+    bonusLevel =
+      playPhase.propagated.bonus_level_policy ===
+        "BonusLevelForSmallerLandlordTeam" &&
+      landlordTeamSize < configFriendTeamSize
+        ? true
+        : false;
+  }
   return (
     <div>
       {shouldBeBeeping ? <Beeper /> : null}
@@ -154,6 +169,7 @@ const Play = (props: IProps): JSX.Element => {
         landlordTeam={playPhase.landlords_team}
         landlord={playPhase.landlord}
         hideLandlordPoints={playPhase.propagated.hide_landlord_points}
+        bonusLevel={bonusLevel}
       />
       <LabeledPlay cards={playPhase.kitty} label="底牌" />
     </div>
