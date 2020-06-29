@@ -29,11 +29,11 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
-        <p>6/27/2020:</p>
+        <p>6/28/2020:</p>
         <ul>
           <li>
-            (#163) add game option to reward a bonus level for landlord team
-            with less than normal team size
+            (#163) add game option to reward a bonus level for landlord team to
+            win a smaller size team
           </li>
         </ul>
         <p>6/26/2020:</p>

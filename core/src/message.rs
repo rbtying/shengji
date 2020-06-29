@@ -117,4 +117,5 @@ pub enum MessageVariant {
     GameFinished {
         result: HashMap<String, PlayerGameFinishedResult>,
     },
+    BonusLevelEarned,
 }

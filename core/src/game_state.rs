@@ -1090,13 +1090,13 @@ impl PlayPhase {
 
         if let GameMode::FindingFriends {
             num_friends,
-            friends,
+            friends: _,
         } = &self.game_mode
         {
             let actual_team_size: usize;
             let setting_team_size = *num_friends + 1;
 
-            actual_team_size = friends.len();
+            actual_team_size = self.landlords_team.len();
 
             if actual_team_size < setting_team_size {
                 smaller_landlord_team = true;
@@ -1105,13 +1105,17 @@ impl PlayPhase {
             }
         }
 
-        let (non_landlord_level_bump, landlord_level_bump, landlord_won) =
+        let (non_landlord_level_bump, landlord_level_bump, landlord_won, bonus_level_earned) =
             Self::compute_level_deltas(
                 self.num_decks,
                 non_landlords_points,
                 self.propagated.bonus_level_policy,
                 smaller_landlord_team,
             );
+
+        if bonus_level_earned {
+            msgs.push(MessageVariant::BonusLevelEarned);
+        };
 
         let mut propagated = self.propagated.clone();
 
@@ -1161,7 +1165,7 @@ impl PlayPhase {
         non_landlords_points: isize,
         bonus_level_policy: BonusLevelPolicy,
         smaller_landlord_team_size: bool,
-    ) -> (usize, usize, bool) {
+    ) -> (usize, usize, bool, bool) {
         let point_segments = (num_decks * 20) as isize;
         let landlord_won = non_landlords_points < 2 * point_segments;
         let bonus_level;
@@ -1180,18 +1184,21 @@ impl PlayPhase {
                 0,
                 bonus_level + ((3 - non_landlords_points / point_segments) as usize),
                 true,
+                bonus_level == 1,
             )
         } else if landlord_won {
             (
                 0,
                 bonus_level + ((2 - non_landlords_points / point_segments) as usize),
                 true,
+                bonus_level == 1,
             )
         } else {
             (
                 (non_landlords_points / point_segments - 2) as usize,
                 0,
                 false,
+                bonus_level == 1,
             )
         }
     }
@@ -1767,7 +1774,10 @@ impl DerefMut for InitializePhase {
 
 #[cfg(test)]
 mod tests {
-    use super::{AdvancementPolicy, BonusLevelPolicy, InitializePhase, PlayPhase, Player};
+    use super::{
+        AdvancementPolicy, BonusLevelPolicy, FriendSelection, GameMode, GameModeSettings,
+        InitializePhase, PlayPhase, Player,
+    };
 
     use crate::types::{cards, Card, Number, PlayerID};
 
@@ -1775,75 +1785,75 @@ mod tests {
     fn test_level_deltas() {
         assert_eq!(
             PlayPhase::compute_level_deltas(2, -80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 5, true)
+            (0, 5, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, -40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 4, true)
+            (0, 4, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, -35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true)
+            (0, 3, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 0, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true)
+            (0, 3, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 5, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true)
+            (0, 2, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true)
+            (0, 2, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true)
+            (0, 1, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 75, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true)
+            (0, 1, true, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false)
+            (0, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 115, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false)
+            (0, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 120, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false)
+            (1, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 155, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false)
+            (1, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 160, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false)
+            (2, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 195, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false)
+            (2, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 200, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false)
+            (3, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 235, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false)
+            (3, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 240, BonusLevelPolicy::NoBonusLevel, false),
-            (4, 0, false)
+            (4, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(2, 280, BonusLevelPolicy::NoBonusLevel, false),
-            (5, 0, false)
+            (5, 0, false, false)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(
@@ -1852,7 +1862,7 @@ mod tests {
                 BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
                 true
             ),
-            (0, 4, true)
+            (0, 4, true, true)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(
@@ -1861,7 +1871,7 @@ mod tests {
                 BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
                 true
             ),
-            (0, 4, true)
+            (0, 4, true, true)
         );
         assert_eq!(
             PlayPhase::compute_level_deltas(
@@ -1870,7 +1880,7 @@ mod tests {
                 BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
                 true
             ),
-            (0, 3, true)
+            (0, 3, true, true)
         );
     }
 
@@ -2033,5 +2043,522 @@ mod tests {
         play.play_cards(p2, &[S_3, S_3, S_5, S_5, S_7]).unwrap();
         play.play_cards(p3, &[S_3, S_5, S_10, S_J, S_Q]).unwrap();
         play.play_cards(p4, &[S_6, S_6, S_6, C_8, C_9]).unwrap();
+    }
+
+    #[test]
+    fn test_bonus_level() {
+        use cards::*;
+
+        let mut init = InitializePhase::new();
+
+        init.set_game_mode(GameModeSettings::FindingFriends {
+            num_friends: Option::None,
+        })
+        .unwrap();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        let p5 = init.add_player("p5".into()).unwrap().0;
+        let p6 = init.add_player("p6".into()).unwrap().0;
+
+        init.set_landlord(Some(p2)).unwrap();
+        init.set_rank(p2, Number::Seven).unwrap();
+
+        let mut draw = init.start().unwrap();
+
+        let p1_hand = vec![
+            Card::SmallJoker,
+            D_7,
+            D_7,
+            H_7,
+            H_K,
+            H_9,
+            H_9,
+            H_4,
+            H_3,
+            S_A,
+            S_Q,
+            S_Q,
+            S_9,
+            S_9,
+            S_8,
+            S_5,
+            D_K,
+            D_8,
+            D_6,
+            D_5,
+            D_4,
+            C_K,
+            C_K,
+            C_J,
+            C_9,
+            C_8,
+        ];
+        let p2_hand = vec![
+            Card::BigJoker,
+            Card::BigJoker,
+            C_7,
+            C_7,
+            S_7,
+            H_K,
+            H_K,
+            H_6,
+            H_4,
+            H_3,
+            S_K,
+            S_J,
+            S_4,
+            S_3,
+            S_2,
+            D_K,
+            D_10,
+            D_4,
+            D_4,
+            D_2,
+            D_2,
+            C_K,
+            C_9,
+            C_5,
+            C_4,
+            C_3,
+        ];
+        let p3_hand = vec![
+            Card::SmallJoker,
+            S_7,
+            H_A,
+            H_10,
+            H_10,
+            H_8,
+            H_8,
+            H_5,
+            H_5,
+            H_2,
+            S_10,
+            S_8,
+            S_5,
+            S_3,
+            D_A,
+            D_J,
+            D_8,
+            D_6,
+            D_5,
+            C_A,
+            C_J,
+            C_10,
+            C_6,
+            C_5,
+            C_5,
+            C_2,
+        ];
+        let p4_hand = vec![
+            H_7, S_7, H_Q, H_Q, H_J, H_J, H_8, S_K, S_J, S_10, S_10, S_6, S_2, D_Q, D_8, D_5, D_3,
+            D_2, C_A, C_Q, C_J, C_9, C_8, C_6, C_2, C_2,
+        ];
+        let p5_hand = vec![
+            Card::SmallJoker,
+            D_7,
+            H_A,
+            H_9,
+            H_6,
+            H_3,
+            H_2,
+            H_2,
+            S_K,
+            S_6,
+            S_6,
+            S_5,
+            S_4,
+            S_2,
+            D_Q,
+            D_J,
+            D_J,
+            D_10,
+            D_9,
+            D_9,
+            D_3,
+            D_3,
+            C_Q,
+            C_10,
+            C_3,
+            C_3,
+        ];
+        let p6_hand = vec![
+            Card::BigJoker,
+            H_7,
+            H_A,
+            H_Q,
+            H_10,
+            H_6,
+            H_5,
+            H_4,
+            S_A,
+            S_A,
+            S_Q,
+            S_J,
+            S_8,
+            S_4,
+            S_3,
+            D_A,
+            D_A,
+            D_K,
+            D_Q,
+            D_10,
+            D_9,
+            C_A,
+            C_8,
+            C_6,
+            C_4,
+            C_4,
+        ];
+
+        assert_eq!(p1_hand.len(), 26);
+        assert_eq!(p2_hand.len(), 26);
+        assert_eq!(p3_hand.len(), 26);
+        assert_eq!(p4_hand.len(), 26);
+        assert_eq!(p5_hand.len(), 26);
+        assert_eq!(p6_hand.len(), 26);
+
+        let mut deck = vec![];
+        for i in 0..26 {
+            deck.push(p1_hand[i]);
+            deck.push(p2_hand[i]);
+            deck.push(p3_hand[i]);
+            deck.push(p4_hand[i]);
+            deck.push(p5_hand[i]);
+            deck.push(p6_hand[i]);
+        }
+        deck.reverse();
+        draw.deck = deck;
+        draw.position = 0;
+
+        for _ in 0..26 {
+            draw.draw_card(p1).unwrap();
+            draw.draw_card(p2).unwrap();
+            draw.draw_card(p3).unwrap();
+            draw.draw_card(p4).unwrap();
+            draw.draw_card(p5).unwrap();
+            draw.draw_card(p6).unwrap();
+        }
+
+        draw.kitty = vec![C_7, S_9, D_6, D_J, C_Q, C_10];
+
+        assert!(draw.bid(p1, D_7, 2));
+
+        let mut exchange = draw.advance(p2).unwrap();
+        let friends = vec![
+            FriendSelection {
+                card: C_K,
+                initial_skip: 0,
+            },
+            FriendSelection {
+                card: H_K,
+                initial_skip: 0,
+            },
+        ];
+        exchange.set_friends(p2, friends).unwrap();
+        let mut play = exchange.advance(p2).unwrap();
+
+        assert_eq!(play.landlords_team.len(), 1);
+
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p2, &[H_K, H_K]).unwrap();
+        play.play_cards(p3, &[H_8, H_8]).unwrap();
+        play.play_cards(p4, &[H_J, H_J]).unwrap();
+        play.play_cards(p5, &[H_2, H_2]).unwrap();
+        play.play_cards(p6, &[H_4, H_5]).unwrap();
+        play.play_cards(p1, &[H_9, H_9]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 1);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p2, &[C_3]).unwrap();
+        play.play_cards(p3, &[C_6]).unwrap();
+        play.play_cards(p4, &[C_6]).unwrap();
+        play.play_cards(p5, &[C_10]).unwrap();
+        play.play_cards(p6, &[C_6]).unwrap();
+        play.play_cards(p1, &[C_K]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p1, &[S_A]).unwrap();
+        play.play_cards(p2, &[S_2]).unwrap();
+        play.play_cards(p3, &[S_3]).unwrap();
+        play.play_cards(p4, &[S_2]).unwrap();
+        play.play_cards(p5, &[S_2]).unwrap();
+        play.play_cards(p6, &[S_3]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p1, &[S_Q, S_Q]).unwrap();
+        play.play_cards(p2, &[S_3, S_4]).unwrap();
+        play.play_cards(p3, &[S_5, S_8]).unwrap();
+        play.play_cards(p4, &[S_10, S_10]).unwrap();
+        play.play_cards(p5, &[S_6, S_6]).unwrap();
+        play.play_cards(p6, &[S_A, S_A]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p6, &[Card::BigJoker]).unwrap();
+        play.play_cards(p1, &[D_4]).unwrap();
+        play.play_cards(p2, &[S_7]).unwrap();
+        play.play_cards(p3, &[D_5]).unwrap();
+        play.play_cards(p4, &[D_5]).unwrap();
+        play.play_cards(p5, &[D_10]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p6, &[D_A, D_A]).unwrap();
+        play.play_cards(p1, &[D_7, D_7]).unwrap();
+        play.play_cards(p2, &[D_2, D_2]).unwrap();
+        play.play_cards(p3, &[D_6, D_8]).unwrap();
+        play.play_cards(p4, &[D_2, D_3]).unwrap();
+        play.play_cards(p5, &[D_3, D_3]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p1, &[S_9, S_9]).unwrap();
+        play.play_cards(p2, &[S_J, S_K]).unwrap();
+        play.play_cards(p3, &[S_10, H_2]).unwrap();
+        play.play_cards(p4, &[S_6, S_J]).unwrap();
+        play.play_cards(p5, &[S_4, S_5]).unwrap();
+        play.play_cards(p6, &[S_4, S_8]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p1, &[S_5]).unwrap();
+        play.play_cards(p2, &[D_10]).unwrap();
+        play.play_cards(p3, &[C_2]).unwrap();
+        play.play_cards(p4, &[S_K]).unwrap();
+        play.play_cards(p5, &[S_K]).unwrap();
+        play.play_cards(p6, &[S_J]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p2, &[Card::BigJoker, Card::BigJoker])
+            .unwrap();
+        play.play_cards(p3, &[D_J, D_A]).unwrap();
+        play.play_cards(p4, &[D_8, D_Q]).unwrap();
+        play.play_cards(p5, &[D_9, D_9]).unwrap();
+        play.play_cards(p6, &[D_9, D_10]).unwrap();
+        play.play_cards(p1, &[D_5, D_K]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        play.play_cards(p2, &[C_7, C_7]).unwrap();
+        play.play_cards(p3, &[S_7, Card::SmallJoker]).unwrap();
+        play.play_cards(p4, &[S_7, H_7]).unwrap();
+        play.play_cards(p5, &[D_J, D_J]).unwrap();
+        play.play_cards(p6, &[D_Q, D_K]).unwrap();
+        play.play_cards(p1, &[D_6, D_8]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        play.play_cards(p2, &[D_4, D_4]).unwrap();
+        play.play_cards(p3, &[C_10, C_J]).unwrap();
+        play.play_cards(p4, &[C_8, C_9]).unwrap();
+        play.play_cards(p5, &[D_Q, D_7]).unwrap();
+        play.play_cards(p6, &[C_8, H_7]).unwrap();
+        play.play_cards(p1, &[H_7, Card::SmallJoker]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        play.play_cards(p2, &[H_3]).unwrap();
+        play.play_cards(p3, &[H_A]).unwrap();
+        play.play_cards(p4, &[H_8]).unwrap();
+        play.play_cards(p5, &[H_3]).unwrap();
+        play.play_cards(p6, &[H_6]).unwrap();
+        play.play_cards(p1, &[H_3]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p3, &[H_10, H_10]).unwrap();
+        play.play_cards(p4, &[H_Q, H_Q]).unwrap();
+        play.play_cards(p5, &[H_6, H_9]).unwrap();
+        play.play_cards(p6, &[H_10, H_Q]).unwrap();
+        play.play_cards(p1, &[H_4, H_K]).unwrap();
+        play.play_cards(p2, &[H_4, H_6]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p4, &[C_2]).unwrap();
+        play.play_cards(p5, &[C_3]).unwrap();
+        play.play_cards(p6, &[C_4]).unwrap();
+        play.play_cards(p1, &[C_K]).unwrap();
+        play.play_cards(p2, &[C_K]).unwrap();
+        play.play_cards(p3, &[C_5]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p1, &[S_8]).unwrap();
+        play.play_cards(p2, &[C_4]).unwrap();
+        play.play_cards(p3, &[C_A]).unwrap();
+        play.play_cards(p4, &[C_A]).unwrap();
+        play.play_cards(p5, &[C_3]).unwrap();
+        play.play_cards(p6, &[S_Q]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        play.play_cards(p6, &[C_4]).unwrap();
+        play.play_cards(p1, &[C_8]).unwrap();
+        play.play_cards(p2, &[C_9]).unwrap();
+        play.play_cards(p3, &[C_5]).unwrap();
+        play.play_cards(p4, &[C_2]).unwrap();
+        play.play_cards(p5, &[C_Q]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+
+        play.play_cards(p5, &[H_A]).unwrap();
+        play.play_cards(p6, &[H_A]).unwrap();
+        play.play_cards(p1, &[C_9]).unwrap();
+        play.play_cards(p2, &[C_5]).unwrap();
+        play.play_cards(p3, &[H_5]).unwrap();
+        play.play_cards(p4, &[C_J]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        play.play_cards(p5, &[Card::SmallJoker]).unwrap();
+        play.play_cards(p6, &[C_A]).unwrap();
+        play.play_cards(p1, &[C_J]).unwrap();
+        play.play_cards(p2, &[D_K]).unwrap();
+        play.play_cards(p3, &[H_5]).unwrap();
+        play.play_cards(p4, &[C_Q]).unwrap();
+        play.finish_trick().unwrap();
+        assert_eq!(play.landlords_team.len(), 2);
+        if let GameMode::FindingFriends {
+            num_friends,
+            friends: _,
+        } = play.game_mode
+        {
+            assert_eq!(num_friends, 2);
+        }
+        if let Ok((phase, _msgs)) = play.finish_game() {
+            assert_eq!(phase.propagated.landlord, Some(p3));
+        };
     }
 }

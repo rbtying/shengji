@@ -73,13 +73,13 @@ const Points = (props: IProps): JSX.Element => {
 
   if (nonLandlordPointsWithPenalties === 0) {
     if (props.bonusLevel) {
-      thresholdStr = `${landlord.name}'s team will go up 4 levels with bonus level (next threshold: 5分)`;
+      thresholdStr = `${landlord.name}'s team will go up 4 levels, including a small-team bonus (next threshold: 5分)`;
     } else {
       thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
     }
   } else if (nonLandlordPointsWithPenalties < segment) {
     if (props.bonusLevel) {
-      thresholdStr = `${landlord.name}'s team will go up 3 levels with bonus level (next threshold: ${segment}分)`;
+      thresholdStr = `${landlord.name}'s team will go up 3 levels, including a small-team bonus (next threshold: ${segment}分)`;
     } else {
       thresholdStr = `${landlord.name}'s team will go up 2 levels (next threshold: ${segment}分)`;
     }
@@ -87,7 +87,7 @@ const Points = (props: IProps): JSX.Element => {
     if (props.bonusLevel) {
       thresholdStr = `${
         landlord.name
-      }'s team will go up 2 level with bonus level (next threshold: ${
+      }'s team will go up 2 levels, including a small-team bonus (next threshold: ${
         2 * segment
       }分)`;
     } else {

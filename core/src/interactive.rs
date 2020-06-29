@@ -393,7 +393,8 @@ impl BroadcastMessage {
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::All } => format!("{} set throws to be evaluated based on all of the cards", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
-            GameFinished { result: _ } => "The game has finished.".to_string()
+            GameFinished { result: _ } => "The game has finished.".to_string(),
+            BonusLevelEarned => "Landlord team earned a bonus level for winning with a smaller team".to_string(),
         })
     }
 }
