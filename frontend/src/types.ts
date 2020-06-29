@@ -133,6 +133,7 @@ export interface IPropagatedState {
   landlord: number | null;
   chat_link: string | null;
   advancement_policy: "Unrestricted" | "DefendPoints";
+  bonus_level_policy: "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
   kitty_penalty: "Times" | "Power";
   kitty_bid_policy: "FirstCard" | "FirstCardOfLevelOrHighest";
   throw_penalty: "None" | "TenPointsPerAttempt";

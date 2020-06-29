@@ -194,6 +194,25 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setBonusLevelPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBonusLevelPolicy: evt.target.value,
+        },
+      });
+    } else {
+      send({
+        Action: {
+          SetBonusLevelPolicy: "NoBonusLevel",
+        },
+      });
+    }
+  };
+
   const setThrowPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -394,6 +413,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetBidPolicy: value,
+              },
+            });
+            break;
+          case "bonus_level_policy":
+            send({
+              Action: {
+                SetBonusLevelPolicy: value,
               },
             });
             break;
@@ -614,6 +640,23 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="Unrestricted">Unrestricted</option>
               <option value="DefendPoints">
                 Points (5, 10, K) must be defended
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Bonus rank policy:{" "}
+            <select
+              value={props.state.propagated.bonus_level_policy}
+              onChange={setBonusLevelPolicy}
+            >
+              <option value="BonusLevelForSmallerLandlordTeam">
+                Landlord team gets a bonus level for successfully defending its
+                game with less than normal team size
+              </option>
+              <option value="NoBonusLevel">
+                No bonus level for landlord team
               </option>
             </select>
           </label>
