@@ -15,6 +15,7 @@ use crate::types::{Card, Number, PlayerID};
 pub enum MessageVariant {
     ResettingGame,
     StartingGame,
+    GameSeparator,
     TrickWon {
         winner: PlayerID,
         points: usize,

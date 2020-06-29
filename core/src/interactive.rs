@@ -75,7 +75,10 @@ impl InteractiveGame {
             (Message::StartGame, GameState::Initialize(ref mut state)) => {
                 info!(logger, "Starting game");
                 self.state = GameState::Draw(state.start()?);
-                vec![MessageVariant::StartingGame]
+                vec![
+                    MessageVariant::GameSeparator,
+                    MessageVariant::StartingGame,
+                ]
             }
             (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Reordering players");
@@ -335,6 +338,7 @@ impl BroadcastMessage {
         use MessageVariant::*;
         Ok(match self.variant {
             ResettingGame => format!("{} reset the game", n?),
+            GameSeparator => "🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜".to_string(),
             StartingGame => format!("{} started the game", n?),
             TrickWon { winner, points } =>if points > 0 {
                     format!("{} wins the trick and gets {} points", player_name(winner)?, points)
