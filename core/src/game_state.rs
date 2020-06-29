@@ -1097,12 +1097,7 @@ impl PlayPhase {
             let setting_team_size = *num_friends + 1;
 
             actual_team_size = self.landlords_team.len();
-
-            if actual_team_size < setting_team_size {
-                smaller_landlord_team = true;
-            } else {
-                smaller_landlord_team = false;
-            }
+            smaller_landlord_team = actual_team_size < setting_team_size;
         }
 
         let (non_landlord_level_bump, landlord_level_bump, landlord_won, bonus_level_earned) =
