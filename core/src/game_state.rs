@@ -1771,7 +1771,7 @@ impl DerefMut for InitializePhase {
 mod tests {
     use super::{
         AdvancementPolicy, BonusLevelPolicy, FriendSelection, GameMode, GameModeSettings,
-        InitializePhase, PlayPhase, Player,
+        InitializePhase, MessageVariant, PlayPhase, Player,
     };
 
     use crate::types::{cards, Card, Number, PlayerID};
@@ -2041,7 +2041,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bonus_level() {
+    fn test_full_game_play() {
         use cards::*;
 
         let mut init = InitializePhase::new();
@@ -2555,5 +2555,198 @@ mod tests {
         if let Ok((phase, _msgs)) = play.finish_game() {
             assert_eq!(phase.propagated.landlord, Some(p3));
         };
+    }
+
+    #[test]
+    fn test_landlord_small_team() {
+        let mut init = InitializePhase::new();
+        init.set_game_mode(GameModeSettings::FindingFriends {
+            num_friends: Some(3),
+        })
+        .unwrap();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        let p5 = init.add_player("p5".into()).unwrap().0;
+        let p6 = init.add_player("p6".into()).unwrap().0;
+        let p7 = init.add_player("p7".into()).unwrap().0;
+        let p8 = init.add_player("p8".into()).unwrap().0;
+
+        init.set_landlord(Some(p1)).unwrap();
+        init.set_rank(p1, Number::Seven).unwrap();
+
+        let mut draw = init.start().unwrap();
+        let mut deck = vec![];
+
+        // We need at least two cards per person, since the landlord needs to
+        // bid, and the biddable card can't be the friend-selection card.
+        let p1_hand = vec![cards::S_7, cards::D_3];
+        let p2_hand = vec![cards::D_4, cards::D_5];
+        let p3_hand = vec![cards::C_6, cards::C_8];
+        let p4_hand = vec![cards::C_9, cards::C_10];
+        let p5_hand = vec![cards::C_J, cards::C_Q];
+        let p6_hand = vec![cards::C_K, cards::C_A];
+        let p7_hand = vec![cards::H_2, cards::H_3];
+        let p8_hand = vec![cards::H_4, cards::H_5];
+
+        // Set up the deck to have the appropriate cards.
+        for i in 0..2 {
+            deck.push(p1_hand[i]);
+            deck.push(p2_hand[i]);
+            deck.push(p3_hand[i]);
+            deck.push(p4_hand[i]);
+            deck.push(p5_hand[i]);
+            deck.push(p6_hand[i]);
+            deck.push(p7_hand[i]);
+            deck.push(p8_hand[i]);
+        }
+        deck.reverse();
+        draw.deck = deck;
+        draw.position = 0;
+
+        // Draw the deck
+        for _ in 0..2 {
+            draw.draw_card(p1).unwrap();
+            draw.draw_card(p2).unwrap();
+            draw.draw_card(p3).unwrap();
+            draw.draw_card(p4).unwrap();
+            draw.draw_card(p5).unwrap();
+            draw.draw_card(p6).unwrap();
+            draw.draw_card(p7).unwrap();
+            draw.draw_card(p8).unwrap();
+        }
+
+        // p1 bids and wins, trump is now Spades and 7s.
+        assert!(draw.bid(p1, cards::S_7, 1));
+
+        let mut exchange = draw.advance(p1).unwrap();
+        let friends = vec![
+            FriendSelection {
+                card: cards::D_3,
+                initial_skip: 0,
+            },
+            FriendSelection {
+                card: cards::D_4,
+                initial_skip: 0,
+            },
+            FriendSelection {
+                card: cards::D_5,
+                initial_skip: 0,
+            },
+        ];
+        exchange.set_friends(p1, friends).unwrap();
+        let mut play = exchange.advance(p1).unwrap();
+        match play.game_mode {
+            GameMode::FindingFriends { num_friends: 3, .. } => (),
+            _ => panic!("Didn't have 3 friends once game was started"),
+        }
+
+        assert_eq!(
+            play.landlords_team,
+            vec![p1],
+            "Nobody should have joined the team yet"
+        );
+
+        // Play the first hand. P2 will join the team.
+        play.play_cards(p1, &p1_hand[..1]).unwrap();
+        play.play_cards(p2, &p2_hand[..1]).unwrap();
+        play.play_cards(p3, &p3_hand[..1]).unwrap();
+        play.play_cards(p4, &p4_hand[..1]).unwrap();
+        play.play_cards(p5, &p5_hand[..1]).unwrap();
+        play.play_cards(p6, &p6_hand[..1]).unwrap();
+        play.play_cards(p7, &p7_hand[..1]).unwrap();
+        play.play_cards(p8, &p8_hand[..1]).unwrap();
+
+        // Check that P2 actually joined the team.
+        let msgs = play.finish_trick().unwrap();
+        assert_eq!(
+            msgs.into_iter()
+                .filter(|m| match m {
+                    MessageVariant::JoinedTeam { player } if *player == p2 => true,
+                    _ => false,
+                })
+                .count(),
+            1
+        );
+
+        assert_eq!(play.landlords_team, vec![p1, p2]);
+
+        // Play the next trick, where the landlord will join the team, and then
+        // p2 will join the team (again).
+        play.play_cards(p1, &p1_hand[1..2]).unwrap();
+        play.play_cards(p2, &p2_hand[1..2]).unwrap();
+        play.play_cards(p3, &p3_hand[1..2]).unwrap();
+        play.play_cards(p4, &p4_hand[1..2]).unwrap();
+        play.play_cards(p5, &p5_hand[1..2]).unwrap();
+        play.play_cards(p6, &p6_hand[1..2]).unwrap();
+        play.play_cards(p7, &p7_hand[1..2]).unwrap();
+        play.play_cards(p8, &p8_hand[1..2]).unwrap();
+
+        // We don't get any joined-team messages, because both team-joiners have
+        // already joined.
+        let msgs = play.finish_trick().unwrap();
+        assert_eq!(
+            msgs.into_iter()
+                .filter(|m| match m {
+                    MessageVariant::JoinedTeam { .. } => true,
+                    _ => false,
+                })
+                .count(),
+            0
+        );
+
+        // Assert that the team didn't get any bigger
+        assert_eq!(play.landlords_team, vec![p1, p2]);
+        // But also that all of the friend cards have been played!
+        match play.game_mode {
+            GameMode::FindingFriends { ref friends, .. } => assert!(
+                friends.iter().all(|f| f.player_id.is_some()),
+                "all friends lots taken"
+            ),
+            _ => unreachable!(),
+        }
+
+        // Finish the game; we should see the landlord go up 4 levels (3 for
+        // keeping the opposing team at 0, and a bonus level)
+
+        let (new_init_phase, msgs) = play.finish_game().unwrap();
+        assert_eq!(
+            msgs.into_iter()
+                .filter(|m| match m {
+                    MessageVariant::BonusLevelEarned => true,
+                    MessageVariant::RankAdvanced { player, new_rank } if *player == p1 => {
+                        assert_eq!(*new_rank, Number::Jack);
+                        false
+                    }
+                    MessageVariant::RankAdvanced { player, new_rank } if *player == p2 => {
+                        assert_eq!(*new_rank, Number::Six);
+                        false
+                    }
+                    _ => false,
+                })
+                .count(),
+            1
+        );
+
+        assert_eq!(
+            new_init_phase
+                .propagated
+                .players
+                .into_iter()
+                .map(|p| p.level)
+                .collect::<Vec<Number>>(),
+            vec![
+                Number::Jack,
+                Number::Six,
+                Number::Two,
+                Number::Two,
+                Number::Two,
+                Number::Two,
+                Number::Two,
+                Number::Two
+            ],
+            "Check that propagated players have the right new levels"
+        );
     }
 }
