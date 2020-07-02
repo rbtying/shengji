@@ -49,11 +49,14 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   }, [timer, setTimerRef]);
 
   React.useEffect(() => {
+    const runtimeWebsocketHost = (window as any)._WEBSOCKET_HOST;
     const uri =
-      (location.protocol === "https:" ? "wss://" : "ws://") +
-      location.host +
-      location.pathname +
-      (location.pathname.endsWith("/") ? "api" : "/api");
+      runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
+        ? runtimeWebsocketHost
+        : (location.protocol === "https:" ? "wss://" : "ws://") +
+          location.host +
+          location.pathname +
+          (location.pathname.endsWith("/") ? "api" : "/api");
 
     const ws = new WebSocket(uri);
     setWebsocket(ws);

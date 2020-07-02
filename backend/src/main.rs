@@ -254,6 +254,16 @@ async fn main() {
 
     let cards = warp::path("cards.json").map(|| warp::reply::json(&*CARDS_JSON));
 
+    let websocket_host: Option<String> = std::env::var("WEBSOCKET_HOST").ok();
+    let runtime_settings = warp::path("runtime.js").map(move || {
+        warp::http::Response::builder()
+            .header("Content-Type", "text/javascript; charset=utf-8")
+            .body(match websocket_host.as_ref() {
+                Some(s) => format!("window._WEBSOCKET_HOST = \"{}\";", s),
+                None => "window._WEBSOCKET_HOST = null;".to_string(),
+            })
+    });
+
     let dump_state = warp::path("full_state.json")
         .and(games.clone())
         .and_then(|(game, _)| dump_state(game));
@@ -263,6 +273,7 @@ async fn main() {
 
     let default_settings = warp::path("default_settings.json").and_then(default_propagated);
     let routes = index
+        .or(runtime_settings)
         .or(js)
         .or(async_js)
         .or(cards_js)
