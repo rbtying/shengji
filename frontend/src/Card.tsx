@@ -5,115 +5,329 @@ import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 import { SettingsContext } from "./AppStateProvider";
 
-import Svg1B from "./generated/playing-cards/1B";
-import Svg2C from "./generated/playing-cards/2C";
-import Svg2J from "./generated/playing-cards/2J";
-import Svg3D from "./generated/playing-cards/3D";
-import Svg4C from "./generated/playing-cards/4C";
-import Svg4S from "./generated/playing-cards/4S";
-import Svg5H from "./generated/playing-cards/5H";
-import Svg6D from "./generated/playing-cards/6D";
-import Svg7C from "./generated/playing-cards/7C";
-import Svg7S from "./generated/playing-cards/7S";
-import Svg8H from "./generated/playing-cards/8H";
-import Svg9D from "./generated/playing-cards/9D";
-import SvgAc from "./generated/playing-cards/Ac";
-import SvgAs from "./generated/playing-cards/As";
-import SvgJh from "./generated/playing-cards/Jh";
-import SvgKd from "./generated/playing-cards/Kd";
-import SvgQc from "./generated/playing-cards/Qc";
-import SvgQs from "./generated/playing-cards/Qs";
-import SvgTh from "./generated/playing-cards/Th";
-import Svg1J from "./generated/playing-cards/1J";
-import Svg2D from "./generated/playing-cards/2D";
-import Svg2S from "./generated/playing-cards/2S";
-import Svg3H from "./generated/playing-cards/3H";
-import Svg4D from "./generated/playing-cards/4D";
-import Svg5C from "./generated/playing-cards/5C";
-import Svg5S from "./generated/playing-cards/5S";
-import Svg6H from "./generated/playing-cards/6H";
-import Svg7D from "./generated/playing-cards/7D";
-import Svg8C from "./generated/playing-cards/8C";
-import Svg8S from "./generated/playing-cards/8S";
-import Svg9H from "./generated/playing-cards/9H";
-import SvgAd from "./generated/playing-cards/Ad";
-import SvgJc from "./generated/playing-cards/Jc";
-import SvgJs from "./generated/playing-cards/Js";
-import SvgKh from "./generated/playing-cards/Kh";
-import SvgQd from "./generated/playing-cards/Qd";
-import SvgTc from "./generated/playing-cards/Tc";
-import SvgTs from "./generated/playing-cards/Ts";
-import Svg2H from "./generated/playing-cards/2H";
-import Svg3C from "./generated/playing-cards/3C";
-import Svg3S from "./generated/playing-cards/3S";
-import Svg4H from "./generated/playing-cards/4H";
-import Svg5D from "./generated/playing-cards/5D";
-import Svg6C from "./generated/playing-cards/6C";
-import Svg6S from "./generated/playing-cards/6S";
-import Svg7H from "./generated/playing-cards/7H";
-import Svg8D from "./generated/playing-cards/8D";
-import Svg9C from "./generated/playing-cards/9C";
-import Svg9S from "./generated/playing-cards/9S";
-import SvgAh from "./generated/playing-cards/Ah";
-import SvgJd from "./generated/playing-cards/Jd";
-import SvgKc from "./generated/playing-cards/Kc";
-import SvgKs from "./generated/playing-cards/Ks";
-import SvgQh from "./generated/playing-cards/Qh";
-import SvgTd from "./generated/playing-cards/Td";
-import Svg4Color2C from "./generated/playing-cards-4color/2C";
-import Svg4Color3D from "./generated/playing-cards-4color/3D";
-import Svg4Color4C from "./generated/playing-cards-4color/4C";
-import Svg4Color4S from "./generated/playing-cards-4color/4S";
-import Svg4Color5H from "./generated/playing-cards-4color/5H";
-import Svg4Color6D from "./generated/playing-cards-4color/6D";
-import Svg4Color7C from "./generated/playing-cards-4color/7C";
-import Svg4Color7S from "./generated/playing-cards-4color/7S";
-import Svg4Color8H from "./generated/playing-cards-4color/8H";
-import Svg4Color9D from "./generated/playing-cards-4color/9D";
-import Svg4ColorAc from "./generated/playing-cards-4color/Ac";
-import Svg4ColorAs from "./generated/playing-cards-4color/As";
-import Svg4ColorJh from "./generated/playing-cards-4color/Jh";
-import Svg4ColorKd from "./generated/playing-cards-4color/Kd";
-import Svg4ColorQc from "./generated/playing-cards-4color/Qc";
-import Svg4ColorQs from "./generated/playing-cards-4color/Qs";
-import Svg4ColorTh from "./generated/playing-cards-4color/Th";
-import Svg4Color2D from "./generated/playing-cards-4color/2D";
-import Svg4Color2S from "./generated/playing-cards-4color/2S";
-import Svg4Color3H from "./generated/playing-cards-4color/3H";
-import Svg4Color4D from "./generated/playing-cards-4color/4D";
-import Svg4Color5C from "./generated/playing-cards-4color/5C";
-import Svg4Color5S from "./generated/playing-cards-4color/5S";
-import Svg4Color6H from "./generated/playing-cards-4color/6H";
-import Svg4Color7D from "./generated/playing-cards-4color/7D";
-import Svg4Color8C from "./generated/playing-cards-4color/8C";
-import Svg4Color8S from "./generated/playing-cards-4color/8S";
-import Svg4Color9H from "./generated/playing-cards-4color/9H";
-import Svg4ColorAd from "./generated/playing-cards-4color/Ad";
-import Svg4ColorJc from "./generated/playing-cards-4color/Jc";
-import Svg4ColorJs from "./generated/playing-cards-4color/Js";
-import Svg4ColorKh from "./generated/playing-cards-4color/Kh";
-import Svg4ColorQd from "./generated/playing-cards-4color/Qd";
-import Svg4ColorTc from "./generated/playing-cards-4color/Tc";
-import Svg4ColorTs from "./generated/playing-cards-4color/Ts";
-import Svg4Color2H from "./generated/playing-cards-4color/2H";
-import Svg4Color3C from "./generated/playing-cards-4color/3C";
-import Svg4Color3S from "./generated/playing-cards-4color/3S";
-import Svg4Color4H from "./generated/playing-cards-4color/4H";
-import Svg4Color5D from "./generated/playing-cards-4color/5D";
-import Svg4Color6C from "./generated/playing-cards-4color/6C";
-import Svg4Color6S from "./generated/playing-cards-4color/6S";
-import Svg4Color7H from "./generated/playing-cards-4color/7H";
-import Svg4Color8D from "./generated/playing-cards-4color/8D";
-import Svg4Color9C from "./generated/playing-cards-4color/9C";
-import Svg4Color9S from "./generated/playing-cards-4color/9S";
-import Svg4ColorAh from "./generated/playing-cards-4color/Ah";
-import Svg4ColorJd from "./generated/playing-cards-4color/Jd";
-import Svg4ColorKc from "./generated/playing-cards-4color/Kc";
-import Svg4ColorKs from "./generated/playing-cards-4color/Ks";
-import Svg4ColorQh from "./generated/playing-cards-4color/Qh";
-import Svg4ColorTd from "./generated/playing-cards-4color/Td";
+const Svg1B = React.lazy(
+  async () => await import("./generated/playing-cards/1B")
+);
+const Svg2C = React.lazy(
+  async () => await import("./generated/playing-cards/2C")
+);
+const Svg2J = React.lazy(
+  async () => await import("./generated/playing-cards/2J")
+);
+const Svg3D = React.lazy(
+  async () => await import("./generated/playing-cards/3D")
+);
+const Svg4C = React.lazy(
+  async () => await import("./generated/playing-cards/4C")
+);
+const Svg4S = React.lazy(
+  async () => await import("./generated/playing-cards/4S")
+);
+const Svg5H = React.lazy(
+  async () => await import("./generated/playing-cards/5H")
+);
+const Svg6D = React.lazy(
+  async () => await import("./generated/playing-cards/6D")
+);
+const Svg7C = React.lazy(
+  async () => await import("./generated/playing-cards/7C")
+);
+const Svg7S = React.lazy(
+  async () => await import("./generated/playing-cards/7S")
+);
+const Svg8H = React.lazy(
+  async () => await import("./generated/playing-cards/8H")
+);
+const Svg9D = React.lazy(
+  async () => await import("./generated/playing-cards/9D")
+);
+const SvgAc = React.lazy(
+  async () => await import("./generated/playing-cards/Ac")
+);
+const SvgAs = React.lazy(
+  async () => await import("./generated/playing-cards/As")
+);
+const SvgJh = React.lazy(
+  async () => await import("./generated/playing-cards/Jh")
+);
+const SvgKd = React.lazy(
+  async () => await import("./generated/playing-cards/Kd")
+);
+const SvgQc = React.lazy(
+  async () => await import("./generated/playing-cards/Qc")
+);
+const SvgQs = React.lazy(
+  async () => await import("./generated/playing-cards/Qs")
+);
+const SvgTh = React.lazy(
+  async () => await import("./generated/playing-cards/Th")
+);
+const Svg1J = React.lazy(
+  async () => await import("./generated/playing-cards/1J")
+);
+const Svg2D = React.lazy(
+  async () => await import("./generated/playing-cards/2D")
+);
+const Svg2S = React.lazy(
+  async () => await import("./generated/playing-cards/2S")
+);
+const Svg3H = React.lazy(
+  async () => await import("./generated/playing-cards/3H")
+);
+const Svg4D = React.lazy(
+  async () => await import("./generated/playing-cards/4D")
+);
+const Svg5C = React.lazy(
+  async () => await import("./generated/playing-cards/5C")
+);
+const Svg5S = React.lazy(
+  async () => await import("./generated/playing-cards/5S")
+);
+const Svg6H = React.lazy(
+  async () => await import("./generated/playing-cards/6H")
+);
+const Svg7D = React.lazy(
+  async () => await import("./generated/playing-cards/7D")
+);
+const Svg8C = React.lazy(
+  async () => await import("./generated/playing-cards/8C")
+);
+const Svg8S = React.lazy(
+  async () => await import("./generated/playing-cards/8S")
+);
+const Svg9H = React.lazy(
+  async () => await import("./generated/playing-cards/9H")
+);
+const SvgAd = React.lazy(
+  async () => await import("./generated/playing-cards/Ad")
+);
+const SvgJc = React.lazy(
+  async () => await import("./generated/playing-cards/Jc")
+);
+const SvgJs = React.lazy(
+  async () => await import("./generated/playing-cards/Js")
+);
+const SvgKh = React.lazy(
+  async () => await import("./generated/playing-cards/Kh")
+);
+const SvgQd = React.lazy(
+  async () => await import("./generated/playing-cards/Qd")
+);
+const SvgTc = React.lazy(
+  async () => await import("./generated/playing-cards/Tc")
+);
+const SvgTs = React.lazy(
+  async () => await import("./generated/playing-cards/Ts")
+);
+const Svg2H = React.lazy(
+  async () => await import("./generated/playing-cards/2H")
+);
+const Svg3C = React.lazy(
+  async () => await import("./generated/playing-cards/3C")
+);
+const Svg3S = React.lazy(
+  async () => await import("./generated/playing-cards/3S")
+);
+const Svg4H = React.lazy(
+  async () => await import("./generated/playing-cards/4H")
+);
+const Svg5D = React.lazy(
+  async () => await import("./generated/playing-cards/5D")
+);
+const Svg6C = React.lazy(
+  async () => await import("./generated/playing-cards/6C")
+);
+const Svg6S = React.lazy(
+  async () => await import("./generated/playing-cards/6S")
+);
+const Svg7H = React.lazy(
+  async () => await import("./generated/playing-cards/7H")
+);
+const Svg8D = React.lazy(
+  async () => await import("./generated/playing-cards/8D")
+);
+const Svg9C = React.lazy(
+  async () => await import("./generated/playing-cards/9C")
+);
+const Svg9S = React.lazy(
+  async () => await import("./generated/playing-cards/9S")
+);
+const SvgAh = React.lazy(
+  async () => await import("./generated/playing-cards/Ah")
+);
+const SvgJd = React.lazy(
+  async () => await import("./generated/playing-cards/Jd")
+);
+const SvgKc = React.lazy(
+  async () => await import("./generated/playing-cards/Kc")
+);
+const SvgKs = React.lazy(
+  async () => await import("./generated/playing-cards/Ks")
+);
+const SvgQh = React.lazy(
+  async () => await import("./generated/playing-cards/Qh")
+);
+const SvgTd = React.lazy(
+  async () => await import("./generated/playing-cards/Td")
+);
+const Svg4Color2C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/2C")
+);
+const Svg4Color3D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/3D")
+);
+const Svg4Color4C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/4C")
+);
+const Svg4Color4S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/4S")
+);
+const Svg4Color5H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/5H")
+);
+const Svg4Color6D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/6D")
+);
+const Svg4Color7C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/7C")
+);
+const Svg4Color7S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/7S")
+);
+const Svg4Color8H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/8H")
+);
+const Svg4Color9D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/9D")
+);
+const Svg4ColorAc = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Ac")
+);
+const Svg4ColorAs = React.lazy(
+  async () => await import("./generated/playing-cards-4color/As")
+);
+const Svg4ColorJh = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Jh")
+);
+const Svg4ColorKd = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Kd")
+);
+const Svg4ColorQc = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Qc")
+);
+const Svg4ColorQs = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Qs")
+);
+const Svg4ColorTh = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Th")
+);
+const Svg4Color2D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/2D")
+);
+const Svg4Color2S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/2S")
+);
+const Svg4Color3H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/3H")
+);
+const Svg4Color4D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/4D")
+);
+const Svg4Color5C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/5C")
+);
+const Svg4Color5S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/5S")
+);
+const Svg4Color6H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/6H")
+);
+const Svg4Color7D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/7D")
+);
+const Svg4Color8C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/8C")
+);
+const Svg4Color8S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/8S")
+);
+const Svg4Color9H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/9H")
+);
+const Svg4ColorAd = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Ad")
+);
+const Svg4ColorJc = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Jc")
+);
+const Svg4ColorJs = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Js")
+);
+const Svg4ColorKh = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Kh")
+);
+const Svg4ColorQd = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Qd")
+);
+const Svg4ColorTc = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Tc")
+);
+const Svg4ColorTs = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Ts")
+);
+const Svg4Color2H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/2H")
+);
+const Svg4Color3C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/3C")
+);
+const Svg4Color3S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/3S")
+);
+const Svg4Color4H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/4H")
+);
+const Svg4Color5D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/5D")
+);
+const Svg4Color6C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/6C")
+);
+const Svg4Color6S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/6S")
+);
+const Svg4Color7H = React.lazy(
+  async () => await import("./generated/playing-cards-4color/7H")
+);
+const Svg4Color8D = React.lazy(
+  async () => await import("./generated/playing-cards-4color/8D")
+);
+const Svg4Color9C = React.lazy(
+  async () => await import("./generated/playing-cards-4color/9C")
+);
+const Svg4Color9S = React.lazy(
+  async () => await import("./generated/playing-cards-4color/9S")
+);
+const Svg4ColorAh = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Ah")
+);
+const Svg4ColorJd = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Jd")
+);
+const Svg4ColorKc = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Kc")
+);
+const Svg4ColorKs = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Ks")
+);
+const Svg4ColorQh = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Qh")
+);
+const Svg4ColorTd = React.lazy(
+  async () => await import("./generated/playing-cards-4color/Td")
+);
 
-export const NormalCards: {
+const NormalCards: {
   [card: string]: React.FunctionComponent<React.SVGProps<SVGElement>>;
 } = {
   "🃁": SvgAd,
@@ -173,7 +387,7 @@ export const NormalCards: {
   "🂠": Svg1B,
 };
 
-export const FourColorCards: {
+const FourColorCards: {
   [card: string]: React.FunctionComponent<React.SVGProps<SVGElement>>;
 } = {
   "🃁": Svg4ColorAd,
@@ -243,44 +457,64 @@ interface IProps {
 const Card = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
   if (!(props.card in cardLookup)) {
-    return (
-      <span
-        className={classNames(
-          "card",
-          settings.svgCards ? "svg" : "",
-          "unknown",
-          props.className
-        )}
-      >
-        {settings.svgCards
-          ? (settings.fourColor ? FourColorCards : NormalCards)[props.card]({
-              height: 120,
-            })
-          : props.card}
+    const nonSVG = (
+      <span className={classNames("card", "unknown", props.className)}>
+        {props.card}
       </span>
+    );
+
+    if (settings.svgCards) {
+    } else {
+      return nonSVG;
+    }
+    return (
+      <React.Suspense fallback={nonSVG}>
+        <span className={classNames("card", "svg", "unknown", props.className)}>
+          {React.createElement(
+            (settings.fourColor ? FourColorCards : NormalCards)[props.card],
+            {
+              height: 120,
+            }
+          )}
+        </span>
+      </React.Suspense>
     );
   } else {
     const cardInfo = cardLookup[props.card];
-    return (
+    const nonSVG = (
       <span
-        className={classNames(
-          "card",
-          settings.svgCards ? "svg" : "",
-          cardInfo.typ,
-          props.className
-        )}
+        className={classNames("card", cardInfo.typ, props.className)}
         onClick={props.onClick}
       >
         <div className="card-label">
           <InlineCard card={props.card} />
         </div>
-        {settings.svgCards
-          ? (settings.fourColor ? FourColorCards : NormalCards)[props.card]({
-              height: 120,
-            })
-          : cardInfo.display_value}
+        {cardInfo.display_value}
       </span>
     );
+
+    if (settings.svgCards) {
+      return (
+        <React.Suspense fallback={nonSVG}>
+          <span
+            className={classNames("card", "svg", cardInfo.typ, props.className)}
+            onClick={props.onClick}
+          >
+            <div className="card-label">
+              <InlineCard card={props.card} />
+            </div>
+            {React.createElement(
+              (settings.fourColor ? FourColorCards : NormalCards)[props.card],
+              {
+                height: 120,
+              }
+            )}
+          </span>
+        </React.Suspense>
+      );
+    } else {
+      return nonSVG;
+    }
   }
 };
 

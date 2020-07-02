@@ -18,6 +18,25 @@ module.exports = {
       },
     ],
   },
+  optimization: {
+    splitChunks: {
+      chunks: "async",
+      cacheGroups: {
+        cards: {
+          test: /[\\/]playing-cards(-4color)?[\\/]/,
+          name(_) {
+            return "playing-cards";
+          },
+        },
+        emoji: {
+          test: /[\\/]node_modules[\\/]/,
+          name(_) {
+            return "async";
+          },
+        },
+      },
+    },
+  },
   performance: {
     hints: false,
   },
