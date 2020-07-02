@@ -67,6 +67,17 @@ const SettingsPane = (props: IProps): JSX.Element => {
           </Cell>
         </Row>
         <Row>
+          <LabelCell>use SVG cards</LabelCell>
+          <Cell>
+            <input
+              name="svg-cards"
+              type="checkbox"
+              checked={settings.svgCards}
+              onChange={handleChange({ svgCards: !settings.svgCards })}
+            />
+          </Cell>
+        </Row>
+        <Row>
           <LabelCell>always show card labels</LabelCell>
           <Cell>
             <input

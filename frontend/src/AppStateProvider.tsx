@@ -40,6 +40,10 @@ export const AppStateContext = React.createContext<Context>({
   updateState: () => {},
 });
 
+export const SettingsContext = React.createContext<Settings>(
+  appState.loadDefault().settings
+);
+
 export const AppStateConsumer = AppStateContext.Consumer;
 
 interface IProps {
@@ -58,7 +62,9 @@ const AppStateProvider = (props: IProps): JSX.Element => {
   };
   return (
     <AppStateContext.Provider value={{ state, updateState }}>
-      {props.children}
+      <SettingsContext.Provider value={state.settings}>
+        {props.children}
+      </SettingsContext.Provider>
     </AppStateContext.Provider>
   );
 };
