@@ -18,6 +18,6 @@ module.exports = {
       version: "detect",
     },
   },
-  rules: {
-  },
+  ignorePatterns: ["**/generated/**"],
+  rules: {},
 };

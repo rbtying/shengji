@@ -10,6 +10,10 @@ button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .card.unknown { cursor: default; color: #aaa; }
 .card .card-label { display: none; }
 .always-show-labels .card .card-label, .card:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.6em; bottom: 1.4em; z-index: 1; background: inherit; }
+.card.svg { background: transparent; }
+.always-show-labels .card.svg .card-label, .card.svg:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.1em; bottom: 2em; z-index: 1; background: transparent; }
+.hand .unselected-cards .card.svg:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.1em; bottom: 3.5em; z-index: 1; background: inherit; }
+.hand .unselected-cards .card:hover svg { margin-bottom: 0.2em; margin-top: -0.2em; }
 .ReactModal__Overlay { z-index: 2; }
 .notify .card, .card.notify { animation:blinkingText 1.5s 1; color: #000; }
 @keyframes blinkingText {

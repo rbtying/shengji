@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
-import Picker, { IEmojiData } from "emoji-picker-react";
+import { IEmojiData } from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
@@ -11,6 +11,8 @@ import { WebsocketContext } from "./WebsocketProvider";
 
 import Header from "./Header";
 import Players from "./Players";
+
+const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
 interface IProps {
   state: IInitializePhase;
@@ -758,7 +760,11 @@ const Initialize = (props: IProps): JSX.Element => {
             >
               Default
             </button>
-            {showPicker ? <Picker onEmojiClick={setEmoji} /> : null}
+            {showPicker ? (
+              <React.Suspense fallback={"..."}>
+                <Picker onEmojiClick={setEmoji} />
+              </React.Suspense>
+            ) : null}
           </label>
         </div>
         <div>

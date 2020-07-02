@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "@svgr/cli": "^5.4.0",
+    "svgo": "^1.3.2"
+  },
+  "scripts": {
+    "svgo": "svgo bridge3-super-wider-qr-Large/*.svg -o min-bridge3-super-wider-qr-Large/ --disable removeXMLNS,removeViewBox --enable removeDimensions && svgo bridge3-super-wider-qr-4colour-Large/*.svg -o min-bridge3-super-wider-qr-4colour-Large/ --disable removeXMLNS,removeViewBox --enable removeDimensions",
+    "build-normal": "svgr min-bridge3-super-wider-qr-Large/ -d ../frontend/src/generated/playing-cards/ --typescript",
+    "build-4color": "svgr min-bridge3-super-wider-qr-4colour-Large/ -d ../frontend/src/generated/playing-cards-4color/ --typescript",
+    "build": "yarn svgo && yarn build-normal && yarn build-4color"
+  }
+}
