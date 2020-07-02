@@ -470,12 +470,7 @@ const Card = (props: IProps): JSX.Element => {
     return (
       <React.Suspense fallback={nonSVG}>
         <span className={classNames("card", "svg", "unknown", props.className)}>
-          {React.createElement(
-            (settings.fourColor ? FourColorCards : NormalCards)[props.card],
-            {
-              height: 120,
-            }
-          )}
+          <Svg1B height={120} />
         </span>
       </React.Suspense>
     );
