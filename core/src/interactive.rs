@@ -2,10 +2,11 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
+use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
-    AdvancementPolicy, BidPolicy, BidTakebackPolicy, BonusLevelPolicy,
-    FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings,
-    GameState, InitializePhase, KittyBidPolicy, KittyPenalty, PlayTakebackPolicy, ThrowPenalty,
+    AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
+    FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
+    KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -406,6 +407,8 @@ impl BroadcastMessage {
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::NoPlayTakeback } => format!("{} disallowed taking back plays", n?),
             BidTakebackPolicySet { policy: BidTakebackPolicy::AllowBidTakeback } => format!("{} allowed taking back bids", n?),
             BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),            
+            KittyTheftPolicySet { policy: KittyTheftPolicy::AllowKittyTheft } => format!("{} allowed stealing the bottom cards after the leader", n?),
+            KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             GameFinished { result: _ } => "The game has finished.".to_string(),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),

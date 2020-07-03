@@ -6,6 +6,7 @@ use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::bidding::{Bid, BidPolicy, BidTakebackPolicy};
 use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded};
@@ -123,18 +124,6 @@ impl Default for AdvancementPolicy {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum KittyBidPolicy {
-    FirstCard,
-    FirstCardOfLevelOrHighest,
-}
-
-impl Default for KittyBidPolicy {
-    fn default() -> Self {
-        KittyBidPolicy::FirstCard
-    }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FriendSelectionPolicy {
     Unrestricted,
     HighestCardNotAllowed,
@@ -152,21 +141,21 @@ pub enum FirstLandlordSelectionPolicy {
     ByFirstBid,
 }
 
-impl Default for FirstLandlordSelectionPolicy {
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum KittyBidPolicy {
+    FirstCard,
+    FirstCardOfLevelOrHighest,
+}
+
+impl Default for KittyBidPolicy {
     fn default() -> Self {
-        FirstLandlordSelectionPolicy::ByWinningBid
+        KittyBidPolicy::FirstCard
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum BidPolicy {
-    JokerOrGreaterLength,
-    GreaterLength,
-}
-
-impl Default for BidPolicy {
+impl Default for FirstLandlordSelectionPolicy {
     fn default() -> Self {
-        BidPolicy::JokerOrGreaterLength
+        FirstLandlordSelectionPolicy::ByWinningBid
     }
 }
 
@@ -195,16 +184,17 @@ impl Default for PlayTakebackPolicy {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum BidTakebackPolicy {
-    AllowBidTakeback,
-    NoBidTakeback,
+pub enum KittyTheftPolicy {
+    AllowKittyTheft,
+    NoKittyTheft,
 }
 
-impl Default for BidTakebackPolicy {
+impl Default for KittyTheftPolicy {
     fn default() -> Self {
-        BidTakebackPolicy::AllowBidTakeback
+        KittyTheftPolicy::NoKittyTheft
     }
 }
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -233,6 +223,8 @@ pub struct PropagatedState {
     pub num_games_finished: usize,
     #[serde(default)]
     kitty_bid_policy: KittyBidPolicy,
+    #[serde(default)]
+    kitty_theft_policy: KittyTheftPolicy,
     #[serde(default)]
     trick_draw_policy: TrickDrawPolicy,
     #[serde(default)]
@@ -574,6 +566,18 @@ impl PropagatedState {
         }
     }
 
+    pub fn set_kitty_theft_policy(
+        &mut self,
+        policy: KittyTheftPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.kitty_theft_policy {
+            self.kitty_theft_policy = policy;
+            Ok(vec![MessageVariant::KittyTheftPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
             self.players.retain(|p| p.id != player_id);
@@ -794,14 +798,18 @@ impl GameState {
                 ref mut hands,
                 ref mut kitty,
                 ref mut game_mode,
+                exchanger,
                 landlord,
+                finalized,
                 ..
             }) => {
                 hands.redact_except(id);
-                if id != landlord {
+                if id != exchanger.unwrap_or(landlord) || finalized {
                     for card in kitty {
                         *card = Card::Unknown;
                     }
+                }
+                if id != landlord {
                     if let GameMode::FindingFriends {
                         ref mut friends, ..
                     } = game_mode
@@ -818,6 +826,7 @@ impl GameState {
                 ref landlords_team,
                 ref propagated,
                 landlord,
+                exchanger,
                 ..
             }) => {
                 if propagated.hide_landlord_points {
@@ -830,7 +839,7 @@ impl GameState {
                 hands.redact_except(id);
                 // Don't redact at the end of the game.
                 let game_ongoing = !hands.is_empty() || !trick.played_cards().is_empty();
-                if game_ongoing && id != landlord {
+                if game_ongoing && id != exchanger.unwrap_or(landlord) {
                     for card in kitty {
                         *card = Card::Unknown;
                     }
@@ -872,6 +881,8 @@ pub struct PlayPhase {
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
+    #[serde(default)]
+    exchanger: Option<PlayerID>,
 }
 
 impl PlayPhase {
@@ -1263,6 +1274,16 @@ pub struct ExchangePhase {
     kitty_size: usize,
     landlord: PlayerID,
     trump: Trump,
+    #[serde(default)]
+    exchanger: Option<PlayerID>,
+    #[serde(default)]
+    finalized: bool,
+    #[serde(default)]
+    epoch: usize,
+    #[serde(default)]
+    bids: Vec<Bid>,
+    #[serde(default)]
+    autobid: Option<Bid>,
 }
 
 impl ExchangePhase {
@@ -1275,21 +1296,29 @@ impl ExchangePhase {
     }
 
     pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
-        if self.landlord != id {
-            bail!("not the landlord")
+        if self.exchanger.unwrap_or(self.landlord) != id {
+            bail!("not the exchanger")
         }
-        self.hands.remove(self.landlord, Some(card))?;
+        if !self.finalized {
+            bail!("cards already finalized")
+        }
+        self.hands
+            .remove(self.exchanger.unwrap_or(self.landlord), Some(card))?;
         self.kitty.push(card);
         Ok(())
     }
 
     pub fn move_card_to_hand(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
-        if self.landlord != id {
-            bail!("not the landlord")
+        if self.exchanger.unwrap_or(self.landlord) != id {
+            bail!("not the exchanger")
+        }
+        if !self.finalized {
+            bail!("cards already finalized")
         }
         if let Some(index) = self.kitty.iter().position(|c| *c == card) {
             self.kitty.swap_remove(index);
-            self.hands.add(self.landlord, Some(card))?;
+            self.hands
+                .add(self.exchanger.unwrap_or(self.landlord), Some(card))?;
             Ok(())
         } else {
             bail!("card not in the kitty")
@@ -1354,6 +1383,70 @@ impl ExchangePhase {
         }
     }
 
+    pub fn finalize(&mut self, id: PlayerID) -> Result<(), Error> {
+        if id != self.exchanger.unwrap_or(self.landlord) {
+            bail!("only the exchanger can finalize their cards")
+        }
+        if self.finalized {
+            bail!("Already finalized")
+        }
+        self.finalized = true;
+        Ok(())
+    }
+
+    pub fn pick_up_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        if !self.finalized {
+            bail!("Current exchanger is still exchanging cards!")
+        }
+        if self.autobid.is_some() {
+            bail!("Bid was automatically determined; no overbidding allowed")
+        }
+        if self.bids.last().map(|b| b.epoch) != Some(self.epoch) {
+            bail!("No bids have been made since the last player finished exchanging cards")
+        }
+        let (_, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
+        if id != winning_bid.id {
+            bail!("Only the winner of the bid can pick up the cards")
+        }
+        self.finalized = false;
+        self.exchanger = Some(winning_bid.id);
+
+        Ok(())
+    }
+
+    pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
+        if !self.finalized || self.autobid.is_some() {
+            return false;
+        }
+        Bid::bid(
+            id,
+            card,
+            count,
+            &mut self.bids,
+            self.autobid,
+            &self.hands,
+            &self.propagated.players,
+            self.propagated.landlord,
+            self.propagated.bid_policy,
+            self.epoch,
+        )
+    }
+
+    pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
+        if !self.finalized {
+            bail!("Can't take back bid until exchanger is done swapping cards")
+        }
+        if self.autobid.is_some() {
+            bail!("Can't take back bid if the winning bid was automatic")
+        }
+        Bid::take_back_bid(
+            id,
+            self.propagated.bid_takeback_policy,
+            &mut self.bids,
+            self.epoch,
+        )
+    }
+
     pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
         if id != self.landlord {
             bail!("only the leader can advance the game")
@@ -1368,6 +1461,12 @@ impl ExchangePhase {
         {
             if friends.len() != num_friends {
                 bail!("need to pick friends")
+            }
+        }
+
+        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft {
+            if self.autobid.is_none() && !self.finalized {
+                bail!("must give other players a chance to over-bid and swap cards")
             }
         }
 
@@ -1421,6 +1520,7 @@ impl ExchangePhase {
             landlord: self.landlord,
             trump: self.trump,
             propagated: self.propagated.clone(),
+            exchanger: self.exchanger,
             landlords_team,
         })
     }
@@ -1433,13 +1533,6 @@ impl ExchangePhase {
 
         Ok((InitializePhase { propagated }, msgs))
     }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Bid {
-    id: PlayerID,
-    card: Card,
-    count: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1514,12 +1607,22 @@ impl DrawPhase {
 
         match self.propagated.kitty_bid_policy {
             KittyBidPolicy::FirstCard => {
-                self.autobid = Some(Bid { count: 1, id, card });
+                self.autobid = Some(Bid {
+                    count: 1,
+                    id,
+                    card,
+                    epoch: 0,
+                });
             }
             KittyBidPolicy::FirstCardOfLevelOrHighest
                 if card.is_joker() || card.number() == Some(level) =>
             {
-                self.autobid = Some(Bid { count: 1, id, card });
+                self.autobid = Some(Bid {
+                    count: 1,
+                    id,
+                    card,
+                    epoch: 0,
+                });
             }
             KittyBidPolicy::FirstCardOfLevelOrHighest
                 if self.revealed_cards >= self.kitty.len() - 1 =>
@@ -1531,6 +1634,7 @@ impl DrawPhase {
                         count: 1,
                         id,
                         card: *highest_card,
+                        epoch: 0,
                     });
                 }
             }
@@ -1541,128 +1645,39 @@ impl DrawPhase {
         Ok(MessageVariant::RevealedCardFromKitty)
     }
 
-    #[allow(clippy::comparison_chain)]
-    pub fn valid_bids(&self, id: PlayerID) -> Result<Vec<Bid>, Error> {
-        // Compute all valid bids.
-        if self.bids.last().map(|b| b.id) == Some(id) {
-            // If we're the current highest bidder, the only permissible bid is
-            // one which is the same as the previous one, but has more cards
-            let last_bid = bail_unwrap!(self.bids.last());
-            let available = self
-                .hands
-                .counts(id)
-                .and_then(|c| c.get(&last_bid.card).cloned())
-                .unwrap_or(0);
-            Ok((last_bid.count + 1..=available)
-                .map(|count| Bid {
-                    card: last_bid.card,
-                    count,
-                    id,
-                })
-                .collect())
-        } else if let Some(counts) = self.hands.counts(id) {
-            // Construct all the valid bids from the player's hand
-            let mut valid_bids = vec![];
-            for (card, count) in counts {
-                let bid_player_id = self.propagated.landlord.unwrap_or(id);
-                let bid_level = self
-                    .propagated
-                    .players
-                    .iter()
-                    .find(|p| p.id == bid_player_id)
-                    .map(|p| p.rank());
-                if !card.is_joker() && card.number() != bid_level {
-                    continue;
-                }
-                for inner_count in 1..=*count {
-                    if card.is_joker() && inner_count == 1 {
-                        continue;
-                    }
-                    let new_bid = Bid {
-                        id,
-                        card: *card,
-                        count: inner_count,
-                    };
-                    if let Some(existing_bid) = self.bids.last() {
-                        if new_bid.count > existing_bid.count {
-                            valid_bids.push(new_bid);
-                        } else if new_bid.count == existing_bid.count {
-                            match (new_bid.card, existing_bid.card) {
-                                (Card::BigJoker, Card::BigJoker) => (),
-                                (Card::BigJoker, _) => {
-                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
-                                    {
-                                        valid_bids.push(new_bid)
-                                    }
-                                }
-                                (Card::SmallJoker, Card::BigJoker)
-                                | (Card::SmallJoker, Card::SmallJoker) => (),
-                                (Card::SmallJoker, _) => {
-                                    if self.propagated.bid_policy == BidPolicy::JokerOrGreaterLength
-                                    {
-                                        valid_bids.push(new_bid)
-                                    }
-                                }
-                                _ => (),
-                            }
-                        }
-                    } else {
-                        valid_bids.push(new_bid);
-                    }
-                }
-            }
-
-            Ok(valid_bids)
-        } else {
-            Ok(vec![])
-        }
-    }
-
     pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
         if self.revealed_cards > 0 {
             return false;
         }
-        let new_bid = Bid { id, card, count };
-        if self
-            .valid_bids(id)
-            .map(|b| b.contains(&new_bid))
-            .unwrap_or(false)
-        {
-            self.bids.push(new_bid);
-            true
-        } else {
-            false
-        }
+        Bid::bid(
+            id,
+            card,
+            count,
+            &mut self.bids,
+            self.autobid,
+            &self.hands,
+            &self.propagated.players,
+            self.propagated.landlord,
+            self.propagated.bid_policy,
+            0,
+        )
     }
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
-        if self.propagated.bid_takeback_policy == BidTakebackPolicy::NoBidTakeback {
-            bail!("Taking back bids is not allowed!")
-        }
-        if self.bids.last().map(|b| b.id) == Some(id) {
-            self.bids.pop();
-            Ok(())
-        } else {
-            bail!("Can't do that right now")
-        }
+        Bid::take_back_bid(id, self.propagated.bid_takeback_policy, &mut self.bids, 0)
     }
 
     pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {
         if !self.deck.is_empty() {
             bail!("deck has cards remaining")
-        } else if self.bids.is_empty() && self.autobid.is_none() {
-            bail!("nobody has bid yet")
         } else {
-            let winning_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.last().copied()));
-            let first_bid = bail_unwrap!(self.autobid.or_else(|| self.bids.first().copied()));
-            let landlord = match self.propagated.first_landlord_selection_policy {
-                FirstLandlordSelectionPolicy::ByWinningBid => {
-                    self.propagated.landlord.unwrap_or(winning_bid.id)
+            let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
+            let landlord = self.propagated.landlord.unwrap_or_else(|| {
+                match self.propagated.first_landlord_selection_policy {
+                    FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
+                    FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
                 }
-                FirstLandlordSelectionPolicy::ByFirstBid => {
-                    self.propagated.landlord.unwrap_or(first_bid.id)
-                }
-            };
+            });
 
             if id != landlord {
                 bail!("only the leader can advance the game");
@@ -1695,6 +1710,11 @@ impl DrawPhase {
                 landlord,
                 hands,
                 trump,
+                exchanger: None,
+                finalized: false,
+                epoch: 1,
+                bids: self.bids.clone(),
+                autobid: self.autobid,
             })
         }
     }
@@ -1828,7 +1848,7 @@ impl DerefMut for InitializePhase {
 mod tests {
     use super::{
         AdvancementPolicy, BonusLevelPolicy, FriendSelection, GameMode, GameModeSettings,
-        InitializePhase, MessageVariant, PlayPhase, Player,
+        InitializePhase, KittyTheftPolicy, MessageVariant, PlayPhase, Player,
     };
 
     use crate::types::{cards, Card, Number, PlayerID};
@@ -2049,6 +2069,53 @@ mod tests {
         assert!(draw.bid(p3, Card::SmallJoker, 2));
         assert!(draw.bid(p2, Card::BigJoker, 2));
         assert!(!draw.bid(p1, cards::H_2, 2));
+    }
+
+    #[test]
+    fn test_kitty_stealing_bid_sequence() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
+            .unwrap();
+        let mut draw = init.start().unwrap();
+        // Hackily ensure that everyone can bid.
+        draw.deck = vec![
+            cards::S_2,
+            Card::SmallJoker,
+            Card::BigJoker,
+            cards::H_2,
+            cards::S_2,
+            Card::SmallJoker,
+            Card::BigJoker,
+            cards::H_2,
+        ];
+        draw.position = 0;
+
+        draw.draw_card(p1).unwrap();
+        draw.draw_card(p2).unwrap();
+        draw.draw_card(p3).unwrap();
+        draw.draw_card(p4).unwrap();
+        draw.draw_card(p1).unwrap();
+        draw.draw_card(p2).unwrap();
+        draw.draw_card(p3).unwrap();
+        draw.draw_card(p4).unwrap();
+
+        assert!(draw.bid(p1, cards::H_2, 1));
+        let mut exchange = draw.advance(p1).unwrap();
+        exchange.finalize(p1).unwrap();
+        assert!(exchange.bid(p1, cards::H_2, 2));
+        assert!(exchange.bid(p3, Card::SmallJoker, 2));
+        exchange.pick_up_cards(p3).unwrap();
+        exchange.advance(p1).unwrap_err();
+        exchange.finalize(p3).unwrap();
+        assert!(exchange.bid(p2, Card::BigJoker, 2));
+        exchange.pick_up_cards(p2).unwrap();
+        exchange.finalize(p2).unwrap();
+        assert!(!exchange.bid(p1, cards::H_2, 2));
+        exchange.advance(p1).unwrap();
     }
 
     #[test]
