@@ -46,14 +46,25 @@ yarn prettier --write
 To run tslint:
 
 ```
-yarn lint
+cd frontend && yarn lint
+```
+
+And clippy:
+```
+cargo clippy
 ```
 
 ## Tests
 To run tests:
 
+### Frontend:
 ```
-yarn test
+cd frontend && yarn test
+```
+
+### Backend:
+```
+cargo test
 ```
 
 # Technical details
