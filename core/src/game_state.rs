@@ -904,6 +904,9 @@ impl PlayPhase {
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.propagated.play_takeback_policy == PlayTakebackPolicy::NoPlayTakeback {
+            bail!("Taking back played cards is not allowed")
+        }
         Ok(self
             .trick
             .take_back(id, &mut self.hands, self.propagated.throw_evaluation_policy)?)
