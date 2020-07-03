@@ -43,7 +43,7 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       {props.moreCards !== undefined && props.moreCards.length > 0 ? (
         <div className="play more">
           {props.moreCards.map((card, idx) => (
-            <Card card={card} key={idx} />
+            <Card card={card} key={idx} smaller={true} />
           ))}
         </div>
       ) : null}
