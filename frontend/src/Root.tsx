@@ -89,6 +89,7 @@ const Root = (): JSX.Element => {
                 state={state.game_state.Exchange}
                 cards={cards}
                 name={state.name}
+                separateBidCards={state.settings.separateBidCards}
               />
             ) : null}
             {state.game_state.Play !== undefined ? (

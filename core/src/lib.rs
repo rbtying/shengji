@@ -3,6 +3,7 @@
 #![allow(clippy::should_implement_trait)]
 #![allow(clippy::new_without_default)]
 
+pub mod bidding;
 pub mod game_state;
 pub mod hands;
 pub mod interactive;
