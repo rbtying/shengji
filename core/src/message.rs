@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_state::{
     AdvancementPolicy, BidPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy,
-    FriendSelectionPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty,
+    FriendSelectionPolicy, GameModeSettings, KittyBidPolicy, KittyPenalty, PlayTakebackPolicy,
     PlayerGameFinishedResult, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -112,6 +112,9 @@ pub enum MessageVariant {
     },
     ThrowEvaluationPolicySet {
         policy: ThrowEvaluationPolicy,
+    },
+    PlayTakebackPolicySet {
+        policy: PlayTakebackPolicy,
     },
     RevealedCardFromKitty,
     GameFinished {

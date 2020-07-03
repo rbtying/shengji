@@ -126,9 +126,11 @@ const Play = (props: IProps): JSX.Element => {
         unsetAutoPlayWhenWinnerChanges={props.unsetAutoPlayWhenWinnerChanges}
         isCurrentPlayerTurn={isCurrentPlayerTurn}
       />
-      <button onClick={takeBackCards} disabled={!canTakeBack}>
-        Take back last play
-      </button>
+      {playPhase.propagated.play_takeback_policy === "AllowPlayTakeback" && (
+        <button onClick={takeBackCards} disabled={!canTakeBack}>
+          Take back last play
+        </button>
+      )}
       <button
         onClick={endTrick}
         disabled={playPhase.trick.player_queue.length > 0}
