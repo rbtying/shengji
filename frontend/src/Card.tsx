@@ -449,7 +449,7 @@ const FourColorCards: {
 
 interface IProps {
   card: string;
-  svgCards?: boolean;
+  smaller?: boolean;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
 }
@@ -464,16 +464,18 @@ const Card = (props: IProps): JSX.Element => {
     );
 
     if (settings.svgCards) {
+      return (
+        <React.Suspense fallback={nonSVG}>
+          <span
+            className={classNames("card", "svg", "unknown", props.className)}
+          >
+            <Svg1B height={props.smaller ? 95 : 120} />
+          </span>
+        </React.Suspense>
+      );
     } else {
       return nonSVG;
     }
-    return (
-      <React.Suspense fallback={nonSVG}>
-        <span className={classNames("card", "svg", "unknown", props.className)}>
-          <Svg1B height={120} />
-        </span>
-      </React.Suspense>
-    );
   } else {
     const cardInfo = cardLookup[props.card];
     const nonSVG = (
@@ -501,7 +503,7 @@ const Card = (props: IProps): JSX.Element => {
             {React.createElement(
               (settings.fourColor ? FourColorCards : NormalCards)[props.card],
               {
-                height: 120,
+                height: props.smaller ? 95 : 120,
               }
             )}
           </span>
