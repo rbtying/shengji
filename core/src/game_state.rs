@@ -182,6 +182,18 @@ impl Default for BonusLevelPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum PlayTakebackPolicy {
+    AllowPlayTakeback,
+    NoPlayTakeback,
+}
+
+impl Default for PlayTakebackPolicy {
+    fn default() -> Self {
+        PlayTakebackPolicy::AllowPlayTakeback
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -220,6 +232,8 @@ pub struct PropagatedState {
     bid_policy: BidPolicy,
     #[serde(default)]
     bonus_level_policy: BonusLevelPolicy,
+    #[serde(default)]
+    play_takeback_policy: PlayTakebackPolicy,
 }
 
 impl PropagatedState {
@@ -494,6 +508,18 @@ impl PropagatedState {
         if policy != self.throw_evaluation_policy {
             self.throw_evaluation_policy = policy;
             Ok(vec![MessageVariant::ThrowEvaluationPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_play_takeback_policy(
+        &mut self,
+        policy: PlayTakebackPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.play_takeback_policy {
+            self.play_takeback_policy = policy;
+            Ok(vec![MessageVariant::PlayTakebackPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -878,6 +904,9 @@ impl PlayPhase {
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.propagated.play_takeback_policy == PlayTakebackPolicy::NoPlayTakeback {
+            bail!("Taking back played cards is not allowed")
+        }
         Ok(self
             .trick
             .take_back(id, &mut self.hands, self.propagated.throw_evaluation_policy)?)

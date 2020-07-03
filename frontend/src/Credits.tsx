@@ -31,6 +31,10 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>7/01/2020:</p>
         <ul>
+          <li>(#68) Add game option to disallow taking back plays</li>
+        </ul>
+        <p>7/01/2020:</p>
+        <ul>
           <li>Add the option to use SVG cards rather than text cards.</li>
         </ul>
         <p>6/28/2020:</p>

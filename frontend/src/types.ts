@@ -141,6 +141,7 @@ export interface IPropagatedState {
   throw_evaluation_policy: "All" | "Highest";
   hide_played_cards: boolean;
   landlord_emoji: string | null;
+  play_takeback_policy: "AllowPlayTakeback" | "NoPlayTakeback";
 }
 
 export interface IHands {

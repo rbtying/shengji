@@ -177,6 +177,19 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setPlayTakebackPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetPlayTakebackPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -422,6 +435,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetBonusLevelPolicy: value,
+              },
+            });
+            break;
+          case "play_takeback_policy":
+            send({
+              Action: {
+                SetPlayTakebackPolicy: value,
               },
             });
             break;
@@ -732,6 +752,18 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="Highest">
                 Subsequent throw must beat highest card to win
               </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Play takeback:{" "}
+            <select
+              value={props.state.propagated.play_takeback_policy}
+              onChange={setPlayTakebackPolicy}
+            >
+              <option value="AllowPlayTakeback">Allow taking back plays</option>
+              <option value="NoPlayTakeback">Disallow taking back plays</option>
             </select>
           </label>
         </div>
