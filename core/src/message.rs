@@ -123,6 +123,8 @@ pub enum MessageVariant {
     BidTakebackPolicySet {
         policy: BidTakebackPolicy,
     },
+    PickedUpCards,
+    PutDownCards,
     RevealedCardFromKitty,
     GameFinished {
         result: HashMap<String, PlayerGameFinishedResult>,

@@ -192,6 +192,10 @@ impl InteractiveGame {
                 info!(logger, "Setting bid takeback policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_takeback_policy(policy)?
             }
+            (Message::SetKittyTheftPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting kitty theft policy"; "policy" => format!("{:?}", policy));
+                state.set_kitty_theft_policy(policy)?
+            }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -218,6 +222,29 @@ impl InteractiveGame {
                 info!(logger, "Entering exchange phase");
                 self.state = GameState::Exchange(state.advance(id)?);
                 vec![]
+            }
+            (Message::Bid(card, count), GameState::Exchange(ref mut state)) => {
+                info!(logger, "Making exchange bid");
+                if state.bid(id, card, count) {
+                    vec![MessageVariant::MadeBid { card, count }]
+                } else {
+                    bail!("bid was invalid")
+                }
+            }
+            (Message::TakeBackBid, GameState::Exchange(ref mut state)) => {
+                debug!(logger, "Taking back bid");
+                state.take_back_bid(id)?;
+                vec![MessageVariant::TookBackBid]
+            }
+            (Message::PickUpKitty, GameState::Exchange(ref mut state)) => {
+                info!(logger, "Picking up cards after over-bid");
+                state.pick_up_cards(id)?;
+                vec![MessageVariant::PickedUpCards]
+            }
+            (Message::PutDownKitty, GameState::Exchange(ref mut state)) => {
+                info!(logger, "Putting down cards after over-bid");
+                state.finalize(id)?;
+                vec![MessageVariant::PickedUpCards]
             }
             (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
                 debug!(logger, "Moving card to kitty");
@@ -312,11 +339,13 @@ pub enum Message {
     SetThrowEvaluationPolicy(ThrowEvaluationPolicy),
     SetPlayTakebackPolicy(PlayTakebackPolicy),
     SetBidTakebackPolicy(BidTakebackPolicy),
+    SetKittyTheftPolicy(KittyTheftPolicy),
     StartGame,
     DrawCard,
     RevealCard,
     Bid(Card, usize),
     PickUpKitty,
+    PutDownKitty,
     MoveCardToKitty(Card),
     MoveCardToHand(Card),
     SetFriends(Vec<FriendSelection>),
@@ -410,6 +439,8 @@ impl BroadcastMessage {
             KittyTheftPolicySet { policy: KittyTheftPolicy::AllowKittyTheft } => format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
+            PickedUpCards => format!("{} picked up the bottom cards", n?),
+            PutDownCards => format!("{} put down the bottom cards", n?),
             GameFinished { result: _ } => "The game has finished.".to_string(),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
         })
