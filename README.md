@@ -8,7 +8,7 @@ I figured an online version would be worthwhile.
 # Usage:
 
 ```
-cargo run
+cd frontend && yarn build && cd .. && cd backend && cargo run
 ```
 
 The server is a self-contained static binary and does not terminate TLS. It
