@@ -6,15 +6,18 @@ button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .player { border: 1px #000 solid; padding: 10px; line-height: 1em; }
 .errors { position: fixed; z-index: 100; background: #f00; color: #fff; padding: 0 10px; }
 .trick { padding: 10px; }
-.card { font-size: 8em; display: inline-block; cursor: pointer; margin-right: -0.4em; background: #fff; user-select: none; font-family: "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; position: relative; }
-.card.unknown { cursor: default; color: #aaa; }
-.card .card-label { display: none; }
-.always-show-labels .card .card-label, .card:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.6em; bottom: 1.4em; z-index: 1; background: inherit; }
-.card.svg { background: transparent; }
-.always-show-labels .card.svg .card-label, .card.svg:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.1em; bottom: 2em; z-index: 1; background: transparent; }
+.card { font-size: 8em; display: inline-block; cursor: pointer; margin-right: -0.35em; background: transparent; user-select: none; font-family: "Noto Sans", "Segoe UI Symbol", "Symbola", "DejaVu Sans", system; position: relative; }
+.unknown, .card.unknown { cursor: default; color: #aaa; }
+.card .card-label { display: none; position: absolute; font-size: initial; left: 0.25em; bottom: 2em; z-index: 1; background: #fff; width: 1.5em; }
+.more .card .card-label { bottom: 1.5em; }
+.always-show-labels .card .card-label, .card:hover .card-label { display: inline-block; }
 .hand .unselected-cards.unclickable .card { cursor: default; }
-.hand .unselected-cards .card.svg:hover .card-label { display: inline-block; position: absolute; font-size: initial; left: 0.1em; bottom: 3.5em; z-index: 1; background: inherit; }
+.hand .unselected-cards .card { margin-top: 0.2em; }
+.hand .unselected-cards .card:hover canvas, .hand .unselected-cards .card.selected canvas { transform: translateY(-0.15em); }
 .hand .unselected-cards .card:hover svg { margin-bottom: 0.2em; margin-top: -0.2em; }
+.hand .unselected-cards .card:hover .card-label, .hand .unselected-cards .card.selected .card-label { bottom: 3.2em; }
+.always-show-labels .card.svg .card-label, .card.svg:hover .card-label { left: 0.1em; bottom: 0.4em; }
+.hand .unselected-cards .card.svg:hover .card-label { left: 0.1em; bottom: 2em; }
 .ReactModal__Overlay { z-index: 2; }
 .notify .card, .card.notify { animation:blinkingText 1.5s 1; color: #000; }
 @keyframes blinkingText {
@@ -29,13 +32,13 @@ button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .♧ { color: #000; }
 .🃟 { color: #000; }
 .🃏 { color: #bb0313; }
-.points .card { font-size: 5em; cursor: default; }
-.four-color .♢ { color: #1933f9; }
-.four-color .♡ { color: #bb0313; }
-.four-color .♤ { color: #000; }
-.four-color .♧ { color: #477e1b; }
-.four-color .🃟 { color: #000; }
-.four-color .🃏 { color: #bb0313; }
+.points .card { cursor: default; }
+.four-color .♢, .four-color.♢ { color: #1933f9; }
+.four-color .♡, .four-color.♡ { color: #bb0313; }
+.four-color .♤, .four-color.♤ { color: #000; }
+.four-color .♧, .four-color.♧ { color: #477e1b; }
+.four-color .🃟, .four-color.🃟 { color: #000; }
+.four-color .🃏, .four-color.🃏 { color: #bb0313; }
 .hand p { margin: 0; text-align: center; }
 .hand .unselected-cards { padding: 0 10px; }
 .hand .selected-cards { padding: 0 10px; }
@@ -56,7 +59,7 @@ button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .labeled-play.clickable .card { cursor: pointer; }
 .labeled-play.winning { box-shadow: inset 0px 0px 0px 2px #bb0313; }
 .labeled-play .more .card { font-size: 6em; }
-.always-show-labels .more .card.svg .card-label, .more .card.svg:hover .card-label { bottom: 1.5em; }
+.always-show-labels .more .card.svg .card-label, .more .card.svg:hover .card-label { bottom: 0em; }
 .labeled-play .play { display: inline-block; }
 .trump { margin: 10px 0; }
 .pending-friends p { margin: 0; }
