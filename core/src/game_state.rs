@@ -1636,6 +1636,9 @@ impl DrawPhase {
     }
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.propagated.bid_takeback_policy == BidTakebackPolicy::NoBidTakeback {
+            bail!("Taking back bids is not allowed!")
+        }
         if self.bids.last().map(|b| b.id) == Some(id) {
             self.bids.pop();
             Ok(())
