@@ -44,16 +44,16 @@ export type MessageVariant =
   | { type: "TookBackPlay" }
   | { type: "TrickWon"; winner: number; points: number }
   | {
-    type: "GameFinished";
-    result: {
-      [player_name: string]: {
-        won_game: boolean;
-        is_defending: boolean;
-        is_landlord: boolean;
-        ranks_up: number;
+      type: "GameFinished";
+      result: {
+        [player_name: string]: {
+          won_game: boolean;
+          is_defending: boolean;
+          is_landlord: boolean;
+          ranks_up: number;
+        };
       };
     };
-  };
 
 export interface IPlayer {
   id: number;
@@ -211,10 +211,10 @@ export interface IOrderedCard {
 
 export type ITrump =
   | {
-    Standard: { suit: string; number: string };
-    NoTrump: null;
-  }
+      Standard: { suit: string; number: string };
+      NoTrump: null;
+    }
   | {
-    Standard: null;
-    NoTrump: { number: string };
-  };
+      Standard: null;
+      NoTrump: { number: string };
+    };

@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::game_state::{
-    AdvancementPolicy, BidPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
-    FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, PlayTakebackPolicy, BidTakebackPolicy, ThrowPenalty,
+    AdvancementPolicy, BidPolicy, BidTakebackPolicy, BonusLevelPolicy,
+    FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings,
+    GameState, InitializePhase, KittyBidPolicy, KittyPenalty, PlayTakebackPolicy, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
