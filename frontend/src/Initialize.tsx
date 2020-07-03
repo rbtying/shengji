@@ -190,6 +190,20 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+
+  const setBidTakebackPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidTakebackPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -282,13 +296,13 @@ const Initialize = (props: IProps): JSX.Element => {
       : "FindingFriends";
   const numFriends =
     props.state.propagated.game_mode === "Tractor" ||
-    props.state.propagated.game_mode.FindingFriends.num_friends === null
+      props.state.propagated.game_mode.FindingFriends.num_friends === null
       ? ""
       : props.state.propagated.game_mode.FindingFriends.num_friends;
   const decksEffective =
     props.state.propagated.num_decks !== undefined &&
-    props.state.propagated.num_decks !== null &&
-    props.state.propagated.num_decks > 0
+      props.state.propagated.num_decks !== null &&
+      props.state.propagated.num_decks > 0
       ? props.state.propagated.num_decks
       : Math.floor(props.state.propagated.players.length / 2);
   let kittyOffset =
@@ -445,6 +459,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "bid_takeback_policy":
+            send({
+              Action: {
+                SetBidTakebackPolicy: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -502,8 +523,8 @@ const Initialize = (props: IProps): JSX.Element => {
       {props.state.propagated.players.length >= 4 ? (
         <button onClick={startGame}>Start game</button>
       ) : (
-        <h2>Waiting for players...</h2>
-      )}
+          <h2>Waiting for players...</h2>
+        )}
       <Kicker
         players={props.state.propagated.players}
         onKick={(playerId: number) => send({ Kick: playerId })}
@@ -553,7 +574,7 @@ const Initialize = (props: IProps): JSX.Element => {
             <select
               value={
                 props.state.propagated.kitty_size !== undefined &&
-                props.state.propagated.kitty_size !== null
+                  props.state.propagated.kitty_size !== null
                   ? props.state.propagated.kitty_size
                   : ""
               }
@@ -609,6 +630,18 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="GreaterLength">
                 All bids must have more cards than the previous bids
               </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Bid takeback:{" "}
+            <select
+              value={props.state.propagated.bid_takeback_policy}
+              onChange={setBidTakebackPolicy}
+            >
+              <option value="AllowBidTakeback">Allow bid takeback</option>
+              <option value="NoBidTakeback">No bid takeback</option>
             </select>
           </label>
         </div>
@@ -771,8 +804,8 @@ const Initialize = (props: IProps): JSX.Element => {
           <label>
             Landlord Emoji:{" "}
             {props.state.propagated.landlord_emoji !== null &&
-            props.state.propagated.landlord_emoji !== undefined &&
-            props.state.propagated.landlord_emoji !== ""
+              props.state.propagated.landlord_emoji !== undefined &&
+              props.state.propagated.landlord_emoji !== ""
               ? props.state.propagated.landlord_emoji
               : "当庄"}{" "}
             <button

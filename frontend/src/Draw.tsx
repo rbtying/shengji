@@ -115,7 +115,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   render(): JSX.Element {
     const canDraw =
       this.props.state.propagated.players[this.props.state.position].name ===
-        this.props.name && this.props.state.deck.length > 0;
+      this.props.name && this.props.state.deck.length > 0;
     if (
       canDraw &&
       !this.could_draw &&
@@ -189,7 +189,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             <LabeledPlay
               label={`${
                 players[this.props.state.autobid.id].name
-              } (from bottom)`}
+                } (from bottom)`}
               cards={[this.props.state.autobid.card]}
             />
           ) : null}
@@ -228,16 +228,17 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         >
           Make bid
         </button>
-        <button
-          onClick={this.takeBackBid}
-          disabled={
-            this.props.state.bids.length === 0 ||
-            this.props.state.bids[this.props.state.bids.length - 1].id !==
+        {this.props.state.propagated.bid_takeback_policy === "AllowBidTakeback" &&
+          <button
+            onClick={this.takeBackBid}
+            disabled={
+              this.props.state.bids.length === 0 ||
+              this.props.state.bids[this.props.state.bids.length - 1].id !==
               playerId
-          }
-        >
-          Take back bid
-        </button>
+            }
+          >
+            Take back bid
+        </button>}
         <button
           onClick={this.pickUpKitty}
           disabled={
@@ -249,7 +250,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
               ((this.props.state.propagated.first_landlord_selection_policy ===
                 "ByWinningBid" &&
                 this.props.state.bids[this.props.state.bids.length - 1].id !==
-                  playerId) ||
+                playerId) ||
                 (this.props.state.propagated.first_landlord_selection_policy ===
                   "ByFirstBid" &&
                   this.props.state.bids[0].id !== playerId)))
@@ -280,8 +281,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             jokers
           </p>
         ) : (
-          <div />
-        )}
+              <div />
+            )}
         <Cards
           cardsInHand={cardsNotBid}
           selectedCards={this.state.selected}

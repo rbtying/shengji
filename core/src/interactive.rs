@@ -5,7 +5,7 @@ use slog::{debug, info, o, Logger};
 use crate::game_state::{
     AdvancementPolicy, BidPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
     FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, PlayTakebackPolicy, ThrowPenalty,
+    KittyPenalty, PlayTakebackPolicy, BidTakebackPolicy, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -187,6 +187,10 @@ impl InteractiveGame {
                 info!(logger, "Setting play takeback policy"; "policy" => format!("{:?}", policy));
                 state.set_play_takeback_policy(policy)?
             }
+            (Message::SetBidTakebackPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting bid takeback policy"; "policy" => format!("{:?}", policy));
+                state.set_bid_takeback_policy(policy)?
+            }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -306,6 +310,7 @@ pub enum Message {
     SetThrowPenalty(ThrowPenalty),
     SetThrowEvaluationPolicy(ThrowEvaluationPolicy),
     SetPlayTakebackPolicy(PlayTakebackPolicy),
+    SetBidTakebackPolicy(BidTakebackPolicy),
     StartGame,
     DrawCard,
     RevealCard,
@@ -399,6 +404,8 @@ impl BroadcastMessage {
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::AllowPlayTakeback } => format!("{} allowed taking back plays", n?),
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::NoPlayTakeback } => format!("{} disallowed taking back plays", n?),
+            BidTakebackPolicySet { policy: BidTakebackPolicy::AllowBidTakeback } => format!("{} allowed taking back bids", n?),
+            BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),            
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             GameFinished { result: _ } => "The game has finished.".to_string(),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
