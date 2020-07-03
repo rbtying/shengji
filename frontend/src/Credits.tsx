@@ -29,10 +29,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
-        <p>7/01/2020:</p>
+        <p>7/02/2020:</p>
         <ul>
           <li>(#171) Add game option disable taking back bids</li>
           <li>(#68) Add game option disable taking back plays</li>
+          <li>
+            (#17) Add game option for &ldquo;stealing&rdquo; the bottom cards
+          </li>
         </ul>
         <p>7/01/2020:</p>
         <ul>

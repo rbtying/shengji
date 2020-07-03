@@ -63,7 +63,7 @@ impl Bid {
                     card: last_bid.card,
                     count,
                     id,
-                    epoch: epoch,
+                    epoch,
                 })
                 .collect())
         } else if let Some(counts) = hands.counts(id) {
@@ -121,6 +121,7 @@ impl Bid {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn bid(
         id: PlayerID,
         card: Card,

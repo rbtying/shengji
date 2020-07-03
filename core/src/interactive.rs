@@ -244,7 +244,7 @@ impl InteractiveGame {
             (Message::PutDownKitty, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Putting down cards after over-bid");
                 state.finalize(id)?;
-                vec![MessageVariant::PickedUpCards]
+                vec![MessageVariant::PutDownCards]
             }
             (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
                 debug!(logger, "Moving card to kitty");

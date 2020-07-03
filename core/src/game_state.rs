@@ -1299,7 +1299,7 @@ impl ExchangePhase {
         if self.exchanger.unwrap_or(self.landlord) != id {
             bail!("not the exchanger")
         }
-        if !self.finalized {
+        if self.finalized {
             bail!("cards already finalized")
         }
         self.hands
@@ -1312,7 +1312,7 @@ impl ExchangePhase {
         if self.exchanger.unwrap_or(self.landlord) != id {
             bail!("not the exchanger")
         }
-        if !self.finalized {
+        if self.finalized {
             bail!("cards already finalized")
         }
         if let Some(index) = self.kitty.iter().position(|c| *c == card) {
@@ -1390,6 +1390,9 @@ impl ExchangePhase {
         if self.finalized {
             bail!("Already finalized")
         }
+        if self.kitty.len() != self.kitty_size {
+            bail!("incorrect number of cards in the bottom")
+        }
         self.finalized = true;
         Ok(())
     }
@@ -1409,6 +1412,7 @@ impl ExchangePhase {
             bail!("Only the winner of the bid can pick up the cards")
         }
         self.finalized = false;
+        self.epoch += 1;
         self.exchanger = Some(winning_bid.id);
 
         Ok(())
@@ -1464,10 +1468,11 @@ impl ExchangePhase {
             }
         }
 
-        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft {
-            if self.autobid.is_none() && !self.finalized {
-                bail!("must give other players a chance to over-bid and swap cards")
-            }
+        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
+            && self.autobid.is_none()
+            && !self.finalized
+        {
+            bail!("must give other players a chance to over-bid and swap cards")
         }
 
         let landlord_position = bail_unwrap!(self

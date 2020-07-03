@@ -23,7 +23,7 @@ const LandlordSelector = (props: IProps): JSX.Element => {
           value={props.landlordId === null ? "" : props.landlordId}
           onChange={handleChange}
         >
-          <option value="">winner of the bid</option>
+          <option value="">determined by the bid</option>
           {props.players.map((player: IPlayer) => (
             <option value={player.id} key={player.id}>
               {player.name}
