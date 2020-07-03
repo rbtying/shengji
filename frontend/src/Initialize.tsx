@@ -762,8 +762,8 @@ const Initialize = (props: IProps): JSX.Element => {
               value={props.state.propagated.play_takeback_policy}
               onChange={setPlayTakebackPolicy}
             >
-              <option value="AllowPlayTakeback">Allow play takeback</option>
-              <option value="NoPlayTakeback">No play takeback</option>
+              <option value="AllowPlayTakeback">Allow taking back plays</option>
+              <option value="NoPlayTakeback">Disallow taking back plays</option>
             </select>
           </label>
         </div>
