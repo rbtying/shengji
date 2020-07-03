@@ -459,7 +459,7 @@ const Card = (props: IProps): JSX.Element => {
   if (!(props.card in cardLookup)) {
     const nonSVG = (
       <span className={classNames("card", "unknown", props.className)}>
-        <span>{props.card}</span>
+        {props.card}
       </span>
     );
 
@@ -486,7 +486,7 @@ const Card = (props: IProps): JSX.Element => {
         <div className="card-label">
           <InlineCard card={props.card} />
         </div>
-        <span>{cardInfo.display_value}</span>
+        {cardInfo.display_value}
       </span>
     );
 
