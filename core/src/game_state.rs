@@ -194,6 +194,17 @@ impl Default for PlayTakebackPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum BidTakebackPolicy {
+    AllowBidTakeback,
+    NoBidTakeback,
+}
+
+impl Default for BidTakebackPolicy {
+    fn default() -> Self {
+        BidTakebackPolicy::AllowBidTakeback
+    }
+}
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -234,6 +245,8 @@ pub struct PropagatedState {
     bonus_level_policy: BonusLevelPolicy,
     #[serde(default)]
     play_takeback_policy: PlayTakebackPolicy,
+    #[serde(default)]
+    bid_takeback_policy: BidTakebackPolicy,
 }
 
 impl PropagatedState {
@@ -520,6 +533,18 @@ impl PropagatedState {
         if policy != self.play_takeback_policy {
             self.play_takeback_policy = policy;
             Ok(vec![MessageVariant::PlayTakebackPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_bid_takeback_policy(
+        &mut self,
+        policy: BidTakebackPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.bid_takeback_policy {
+            self.bid_takeback_policy = policy;
+            Ok(vec![MessageVariant::BidTakebackPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -1611,6 +1636,9 @@ impl DrawPhase {
     }
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.propagated.bid_takeback_policy == BidTakebackPolicy::NoBidTakeback {
+            bail!("Taking back bids is not allowed!")
+        }
         if self.bids.last().map(|b| b.id) == Some(id) {
             self.bids.pop();
             Ok(())

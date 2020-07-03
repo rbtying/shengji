@@ -228,16 +228,19 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         >
           Make bid
         </button>
-        <button
-          onClick={this.takeBackBid}
-          disabled={
-            this.props.state.bids.length === 0 ||
-            this.props.state.bids[this.props.state.bids.length - 1].id !==
-              playerId
-          }
-        >
-          Take back bid
-        </button>
+        {this.props.state.propagated.bid_takeback_policy ===
+          "AllowBidTakeback" && (
+          <button
+            onClick={this.takeBackBid}
+            disabled={
+              this.props.state.bids.length === 0 ||
+              this.props.state.bids[this.props.state.bids.length - 1].id !==
+                playerId
+            }
+          >
+            Take back bid
+          </button>
+        )}
         <button
           onClick={this.pickUpKitty}
           disabled={

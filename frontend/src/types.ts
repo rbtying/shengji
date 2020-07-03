@@ -142,6 +142,7 @@ export interface IPropagatedState {
   hide_played_cards: boolean;
   landlord_emoji: string | null;
   play_takeback_policy: "AllowPlayTakeback" | "NoPlayTakeback";
+  bid_takeback_policy: "AllowBidTakeback" | "NoBidTakeback";
 }
 
 export interface IHands {

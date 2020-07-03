@@ -190,6 +190,19 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setBidTakebackPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidTakebackPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -445,6 +458,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "bid_takeback_policy":
+            send({
+              Action: {
+                SetBidTakebackPolicy: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -609,6 +629,18 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="GreaterLength">
                 All bids must have more cards than the previous bids
               </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Bid takeback:{" "}
+            <select
+              value={props.state.propagated.bid_takeback_policy}
+              onChange={setBidTakebackPolicy}
+            >
+              <option value="AllowBidTakeback">Allow bid takeback</option>
+              <option value="NoBidTakeback">No bid takeback</option>
             </select>
           </label>
         </div>

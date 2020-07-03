@@ -31,7 +31,8 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>7/01/2020:</p>
         <ul>
-          <li>(#68) Add game option to disallow taking back plays</li>
+          <li>(#171) Add game option disable taking back bids</li>
+          <li>(#68) Add game option disable taking back plays</li>
         </ul>
         <p>7/01/2020:</p>
         <ul>
@@ -41,7 +42,7 @@ const ChangeLog = (): JSX.Element => {
         <ul>
           <li>
             (#163) add game option to reward a bonus level for landlord team to
-            win a smaller size team
+            win with a smaller size team
           </li>
         </ul>
         <p>6/26/2020:</p>
