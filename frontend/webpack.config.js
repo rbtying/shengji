@@ -23,7 +23,7 @@ module.exports = {
       chunks: "async",
       cacheGroups: {
         cards: {
-          test: /[\\/]playing-cards(-4color)?[\\/]/,
+          test: /([\\/]playing-cards(-4color)?[\\/])|(SvgCard.tsx)/,
           name(_) {
             return "playing-cards";
           },
