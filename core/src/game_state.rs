@@ -726,7 +726,7 @@ impl GameState {
 
     pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         if let Ok(pid) = self.player_id(&name) {
-            return Ok((pid, vec![]));
+            return Ok((pid, vec![MessageVariant::JoinedGameAgain { player: pid }]));
         }
         match self {
             GameState::Initialize(ref mut p) => p.add_player(name),
