@@ -40,7 +40,7 @@ pub enum MessageVariant {
     },
     JoinedGameAgain {
         player: PlayerID,
-    },    
+    },
     JoinedTeam {
         player: PlayerID,
     },
