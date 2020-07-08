@@ -43,6 +43,10 @@ impl InteractiveGame {
         Ok(self.state.clone())
     }
 
+    pub fn get_user_multi_game_session_policy(&self) -> UserMultiGameSessionPolicy {
+        self.state.user_multi_game_session_policy
+    }
+
     pub fn dump_state_for_player(&self, id: PlayerID) -> Result<(GameState, Vec<Card>), Error> {
         Ok((self.state.for_player(id), self.state.cards(id)))
     }

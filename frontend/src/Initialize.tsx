@@ -906,10 +906,10 @@ const Initialize = (props: IProps): JSX.Element => {
               onChange={setUserMultiGameSessionPolicy}
             >
               <option value="AllowMultipleSessions">
-                A user can join the same game with multiple sessions
+                Users can join the game in multiple tabs
               </option>
               <option value="SingleSessionOnly">
-                A user can join the same game with only one session
+                Users can only join the game in one tab
               </option>
             </select>
           </label>

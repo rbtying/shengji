@@ -514,11 +514,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             game.users.insert(ws_id, UserState { player_id, tx });
 
             // if the same user joined before, remove its previous entry from the user list
-            if game
-                .game
-                .dump_state()
-                .unwrap()
-                .user_multi_game_session_policy
+            if game.game.get_user_multi_game_session_policy()
                 == game_state::UserMultiGameSessionPolicy::SingleSessionOnly
             {
                 game.users
