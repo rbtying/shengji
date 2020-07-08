@@ -203,14 +203,14 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setBidTakebackPolicy = (
+  const setUserMultiGameSessionPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
         Action: {
-          SetBidTakebackPolicy: evt.target.value,
+          SetUserMultiGameSessionPolicy: evt.target.value,
         },
       });
     }
@@ -249,6 +249,19 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetBonusLevelPolicy: "NoBonusLevel",
+        },
+      });
+    }
+  };
+
+  const setBidTakebackPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidTakebackPolicy: evt.target.value,
         },
       });
     }
@@ -482,6 +495,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetBidTakebackPolicy: value,
+              },
+            });
+            break;
+          case "user_multi_game_session_policy":
+            send({
+              Action: {
+                SetUserMultiGameSessionPolicy: value,
               },
             });
             break;
@@ -876,6 +896,22 @@ const Initialize = (props: IProps): JSX.Element => {
                 <Picker onEmojiClick={setEmoji} />
               </React.Suspense>
             ) : null}
+          </label>
+        </div>
+        <div>
+          <label>
+            User joining game policy:{" "}
+            <select
+              value={props.state.propagated.user_multi_game_session_policy}
+              onChange={setUserMultiGameSessionPolicy}
+            >
+              <option value="AllowMultipleSessions">
+                A user can join the same game with multiple sessions
+              </option>
+              <option value="SingleSessionOnly">
+                A user can join the same game with only one session
+              </option>
+            </select>
           </label>
         </div>
         <div>

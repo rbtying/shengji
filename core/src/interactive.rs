@@ -6,7 +6,7 @@ use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
     AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
     FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
+    KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty, UserMultiGameSessionPolicy,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -30,6 +30,7 @@ impl InteractiveGame {
         name: String,
     ) -> Result<(PlayerID, Vec<(BroadcastMessage, String)>), Error> {
         let (actor, msgs) = self.state.register(name)?;
+
         Ok((actor, self.hydrate_messages(actor, msgs)?))
     }
 
@@ -196,6 +197,13 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty theft policy"; "policy" => format!("{:?}", policy));
                 state.set_kitty_theft_policy(policy)?
             }
+            (
+                Message::SetUserMultiGameSessionPolicy(policy),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting user multiple game session policy"; "policy" => format!("{:?}", policy));
+                state.set_user_multiple_game_session_policy(policy)?
+            }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -340,6 +348,7 @@ pub enum Message {
     SetPlayTakebackPolicy(PlayTakebackPolicy),
     SetBidTakebackPolicy(BidTakebackPolicy),
     SetKittyTheftPolicy(KittyTheftPolicy),
+    SetUserMultiGameSessionPolicy(UserMultiGameSessionPolicy),
     StartGame,
     DrawCard,
     RevealCard,
@@ -386,7 +395,8 @@ impl BroadcastMessage {
             NewLandlordForNextGame { landlord } => format!("{} will start the next game", player_name(landlord)?),
             PointsInKitty { points, multiplier } => format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
-            JoinedGameAgain { player } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
+            JoinedGameAgain { player, user_multi_game_session_policy: UserMultiGameSessionPolicy::SingleSessionOnly } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
+            JoinedGameAgain { player, user_multi_game_session_policy: UserMultiGameSessionPolicy::AllowMultipleSessions } => format!("{} has joined the game again", player_name(player)?),
             JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),
@@ -439,6 +449,8 @@ impl BroadcastMessage {
             BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),            
             KittyTheftPolicySet { policy: KittyTheftPolicy::AllowKittyTheft } => format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
+            UserMultiGameSessionPolicySet { policy: UserMultiGameSessionPolicy::AllowMultipleSessions } => format!("{} allowed a user to join the same game in multiple sessions", n?),
+            UserMultiGameSessionPolicySet { policy: UserMultiGameSessionPolicy::SingleSessionOnly } => format!("{} allowed a user to join the same game with only one session", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             PickedUpCards => format!("{} picked up the bottom cards", n?),
             PutDownCards => format!("{} put down the bottom cards", n?),

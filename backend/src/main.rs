@@ -513,9 +513,17 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
             game.users.insert(ws_id, UserState { player_id, tx });
 
-            // if user with the same name joined before, remove its previous entry from user list
-            game.users
-                .retain(|id, user| user.player_id != player_id || *id == ws_id);
+            // if the same user joined before, remove its previous entry from the user list
+            if game
+                .game
+                .dump_state()
+                .unwrap()
+                .user_multi_game_session_policy
+                == game_state::UserMultiGameSessionPolicy::SingleSessionOnly
+            {
+                game.users
+                    .retain(|id, user| user.player_id != player_id || *id == ws_id);
+            }
 
             // send the updated game state to everyone!
             for user in game.users.values() {
@@ -621,8 +629,30 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     }
                 }
                 UserMessage::Action(m) => {
+                    let user_single_game_session;
+                    if let interactive::Message::SetUserMultiGameSessionPolicy(
+                        game_state::UserMultiGameSessionPolicy::SingleSessionOnly,
+                    ) = m
+                    {
+                        user_single_game_session = true;
+                    } else {
+                        user_single_game_session = true;
+                    }
+
                     match game.game.interact(m, player_id, &logger) {
                         Ok(msgs) => {
+                            if user_single_game_session {
+                                let mut unique_player_ids: Vec<types::PlayerID> = vec![];
+                                let mut retain_ws_ids: Vec<usize> = vec![];
+                                for (id, user) in game.users.iter() {
+                                    if !unique_player_ids.contains(&user.player_id) {
+                                        unique_player_ids.push(user.player_id);
+                                        retain_ws_ids.push(*id);
+                                    }
+                                }
+
+                                game.users.retain(|id, _| retain_ws_ids.contains(id));
+                            }
                             // send the updated game state to everyone!
                             for user in game.users.values() {
                                 if let Ok((state, cards)) =

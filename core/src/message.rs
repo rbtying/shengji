@@ -6,7 +6,7 @@ use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
     AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
     GameModeSettings, KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy,
-    PlayerGameFinishedResult, ThrowPenalty,
+    PlayerGameFinishedResult, ThrowPenalty, UserMultiGameSessionPolicy,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
@@ -40,6 +40,7 @@ pub enum MessageVariant {
     },
     JoinedGameAgain {
         player: PlayerID,
+        user_multi_game_session_policy: UserMultiGameSessionPolicy,
     },
     JoinedTeam {
         player: PlayerID,
@@ -125,6 +126,9 @@ pub enum MessageVariant {
     },
     BidTakebackPolicySet {
         policy: BidTakebackPolicy,
+    },
+    UserMultiGameSessionPolicySet {
+        policy: UserMultiGameSessionPolicy,
     },
     PickedUpCards,
     PutDownCards,

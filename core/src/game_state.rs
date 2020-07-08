@@ -195,6 +195,18 @@ impl Default for KittyTheftPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum UserMultiGameSessionPolicy {
+    AllowMultipleSessions,
+    SingleSessionOnly,
+}
+
+impl Default for UserMultiGameSessionPolicy {
+    fn default() -> Self {
+        UserMultiGameSessionPolicy::AllowMultipleSessions
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -239,6 +251,8 @@ pub struct PropagatedState {
     play_takeback_policy: PlayTakebackPolicy,
     #[serde(default)]
     bid_takeback_policy: BidTakebackPolicy,
+    #[serde(default)]
+    pub user_multi_game_session_policy: UserMultiGameSessionPolicy,
 }
 
 impl PropagatedState {
@@ -578,6 +592,20 @@ impl PropagatedState {
         }
     }
 
+    pub fn set_user_multiple_game_session_policy(
+        &mut self,
+        policy: UserMultiGameSessionPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.user_multi_game_session_policy {
+            self.user_multi_game_session_policy = policy;
+            Ok(vec![MessageVariant::UserMultiGameSessionPolicySet {
+                policy,
+            }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
             self.players.retain(|p| p.id != player_id);
@@ -726,7 +754,13 @@ impl GameState {
 
     pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         if let Ok(pid) = self.player_id(&name) {
-            return Ok((pid, vec![MessageVariant::JoinedGameAgain { player: pid }]));
+            return Ok((
+                pid,
+                vec![MessageVariant::JoinedGameAgain {
+                    player: pid,
+                    user_multi_game_session_policy: self.user_multi_game_session_policy,
+                }],
+            ));
         }
         match self {
             GameState::Initialize(ref mut p) => p.add_player(name),
