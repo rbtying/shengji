@@ -196,14 +196,14 @@ impl Default for KittyTheftPolicy {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum UserMultiGameSessionPolicy {
+pub enum GameShadowingPolicy {
     AllowMultipleSessions,
     SingleSessionOnly,
 }
 
-impl Default for UserMultiGameSessionPolicy {
+impl Default for GameShadowingPolicy {
     fn default() -> Self {
-        UserMultiGameSessionPolicy::AllowMultipleSessions
+        GameShadowingPolicy::AllowMultipleSessions
     }
 }
 
@@ -252,7 +252,7 @@ pub struct PropagatedState {
     #[serde(default)]
     bid_takeback_policy: BidTakebackPolicy,
     #[serde(default)]
-    pub user_multi_game_session_policy: UserMultiGameSessionPolicy,
+    pub game_shadowing_policy: GameShadowingPolicy,
 }
 
 impl PropagatedState {
@@ -594,13 +594,11 @@ impl PropagatedState {
 
     pub fn set_user_multiple_game_session_policy(
         &mut self,
-        policy: UserMultiGameSessionPolicy,
+        policy: GameShadowingPolicy,
     ) -> Result<Vec<MessageVariant>, Error> {
-        if policy != self.user_multi_game_session_policy {
-            self.user_multi_game_session_policy = policy;
-            Ok(vec![MessageVariant::UserMultiGameSessionPolicySet {
-                policy,
-            }])
+        if policy != self.game_shadowing_policy {
+            self.game_shadowing_policy = policy;
+            Ok(vec![MessageVariant::GameShadowingPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -758,7 +756,7 @@ impl GameState {
                 pid,
                 vec![MessageVariant::JoinedGameAgain {
                     player: pid,
-                    user_multi_game_session_policy: self.user_multi_game_session_policy,
+                    game_shadowing_policy: self.game_shadowing_policy,
                 }],
             ));
         }

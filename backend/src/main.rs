@@ -514,9 +514,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             game.users.insert(ws_id, UserState { player_id, tx });
 
             // if the same user joined before, remove its previous entry from the user list
-            if game.game.get_user_multi_game_session_policy()
-                == game_state::UserMultiGameSessionPolicy::SingleSessionOnly
-            {
+            if !game.game.allows_multiple_sessions_per_user() {
                 game.users
                     .retain(|id, user| user.player_id != player_id || *id == ws_id);
             }
@@ -625,19 +623,19 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     }
                 }
                 UserMessage::Action(m) => {
-                    let user_single_game_session;
-                    if let interactive::Message::SetUserMultiGameSessionPolicy(
-                        game_state::UserMultiGameSessionPolicy::SingleSessionOnly,
+                    let single_game_shadowing_session;
+                    if let interactive::Message::SetGameShadowingPolicy(
+                        game_state::GameShadowingPolicy::SingleSessionOnly,
                     ) = m
                     {
-                        user_single_game_session = true;
+                        single_game_shadowing_session = true;
                     } else {
-                        user_single_game_session = true;
+                        single_game_shadowing_session = true;
                     }
 
                     match game.game.interact(m, player_id, &logger) {
                         Ok(msgs) => {
-                            if user_single_game_session {
+                            if single_game_shadowing_session {
                                 let mut unique_player_ids: Vec<types::PlayerID> = vec![];
                                 let mut retain_ws_ids: Vec<usize> = vec![];
                                 for (id, user) in game.users.iter() {

@@ -203,14 +203,14 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setUserMultiGameSessionPolicy = (
+  const setGameShadowingPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
         Action: {
-          SetUserMultiGameSessionPolicy: evt.target.value,
+          SetGameShadowingPolicy: evt.target.value,
         },
       });
     }
@@ -498,10 +498,10 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
-          case "user_multi_game_session_policy":
+          case "game_shadowing_policy":
             send({
               Action: {
-                SetUserMultiGameSessionPolicy: value,
+                SetGameShadowingPolicy: value,
               },
             });
             break;
@@ -900,10 +900,10 @@ const Initialize = (props: IProps): JSX.Element => {
         </div>
         <div>
           <label>
-            User joining game policy:{" "}
+            Game shadowing policy:{" "}
             <select
-              value={props.state.propagated.user_multi_game_session_policy}
-              onChange={setUserMultiGameSessionPolicy}
+              value={props.state.propagated.game_shadowing_policy}
+              onChange={setGameShadowingPolicy}
             >
               <option value="AllowMultipleSessions">
                 Users can join the game in multiple tabs

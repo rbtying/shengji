@@ -5,8 +5,8 @@ use slog::{debug, info, o, Logger};
 use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
     AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
-    FriendSelectionPolicy, GameModeSettings, GameState, InitializePhase, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty, UserMultiGameSessionPolicy,
+    FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameState, InitializePhase,
+    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -43,8 +43,8 @@ impl InteractiveGame {
         Ok(self.state.clone())
     }
 
-    pub fn get_user_multi_game_session_policy(&self) -> UserMultiGameSessionPolicy {
-        self.state.user_multi_game_session_policy
+    pub fn allows_multiple_sessions_per_user(&self) -> bool {
+        self.state.game_shadowing_policy == GameShadowingPolicy::AllowMultipleSessions
     }
 
     pub fn dump_state_for_player(&self, id: PlayerID) -> Result<(GameState, Vec<Card>), Error> {
@@ -201,10 +201,7 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty theft policy"; "policy" => format!("{:?}", policy));
                 state.set_kitty_theft_policy(policy)?
             }
-            (
-                Message::SetUserMultiGameSessionPolicy(policy),
-                GameState::Initialize(ref mut state),
-            ) => {
+            (Message::SetGameShadowingPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting user multiple game session policy"; "policy" => format!("{:?}", policy));
                 state.set_user_multiple_game_session_policy(policy)?
             }
@@ -352,7 +349,7 @@ pub enum Message {
     SetPlayTakebackPolicy(PlayTakebackPolicy),
     SetBidTakebackPolicy(BidTakebackPolicy),
     SetKittyTheftPolicy(KittyTheftPolicy),
-    SetUserMultiGameSessionPolicy(UserMultiGameSessionPolicy),
+    SetGameShadowingPolicy(GameShadowingPolicy),
     StartGame,
     DrawCard,
     RevealCard,
@@ -399,8 +396,8 @@ impl BroadcastMessage {
             NewLandlordForNextGame { landlord } => format!("{} will start the next game", player_name(landlord)?),
             PointsInKitty { points, multiplier } => format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
-            JoinedGameAgain { player, user_multi_game_session_policy: UserMultiGameSessionPolicy::SingleSessionOnly } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
-            JoinedGameAgain { player, user_multi_game_session_policy: UserMultiGameSessionPolicy::AllowMultipleSessions } => format!("{} has joined the game again", player_name(player)?),
+            JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::SingleSessionOnly } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
+            JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} has joined the game again", player_name(player)?),
             JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),
@@ -453,8 +450,8 @@ impl BroadcastMessage {
             BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),            
             KittyTheftPolicySet { policy: KittyTheftPolicy::AllowKittyTheft } => format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
-            UserMultiGameSessionPolicySet { policy: UserMultiGameSessionPolicy::AllowMultipleSessions } => format!("{} allowed users to join the game in multiple tabs", n?),
-            UserMultiGameSessionPolicySet { policy: UserMultiGameSessionPolicy::SingleSessionOnly } => format!("{} allowed users to join the game in one tab", n?),
+            GameShadowingPolicySet { policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} allowed users to join the game in multiple tabs", n?),
+            GameShadowingPolicySet { policy: GameShadowingPolicy::SingleSessionOnly } => format!("{} allowed users to join the game in one tab", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             PickedUpCards => format!("{} picked up the bottom cards", n?),
             PutDownCards => format!("{} put down the bottom cards", n?),
