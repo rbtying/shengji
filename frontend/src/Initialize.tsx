@@ -906,10 +906,10 @@ const Initialize = (props: IProps): JSX.Element => {
               onChange={setGameShadowingPolicy}
             >
               <option value="AllowMultipleSessions">
-                Users can join the game in multiple tabs
+                Allow players to be shadowed by joining with the same name
               </option>
               <option value="SingleSessionOnly">
-                Users can only join the game in one tab
+                Do not allow players to be shadowed
               </option>
             </select>
           </label>
