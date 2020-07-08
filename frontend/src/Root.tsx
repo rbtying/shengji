@@ -112,8 +112,38 @@ const Root = (): JSX.Element => {
         </div>
       );
     }
+  } else if (state.everConnected) {
+    return (
+      <>
+        <p>
+          It looks like you got disconnected from the server, please refresh! If
+          the game is still ongoing, you should be able to re-join with the same
+          name and pick up where you left off.
+        </p>
+      </>
+    );
   } else {
-    return <p>disconnected from server, please refresh</p>;
+    return (
+      <div>
+        <div className="game">
+          <h1>
+            升级 / <span className="red">Tractor</span> / 找朋友 /{" "}
+            <span className="red">Finding Friends</span>
+          </h1>
+          <p>
+            Welcome! This website helps you play 升级 / Tractor / 找朋友 /
+            Finding Friends with other people online.
+          </p>
+          <p>
+            If you&apos;re not familiar with the rules, check them out{" "}
+            <a href="rules">here</a>!
+          </p>
+          <p>Connecting to the server...</p>
+        </div>
+        <hr />
+        <Credits />
+      </div>
+    );
   }
 };
 

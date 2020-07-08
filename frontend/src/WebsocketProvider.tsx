@@ -62,7 +62,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
     setWebsocket(ws);
 
     ws.addEventListener("open", () =>
-      updateStateRef.current({ connected: true })
+      updateStateRef.current({ connected: true, everConnected: true })
     );
     ws.addEventListener("close", () =>
       updateStateRef.current({ connected: false })
@@ -79,6 +79,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       } else {
         updateStateRef.current({
           connected: true,
+          everConnected: true,
           ...websocketHandler(stateRef.current, message),
         });
       }

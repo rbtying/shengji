@@ -10,6 +10,7 @@ export interface AppState {
   settings: Settings;
   gameStatistics: GameStatistics;
   connected: boolean;
+  everConnected: boolean;
   roomName: string;
   name: string;
   game_state: IGameState | null;
@@ -22,6 +23,7 @@ const appState: State<AppState> = combineState({
   settings,
   gameStatistics,
   connected: noPersistence(() => false),
+  everConnected: noPersistence(() => false),
   roomName: noPersistence(() => window.location.hash.slice(1)),
   name: stringLocalStorageState("name"),
   game_state: noPersistence(() => null),
