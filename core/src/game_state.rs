@@ -195,6 +195,18 @@ impl Default for KittyTheftPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum GameShadowingPolicy {
+    AllowMultipleSessions,
+    SingleSessionOnly,
+}
+
+impl Default for GameShadowingPolicy {
+    fn default() -> Self {
+        GameShadowingPolicy::AllowMultipleSessions
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -239,6 +251,8 @@ pub struct PropagatedState {
     play_takeback_policy: PlayTakebackPolicy,
     #[serde(default)]
     bid_takeback_policy: BidTakebackPolicy,
+    #[serde(default)]
+    pub game_shadowing_policy: GameShadowingPolicy,
 }
 
 impl PropagatedState {
@@ -578,6 +592,18 @@ impl PropagatedState {
         }
     }
 
+    pub fn set_user_multiple_game_session_policy(
+        &mut self,
+        policy: GameShadowingPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.game_shadowing_policy {
+            self.game_shadowing_policy = policy;
+            Ok(vec![MessageVariant::GameShadowingPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         if let Some(player) = self.players.iter().find(|p| p.id == player_id).cloned() {
             self.players.retain(|p| p.id != player_id);
@@ -726,7 +752,13 @@ impl GameState {
 
     pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         if let Ok(pid) = self.player_id(&name) {
-            return Ok((pid, vec![]));
+            return Ok((
+                pid,
+                vec![MessageVariant::JoinedGameAgain {
+                    player: pid,
+                    game_shadowing_policy: self.game_shadowing_policy,
+                }],
+            ));
         }
         match self {
             GameState::Initialize(ref mut p) => p.add_player(name),

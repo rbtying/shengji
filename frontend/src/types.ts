@@ -150,6 +150,7 @@ export interface IPropagatedState {
   play_takeback_policy: "AllowPlayTakeback" | "NoPlayTakeback";
   bid_takeback_policy: "AllowBidTakeback" | "NoBidTakeback";
   kitty_theft_policy: "AllowKittyTheft" | "NoKittyTheft";
+  game_shadowing_policy: "AllowMultipleSessions" | "SingleSessionOnly";
 }
 
 export interface IHands {

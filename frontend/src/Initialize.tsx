@@ -203,14 +203,14 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setBidTakebackPolicy = (
+  const setGameShadowingPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
       send({
         Action: {
-          SetBidTakebackPolicy: evt.target.value,
+          SetGameShadowingPolicy: evt.target.value,
         },
       });
     }
@@ -249,6 +249,19 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetBonusLevelPolicy: "NoBonusLevel",
+        },
+      });
+    }
+  };
+
+  const setBidTakebackPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidTakebackPolicy: evt.target.value,
         },
       });
     }
@@ -482,6 +495,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetBidTakebackPolicy: value,
+              },
+            });
+            break;
+          case "game_shadowing_policy":
+            send({
+              Action: {
+                SetGameShadowingPolicy: value,
               },
             });
             break;
@@ -876,6 +896,22 @@ const Initialize = (props: IProps): JSX.Element => {
                 <Picker onEmojiClick={setEmoji} />
               </React.Suspense>
             ) : null}
+          </label>
+        </div>
+        <div>
+          <label>
+            Game shadowing policy:{" "}
+            <select
+              value={props.state.propagated.game_shadowing_policy}
+              onChange={setGameShadowingPolicy}
+            >
+              <option value="AllowMultipleSessions">
+                Allow players to be shadowed by joining with the same name
+              </option>
+              <option value="SingleSessionOnly">
+                Do not allow players to be shadowed
+              </option>
+            </select>
           </label>
         </div>
         <div>

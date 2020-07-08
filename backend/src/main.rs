@@ -512,6 +512,13 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             };
             info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
             game.users.insert(ws_id, UserState { player_id, tx });
+
+            // if the same user joined before, remove its previous entry from the user list
+            if !game.game.allows_multiple_sessions_per_user() {
+                game.users
+                    .retain(|id, user| user.player_id != player_id || *id == ws_id);
+            }
+
             // send the updated game state to everyone!
             for user in game.users.values() {
                 if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id) {
