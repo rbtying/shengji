@@ -83,6 +83,6 @@ the WebSocket/HTTP server implementation and using React from a CDN.
 - No player limit per game
 - No overall player limit
 
-# Demo
+# Play online!
 
 [https://robertying.com/shengji/](https://robertying.com/shengji/)
