@@ -1,6 +1,6 @@
 # What is this?
 
-升级 is a popular Chinese trick-taking playing card game. Rules are available
+升级 is a popular Chinese trick-taking playing card game, also known as tractor, finding friends, fighting for 100 points, 80 points, etc. Rules are available
 [here](https://robertying.com/shengji/rules). Due to the COVID-19
 shelter-in-place, I've been unable to play the this game in person... so
 I figured an online version would be worthwhile.
