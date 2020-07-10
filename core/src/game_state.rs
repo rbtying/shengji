@@ -1783,16 +1783,8 @@ impl InitializePhase {
             bail!("not enough players")
         }
 
-        match self.propagated.landlord {
-            None => (),
-            Some(player_id) => {
-                if player_id != id {
-                    bail!(format!(
-                        "player {} is not allowed to start game!",
-                        self.propagated.players[id.0].name
-                    ))
-                }
-            }
+        if self.propagated.landlord.map(|l| l != id).unwrap_or(false) {
+            bail!("Only the landlord can start the game")
         }
 
         let game_mode = match self.propagated.game_mode {
