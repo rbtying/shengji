@@ -2090,7 +2090,7 @@ mod tests {
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![
             cards::S_2,
@@ -2129,7 +2129,7 @@ mod tests {
         let p4 = init.add_player("p4".into()).unwrap().0;
         init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
             .unwrap();
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![
             cards::S_2,
@@ -2178,7 +2178,7 @@ mod tests {
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
 
         let p1_hand = vec![S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
         let p2_hand = vec![S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
@@ -2233,7 +2233,7 @@ mod tests {
         init.set_landlord(Some(p2)).unwrap();
         init.set_rank(p2, Number::Seven).unwrap();
 
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(1)).unwrap();
 
         let p1_hand = vec![
             Card::SmallJoker,
@@ -2749,7 +2749,7 @@ mod tests {
         init.set_landlord(Some(p1)).unwrap();
         init.set_rank(p1, Number::Seven).unwrap();
 
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         let mut deck = vec![];
 
         // We need at least two cards per person, since the landlord needs to
