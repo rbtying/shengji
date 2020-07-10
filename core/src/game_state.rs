@@ -1778,9 +1778,21 @@ impl InitializePhase {
         }
     }
 
-    pub fn start(&self) -> Result<DrawPhase, Error> {
+    pub fn start(&self, id: PlayerID) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
+        }
+
+        match self.propagated.landlord {
+            None => (),
+            Some(player_id) => {
+                if player_id != id {
+                    bail!(format!(
+                        "player {} is not allowed to start game!",
+                        self.propagated.players[id.0].name
+                    ))
+                }
+            }
         }
 
         let game_mode = match self.propagated.game_mode {

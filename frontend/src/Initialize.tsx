@@ -560,7 +560,16 @@ const Initialize = (props: IProps): JSX.Element => {
         </a>
       </p>
       {props.state.propagated.players.length >= 4 ? (
-        <button onClick={startGame}>Start game</button>
+        <button
+          disabled={
+            props.state.propagated.landlord != null &&
+            props.state.propagated.players[props.state.propagated.landlord]
+              .name !== props.name
+          }
+          onClick={startGame}
+        >
+          Start game
+        </button>
       ) : (
         <h2>Waiting for players...</h2>
       )}

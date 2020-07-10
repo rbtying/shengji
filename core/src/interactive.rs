@@ -80,7 +80,7 @@ impl InteractiveGame {
             }
             (Message::StartGame, GameState::Initialize(ref mut state)) => {
                 info!(logger, "Starting game");
-                self.state = GameState::Draw(state.start()?);
+                self.state = GameState::Draw(state.start(id)?);
                 vec![MessageVariant::StartingGame]
             }
             (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
