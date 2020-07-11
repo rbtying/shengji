@@ -16,7 +16,7 @@ const Root = (): JSX.Element => {
   const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
   if (state.connected) {
-    if (state.game_state === null) {
+    if (state.game_state === null || state.roomName.length !== 16) {
       return (
         <div>
           <Errors errors={state.errors} />
