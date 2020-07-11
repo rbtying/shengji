@@ -55,7 +55,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
     </span>
   );
 
-  const generateRoomName = () => {
+  const generateRoomName = (): void => {
     const arr = new Uint8Array(8);
     window.crypto.getRandomValues(arr);
     setShouldGenerate(false);
@@ -114,7 +114,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
           (re-)join the game if it already exists.
         </p>
         <p>
-          If you're unfamiliar with the game, it might be helpful to{" "}
+          If you&apos;re unfamiliar with the game, it might be helpful to{" "}
           <a href="rules" target="_blank">
             read the rules
           </a>{" "}
@@ -127,8 +127,9 @@ const JoinRoom = (props: IProps): JSX.Element => {
         </p>
         <p>
           This is a game with many house rules, so be sure to check out the game
-          settings to see if your favorite rules are implemented. There's also a
-          settings gear at the top, which can change how the game looks to you.
+          settings to see if your favorite rules are implemented. There&apos;s
+          also a settings gear at the top, which can change how the game looks
+          to you.
         </p>
       </div>
     </div>
