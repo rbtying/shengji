@@ -12,7 +12,9 @@ interface IProps {
 
 const JoinRoom = (props: IProps): JSX.Element => {
   const [editable, setEditable] = React.useState<boolean>(false);
-  const [shouldGenerate, setShouldGenerate] = React.useState<boolean>(props.room_name.length !== 16);
+  const [shouldGenerate, setShouldGenerate] = React.useState<boolean>(
+    props.room_name.length !== 16
+  );
   const { send } = React.useContext(WebsocketContext);
   const { setTimeout } = React.useContext(TimerContext);
 
@@ -57,9 +59,9 @@ const JoinRoom = (props: IProps): JSX.Element => {
     const arr = new Uint8Array(8);
     window.crypto.getRandomValues(arr);
     setShouldGenerate(false);
-    props.setRoomName(Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join(
-      ""
-    ));
+    props.setRoomName(
+      Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join("")
+    );
   };
 
   if (shouldGenerate) {
@@ -74,8 +76,13 @@ const JoinRoom = (props: IProps): JSX.Element => {
           <h2>
             <label>
               <strong>Room Name:</strong>{" "}
-              {editable ? editableRoomName : nonEditableRoomName}{' '}
-              <span title="Generate new room" onClick={() => generateRoomName()}>🎲</span>{' '}
+              {editable ? editableRoomName : nonEditableRoomName}{" "}
+              <span
+                title="Generate new room"
+                onClick={() => generateRoomName()}
+              >
+                🎲
+              </span>{" "}
             </label>
           </h2>
         </div>
@@ -107,20 +114,21 @@ const JoinRoom = (props: IProps): JSX.Element => {
           (re-)join the game if it already exists.
         </p>
         <p>
-          If you're unfamiliar with the game, it might be helpful to <a
-          href="rules" target="_blank">read the rules</a> and then shadow
-          another player&mdash;you can just join with the same name,
-          case-sensitive.
+          If you're unfamiliar with the game, it might be helpful to{" "}
+          <a href="rules" target="_blank">
+            read the rules
+          </a>{" "}
+          and then shadow another player&mdash;you can just join with the same
+          name, case-sensitive.
         </p>
         <p>
           Once you are in the game, share the room link with at least three
           friends to start playing!
         </p>
         <p>
-          This is a game with many house rules, so be sure to check out the
-          game settings to see if your favorite rules are implemented.
-          There's also a settings gear at the top, which can change how the
-          game looks to you.
+          This is a game with many house rules, so be sure to check out the game
+          settings to see if your favorite rules are implemented. There's also a
+          settings gear at the top, which can change how the game looks to you.
         </p>
       </div>
     </div>
