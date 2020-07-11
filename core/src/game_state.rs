@@ -1443,6 +1443,16 @@ impl ExchangePhase {
         if id != winning_bid.id {
             bail!("Only the winner of the bid can pick up the cards")
         }
+        self.trump = match winning_bid.card {
+            Card::Unknown => bail!("can't bid with unknown cards!"),
+            Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
+                number: self.trump.number(),
+            },
+            Card::Suited { suit, .. } => Trump::Standard {
+                suit,
+                number: self.trump.number(),
+            },
+        };
         self.finalized = false;
         self.epoch += 1;
         self.exchanger = Some(winning_bid.id);
