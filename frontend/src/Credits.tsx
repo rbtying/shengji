@@ -31,7 +31,10 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>7/12/2020:</p>
         <ul>
-          <li> (#21) Announce game set winner.</li>
+          <li>
+            {" "}
+            (#21) Announce game set winner using chat message and fireworks.
+          </li>
         </ul>
         <p>7/02/2020:</p>
         <ul>
