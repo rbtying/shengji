@@ -220,8 +220,6 @@ pub struct PropagatedState {
     pub players: Vec<Player>,
     pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
-    gameset_winner_declared: bool,
-    gameset_winner_player_id: Option<PlayerID>,
     #[serde(default)]
     landlord_emoji: Option<String>,
     chat_link: Option<String>,
@@ -1218,11 +1216,9 @@ impl PlayPhase {
             .position(|p| p.id == self.landlord));
 
         if landlord_won && self.propagated.players[current_landlord_idx].rank() == Number::Ace {
-            self.propagated.gameset_winner_declared = true;
-            self.propagated.gameset_winner_player_id = self.propagated.landlord;
-        } else {
-            self.propagated.gameset_winner_declared = false;
-            self.propagated.gameset_winner_player_id = Option::None;
+            msgs.push(MessageVariant::GamesetWinnerAnnoucement {
+                player_name: self.propagated.players[current_landlord_idx].name.clone(),
+            });
         }
 
         let mut propagated = self.propagated.clone();
@@ -1809,8 +1805,6 @@ impl InitializePhase {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
         }
-
-        self.propagated.gameset_winner_declared = false;
 
         let game_mode = match self.propagated.game_mode {
             GameModeSettings::FindingFriends {

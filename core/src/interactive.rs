@@ -457,6 +457,7 @@ impl BroadcastMessage {
             PutDownCards => format!("{} put down the bottom cards", n?),
             GameFinished { result: _ } => "The game has finished.".to_string(),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
+            GamesetWinnerAnnoucement {ref player_name} => format!("{} won the game set!", player_name),
         })
     }
 }
