@@ -42,3 +42,5 @@ declare module "emoji-picker-react" {
   ) => {};
   export default EmojiPicker;
 }
+
+declare module "canvas-confetti";

@@ -1,6 +1,7 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
 import { IEmojiData } from "emoji-picker-react";
+import Ticker from "react-ticker";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import RankSelector from "./RankSelector";
@@ -11,6 +12,7 @@ import { WebsocketContext } from "./WebsocketProvider";
 
 import Header from "./Header";
 import Players from "./Players";
+import { firework } from "./firework";
 
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
@@ -23,6 +25,7 @@ interface IProps {
 const Initialize = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const [showPicker, setShowPicker] = React.useState<boolean>(false);
+  const [fireworkStart, setFireworkStart] = React.useState<boolean>(false);
   const setGameMode = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
     evt.preventDefault();
     if (evt.target.value === "Tractor") {
@@ -539,8 +542,33 @@ const Initialize = (props: IProps): JSX.Element => {
     fetchAsync().catch((e) => console.error(e));
   };
 
+  const gamesetWinnerDeclared = props.state.propagated.gameset_winner_declared;
+
+  if (gamesetWinnerDeclared && !fireworkStart) {
+    firework(10);
+    setFireworkStart(true);
+  }
+
+  console.log(JSON.stringify(props.state.propagated));
   return (
     <div>
+      {gamesetWinnerDeclared && (
+        <Ticker offset="20">
+          {() => (
+            <>
+              <h1 className="red">
+                Congradulations! Game set winner is{" "}
+                {
+                  props.state.propagated.players[
+                    props.state.propagated.gameset_winner_player_id
+                  ].name
+                }
+                !&nbsp;&nbsp;
+              </h1>
+            </>
+          )}
+        </Ticker>
+      )}
       <Header
         gameMode={props.state.propagated.game_mode}
         chatLink={props.state.propagated.chat_link}

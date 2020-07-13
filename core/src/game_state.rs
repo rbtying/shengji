@@ -220,6 +220,8 @@ pub struct PropagatedState {
     pub players: Vec<Player>,
     pub observers: Vec<Player>,
     landlord: Option<PlayerID>,
+    gameset_winner_declared: bool,
+    gameset_winner_player_id: Option<PlayerID>,
     #[serde(default)]
     landlord_emoji: Option<String>,
     chat_link: Option<String>,
@@ -1158,7 +1160,7 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+    pub fn finish_game(&mut self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -1209,6 +1211,20 @@ impl PlayPhase {
             msgs.push(MessageVariant::BonusLevelEarned);
         };
 
+        let current_landlord_idx = bail_unwrap!(self
+            .propagated
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord));
+
+        if landlord_won && self.propagated.players[current_landlord_idx].rank() == Number::Ace {
+            self.propagated.gameset_winner_declared = true;
+            self.propagated.gameset_winner_player_id = self.propagated.landlord;
+        } else {
+            self.propagated.gameset_winner_declared = false;
+            self.propagated.gameset_winner_player_id = Option::None;
+        }
+
         let mut propagated = self.propagated.clone();
 
         msgs.extend(Self::compute_player_level_deltas(
@@ -1225,6 +1241,7 @@ impl PlayPhase {
             .players
             .iter()
             .position(|p| p.id == self.landlord));
+
         let mut idx = (landlord_idx + 1) % propagated.players.len();
         let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
@@ -1788,10 +1805,12 @@ impl InitializePhase {
         }
     }
 
-    pub fn start(&self) -> Result<DrawPhase, Error> {
+    pub fn start(&mut self) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
         }
+
+        self.propagated.gameset_winner_declared = false;
 
         let game_mode = match self.propagated.game_mode {
             GameModeSettings::FindingFriends {
