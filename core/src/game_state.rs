@@ -1158,7 +1158,7 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn finish_game(&mut self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
