@@ -43,6 +43,7 @@ export type MessageVariant =
   | { type: "StartingGame" }
   | { type: "TookBackPlay" }
   | { type: "TrickWon"; winner: number; points: number }
+  | { type: "GamesetWinnerAnnoucement"; player_name: string }
   | {
       type: "GameFinished";
       result: {
@@ -137,8 +138,6 @@ export interface IPropagatedState {
   players: IPlayer[];
   observers: IPlayer[];
   landlord: number | null;
-  gameset_winner_declared: boolean;
-  gameset_winner_player_id: number | null;
   chat_link: string | null;
   advancement_policy: "Unrestricted" | "DefendPoints";
   bonus_level_policy: "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";

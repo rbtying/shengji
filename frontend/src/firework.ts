@@ -2,7 +2,9 @@ import Confetti from "canvas-confetti";
 var confetti: any = null;
 
 export const firework = (timeInSecond: number): void => {
-  confetti = confetti != null || Confetti.create(null, { resize: true });
+  if (confetti == null) {
+    confetti = Confetti.create(null, { resize: true });
+  }
 
   var duration = timeInSecond * 1000;
   var animationEnd = Date.now() + duration;
