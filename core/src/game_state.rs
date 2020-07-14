@@ -1801,7 +1801,7 @@ impl InitializePhase {
         }
     }
 
-    pub fn start(&mut self) -> Result<DrawPhase, Error> {
+    pub fn start(&self) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
         }

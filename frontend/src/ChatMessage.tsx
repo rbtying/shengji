@@ -3,7 +3,7 @@ import { IBroadcastMessage } from "./types";
 import InlineCard from "./InlineCard";
 import classNames from "classnames";
 import ArrayUtil from "./util/array";
-import { firework } from "./firework";
+import Firework from "./Firework";
 
 export interface IMessage {
   from: string;
@@ -46,16 +46,8 @@ interface IProps {
   message: IMessage;
 }
 const ChatMessage = (props: IProps): JSX.Element => {
-  const [fireworkStarted, setFireworkStarted] = React.useState<boolean>(false);
   const { message } = props;
 
-  if (
-    message.data?.variant.type === "GamesetWinnerAnnoucement" &&
-    !fireworkStarted
-  ) {
-    setFireworkStarted(true);
-    firework(10);
-  }
   return (
     <p className={classNames("message", { "game-message": message.from_game })}>
       {message.data?.variant.type === "StartingGame" ? (
@@ -68,6 +60,9 @@ const ChatMessage = (props: IProps): JSX.Element => {
         <span>{message.from}: </span>
       )}
       {renderMessage(message)}
+      {message.data?.variant.type === "GamesetWinnerAnnoucement" && (
+        <Firework />
+      )}
     </p>
   );
 };
