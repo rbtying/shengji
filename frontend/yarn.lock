@@ -587,6 +587,11 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/canvas-confetti@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/canvas-confetti/-/canvas-confetti-1.0.0.tgz#784fca12934ae3a8b50213672e7747b2efb0ffa7"
+  integrity sha512-Z3Eh7qlYdi9cvotmreZjqxaUSwpUYu/s2uzSvnGgktuHhpj8FHq6JSJLVYP3R4YNZN/d8nNOG5y2cKmautyDCQ==
+
 "@types/classnames@^2.2.10":
   version "2.2.10"
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-2.2.10.tgz#cc658ca319b6355399efc1f5b9e818f1a24bf999"
@@ -1547,6 +1552,11 @@ camelize@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/camelize/-/camelize-1.0.0.tgz#164a5483e630fa4321e5af07020e531831b2609b"
   integrity sha1-FkpUg+Yw+kMh5a8HAg5TGDGyYJs=
+
+canvas-confetti@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/canvas-confetti/-/canvas-confetti-1.2.0.tgz#5591764e1126adb08710d20bc9ba63842a3d8ee6"
+  integrity sha512-0B49O9CfLciAYz4hriu9pvWNGkCtVcpvyNFKWZI+JVWJM5nJTMg5MX3cFzatyeYcOL6bR1Jw3yhZKbgt03O8/Q==
 
 capture-exit@^2.0.0:
   version "2.0.0"

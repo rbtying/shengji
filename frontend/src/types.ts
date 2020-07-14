@@ -51,6 +51,7 @@ export type MessageVariant =
           is_defending: boolean;
           is_landlord: boolean;
           ranks_up: number;
+          confetti: boolean;
         };
       };
     };

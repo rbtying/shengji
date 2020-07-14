@@ -29,7 +29,7 @@ module.exports = {
           },
         },
         emoji: {
-          test: /[\\/]node_modules[\\/]/,
+          test: /[\\/]node_modules[\\/]|(Confetti.tsx)/,
           name(_) {
             return "async";
           },
