@@ -896,6 +896,7 @@ pub struct PlayerGameFinishedResult {
     pub is_defending: bool,
     pub is_landlord: bool,
     pub ranks_up: usize,
+    pub confetti: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1107,6 +1108,7 @@ impl PlayPhase {
                 };
                 let mut num_advances = 0;
                 let mut was_blocked = false;
+                let initial_rank = player.rank();
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
@@ -1149,6 +1151,10 @@ impl PlayPhase {
                         is_defending,
                         is_landlord: landlord == player.id,
                         ranks_up: num_advances,
+                        confetti: num_advances > 0
+                            && landlord_won
+                            && is_defending
+                            && initial_rank == Number::Ace,
                     },
                 )
             })

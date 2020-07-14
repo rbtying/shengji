@@ -17,6 +17,7 @@ export interface AppState {
   cards: string[];
   errors: string[];
   messages: IMessage[];
+  confetti: string | null;
 }
 
 const appState: State<AppState> = combineState({
@@ -30,6 +31,7 @@ const appState: State<AppState> = combineState({
   cards: noPersistence(() => []),
   errors: noPersistence(() => []),
   messages: noPersistence(() => []),
+  confetti: noPersistence(() => null),
 });
 
 interface Context {
