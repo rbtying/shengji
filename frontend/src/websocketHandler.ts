@@ -117,10 +117,13 @@ const gameFinishedHandler: WebsocketHandler = (
     }
     const gameWinners = Object.entries(result)
       .filter((r) => r[1].confetti)
-      .map((r) => r[0])
-      .join(", ")
-      .replace(/, ((?:.(?!, ))+)$/, " and $1");
-    updates.confetti = `${gameWinners} successfully defended on A!`;
+      .map((r) => r[0]);
+    if (gameWinners.length > 0) {
+      const group = gameWinners
+        .join(", ")
+        .replace(/, ((?:.(?!, ))+)$/, " and $1");
+      updates.confetti = `${group} successfully defended on A!`;
+    }
     if (
       updates.gameStatistics !== undefined ||
       updates.confetti !== undefined
