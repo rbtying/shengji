@@ -397,7 +397,7 @@ impl BroadcastMessage {
             PointsInKitty { points, multiplier } => format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
             JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::SingleSessionOnly } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
-            JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} is bejing shadowned", player_name(player)?),
+            JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} is being shadowed", player_name(player)?),
             JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),

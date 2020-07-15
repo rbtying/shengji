@@ -43,18 +43,22 @@ interface IProps {
 const ChatMessage = (props: IProps): JSX.Element => {
   const { message } = props;
   return (
-    <p className={classNames("message", { "game-message": message.from_game })}>
+    <>
       {message.data?.variant.type === "StartingGame" ? (
-        <span>
+        <p
+          className={classNames("message", {
+            "game-message": message.from_game,
+          })}
+        >
           🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜 🚜
-          <br />
-          {message.from}:{" "}
-        </span>
-      ) : (
-        <span>{message.from}: </span>
-      )}
-      {renderMessage(message)}
-    </p>
+        </p>
+      ) : null}
+      <p
+        className={classNames("message", { "game-message": message.from_game })}
+      >
+        <span>{message.from}: </span> {renderMessage(message)}
+      </p>
+    </>
   );
 };
 

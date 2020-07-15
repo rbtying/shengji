@@ -39,6 +39,12 @@ const ChangeLog = (): JSX.Element => {
         </ul>
         <p>7/02/2020:</p>
         <ul>
+          <li>
+            (#21) Add a screen and confetti when you successfully defend A!
+          </li>
+        </ul>
+        <p>7/02/2020:</p>
+        <ul>
           <li>(#171) Add game option disable taking back bids</li>
           <li>(#68) Add game option disable taking back plays</li>
           <li>

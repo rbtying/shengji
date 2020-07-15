@@ -87,8 +87,10 @@ const gameFinishedHandler: WebsocketHandler = (
     message.Broadcast !== undefined &&
     message.Broadcast.data.variant.type === "GameFinished"
   ) {
-    if (state.name in message.Broadcast.data.variant.result) {
-      const ownResult = message.Broadcast.data.variant.result[state.name];
+    const result = message.Broadcast.data.variant.result;
+    const updates: Partial<AppState> = {};
+    if (state.name in result) {
+      const ownResult = result[state.name];
       const gameStatistics = state.gameStatistics;
 
       const newGameStatistics = { ...gameStatistics };
@@ -111,7 +113,22 @@ const gameFinishedHandler: WebsocketHandler = (
       }
 
       newGameStatistics.ranksUp += ownResult.ranks_up;
-      return { gameStatistics: newGameStatistics };
+      updates.gameStatistics = newGameStatistics;
+    }
+    const gameWinners = Object.entries(result)
+      .filter((r) => r[1].confetti)
+      .map((r) => r[0]);
+    if (gameWinners.length > 0) {
+      const group = gameWinners
+        .join(", ")
+        .replace(/, ((?:.(?!, ))+)$/, " and $1");
+      updates.confetti = `${group} successfully defended on A!`;
+    }
+    if (
+      updates.gameStatistics !== undefined ||
+      updates.confetti !== undefined
+    ) {
+      return updates;
     }
   }
   return null;

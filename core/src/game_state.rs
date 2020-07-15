@@ -896,6 +896,7 @@ pub struct PlayerGameFinishedResult {
     pub is_defending: bool,
     pub is_landlord: bool,
     pub ranks_up: usize,
+    pub confetti: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1107,6 +1108,7 @@ impl PlayPhase {
                 };
                 let mut num_advances = 0;
                 let mut was_blocked = false;
+                let initial_rank = player.rank();
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
@@ -1149,6 +1151,10 @@ impl PlayPhase {
                         is_defending,
                         is_landlord: landlord == player.id,
                         ranks_up: num_advances,
+                        confetti: num_advances > 0
+                            && landlord_won
+                            && is_defending
+                            && initial_rank == Number::Ace,
                     },
                 )
             })
@@ -1443,6 +1449,16 @@ impl ExchangePhase {
         if id != winning_bid.id {
             bail!("Only the winner of the bid can pick up the cards")
         }
+        self.trump = match winning_bid.card {
+            Card::Unknown => bail!("can't bid with unknown cards!"),
+            Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
+                number: self.trump.number(),
+            },
+            Card::Suited { suit, .. } => Trump::Standard {
+                suit,
+                number: self.trump.number(),
+            },
+        };
         self.finalized = false;
         self.epoch += 1;
         self.exchanger = Some(winning_bid.id);

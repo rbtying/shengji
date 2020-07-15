@@ -11,12 +11,14 @@ import Credits from "./Credits";
 import Chat from "./Chat";
 import Play from "./Play";
 
+const Confetti = React.lazy(async () => await import("./Confetti.tsx"));
+
 const Root = (): JSX.Element => {
   const send = (window as any).send;
   const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
   if (state.connected) {
-    if (state.game_state === null) {
+    if (state.game_state === null || state.roomName.length !== 16) {
       return (
         <div>
           <Errors errors={state.errors} />
@@ -52,6 +54,14 @@ const Root = (): JSX.Element => {
           )}
         >
           <Errors errors={state.errors} />
+          {state.confetti !== null ? (
+            <React.Suspense fallback={null}>
+              <Confetti
+                confetti={state.confetti}
+                clearConfetti={() => updateState({ confetti: null })}
+              />
+            </React.Suspense>
+          ) : null}
           <div className="game">
             {state.game_state.Initialize !== undefined ? null : (
               <a
