@@ -5,8 +5,9 @@ use slog::{debug, info, o, Logger};
 use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
     AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelection,
-    FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameState, InitializePhase,
-    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
+    FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameState,
+    InitializePhase, KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy,
+    ThrowPenalty,
 };
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
@@ -80,7 +81,7 @@ impl InteractiveGame {
             }
             (Message::StartGame, GameState::Initialize(ref mut state)) => {
                 info!(logger, "Starting game");
-                self.state = GameState::Draw(state.start()?);
+                self.state = GameState::Draw(state.start(id)?);
                 vec![MessageVariant::StartingGame]
             }
             (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
@@ -204,6 +205,10 @@ impl InteractiveGame {
             (Message::SetGameShadowingPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting user multiple game session policy"; "policy" => format!("{:?}", policy));
                 state.set_user_multiple_game_session_policy(policy)?
+            }
+            (Message::SetGameStartPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting game start policy"; "policy" => format!("{:?}", policy));
+                state.set_game_start_policy(policy)?
             }
             (Message::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
@@ -350,6 +355,7 @@ pub enum Message {
     SetBidTakebackPolicy(BidTakebackPolicy),
     SetKittyTheftPolicy(KittyTheftPolicy),
     SetGameShadowingPolicy(GameShadowingPolicy),
+    SetGameStartPolicy(GameStartPolicy),
     StartGame,
     DrawCard,
     RevealCard,
@@ -452,6 +458,8 @@ impl BroadcastMessage {
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} allowed players to be shadowed by joining with the same name", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::SingleSessionOnly } => format!("{} prohibited players from being shadowed", n?),
+            GameStartPolicySet { policy: GameStartPolicy::AllowAnyPlayer } => format!("{} allowed any player to start a game", n?),
+            GameStartPolicySet { policy: GameStartPolicy::AllowLandlordOnly } => format!("{} allowed only landlord to start a game", n?),
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             PickedUpCards => format!("{} picked up the bottom cards", n?),
             PutDownCards => format!("{} put down the bottom cards", n?),

@@ -207,6 +207,18 @@ impl Default for GameShadowingPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum GameStartPolicy {
+    AllowAnyPlayer,
+    AllowLandlordOnly,
+}
+
+impl Default for GameStartPolicy {
+    fn default() -> Self {
+        GameStartPolicy::AllowAnyPlayer
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -253,6 +265,8 @@ pub struct PropagatedState {
     bid_takeback_policy: BidTakebackPolicy,
     #[serde(default)]
     pub game_shadowing_policy: GameShadowingPolicy,
+    #[serde(default)]
+    pub game_start_policy: GameStartPolicy,
 }
 
 impl PropagatedState {
@@ -599,6 +613,18 @@ impl PropagatedState {
         if policy != self.game_shadowing_policy {
             self.game_shadowing_policy = policy;
             Ok(vec![MessageVariant::GameShadowingPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_game_start_policy(
+        &mut self,
+        policy: GameStartPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.game_start_policy {
+            self.game_start_policy = policy;
+            Ok(vec![MessageVariant::GameStartPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -1794,9 +1820,15 @@ impl InitializePhase {
         }
     }
 
-    pub fn start(&self) -> Result<DrawPhase, Error> {
+    pub fn start(&self, id: PlayerID) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
+        }
+
+        if self.propagated.game_start_policy == GameStartPolicy::AllowLandlordOnly
+            && self.propagated.landlord.map(|l| l != id).unwrap_or(false)
+        {
+            bail!("Only the landlord can start the game")
         }
 
         let game_mode = match self.propagated.game_mode {
@@ -2094,7 +2126,7 @@ mod tests {
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![
             cards::S_2,
@@ -2133,7 +2165,7 @@ mod tests {
         let p4 = init.add_player("p4".into()).unwrap().0;
         init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
             .unwrap();
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         // Hackily ensure that everyone can bid.
         draw.deck = vec![
             cards::S_2,
@@ -2182,7 +2214,7 @@ mod tests {
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
 
         let p1_hand = vec![S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
         let p2_hand = vec![S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
@@ -2237,7 +2269,7 @@ mod tests {
         init.set_landlord(Some(p2)).unwrap();
         init.set_rank(p2, Number::Seven).unwrap();
 
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(1)).unwrap();
 
         let p1_hand = vec![
             Card::SmallJoker,
@@ -2753,7 +2785,7 @@ mod tests {
         init.set_landlord(Some(p1)).unwrap();
         init.set_rank(p1, Number::Seven).unwrap();
 
-        let mut draw = init.start().unwrap();
+        let mut draw = init.start(PlayerID(0)).unwrap();
         let mut deck = vec![];
 
         // We need at least two cards per person, since the landlord needs to

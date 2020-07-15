@@ -152,6 +152,7 @@ export interface IPropagatedState {
   bid_takeback_policy: "AllowBidTakeback" | "NoBidTakeback";
   kitty_theft_policy: "AllowKittyTheft" | "NoKittyTheft";
   game_shadowing_policy: "AllowMultipleSessions" | "SingleSessionOnly";
+  game_start_policy: "AllowAnyPlayer" | "AllowLandlordOnly";
 }
 
 export interface IHands {
