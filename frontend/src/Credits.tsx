@@ -29,9 +29,9 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
-        <p>7/10/2020:</p>
+        <p>7/15/2020:</p>
         <ul>
-          <li>Only landlord has the privilege to start a new game.</li>
+          <li>add game option for starting a game</li>
         </ul>
         <p>7/09/2020:</p>
         <ul>

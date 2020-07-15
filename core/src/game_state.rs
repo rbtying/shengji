@@ -207,6 +207,18 @@ impl Default for GameShadowingPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum GameStartPolicy {
+    AllowAnyPlayer,
+    AllowLandlordOnly,
+}
+
+impl Default for GameStartPolicy {
+    fn default() -> Self {
+        GameStartPolicy::AllowAnyPlayer
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropagatedState {
     pub game_mode: GameModeSettings,
@@ -253,6 +265,8 @@ pub struct PropagatedState {
     bid_takeback_policy: BidTakebackPolicy,
     #[serde(default)]
     pub game_shadowing_policy: GameShadowingPolicy,
+    #[serde(default)]
+    pub game_start_policy: GameStartPolicy,
 }
 
 impl PropagatedState {
@@ -599,6 +613,18 @@ impl PropagatedState {
         if policy != self.game_shadowing_policy {
             self.game_shadowing_policy = policy;
             Ok(vec![MessageVariant::GameShadowingPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_game_start_policy(
+        &mut self,
+        policy: GameStartPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if policy != self.game_start_policy {
+            self.game_start_policy = policy;
+            Ok(vec![MessageVariant::GameStartPolicySet { policy }])
         } else {
             Ok(vec![])
         }
@@ -1799,7 +1825,9 @@ impl InitializePhase {
             bail!("not enough players")
         }
 
-        if self.propagated.landlord.map(|l| l != id).unwrap_or(false) {
+        if self.propagated.game_start_policy == GameStartPolicy::AllowLandlordOnly
+            && self.propagated.landlord.map(|l| l != id).unwrap_or(false)
+        {
             bail!("Only the landlord can start the game")
         }
 

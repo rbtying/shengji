@@ -216,6 +216,19 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
+  const setGameStartPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetGameStartPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
   const setAdvancementPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -505,6 +518,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "game_start_policy":
+            send({
+              Action: {
+                SetGameStartPolicy: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -562,6 +582,7 @@ const Initialize = (props: IProps): JSX.Element => {
       {props.state.propagated.players.length >= 4 ? (
         <button
           disabled={
+            props.state.propagated.game_start_policy === "AllowLandlordOnly" &&
             props.state.propagated.landlord != null &&
             props.state.propagated.players[props.state.propagated.landlord]
               .name !== props.name
@@ -919,6 +940,22 @@ const Initialize = (props: IProps): JSX.Element => {
               </option>
               <option value="SingleSessionOnly">
                 Do not allow players to be shadowed
+              </option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Game start policy:{" "}
+            <select
+              value={props.state.propagated.game_start_policy}
+              onChange={setGameStartPolicy}
+            >
+              <option value="AllowAnyPlayer">
+                Allow any player to start a game
+              </option>
+              <option value="AllowLandlordOnly">
+                Allow only landlord to start a game
               </option>
             </select>
           </label>

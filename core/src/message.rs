@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::bidding::{BidPolicy, BidTakebackPolicy};
 use crate::game_state::{
     AdvancementPolicy, BonusLevelPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
-    GameModeSettings, GameShadowingPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
-    PlayTakebackPolicy, PlayerGameFinishedResult, ThrowPenalty,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
+    KittyTheftPolicy, PlayTakebackPolicy, PlayerGameFinishedResult, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
@@ -129,6 +129,9 @@ pub enum MessageVariant {
     },
     GameShadowingPolicySet {
         policy: GameShadowingPolicy,
+    },
+    GameStartPolicySet {
+        policy: GameStartPolicy,
     },
     PickedUpCards,
     PutDownCards,
