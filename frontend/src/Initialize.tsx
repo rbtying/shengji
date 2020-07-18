@@ -343,7 +343,7 @@ const Initialize = (props: IProps): JSX.Element => {
     props.state.propagated.num_decks > 0
       ? props.state.propagated.num_decks
       : Math.floor(props.state.propagated.players.length / 2);
-  let kittyOffset =
+  const kittyOffset =
     (decksEffective * 54) % props.state.propagated.players.length;
 
   let currentPlayer = props.state.propagated.players.find(
