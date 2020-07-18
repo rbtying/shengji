@@ -29,13 +29,19 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>7/18/2020:</p>
+        <ul>
+          <li>Allow zero-sized kitty in the UI</li>
+        </ul>
         <p>7/15/2020:</p>
         <ul>
-          <li>add game option for starting a game</li>
+          <li>Add game option for limiting who can start a game</li>
         </ul>
         <p>7/09/2020:</p>
         <ul>
-          <li>game option for game shadowing</li>
+          <li>
+            Add a game option for (disallowing) shadowing of other players
+          </li>
         </ul>
         <p>7/02/2020:</p>
         <ul>
