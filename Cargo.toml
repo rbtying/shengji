@@ -2,4 +2,8 @@
 members = [
   "core",
   "backend",
+  "frontend/shengji-wasm"
 ]
+
+[profile.release]
+lto = true

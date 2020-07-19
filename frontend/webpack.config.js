@@ -1,3 +1,6 @@
+const path = require("path");
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+
 module.exports = {
   mode: "production",
   devtool: "source-map",
@@ -19,8 +22,8 @@ module.exports = {
     ],
   },
   optimization: {
+    moduleIds: 'hashed',
     splitChunks: {
-      chunks: "async",
       cacheGroups: {
         cards: {
           test: /([\\/]playing-cards(-4color)?[\\/])|(SvgCard.tsx)/,
@@ -28,11 +31,9 @@ module.exports = {
             return "playing-cards";
           },
         },
-        emoji: {
-          test: /[\\/]node_modules[\\/]|(Confetti.tsx)/,
-          name(_) {
-            return "async";
-          },
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: "vendors",
         },
       },
     },
@@ -40,4 +41,10 @@ module.exports = {
   performance: {
     hints: false,
   },
+  plugins: [
+    new WasmPackPlugin({
+      crateDirectory: path.resolve(__dirname, "shengji-wasm"),
+      outName: "shengji-core"
+    })
+  ]
 };
