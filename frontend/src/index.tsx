@@ -7,17 +7,23 @@ import WebsocketProvider from "./WebsocketProvider";
 import TimerProvider from "./TimerProvider";
 import Root from "./Root";
 
+const ShengjiProvider = React.lazy(async () => await import("./WasmProvider"));
+
 const bootstrap = (): void => {
   const root = document.getElementById("root");
   ReactModal.setAppElement(root);
   ReactDOM.render(
-    <TimerProvider>
-      <AppStateProvider>
-        <WebsocketProvider>
-          <Root />
-        </WebsocketProvider>
-      </AppStateProvider>
-    </TimerProvider>,
+    <React.Suspense fallback={"loading..."}>
+      <ShengjiProvider>
+        <TimerProvider>
+          <AppStateProvider>
+            <WebsocketProvider>
+              <Root />
+            </WebsocketProvider>
+          </AppStateProvider>
+        </TimerProvider>
+      </ShengjiProvider>
+    </React.Suspense>,
     root
   );
 };

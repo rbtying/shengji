@@ -2,82 +2,58 @@ import * as React from "react";
 import Card from "./Card";
 import classNames from "classnames";
 import ArrayUtils from "./util/array";
-import { cardLookup, unicodeToCard } from "./util/cardHelpers";
 
 interface IProps {
   cardsInHand: string[];
-  selectedCards: string[];
-  onSelect: (selected: string[]) => void;
+  selectedCards?: string[];
+  onSelect?: (selected: string[]) => void;
   notifyEmpty?: boolean;
-  separateBidCards?: boolean;
-  level?: string;
 }
 
 const Cards = (props: IProps): JSX.Element => {
-  const {
-    cardsInHand,
-    selectedCards,
-    notifyEmpty,
-    separateBidCards,
-    level,
-  } = props;
+  const { cardsInHand, selectedCards, notifyEmpty } = props;
   const handleSelect = (card: string) => () => {
-    props.onSelect([...selectedCards, card]);
+    if (selectedCards !== undefined) {
+      props.onSelect([...selectedCards, card]);
+    }
   };
 
   const handleUnselect = (card: string) => () => {
-    const index = selectedCards.indexOf(card);
-    if (index >= 0) {
-      props.onSelect(ArrayUtils.minus(selectedCards, [card]));
+    if (selectedCards !== undefined) {
+      const index = selectedCards.indexOf(card);
+      if (index >= 0) {
+        props.onSelect(ArrayUtils.minus(selectedCards, [card]));
+      }
     }
   };
 
-  let unselected = ArrayUtils.minus(cardsInHand, selectedCards);
-  const bidCards = separateBidCards
-    ? unselected.filter(
-        (card) =>
-          unicodeToCard(card).type === "big_joker" ||
-          unicodeToCard(card).type === "little_joker" ||
-          (unicodeToCard(card).type === "suit_card" &&
-            cardLookup[card].number === level)
-      )
-    : [];
-
-  let bidCardComponent;
-  if (separateBidCards) {
-    unselected = ArrayUtils.minus(unselected, bidCards);
-    if (bidCards.length === 0) {
-      bidCardComponent = null;
-    } else {
-      bidCardComponent = (
-        <div className="unselected-cards">
-          <div>
-            <label>Available Bid Cards</label>
-          </div>
-          {bidCards.map((c, idx) => (
-            <Card key={idx} onClick={handleSelect(c)} card={c} />
-          ))}
-        </div>
-      );
-    }
-  } else {
-    bidCardComponent = null;
-  }
-
+  const unselected =
+    selectedCards === undefined
+      ? cardsInHand
+      : ArrayUtils.minus(cardsInHand, selectedCards);
   return (
     <div className="hand">
-      <div className="selected-cards">
-        {selectedCards.map((c, idx) => (
-          <Card key={idx} onClick={handleUnselect(c)} card={c} />
-        ))}
-        {selectedCards.length === 0 && (
-          <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
-        )}
-      </div>
-      {bidCardComponent}
-      <div className="unselected-cards">
+      {props.selectedCards !== undefined ? (
+        <div className="selected-cards">
+          {selectedCards.map((c, idx) => (
+            <Card key={idx} onClick={handleUnselect(c)} card={c} />
+          ))}
+          {selectedCards.length === 0 && (
+            <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
+          )}
+        </div>
+      ) : null}
+      <div
+        className={classNames("unselected-cards", {
+          unclickable: props.onSelect === undefined,
+        })}
+      >
         {unselected.map((c, idx) => (
-          <Card key={idx} onClick={handleSelect(c)} card={c} />
+          <Card
+            key={idx}
+            onClick={props.onSelect !== undefined ? handleSelect(c) : null}
+            card={c}
+          />
         ))}
         {unselected.length === 0 && <Card card="🂠" />}
       </div>

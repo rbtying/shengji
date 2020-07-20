@@ -1,6 +1,7 @@
 #![deny(warnings)]
 
 use std::collections::HashMap;
+use std::env;
 use std::io::ErrorKind;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -192,66 +193,6 @@ async fn main() {
         },
     );
 
-    #[cfg(not(feature = "dynamic"))]
-    let index = warp::path::end().map(|| warp::reply::html(INDEX_HTML));
-    #[cfg(not(feature = "dynamic"))]
-    let rules = warp::path("rules").map(|| warp::reply::html(RULES_HTML));
-    #[cfg(not(feature = "dynamic"))]
-    let js = warp::path("main.js").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(JS)
-    });
-    #[cfg(not(feature = "dynamic"))]
-    let async_js = warp::path("async.js").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(ASYNC_JS)
-    });
-    #[cfg(not(feature = "dynamic"))]
-    let cards_js = warp::path("playing-cards.js").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(CARDS_JS)
-    });
-    #[cfg(not(feature = "dynamic"))]
-    let js_map = warp::path("main.js.map").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(JS_MAP)
-    });
-    #[cfg(not(feature = "dynamic"))]
-    let css = warp::path("style.css").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/css; charset=utf-8")
-            .body(CSS)
-    });
-    #[cfg(not(feature = "dynamic"))]
-    let worker_js = warp::path("timer-worker.js").map(|| {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(WORKER_JS)
-    });
-
-    #[cfg(feature = "dynamic")]
-    let index = warp::path::end().and(warp::fs::file("../frontend/static/index.html"));
-    #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("../frontend/static/rules.html"));
-    #[cfg(feature = "dynamic")]
-    let js = warp::path("main.js").and(warp::fs::file("../frontend/dist/main.js"));
-    #[cfg(feature = "dynamic")]
-    let async_js = warp::path("async.js").and(warp::fs::file("../frontend/dist/async.js"));
-    #[cfg(feature = "dynamic")]
-    let cards_js =
-        warp::path("playing-cards.js").and(warp::fs::file("../frontend/dist/playing-cards.js"));
-    #[cfg(feature = "dynamic")]
-    let js_map = warp::path("main.js.map").and(warp::fs::file("../frontend/dist/main.js.map"));
-    #[cfg(feature = "dynamic")]
-    let css = warp::path("style.css").and(warp::fs::file("../frontend/static/style.css"));
-    #[cfg(feature = "dynamic")]
-    let worker_js =
-        warp::path("timer-worker.js").and(warp::fs::file("../frontend/static/timer-worker.js"));
-
     let cards = warp::path("cards.json").map(|| warp::reply::json(&*CARDS_JSON));
 
     let websocket_host: Option<String> = std::env::var("WEBSOCKET_HOST").ok();
@@ -271,81 +212,30 @@ async fn main() {
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
 
+    #[cfg(feature = "dynamic")]
+    let static_routes = warp::fs::dir("../frontend/dist")
+        .or(warp::fs::dir("../frontend/static"))
+        .or(warp::fs::dir("../favicon"));
+    #[cfg(not(feature = "dynamic"))]
+    let static_routes = static_dir::static_dir!("../frontend/dist")
+        .or(static_dir::static_dir!("../frontend/static"))
+        .or(static_dir::static_dir!("../favicon"));
+
+    #[cfg(feature = "dynamic")]
+    let rules = warp::path("rules").and(warp::fs::file("../frontend/static/rules.html"));
+    #[cfg(not(feature = "dynamic"))]
+    let rules = warp::path("rules")
+        .map(|| warp::reply::html(include_str!("../../frontend/static/rules.html")));
+
     let default_settings = warp::path("default_settings.json").and_then(default_propagated);
-    let routes = index
-        .or(runtime_settings)
-        .or(js)
-        .or(async_js)
-        .or(cards_js)
-        .or(js_map)
-        .or(worker_js)
-        .or(css)
+    let routes = runtime_settings
         .or(cards)
         .or(api)
-        .or(rules)
         .or(dump_state)
         .or(game_stats)
         .or(default_settings)
-        .or(warp::path("apple-icon-57x57.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_57x57)
-        }))
-        .or(warp::path("apple-icon-60x60.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_60x60)
-        }))
-        .or(warp::path("apple-icon-72x72.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_72x72)
-        }))
-        .or(warp::path("apple-icon-76x76.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_76x76)
-        }))
-        .or(warp::path("apple-icon-114x114.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_114x114)
-        }))
-        .or(warp::path("apple-icon-120x120.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_120x120)
-        }))
-        .or(warp::path("apple-icon-144x144.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(APPLE_ICON_144x144)
-        }))
-        .or(warp::path("favicon-32x32.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(ICON_32x32)
-        }))
-        .or(warp::path("favicon-96x96.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(ICON_96x96)
-        }))
-        .or(warp::path("favicon-16x16.png").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/png")
-                .body(ICON_16x16)
-        }))
-        .or(warp::path("favicon.ico").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "image/vnd.microsoft.icon")
-                .body(FAVICON_ICO)
-        }))
-        .or(warp::path("manifest.json").map(|| {
-            warp::http::Response::builder()
-                .header("Content-Type", "application/json")
-                .body(ICON_MANIFEST)
-        }));
+        .or(static_routes)
+        .or(rules);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -682,46 +572,6 @@ async fn user_disconnected(
         "span" => format!("{}:ws_{}", room, ws_id)
     );
 }
-
-#[cfg(not(feature = "dynamic"))]
-static INDEX_HTML: &str = include_str!("../../frontend/static/index.html");
-#[cfg(not(feature = "dynamic"))]
-static RULES_HTML: &str = include_str!("../../frontend/static/rules.html");
-#[cfg(not(feature = "dynamic"))]
-static JS: &str = include_str!("../../frontend/dist/main.js");
-#[cfg(not(feature = "dynamic"))]
-static ASYNC_JS: &str = include_str!("../../frontend/dist/async.js");
-#[cfg(not(feature = "dynamic"))]
-static CARDS_JS: &str = include_str!("../../frontend/dist/playing-cards.js");
-#[cfg(not(feature = "dynamic"))]
-static JS_MAP: &str = include_str!("../../frontend/dist/main.js.map");
-#[cfg(not(feature = "dynamic"))]
-static CSS: &str = include_str!("../../frontend/static/style.css");
-#[cfg(not(feature = "dynamic"))]
-static WORKER_JS: &str = include_str!("../../frontend/static/timer-worker.js");
-
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_57x57: &[u8] = include_bytes!("../../favicon/apple-icon-57x57.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_60x60: &[u8] = include_bytes!("../../favicon/apple-icon-60x60.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_72x72: &[u8] = include_bytes!("../../favicon/apple-icon-72x72.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_76x76: &[u8] = include_bytes!("../../favicon/apple-icon-76x76.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_114x114: &[u8] = include_bytes!("../../favicon/apple-icon-114x114.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_120x120: &[u8] = include_bytes!("../../favicon/apple-icon-120x120.png");
-#[allow(non_upper_case_globals)]
-static APPLE_ICON_144x144: &[u8] = include_bytes!("../../favicon/apple-icon-144x144.png");
-#[allow(non_upper_case_globals)]
-static ICON_32x32: &[u8] = include_bytes!("../../favicon/favicon-32x32.png");
-#[allow(non_upper_case_globals)]
-static ICON_96x96: &[u8] = include_bytes!("../../favicon/favicon-96x96.png");
-#[allow(non_upper_case_globals)]
-static ICON_16x16: &[u8] = include_bytes!("../../favicon/favicon-16x16.png");
-static ICON_MANIFEST: &str = include_str!("../../favicon/manifest.json");
-static FAVICON_ICO: &[u8] = include_bytes!("../../favicon/favicon.ico");
 
 #[cfg(test)]
 mod tests {

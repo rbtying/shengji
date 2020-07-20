@@ -11,7 +11,6 @@ interface IDrawProps {
   state: IDrawPhase;
   name: string;
   cards: string[];
-  separateBidCards: boolean;
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
 }
@@ -122,11 +121,12 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           bids={this.props.state.bids}
           autobid={this.props.state.autobid}
           cards={this.props.cards}
+          hands={this.props.state.hands}
           epoch={0}
           name={this.props.name}
           landlord={this.props.state.propagated.landlord}
           players={this.props.state.propagated.players}
-          separateBidCards={this.props.separateBidCards}
+          bidPolicy={this.props.state.propagated.bid_policy}
           header={
             <h2>
               Bids ({this.props.state.deck.length} cards remaining in the deck)

@@ -1,0 +1,24 @@
+[package]
+name = "shengji-wasm"
+description = "Shengji Core functionality exposed as a WASM file for the frontend"
+version = "0.1.0"
+authors = ["Robert Ying <rbtying@aeturnalus.com>"]
+categories = ["wasm"]
+edition = "2018"
+repository = "https://github.com/rbtying/shengji"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+
+[dependencies]
+console_error_panic_hook = "0.1.5"
+serde = { version = "1.0", features = ["derive"]}
+shengji-core = { path = "../../core" }
+smallvec = { version = "1.3.0", features = ["serde"] }
+wasm-bindgen = { version = "0.2.45", features = ["serde-serialize"] }
+web-sys = { version = "0.3.22", features = ["console"]}
+wee_alloc = { version = "0.4.2"}
