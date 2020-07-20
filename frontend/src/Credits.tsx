@@ -29,6 +29,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>7/19/2020:</p>
+        <ul>
+          <li>Bid by clicking on a predefined set of valid bids</li>
+        </ul>
         <p>7/18/2020:</p>
         <ul>
           <li>Allow zero-sized kitty in the UI</li>
