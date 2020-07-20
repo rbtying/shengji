@@ -1121,6 +1121,7 @@ impl PlayPhase {
         landlord_won: bool,
         landlord: PlayerID,
         advancement_policy: AdvancementPolicy,
+        finding_friends_game: bool,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
 
@@ -1139,7 +1140,12 @@ impl PlayPhase {
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         // Player *must* defend on Ace and win to advance.
-                        _ if player.rank() == Number::Ace && !(is_defending && bump_idx == 0) => {
+                        _ if player.rank() == Number::Ace
+                            && !(is_defending
+                                && (!finding_friends_game
+                                    || (finding_friends_game && player.id == landlord))
+                                && bump_idx == 0) =>
+                        {
                             was_blocked = true;
                             break;
                         }
@@ -1180,6 +1186,8 @@ impl PlayPhase {
                         confetti: num_advances > 0
                             && landlord_won
                             && is_defending
+                            && (!finding_friends_game
+                                || finding_friends_game && player.id == landlord)
                             && initial_rank == Number::Ace,
                     },
                 )
@@ -1191,6 +1199,7 @@ impl PlayPhase {
     }
 
     pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+        let mut finding_friends_game = false;
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -1225,6 +1234,7 @@ impl PlayPhase {
             let actual_team_size: usize;
             let setting_team_size = *num_friends + 1;
 
+            finding_friends_game = true;
             actual_team_size = self.landlords_team.len();
             smaller_landlord_team = actual_team_size < setting_team_size;
         }
@@ -1251,6 +1261,7 @@ impl PlayPhase {
             landlord_won,
             self.landlord,
             propagated.advancement_policy,
+            finding_friends_game,
         ));
 
         let landlord_idx = bail_unwrap!(propagated
