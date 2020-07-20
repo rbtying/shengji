@@ -1113,6 +1113,7 @@ impl PlayPhase {
         self.hands.is_empty() && self.trick.played_cards().is_empty()
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn compute_player_level_deltas<'a, 'b: 'a>(
         players: impl Iterator<Item = &'b mut Player>,
         non_landlord_level_bump: usize,
@@ -1121,7 +1122,7 @@ impl PlayPhase {
         landlord_won: bool,
         landlord: PlayerID,
         advancement_policy: AdvancementPolicy,
-        finding_friends_game: bool,
+        landlord_level: Number,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
 
@@ -1140,11 +1141,9 @@ impl PlayPhase {
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         // Player *must* defend on Ace and win to advance.
-                        _ if player.rank() == Number::Ace
-                            && !(is_defending
-                                && (!finding_friends_game
-                                    || (finding_friends_game && player.id == landlord))
-                                && bump_idx == 0) =>
+                        _ if landlord_level != Number::Ace
+                            && player.rank() == Number::Ace
+                            && is_defending =>
                         {
                             was_blocked = true;
                             break;
@@ -1186,8 +1185,6 @@ impl PlayPhase {
                         confetti: num_advances > 0
                             && landlord_won
                             && is_defending
-                            && (!finding_friends_game
-                                || finding_friends_game && player.id == landlord)
                             && initial_rank == Number::Ace,
                     },
                 )
@@ -1199,7 +1196,6 @@ impl PlayPhase {
     }
 
     pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
-        let mut finding_friends_game = false;
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -1234,7 +1230,6 @@ impl PlayPhase {
             let actual_team_size: usize;
             let setting_team_size = *num_friends + 1;
 
-            finding_friends_game = true;
             actual_team_size = self.landlords_team.len();
             smaller_landlord_team = actual_team_size < setting_team_size;
         }
@@ -1253,6 +1248,11 @@ impl PlayPhase {
 
         let mut propagated = self.propagated.clone();
 
+        let landlord_idx = bail_unwrap!(propagated
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord));
+
         msgs.extend(Self::compute_player_level_deltas(
             propagated.players.iter_mut(),
             non_landlord_level_bump,
@@ -1261,13 +1261,9 @@ impl PlayPhase {
             landlord_won,
             self.landlord,
             propagated.advancement_policy,
-            finding_friends_game,
+            self.propagated.players[landlord_idx].level,
         ));
 
-        let landlord_idx = bail_unwrap!(propagated
-            .players
-            .iter()
-            .position(|p| p.id == self.landlord));
         let mut idx = (landlord_idx + 1) % propagated.players.len();
         let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
