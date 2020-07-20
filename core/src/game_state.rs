@@ -2087,6 +2087,7 @@ mod tests {
             true,
             PlayerID(0),
             AdvancementPolicy::Unrestricted,
+            Number::Ace,
         );
         for p in &players {
             assert_eq!(p.rank(), Number::Six);
@@ -2101,6 +2102,7 @@ mod tests {
             true,
             PlayerID(0),
             AdvancementPolicy::DefendPoints,
+            Number::Ace,
         );
         for p in &players_ {
             assert_eq!(p.rank(), Number::Five);
@@ -2116,6 +2118,7 @@ mod tests {
             true,
             PlayerID(0),
             AdvancementPolicy::DefendPoints,
+            Number::Ace,
         );
         for p in &players_ {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
