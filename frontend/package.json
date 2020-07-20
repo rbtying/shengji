@@ -36,7 +36,7 @@
     "build": "webpack",
     "watch": "webpack --watch --mode=development",
     "prettier": "prettier src",
-    "lint": "eslint -c .eslintrc.js 'src/**/*.{js,ts,tsx}'",
+    "lint": "eslint -c .eslintrc.js \"src/**/*.{js,ts,tsx}\"",
     "test": "jest",
     "download-cards-json": "curl -s http://localhost:3030/cards.json | prettier --parser=json > src/generated/cards.json"
   },
