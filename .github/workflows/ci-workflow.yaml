@@ -15,6 +15,11 @@ jobs:
         run: yarn install
         working-directory: ./frontend
 
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.3.0
+        with:
+          version: 'latest'
+
       - name: Build frontend
         run: yarn build
         working-directory: ./frontend
