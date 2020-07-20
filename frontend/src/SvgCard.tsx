@@ -235,12 +235,14 @@ interface IProps {
 }
 
 const SvgCard = (props: IProps): JSX.Element => {
+  /* eslint-disable */
   return React.createElement(
     (props.fourColor ? FourColorCards : NormalCards)[props.card],
     {
       height: props.smaller ? 95 : 120,
     }
   );
+  /* eslint-enable */
 };
 
 export default SvgCard;
