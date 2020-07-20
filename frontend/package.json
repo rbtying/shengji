@@ -54,6 +54,7 @@
     "eslint-plugin-standard": "4",
     "prettier": "^2.0.2",
     "prettier-eslint": "^11.0.0",
+    "rimraf": "^3.0.2",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.12"
   }

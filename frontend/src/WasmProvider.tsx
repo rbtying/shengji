@@ -1,19 +1,26 @@
 import * as React from "react";
-import * as Shengji from "../shengji-wasm/pkg/index.js";
+import * as Shengji from "../shengji-wasm/pkg/shengji-core.js";
+import WasmContext from "./WasmContext";
+import { ITrump } from "./types";
 
 interface IProps {
   children: React.ReactNode;
 }
-interface Context {}
-
-export const ShengjiContext = React.createContext<Context>({});
-
 const ShengjiProvider = (props: IProps): JSX.Element => {
-  Shengji.init();
+  (window as any).shengji = Shengji;
   return (
-    <ShengjiContext.Provider value={{}}>
+    <WasmContext.Provider
+      value={{
+        findViablePlays: (trump: ITrump, cards: string[]) => {
+          return Shengji.find_viable_plays({ trump, cards }).results;
+        },
+        findValidBids: (req) => {
+          return Shengji.find_valid_bids(req).results;
+        },
+      }}
+    >
       {props.children}
-    </ShengjiContext.Provider>
+    </WasmContext.Provider>
   );
 };
 export default ShengjiProvider;

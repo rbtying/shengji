@@ -14,7 +14,6 @@ interface IExchangeProps {
   state: IExchangePhase;
   name: string;
   cards: string[];
-  separateBidCards: boolean;
 }
 interface IExchangeState {
   friends: IFriend[];
@@ -202,11 +201,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             bids={this.props.state.bids}
             autobid={this.props.state.autobid}
             cards={this.props.cards}
+            hands={this.props.state.hands}
             epoch={this.props.state.epoch}
             name={this.props.name}
             landlord={this.props.state.propagated.landlord}
             players={this.props.state.propagated.players}
-            separateBidCards={this.props.separateBidCards}
+            bidPolicy={this.props.state.propagated.bid_policy}
             header={
               <h2>Bids (round {this.props.state.epoch + 1} of bidding)</h2>
             }

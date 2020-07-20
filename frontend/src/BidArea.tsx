@@ -1,8 +1,9 @@
 import * as React from "react";
 import Cards from "./Cards";
-import { IBid, IPlayer } from "./types";
+import { IBid, IPlayer, IHands, BidPolicy } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
+import WasmContext from "./WasmContext";
 
 interface IBidAreaProps {
   bids: IBid[];
@@ -12,44 +13,17 @@ interface IBidAreaProps {
   name: string;
   landlord: number | null;
   players: IPlayer[];
-  separateBidCards: boolean;
   header?: JSX.Element | JSX.Element[];
   prefixButtons?: JSX.Element | JSX.Element[];
   suffixButtons?: JSX.Element | JSX.Element[];
   bidTakeBacksEnabled: boolean;
+  bidPolicy: BidPolicy;
+  hands: IHands;
 }
 
 const BidArea = (props: IBidAreaProps): JSX.Element => {
-  const [selected, setSelected] = React.useState<string[]>([]);
   const { send } = React.useContext(WebsocketContext);
-
-  const makeBid = (evt: React.SyntheticEvent): void => {
-    evt.preventDefault();
-    const counts: { [card: string]: number } = {};
-    selected.forEach(
-      (c) => (counts[c] = (counts[c] !== undefined ? counts[c] : 0) + 1)
-    );
-    if (Object.keys(counts).length !== 1) {
-      return;
-    }
-
-    const players: { [playerId: number]: IPlayer } = {};
-    props.players.forEach((p: IPlayer) => {
-      players[p.id] = p;
-    });
-
-    for (const c in counts) {
-      let alreadyBid = 0;
-      props.bids.forEach((bid: IBid) => {
-        if (players[bid.id].name === props.name && bid.card === c) {
-          alreadyBid = alreadyBid < bid.count ? bid.count : alreadyBid;
-        }
-      });
-
-      send({ Action: { Bid: [c, counts[c] + alreadyBid] } });
-      setSelected([]);
-    }
-  };
+  const { findValidBids } = React.useContext(WasmContext);
 
   const takeBackBid = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
@@ -65,28 +39,29 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
     }
   });
 
-  const myBids: { [card: string]: number } = {};
-  props.bids.forEach((bid: IBid): void => {
-    if (playerId === bid.id) {
-      const existingBid = bid.card in myBids ? myBids[bid.card] : 0;
-      myBids[bid.card] = existingBid < bid.count ? bid.count : existingBid;
-    }
-  });
-  const cardsNotBid = [...props.cards];
-
-  Object.keys(myBids).forEach((card) => {
-    const count = card in myBids ? myBids[card] : 0;
-    for (let i = 0; i < count; i = i + 1) {
-      const cardIdx = cardsNotBid.indexOf(card);
-      if (cardIdx >= 0) {
-        cardsNotBid.splice(cardIdx, 1);
-      }
-    }
+  const validBids = findValidBids({
+    id: playerId,
+    bids: props.bids,
+    hands: props.hands,
+    players: props.players,
+    landlord: props.landlord,
+    epoch: props.epoch,
+    bid_policy: props.bidPolicy,
   });
 
-  const landlord = props.landlord;
-  const level =
-    props.landlord == null ? players[playerId].level : players[landlord].level;
+  validBids.sort((a, b) => {
+    if (a.card < b.card) {
+      return -1;
+    } else if (a.card > b.card) {
+      return 1;
+    } else if (a.count < b.count) {
+      return -1;
+    } else if (a.count > b.count) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 
   return (
     <div>
@@ -110,9 +85,6 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
         })}
       </div>
       {props.prefixButtons}
-      <button onClick={makeBid} disabled={selected.length === 0}>
-        Make bid
-      </button>
       {props.bidTakeBacksEnabled ? (
         <button
           onClick={takeBackBid}
@@ -138,13 +110,19 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       ) : (
         <div />
       )}
-      <Cards
-        cardsInHand={cardsNotBid}
-        selectedCards={selected}
-        onSelect={setSelected}
-        separateBidCards={props.separateBidCards}
-        level={level}
-      />
+      {validBids.map((bid, idx) => {
+        return (
+          <LabeledPlay
+            cards={Array(bid.count).fill(bid.card)}
+            key={idx}
+            label={`Bid option ${idx + 1}`}
+            onClick={() => {
+              send({ Action: { Bid: [bid.card, bid.count] } });
+            }}
+          />
+        );
+      })}
+      <Cards cardsInHand={props.cards} />
     </div>
   );
 };

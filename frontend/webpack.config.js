@@ -24,6 +24,7 @@ module.exports = {
   optimization: {
     moduleIds: 'hashed',
     splitChunks: {
+      chunks: "async",
       cacheGroups: {
         cards: {
           test: /([\\/]playing-cards(-4color)?[\\/])|(SvgCard.tsx)/,

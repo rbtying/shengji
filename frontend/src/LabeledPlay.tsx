@@ -11,6 +11,7 @@ interface IProps {
   moreCards?: string[];
   label: string;
   next?: number | null;
+  onClick?: () => void;
 }
 const LabeledPlay = (props: IProps): JSX.Element => {
   const className = classNames("label", {
@@ -38,7 +39,19 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       : cards;
 
   return (
-    <div className={classNames("labeled-play", props.className)}>
+    <div
+      className={classNames("labeled-play", props.className, {
+        clickable: props.onClick !== undefined,
+      })}
+      onClick={
+        props.onClick !== undefined
+          ? (evt) => {
+              evt.preventDefault();
+              props.onClick();
+            }
+          : undefined
+      }
+    >
       <div className="play">{groupedCards}</div>
       {props.moreCards !== undefined && props.moreCards.length > 0 ? (
         <div className="play more">

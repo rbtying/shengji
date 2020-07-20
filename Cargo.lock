@@ -1312,7 +1312,9 @@ name = "shengji-wasm"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "serde",
  "shengji-core",
+ "smallvec",
  "wasm-bindgen",
  "web-sys",
  "wee_alloc",
@@ -1750,6 +1752,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3c7d40d09cdbf0f4895ae58cf57d92e1e57a9dd8ed2e8390514b54a47cc5551"
 dependencies = [
  "cfg-if",
+ "serde",
+ "serde_json",
  "wasm-bindgen-macro",
 ]
 

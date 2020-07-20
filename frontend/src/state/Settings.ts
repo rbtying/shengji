@@ -9,7 +9,6 @@ export interface Settings {
   reverseCardOrder: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
   showTrickInPlayerOrder: boolean;
-  separateBidCards: boolean;
   svgCards: boolean;
 }
 
@@ -31,9 +30,6 @@ const unsetAutoPlayWhenWinnerChanges: State<boolean> = booleanLocalStorageState(
 const showTrickInPlayerOrder: State<boolean> = booleanLocalStorageState(
   "show_trick_in_player_order"
 );
-const separateBidCards: State<boolean> = booleanLocalStorageState(
-  "separate_bid_cards"
-);
 const settings: State<Settings> = combineState({
   fourColor,
   showCardLabels,
@@ -42,7 +38,6 @@ const settings: State<Settings> = combineState({
   reverseCardOrder,
   unsetAutoPlayWhenWinnerChanges,
   showTrickInPlayerOrder,
-  separateBidCards,
   svgCards,
 });
 
