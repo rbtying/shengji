@@ -1119,7 +1119,7 @@ impl PlayPhase {
         landlord_level_bump: usize,
         landlords_team: &'a [PlayerID],
         landlord_won: bool,
-        landlord: PlayerID,
+        landlord: (PlayerID, Number),
         advancement_policy: AdvancementPolicy,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
@@ -1135,14 +1135,21 @@ impl PlayPhase {
                 let mut num_advances = 0;
                 let mut was_blocked = false;
                 let initial_rank = player.rank();
+                let landlord_successfully_defended_a: bool =
+                    landlord.1 == Number::Ace && landlord_won;
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         // Player *must* defend on Ace and win to advance.
-                        _ if player.rank() == Number::Ace && !(is_defending && bump_idx == 0) => {
+                        _ if player.rank() == Number::Ace
+                            && !(is_defending
+                                && bump_idx == 0
+                                && landlord_successfully_defended_a) =>
+                        {
                             was_blocked = true;
                             break;
                         }
+
                         AdvancementPolicy::Unrestricted => (),
                         AdvancementPolicy::DefendPoints => match player.rank().points() {
                             None => (),
@@ -1175,7 +1182,7 @@ impl PlayPhase {
                     PlayerGameFinishedResult {
                         won_game: landlord_won == is_defending,
                         is_defending,
-                        is_landlord: landlord == player.id,
+                        is_landlord: landlord.0 == player.id,
                         ranks_up: num_advances,
                         confetti: num_advances > 0
                             && landlord_won
@@ -1243,20 +1250,21 @@ impl PlayPhase {
 
         let mut propagated = self.propagated.clone();
 
+        let landlord_idx = bail_unwrap!(propagated
+            .players
+            .iter()
+            .position(|p| p.id == self.landlord));
+
         msgs.extend(Self::compute_player_level_deltas(
             propagated.players.iter_mut(),
             non_landlord_level_bump,
             landlord_level_bump,
             &self.landlords_team[..],
             landlord_won,
-            self.landlord,
+            (self.landlord, self.propagated.players[landlord_idx].level),
             propagated.advancement_policy,
         ));
 
-        let landlord_idx = bail_unwrap!(propagated
-            .players
-            .iter()
-            .position(|p| p.id == self.landlord));
         let mut idx = (landlord_idx + 1) % propagated.players.len();
         let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
@@ -2078,7 +2086,7 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::Unrestricted,
         );
         for p in &players {
@@ -2092,7 +2100,7 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::DefendPoints,
         );
         for p in &players_ {
@@ -2107,7 +2115,7 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::DefendPoints,
         );
         for p in &players_ {
