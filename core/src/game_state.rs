@@ -1135,17 +1135,21 @@ impl PlayPhase {
                 let mut num_advances = 0;
                 let mut was_blocked = false;
                 let initial_rank = player.rank();
+                let landlord_successfully_defended_a: bool =
+                    landlord.1 == Number::Ace && landlord_won;
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         // Player *must* defend on Ace and win to advance.
-                        _ if landlord.1 != Number::Ace
-                            && player.rank() == Number::Ace
-                            && is_defending =>
+                        _ if player.rank() == Number::Ace
+                            && !(is_defending
+                                && bump_idx == 0
+                                && landlord_successfully_defended_a) =>
                         {
                             was_blocked = true;
                             break;
                         }
+
                         AdvancementPolicy::Unrestricted => (),
                         AdvancementPolicy::DefendPoints => match player.rank().points() {
                             None => (),
