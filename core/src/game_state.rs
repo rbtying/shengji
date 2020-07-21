@@ -1113,16 +1113,14 @@ impl PlayPhase {
         self.hands.is_empty() && self.trick.played_cards().is_empty()
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn compute_player_level_deltas<'a, 'b: 'a>(
         players: impl Iterator<Item = &'b mut Player>,
         non_landlord_level_bump: usize,
         landlord_level_bump: usize,
         landlords_team: &'a [PlayerID],
         landlord_won: bool,
-        landlord: PlayerID,
+        landlord: (PlayerID, Number),
         advancement_policy: AdvancementPolicy,
-        landlord_level: Number,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
 
@@ -1141,7 +1139,7 @@ impl PlayPhase {
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         // Player *must* defend on Ace and win to advance.
-                        _ if landlord_level != Number::Ace
+                        _ if landlord.1 != Number::Ace
                             && player.rank() == Number::Ace
                             && is_defending =>
                         {
@@ -1180,7 +1178,7 @@ impl PlayPhase {
                     PlayerGameFinishedResult {
                         won_game: landlord_won == is_defending,
                         is_defending,
-                        is_landlord: landlord == player.id,
+                        is_landlord: landlord.0 == player.id,
                         ranks_up: num_advances,
                         confetti: num_advances > 0
                             && landlord_won
@@ -1259,9 +1257,8 @@ impl PlayPhase {
             landlord_level_bump,
             &self.landlords_team[..],
             landlord_won,
-            self.landlord,
+            (self.landlord, self.propagated.players[landlord_idx].level),
             propagated.advancement_policy,
-            self.propagated.players[landlord_idx].level,
         ));
 
         let mut idx = (landlord_idx + 1) % propagated.players.len();
@@ -2085,9 +2082,8 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::Unrestricted,
-            Number::Ace,
         );
         for p in &players {
             assert_eq!(p.rank(), Number::Six);
@@ -2100,9 +2096,8 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::DefendPoints,
-            Number::Ace,
         );
         for p in &players_ {
             assert_eq!(p.rank(), Number::Five);
@@ -2116,9 +2111,8 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            PlayerID(0),
+            (PlayerID(0), Number::Ace),
             AdvancementPolicy::DefendPoints,
-            Number::Ace,
         );
         for p in &players_ {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
