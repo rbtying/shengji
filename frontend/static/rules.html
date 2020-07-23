@@ -4,6 +4,9 @@
         <title>升级 / 找朋友 Rules</title>
         <meta charset="UTF-8">
         <link rel="stylesheet" type="text/css" href="style.css">
+        <style>
+          .card { background: #fff; height: inherit; }
+        </style>
     </head>
     <body id="body">
       <h1>Rules for 升级 and 找朋友</h1>
@@ -1097,6 +1100,41 @@
         rank and successfully defends it first. In this implementation, this
         is A.
       </p>
+      <script type="text/javascript">
+        const c = document.createElement("canvas");
+        c.width = 300;
+        c.height = 300;
+        c.style.border = '2px #000 solid';
+        // c.style.display = "none";
+        document.body.appendChild(c);
+        const ctx = c.getContext("2d");
+        ctx.font = "100px solid";
+        const text = "🂠";
+        const textMetrics = ctx.measureText(text);
+        const width =
+          textMetrics.actualBoundingBoxLeft + textMetrics.actualBoundingBoxRight;
+        const height =
+          textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+        
+        // ctx.textAlign = "center";
+        // ctx.textBaseline = "middle";
+        const x = 150;
+        const y = 150;
+        ctx.fillText(text, x-2, y);
+        ctx.moveTo(0, y - textMetrics.actualBoundingBoxAscent);
+        ctx.lineTo(300, y - textMetrics.actualBoundingBoxAscent);
+        ctx.stroke();
+        ctx.moveTo(0, y + textMetrics.actualBoundingBoxDescent);
+        ctx.lineTo(300, y + textMetrics.actualBoundingBoxDescent);
+        ctx.stroke();
+        ctx.moveTo(x + textMetrics.actualBoundingBoxRight, 0);
+        ctx.lineTo(x + textMetrics.actualBoundingBoxRight, 300);
+        ctx.stroke();
+        ctx.moveTo(x - textMetrics.actualBoundingBoxLeft, 0);
+        ctx.lineTo(x - textMetrics.actualBoundingBoxLeft, 300);
+        ctx.stroke();
+        //document.body.removeChild(c);
+      </script>
 
       <script type="text/javascript">
         const body = document.getElementById("body");
