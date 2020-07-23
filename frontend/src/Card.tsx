@@ -22,7 +22,7 @@ const Card = (props: IProps): JSX.Element => {
       <span className={classNames("card", "unknown", props.className)}>
         <CardCanvas
           card={props.card}
-          height={props.smaller ? 115 : 135}
+          height={props.smaller ? 95 : 120}
           suit={classNames("unknown", settings.fourColor ? "four-color" : null)}
         />
       </span>
@@ -57,7 +57,7 @@ const Card = (props: IProps): JSX.Element => {
         </div>
         <CardCanvas
           card={cardInfo.display_value}
-          height={props.smaller ? 115 : 135}
+          height={props.smaller ? 95 : 120}
           suit={classNames(
             cardInfo.typ,
             settings.fourColor ? "four-color" : null
@@ -139,7 +139,9 @@ const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
       2
   );
   const effectiveWidth = Math.round(
-    textMetrics.actualBoundingBoxRight + textMetrics.actualBoundingBoxLeft + 2
+    textMetrics.actualBoundingBoxRight +
+      Math.min(textMetrics.actualBoundingBoxLeft, 0) +
+      2
   );
   return (
     <svg
@@ -160,7 +162,7 @@ const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
         fill={style}
         fontSize={`${props.height}px`}
         textLength={`${textMetrics.width}px`}
-        x={textMetrics.actualBoundingBoxLeft + 1}
+        x={Math.min(textMetrics.actualBoundingBoxLeft, 0) + 1}
         y={effectiveHeight - textMetrics.actualBoundingBoxDescent - 1}
       >
         {props.card}
