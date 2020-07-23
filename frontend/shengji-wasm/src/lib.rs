@@ -56,6 +56,7 @@ struct FindValidBidsResult {
 
 #[wasm_bindgen]
 pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
     let req: FindValidBidsRequest = req

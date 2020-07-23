@@ -22,7 +22,7 @@ const Card = (props: IProps): JSX.Element => {
       <span className={classNames("card", "unknown", props.className)}>
         <CardCanvas
           card={props.card}
-          height={props.smaller ? 95 : 120}
+          height={props.smaller ? 115 : 135}
           suit={classNames("unknown", settings.fourColor ? "four-color" : null)}
         />
       </span>
@@ -57,7 +57,7 @@ const Card = (props: IProps): JSX.Element => {
         </div>
         <CardCanvas
           card={cardInfo.display_value}
-          height={props.smaller ? 95 : 120}
+          height={props.smaller ? 115 : 135}
           suit={classNames(
             cardInfo.typ,
             settings.fourColor ? "four-color" : null
@@ -90,20 +90,17 @@ const Card = (props: IProps): JSX.Element => {
   }
 };
 
-const computeCanvasBounds = (font: string): [number, number, number] => {
+const computeCanvasBounds = (font: string, dpr: number): TextMetrics => {
   const c = document.createElement("canvas");
   c.style.display = "none";
   document.body.appendChild(c);
   const ctx = c.getContext("2d");
+  ctx.scale(dpr, dpr);
   ctx.font = font;
   const text = "🂠";
   const textMetrics = ctx.measureText(text);
-  const width =
-    textMetrics.actualBoundingBoxLeft + textMetrics.actualBoundingBoxRight;
-  const height =
-    textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
   document.body.removeChild(c);
-  return [width, height, textMetrics.actualBoundingBoxDescent];
+  return textMetrics;
 };
 
 const computeSuitColor = (suit: string): string => {
@@ -116,7 +113,7 @@ const computeSuitColor = (suit: string): string => {
   return color;
 };
 
-const cardBoundsCache: { [font: string]: () => [number, number, number] } = {};
+const cardBoundsCache: { [font: string]: () => TextMetrics } = {};
 const suitColorCache: { [suit: string]: () => string } = {};
 
 interface ICardCanvasProps {
@@ -126,42 +123,49 @@ interface ICardCanvasProps {
 }
 
 const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const dpr =
-    (window.devicePixelRatio !== undefined ? window.devicePixelRatio : 1) * 1.5;
-  const font = `${props.height * dpr}px solid`;
+  const font = `${props.height}px solid`;
   if (!(font in cardBoundsCache)) {
-    cardBoundsCache[font] = memoize(() => computeCanvasBounds(font));
+    cardBoundsCache[font] = memoize(() => computeCanvasBounds(font, 1));
   }
   if (!(props.suit in suitColorCache)) {
     suitColorCache[props.suit] = memoize(() => computeSuitColor(props.suit));
   }
-  const [width, height, offset] = cardBoundsCache[font]();
+  const textMetrics = cardBoundsCache[font]();
   const style = suitColorCache[props.suit]();
 
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.font = font;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.clearRect(0, 0, width + 2, height + 2);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(2, 2, width, height);
-    ctx.fillStyle = style;
-    ctx.fillText(props.card, width / 2 + 1, height + offset - 3 * dpr);
-  });
-
+  const effectiveHeight = Math.round(
+    textMetrics.actualBoundingBoxAscent +
+      textMetrics.actualBoundingBoxDescent +
+      2
+  );
+  const effectiveWidth = Math.round(
+    textMetrics.actualBoundingBoxRight + textMetrics.actualBoundingBoxLeft + 2
+  );
   return (
-    <canvas
-      ref={canvasRef}
-      width={width + 2}
-      height={height + 2}
-      style={{
-        width: width / dpr + 2,
-        height: height / dpr + 2,
-      }}
-    />
+    <svg
+      focusable="false"
+      role="img"
+      xmlns="http://www.w3.org/2000/svg"
+      height={effectiveHeight}
+      width={effectiveWidth}
+    >
+      <rect
+        fill="#fff"
+        x={textMetrics.actualBoundingBoxLeft}
+        y={0}
+        width={textMetrics.width - 2}
+        height={effectiveHeight}
+      ></rect>
+      <text
+        fill={style}
+        fontSize={`${props.height}px`}
+        textLength={`${textMetrics.width}px`}
+        x={textMetrics.actualBoundingBoxLeft + 1}
+        y={effectiveHeight - textMetrics.actualBoundingBoxDescent - 1}
+      >
+        {props.card}
+      </text>
+    </svg>
   );
 };
 
