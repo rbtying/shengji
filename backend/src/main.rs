@@ -213,19 +213,17 @@ async fn main() {
         .and_then(|(game, stats)| get_stats(game, stats));
 
     #[cfg(feature = "dynamic")]
-    let static_routes = warp::fs::dir("../frontend/dist")
-        .or(warp::fs::dir("../frontend/static"))
-        .or(warp::fs::dir("../favicon"));
+    let static_routes = warp::fs::dir("../frontend/dist").or(warp::fs::dir("../favicon"));
     #[cfg(not(feature = "dynamic"))]
-    let static_routes = static_dir::static_dir!("../frontend/dist")
-        .or(static_dir::static_dir!("../frontend/static"))
-        .or(static_dir::static_dir!("../favicon"));
+    let static_routes =
+        static_dir::static_dir!("../frontend/dist").or(static_dir::static_dir!("../favicon"));
 
+    // TODO: Figure out if this can be redirected safely without this duplicate hax.
     #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("../frontend/static/rules.html"));
+    let rules = warp::path("rules").and(warp::fs::file("../frontend/dist/rules.html"));
     #[cfg(not(feature = "dynamic"))]
     let rules = warp::path("rules")
-        .map(|| warp::reply::html(include_str!("../../frontend/static/rules.html")));
+        .map(|| warp::reply::html(include_str!("../../frontend/dist/rules.html")));
 
     let default_settings = warp::path("default_settings.json").and_then(default_propagated);
     let routes = runtime_settings

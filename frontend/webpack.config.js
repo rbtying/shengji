@@ -1,5 +1,7 @@
 const path = require("path");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: "production",
@@ -24,7 +26,7 @@ module.exports = {
   optimization: {
     moduleIds: 'hashed',
     splitChunks: {
-      chunks: "async",
+      chunks: "all",
       cacheGroups: {
         cards: {
           test: /([\\/]playing-cards(-4color)?[\\/])|(SvgCard.tsx)/,
@@ -32,12 +34,11 @@ module.exports = {
             return "playing-cards";
           },
         },
-        vendors: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
-        },
       },
     },
+  },
+  output: {
+    filename: "[name].[contenthash].js",
   },
   performance: {
     hints: false,
@@ -45,7 +46,27 @@ module.exports = {
   plugins: [
     new WasmPackPlugin({
       crateDirectory: path.resolve(__dirname, "shengji-wasm"),
-      outName: "shengji-core"
-    })
-  ]
+      outName: "shengji-core",
+    }),
+    new HtmlWebpackPlugin({
+      filename: "index.html",
+      template: "static/index.html",
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: "static/rules.html",
+          to: "rules.html",
+        },
+        {
+          from: "static/timer-worker.js",
+          to: "timer-worker.js",
+        },
+        {
+          from: "static/style.css",
+          to: "style.css",
+        },
+      ],
+    }),
+  ],
 };
