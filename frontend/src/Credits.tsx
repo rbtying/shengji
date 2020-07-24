@@ -29,6 +29,12 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>7/23/2020:</p>
+        <ul>
+          <li>
+            Move a bunch of settings into modals to make interface cleaner
+          </li>
+        </ul>
         <p>7/19/2020:</p>
         <ul>
           <li>Bid by clicking on a predefined set of valid bids</li>

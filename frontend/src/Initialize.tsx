@@ -1,5 +1,6 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
+import * as ReactModal from "react-modal";
 import { IEmojiData } from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
@@ -13,6 +14,303 @@ import Header from "./Header";
 import Players from "./Players";
 
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
+
+interface IDifficultyProps {
+  state: IInitializePhase;
+  setFriendSelectionPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setAdvancementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setHideLandlordsPoints: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setHidePlayedCards: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setKittyPenalty: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setThrowPenalty: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setPlayTakebackPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setBidTakebackPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+const contentStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+};
+
+const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const s = (
+    <>
+      <div>
+        <label>
+          Friend selection restriction:{" "}
+          <select
+            value={props.state.propagated.friend_selection_policy}
+            onChange={props.setFriendSelectionPolicy}
+          >
+            <option value="Unrestricted">Non-trump cards</option>
+            <option value="HighestCardNotAllowed">
+              Non-trump cards, except the highest
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Rank advancement policy:{" "}
+          <select
+            value={props.state.propagated.advancement_policy}
+            onChange={props.setAdvancementPolicy}
+          >
+            <option value="Unrestricted">Unrestricted</option>
+            <option value="DefendPoints">
+              Points (5, 10, K) must be defended
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Point visibility:{" "}
+          <select
+            value={
+              props.state.propagated.hide_landlord_points ? "hide" : "show"
+            }
+            onChange={props.setHideLandlordsPoints}
+          >
+            <option value="show">Show all players&apos; points</option>
+            <option value="hide">Hide defending team&apos;s points</option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Played card visibility (in chat):{" "}
+          <select
+            value={props.state.propagated.hide_played_cards ? "hide" : "show"}
+            onChange={props.setHidePlayedCards}
+          >
+            <option value="show">Show played cards in chat</option>
+            <option value="hide">Hide played cards in chat</option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Penalty for points left in the bottom:{" "}
+          <select
+            value={props.state.propagated.kitty_penalty}
+            onChange={props.setKittyPenalty}
+          >
+            <option value="Times">Twice the size of the last trick</option>
+            <option value="Power">
+              Two to the power of the size of the last trick
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Penalty for incorrect throws:{" "}
+          <select
+            value={props.state.propagated.throw_penalty}
+            onChange={props.setThrowPenalty}
+          >
+            <option value="None">No penalty</option>
+            <option value="TenPointsPerAttempt">
+              Ten points per bad throw
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Play takeback:{" "}
+          <select
+            value={props.state.propagated.play_takeback_policy}
+            onChange={props.setPlayTakebackPolicy}
+          >
+            <option value="AllowPlayTakeback">Allow taking back plays</option>
+            <option value="NoPlayTakeback">Disallow taking back plays</option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Bid takeback:{" "}
+          <select
+            value={props.state.propagated.bid_takeback_policy}
+            onChange={props.setBidTakebackPolicy}
+          >
+            <option value="AllowBidTakeback">Allow bid takeback</option>
+            <option value="NoBidTakeback">No bid takeback</option>
+          </select>
+        </label>
+      </div>
+    </>
+  );
+
+  return (
+    <div>
+      <label>
+        Difficulty settings:{" "}
+        <button
+          className="normal"
+          onClick={(evt) => {
+            evt.preventDefault();
+            setModalOpen(true);
+          }}
+        >
+          Open
+        </button>
+        <ReactModal
+          isOpen={modalOpen}
+          onRequestClose={() => setModalOpen(false)}
+          shouldCloseOnOverlayClick
+          shouldCloseOnEsc
+          style={{ content: contentStyle }}
+        >
+          {s}
+        </ReactModal>
+      </label>
+    </div>
+  );
+};
+
+interface IUncommonSettings {
+  state: IInitializePhase;
+  setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setFirstLandlordSelectionPolicy: (
+    v: React.ChangeEvent<HTMLSelectElement>
+  ) => void;
+  setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setBonusLevelPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const s = (
+    <>
+      <div>
+        <label>
+          Game shadowing policy:{" "}
+          <select
+            value={props.state.propagated.game_shadowing_policy}
+            onChange={props.setGameShadowingPolicy}
+          >
+            <option value="AllowMultipleSessions">
+              Allow players to be shadowed by joining with the same name
+            </option>
+            <option value="SingleSessionOnly">
+              Do not allow players to be shadowed
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Game start policy:{" "}
+          <select
+            value={props.state.propagated.game_start_policy}
+            onChange={props.setGameStartPolicy}
+          >
+            <option value="AllowAnyPlayer">
+              Allow any player to start a game
+            </option>
+            <option value="AllowLandlordOnly">
+              Allow only landlord to start a game
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Landlord selection from bid:{" "}
+          <select
+            value={props.state.propagated.first_landlord_selection_policy}
+            onChange={props.setFirstLandlordSelectionPolicy}
+          >
+            <option value="ByWinningBid">
+              Winning bid decides both landlord and trump
+            </option>
+            <option value="ByFirstBid">
+              First bid decides landlord, winning bid decides trump
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Trump policy for cards revealed from the bottom:{" "}
+          <select
+            value={props.state.propagated.kitty_bid_policy}
+            onChange={props.setKittyBidPolicy}
+          >
+            <option value="FirstCard">First card revealed</option>
+            <option value="FirstCardOfLevelOrHighest">
+              First card revealed of the appropriate rank
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Bid Policy:{" "}
+          <select
+            value={props.state.propagated.bid_policy}
+            onChange={props.setBidPolicy}
+          >
+            <option value="JokerOrGreaterLength">
+              Joker bids to outbid non-joker bids with the same number of cards
+            </option>
+            <option value="GreaterLength">
+              All bids must have more cards than the previous bids
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Small defending team bonus rank policy:{" "}
+          <select
+            value={props.state.propagated.bonus_level_policy}
+            onChange={props.setBonusLevelPolicy}
+          >
+            <option value="BonusLevelForSmallerLandlordTeam">
+              Bonus level for smaller defending team
+            </option>
+            <option value="NoBonusLevel">
+              No bonus level for defending team
+            </option>
+          </select>
+        </label>
+      </div>
+    </>
+  );
+  return (
+    <div>
+      <label>
+        More game settings:{" "}
+        <button
+          className="normal"
+          onClick={(evt) => {
+            evt.preventDefault();
+            setModalOpen(true);
+          }}
+        >
+          Open
+        </button>
+        <ReactModal
+          isOpen={modalOpen}
+          onRequestClose={() => setModalOpen(false)}
+          shouldCloseOnOverlayClick
+          shouldCloseOnEsc
+          style={{ content: contentStyle }}
+        >
+          {s}
+        </ReactModal>
+      </label>
+    </div>
+  );
+};
 
 interface IProps {
   state: IInitializePhase;
@@ -383,7 +681,7 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             if (kittySizeSet) {
-              // reset the size again, as setting deck numn resets kitty_size to default
+              // reset the size again, as setting deck num resets kitty_size to default
               send({
                 Action: {
                   SetKittySize: kittySize,
@@ -708,37 +1006,25 @@ const Initialize = (props: IProps): JSX.Element => {
             </select>
           </label>
         </div>
-        <div>
-          <label>
-            Trump policy for cards revealed from the bottom:{" "}
-            <select
-              value={props.state.propagated.kitty_bid_policy}
-              onChange={setKittyBidPolicy}
-            >
-              <option value="FirstCard">First card revealed</option>
-              <option value="FirstCardOfLevelOrHighest">
-                First card revealed of the appropriate rank
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Bid Policy:{" "}
-            <select
-              value={props.state.propagated.bid_policy}
-              onChange={setBidPolicy}
-            >
-              <option value="JokerOrGreaterLength">
-                Joker bids to outbid non-joker bids with the same number of
-                cards
-              </option>
-              <option value="GreaterLength">
-                All bids must have more cards than the previous bids
-              </option>
-            </select>
-          </label>
-        </div>
+        <UncommonSettings
+          state={props.state}
+          setBidPolicy={setBidPolicy}
+          setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
+          setGameStartPolicy={setGameStartPolicy}
+          setGameShadowingPolicy={setGameShadowingPolicy}
+          setBonusLevelPolicy={setBonusLevelPolicy}
+        />
+        <DifficultySettings
+          state={props.state}
+          setFriendSelectionPolicy={setFriendSelectionPolicy}
+          setAdvancementPolicy={setAdvancementPolicy}
+          setHideLandlordsPoints={setHideLandlordsPoints}
+          setHidePlayedCards={setHidePlayedCards}
+          setKittyPenalty={setKittyPenalty}
+          setThrowPenalty={setThrowPenalty}
+          setPlayTakebackPolicy={setPlayTakebackPolicy}
+          setBidTakebackPolicy={setBidTakebackPolicy}
+        />
         <h3>Continuation settings</h3>
         <LandlordSelector
           players={props.state.propagated.players}
@@ -753,145 +1039,6 @@ const Initialize = (props: IProps): JSX.Element => {
             send({ Action: { SetRank: newRank } })
           }
         />
-        <h3>Difficulty and information settings</h3>
-        <div>
-          <label>
-            Friend selection restriction:{" "}
-            <select
-              value={props.state.propagated.friend_selection_policy}
-              onChange={setFriendSelectionPolicy}
-            >
-              <option value="Unrestricted">Non-trump cards</option>
-              <option value="HighestCardNotAllowed">
-                Non-trump cards, except the highest
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Rank advancement policy:{" "}
-            <select
-              value={props.state.propagated.advancement_policy}
-              onChange={setAdvancementPolicy}
-            >
-              <option value="Unrestricted">Unrestricted</option>
-              <option value="DefendPoints">
-                Points (5, 10, K) must be defended
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Point visibility:{" "}
-            <select
-              value={
-                props.state.propagated.hide_landlord_points ? "hide" : "show"
-              }
-              onChange={setHideLandlordsPoints}
-            >
-              <option value="show">Show all players&apos; points</option>
-              <option value="hide">Hide defending team&apos;s points</option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Played card visibility (in chat):{" "}
-            <select
-              value={props.state.propagated.hide_played_cards ? "hide" : "show"}
-              onChange={setHidePlayedCards}
-            >
-              <option value="show">Show played cards in chat</option>
-              <option value="hide">Hide played cards in chat</option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Penalty for points left in the bottom:{" "}
-            <select
-              value={props.state.propagated.kitty_penalty}
-              onChange={setKittyPenalty}
-            >
-              <option value="Times">Twice the size of the last trick</option>
-              <option value="Power">
-                Two to the power of the size of the last trick
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Penalty for incorrect throws:{" "}
-            <select
-              value={props.state.propagated.throw_penalty}
-              onChange={setThrowPenalty}
-            >
-              <option value="None">No penalty</option>
-              <option value="TenPointsPerAttempt">
-                Ten points per bad throw
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Play takeback:{" "}
-            <select
-              value={props.state.propagated.play_takeback_policy}
-              onChange={setPlayTakebackPolicy}
-            >
-              <option value="AllowPlayTakeback">Allow taking back plays</option>
-              <option value="NoPlayTakeback">Disallow taking back plays</option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Bid takeback:{" "}
-            <select
-              value={props.state.propagated.bid_takeback_policy}
-              onChange={setBidTakebackPolicy}
-            >
-              <option value="AllowBidTakeback">Allow bid takeback</option>
-              <option value="NoBidTakeback">No bid takeback</option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Small defending team bonus rank policy:{" "}
-            <select
-              value={props.state.propagated.bonus_level_policy}
-              onChange={setBonusLevelPolicy}
-            >
-              <option value="BonusLevelForSmallerLandlordTeam">
-                Bonus level for smaller defending team
-              </option>
-              <option value="NoBonusLevel">
-                No bonus level for defending team
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Landlord selection from bid:{" "}
-            <select
-              value={props.state.propagated.first_landlord_selection_policy}
-              onChange={setFirstLandlordSelectionPolicy}
-            >
-              <option value="ByWinningBid">
-                Winning bid decides both landlord and trump
-              </option>
-              <option value="ByFirstBid">
-                First bid decides landlord, winning bid decides trump
-              </option>
-            </select>
-          </label>
-        </div>
         <h3>Misc settings</h3>
         <div>
           <label>
@@ -923,38 +1070,6 @@ const Initialize = (props: IProps): JSX.Element => {
                 <Picker onEmojiClick={setEmoji} />
               </React.Suspense>
             ) : null}
-          </label>
-        </div>
-        <div>
-          <label>
-            Game shadowing policy:{" "}
-            <select
-              value={props.state.propagated.game_shadowing_policy}
-              onChange={setGameShadowingPolicy}
-            >
-              <option value="AllowMultipleSessions">
-                Allow players to be shadowed by joining with the same name
-              </option>
-              <option value="SingleSessionOnly">
-                Do not allow players to be shadowed
-              </option>
-            </select>
-          </label>
-        </div>
-        <div>
-          <label>
-            Game start policy:{" "}
-            <select
-              value={props.state.propagated.game_start_policy}
-              onChange={setGameStartPolicy}
-            >
-              <option value="AllowAnyPlayer">
-                Allow any player to start a game
-              </option>
-              <option value="AllowLandlordOnly">
-                Allow only landlord to start a game
-              </option>
-            </select>
           </label>
         </div>
         <div>
