@@ -39,15 +39,18 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
     }
   });
 
-  const validBids = findValidBids({
-    id: playerId,
-    bids: props.bids,
-    hands: props.hands,
-    players: props.players,
-    landlord: props.landlord,
-    epoch: props.epoch,
-    bid_policy: props.bidPolicy,
-  });
+  const validBids =
+    playerId !== null && playerId >= 0
+      ? findValidBids({
+          id: playerId,
+          bids: props.bids,
+          hands: props.hands,
+          players: props.players,
+          landlord: props.landlord,
+          epoch: props.epoch,
+          bid_policy: props.bidPolicy,
+        })
+      : [];
 
   validBids.sort((a, b) => {
     if (a.card < b.card) {
