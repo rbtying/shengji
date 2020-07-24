@@ -10,16 +10,16 @@ button.normal { padding: 2px; cursor: pointer; margin: 2px; line-height: 1em; }
 .card > svg { background: #fff; margin-left: 1px; }
 .card:first-child > svg { padding: 0; }
 .unknown, .card.unknown { cursor: default; color: #aaa; }
-.card .card-label { display: none; position: absolute; font-size: initial; left: 0.35em; bottom: 2.2em; z-index: 1; background: #fff; width: 1.5em; }
-.more .card .card-label { bottom: 1.85em; }
+.card .card-label { display: none; position: absolute; font-size: initial; left: 0.35em; bottom: 2.6em; z-index: 1; background: #fff; width: 1.5em; }
+.more .card .card-label { bottom: 1.95em; }
 .hand .unselected-cards.unclickable .card { cursor: default; }
 .hand .unselected-cards .card { margin-top: 0.2em; }
 .hand .unselected-cards .card:hover svg { transform: translateY(-0.15em); }
-.hand .unselected-cards .card:hover .card-label { bottom: 3.45em }
+.hand .unselected-cards .card:hover .card-label { bottom: 4.25em; }
 .hand .unselected-cards .card.svg:hover svg { margin-bottom: 0.2em; margin-top: -0.2em; }
-.hand .unselected-cards .card.svg:hover .card-label { left: 0.15em; bottom: 5em; }
+.hand .unselected-cards .card.svg:hover .card-label { left: 0.15em; bottom: 5.4em; }
 .always-show-labels .card .card-label, .card:hover .card-label { display: inline-block; }
-.always-show-labels .card.svg .card-label, .card.svg:hover .card-label { left: 0.15em; bottom: 2.2em; }
+.always-show-labels .card.svg .card-label, .card.svg:hover .card-label { left: 0.15em; bottom: 2.6em; }
 .ReactModal__Overlay { z-index: 2; }
 .notify .card, .card.notify { animation:blinkingText 1.5s 1; color: #000; }
 @keyframes blinkingText {
