@@ -183,6 +183,7 @@ interface IUncommonSettings {
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setBonusLevelPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
@@ -1013,6 +1014,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}
           setBonusLevelPolicy={setBonusLevelPolicy}
+          setKittyBidPolicy={setKittyBidPolicy}
         />
         <DifficultySettings
           state={props.state}
