@@ -433,7 +433,7 @@ impl Trick {
                         match unit {
                             TrickUnit::Repeated { count, card } => {
                                 for (c, ct) in subset_hands.clone() {
-                                    if ct >= *count && c.cmp_effective(card) == Ordering::Greater {
+                                    if ct >= *count && c.cmp_effective(*card) == Ordering::Greater {
                                         invalid = Some((player, unit.clone()));
                                         break 'search;
                                     }
@@ -729,7 +729,7 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
 
 type Units = SmallVec<[TrickUnit; 4]>;
 
-#[derive(Copy, Clone, Hash, Serialize, Deserialize)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OrderedCard {
     card: Card,
     trump: Trump,
@@ -759,7 +759,7 @@ impl OrderedCard {
         iter.flat_map(|(card, count)| (0..*count).map(move |_| card))
     }
 
-    pub fn cmp_effective(&self, o: &OrderedCard) -> Ordering {
+    pub fn cmp_effective(&self, o: OrderedCard) -> Ordering {
         self.trump.compare_effective(self.card, o.card)
     }
 }
@@ -769,14 +769,6 @@ impl Ord for OrderedCard {
         self.trump.compare(self.card, o.card)
     }
 }
-
-impl PartialEq for OrderedCard {
-    fn eq(&self, o: &OrderedCard) -> bool {
-        self.trump == o.trump && self.cmp(o) == Ordering::Equal
-    }
-}
-
-impl Eq for OrderedCard {}
 
 impl PartialOrd for OrderedCard {
     fn partial_cmp(&self, o: &OrderedCard) -> Option<Ordering> {
