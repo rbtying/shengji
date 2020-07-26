@@ -119,7 +119,6 @@ pub enum UserMessage {
 pub enum GameMessage {
     State {
         state: game_state::GameState,
-        cards: Vec<types::Card>,
     },
     Message {
         from: String,
@@ -409,8 +408,8 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
 
             // send the updated game state to everyone!
             for user in game.users.values() {
-                if let Ok((state, cards)) = game.game.dump_state_for_player(user.player_id) {
-                    user.send(&GameMessage::State { state, cards });
+                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
+                    user.send(&GameMessage::State { state });
                 }
 
                 for (data, message) in &msgs {
@@ -488,10 +487,10 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                             for user in game.users.values() {
                                 if user.player_id == id {
                                     user.send(&GameMessage::Kicked);
-                                } else if let Ok((state, cards)) =
+                                } else if let Ok(state) =
                                     game.game.dump_state_for_player(user.player_id)
                                 {
-                                    user.send(&GameMessage::State { state, cards });
+                                    user.send(&GameMessage::State { state });
                                 }
                                 for (data, message) in &msgs {
                                     user.send(&GameMessage::Broadcast {
@@ -515,16 +514,14 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                         Ok(msgs) => {
                             // send the updated game state to everyone!
                             for user in game.users.values() {
-                                if let Ok((state, cards)) =
-                                    game.game.dump_state_for_player(user.player_id)
-                                {
+                                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
                                     for (data, message) in &msgs {
                                         user.send(&GameMessage::Broadcast {
                                             data: data.clone(),
                                             message: message.clone(),
                                         });
                                     }
-                                    user.send(&GameMessage::State { state, cards });
+                                    user.send(&GameMessage::State { state });
                                 }
                             }
                         }

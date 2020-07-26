@@ -13,6 +13,8 @@ interface IProps {
   smaller?: boolean;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
+  onMouseEnter?: (event: React.MouseEvent) => void;
+  onMouseLeave?: (event: React.MouseEvent) => void;
 }
 
 const Card = (props: IProps): JSX.Element => {
@@ -51,6 +53,8 @@ const Card = (props: IProps): JSX.Element => {
       <span
         className={classNames("card", cardInfo.typ, props.className)}
         onClick={props.onClick}
+        onMouseEnter={props.onMouseEnter}
+        onMouseLeave={props.onMouseLeave}
       >
         <div className="card-label">
           <InlineCard card={props.card} />
@@ -72,6 +76,8 @@ const Card = (props: IProps): JSX.Element => {
           <span
             className={classNames("card", "svg", cardInfo.typ, props.className)}
             onClick={props.onClick}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
           >
             <div className="card-label">
               <InlineCard card={props.card} />

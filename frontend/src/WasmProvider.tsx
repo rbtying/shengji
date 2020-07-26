@@ -17,6 +17,9 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         findValidBids: (req) => {
           return Shengji.find_valid_bids(req).results;
         },
+        sortAndGroupCards: (req) => {
+          return Shengji.sort_and_group_cards(req).results;
+        },
       }}
     >
       {props.children}

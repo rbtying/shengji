@@ -42,10 +42,6 @@ const Root = (): JSX.Element => {
         </div>
       );
     } else {
-      const cards = [...state.cards];
-      if (state.settings.reverseCardOrder) {
-        cards.reverse();
-      }
       return (
         <div
           className={classNames(
@@ -80,30 +76,23 @@ const Root = (): JSX.Element => {
             {state.game_state.Initialize !== undefined ? (
               <Initialize
                 state={state.game_state.Initialize}
-                cards={cards}
                 name={state.name}
               />
             ) : null}
             {state.game_state.Draw !== undefined ? (
               <Draw
                 state={state.game_state.Draw}
-                cards={cards}
                 name={state.name}
                 setTimeout={timerContext.setTimeout}
                 clearTimeout={timerContext.clearTimeout}
               />
             ) : null}
             {state.game_state.Exchange !== undefined ? (
-              <Exchange
-                state={state.game_state.Exchange}
-                cards={cards}
-                name={state.name}
-              />
+              <Exchange state={state.game_state.Exchange} name={state.name} />
             ) : null}
             {state.game_state.Play !== undefined ? (
               <Play
                 playPhase={state.game_state.Play}
-                cards={cards}
                 name={state.name}
                 showLastTrick={state.settings.showLastTrick}
                 unsetAutoPlayWhenWinnerChanges={

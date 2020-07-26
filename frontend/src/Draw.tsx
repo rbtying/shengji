@@ -10,7 +10,6 @@ import BidArea from "./BidArea";
 interface IDrawProps {
   state: IDrawPhase;
   name: string;
-  cards: string[];
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
 }
@@ -120,7 +119,6 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         <BidArea
           bids={this.props.state.bids}
           autobid={this.props.state.autobid}
-          cards={this.props.cards}
           hands={this.props.state.hands}
           epoch={0}
           name={this.props.name}
@@ -196,7 +194,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             "AllowBidTakeback"
           }
         />
-        <LabeledPlay cards={this.props.state.kitty} label="底牌" />
+        <LabeledPlay
+          className="kitty"
+          cards={this.props.state.kitty}
+          label="底牌"
+        />
       </div>
     );
   }

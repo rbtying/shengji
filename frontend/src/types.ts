@@ -16,7 +16,6 @@ export interface IGameMessageBroadcast {
 }
 export interface IGameMessageState {
   state: IGameState;
-  cards: string[];
 }
 export interface IBroadcastMessage {
   actor: number;
@@ -224,9 +223,9 @@ export interface IOrderedCard {
 export type ITrump =
   | {
       Standard: { suit: string; number: string };
-      NoTrump: null;
+      NoTrump?: null;
     }
   | {
-      Standard: null;
+      Standard?: null;
       NoTrump: { number: string };
     };

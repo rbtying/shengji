@@ -315,7 +315,6 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
 
 interface IProps {
   state: IInitializePhase;
-  cards: string[];
   name: string;
 }
 

@@ -128,6 +128,32 @@ const SettingsPane = (props: IProps): JSX.Element => {
           </Cell>
         </Row>
         <Row>
+          <LabelCell>separate cards by effective suit (in hand)</LabelCell>
+          <Cell>
+            <input
+              name="separate-cards-by-suit"
+              type="checkbox"
+              checked={settings.separateCardsBySuit}
+              onChange={handleChange({
+                separateCardsBySuit: !settings.separateCardsBySuit,
+              })}
+            />
+          </Cell>
+        </Row>
+        <Row>
+          <LabelCell>disable suit highlights</LabelCell>
+          <Cell>
+            <input
+              name="disable-suit-highlights"
+              type="checkbox"
+              checked={settings.disableSuitHighlights}
+              onChange={handleChange({
+                disableSuitHighlights: !settings.disableSuitHighlights,
+              })}
+            />
+          </Cell>
+        </Row>
+        <Row>
           <LabelCell>unset auto-play if winner changes</LabelCell>
           <Cell>
             <input

@@ -9,11 +9,11 @@ import Friends from "./Friends";
 import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
 import { IExchangePhase, IFriend } from "./types";
+import Cards from "./Cards";
 
 interface IExchangeProps {
   state: IExchangePhase;
   name: string;
-  cards: string[];
 }
 interface IExchangeState {
   friends: IFriend[];
@@ -121,7 +121,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
 
     let landlordIdx = 0;
     let exchangerIdx = 0;
-    let playerId = 0;
+    let playerId = -1;
     this.props.state.propagated.players.forEach((player, idx) => {
       if (player.id === this.props.state.landlord) {
         landlordIdx = idx;
@@ -146,15 +146,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       isExchanger && !this.props.state.finalized ? (
         <>
           <h2>Your hand</h2>
-          <div className="hand">
-            {this.props.cards.map((c, idx) => (
-              <Card
-                key={idx}
-                onClick={() => this.moveCardToKitty(c)}
-                card={c}
-              />
-            ))}
-          </div>
+          <Cards
+            hands={this.props.state.hands}
+            playerId={playerId}
+            onCardClick={(c) => this.moveCardToKitty(c)}
+            trump={this.props.state.trump}
+          />
           <h2>
             Discarded cards {this.props.state.kitty.length} /{" "}
             {this.props.state.kitty_size}
@@ -200,7 +197,6 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           <BidArea
             bids={this.props.state.bids}
             autobid={this.props.state.autobid}
-            cards={this.props.cards}
             hands={this.props.state.hands}
             epoch={this.props.state.epoch}
             name={this.props.name}
@@ -229,7 +225,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               "AllowBidTakeback"
             }
           />
-          <LabeledPlay cards={this.props.state.kitty} label="底牌" />
+          <LabeledPlay
+            className="kitty"
+            cards={this.props.state.kitty}
+            label="底牌"
+          />
         </>
       ) : null;
     const friendUI =
@@ -276,13 +276,13 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         <Trump trump={this.props.state.trump} />
         {friendUI}
         {exchangeUI}
-        {exchangeUI === null && bidUI === null ? (
+        {exchangeUI === null && bidUI === null && playerId >= 0 ? (
           <>
-            <div className="hand">
-              {this.props.cards.map((c, idx) => (
-                <Card key={idx} card={c} />
-              ))}
-            </div>
+            <Cards
+              hands={this.props.state.hands}
+              playerId={playerId}
+              trump={this.props.state.trump}
+            />
             <p>Waiting...</p>
           </>
         ) : null}
