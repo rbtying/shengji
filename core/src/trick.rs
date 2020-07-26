@@ -350,11 +350,12 @@ impl Trick {
         self.player_queue.iter().copied()
     }
 
-    /**
-     * Determines whether the player can play the cards.
-     *
-     * Note: this does not account throw validity, nor is it intended to catch all illegal plays.
-     */
+    ///
+    /// Determines whether the player can play the cards.
+    ///
+    /// Note: this does not account for throw validity, nor is it intended to
+    /// catch all illegal plays.
+    ///
     pub fn can_play_cards<'a, 'b>(
         &self,
         id: PlayerID,
@@ -389,11 +390,11 @@ impl Trick {
         }
     }
 
-    /**
-     * Actually plays the cards, if possible. On error, does not modify any state.
-     *
-     * Note: this does not account throw validity, nor is it intended to catch all illegal plays.
-     */
+    ///
+    /// Actually plays the cards, if possible. On error, does not modify any state.
+    ///
+    /// Note: this does not account throw validity, nor is it intended to catch all illegal plays.
+    ///
     pub fn play_cards<'a, 'b>(
         &mut self,
         id: PlayerID,
@@ -432,7 +433,7 @@ impl Trick {
                         match unit {
                             TrickUnit::Repeated { count, card } => {
                                 for (c, ct) in subset_hands.clone() {
-                                    if ct >= *count && c > *card {
+                                    if ct >= *count && c.cmp_effective(card) == Ordering::Greater {
                                         invalid = Some((player, unit.clone()));
                                         break 'search;
                                     }
@@ -728,7 +729,7 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
 
 type Units = SmallVec<[TrickUnit; 4]>;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Copy, Clone, Hash, Serialize, Deserialize)]
 pub struct OrderedCard {
     card: Card,
     trump: Trump,
@@ -757,6 +758,10 @@ impl OrderedCard {
     ) -> impl Iterator<Item = &'b OrderedCard> + 'a {
         iter.flat_map(|(card, count)| (0..*count).map(move |_| card))
     }
+
+    pub fn cmp_effective(&self, o: &OrderedCard) -> Ordering {
+        self.trump.compare_effective(self.card, o.card)
+    }
 }
 
 impl Ord for OrderedCard {
@@ -764,6 +769,14 @@ impl Ord for OrderedCard {
         self.trump.compare(self.card, o.card)
     }
 }
+
+impl PartialEq for OrderedCard {
+    fn eq(&self, o: &OrderedCard) -> bool {
+        self.trump == o.trump && self.cmp(o) == Ordering::Equal
+    }
+}
+
+impl Eq for OrderedCard {}
 
 impl PartialOrd for OrderedCard {
     fn partial_cmp(&self, o: &OrderedCard) -> Option<Ordering> {
@@ -1037,8 +1050,8 @@ mod tests {
     use crate::hands::Hands;
     use crate::types::{
         cards::{
-            C_10, C_4, C_5, C_6, C_7, C_8, C_K, D_K, H_2, H_3, H_4, H_5, H_7, H_8, H_A, H_K, S_10,
-            S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
+            C_10, C_4, C_5, C_6, C_7, C_8, C_K, D_4, D_K, H_2, H_3, H_4, H_5, H_7, H_8, H_A, H_K,
+            S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
         },
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
@@ -2042,5 +2055,61 @@ mod tests {
         assert_eq!(run(ThrowEvaluationPolicy::All), P3);
         // In the "highest" cas, P4 wins because P4 played a higher card.
         assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
+    }
+
+    #[test]
+    fn test_throw_of_trump_rank_in_trump() {
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![H_4, S_4]).unwrap();
+        hands.add(P2, vec![D_4, S_2]).unwrap();
+        hands.add(P3, vec![S_3, S_3]).unwrap();
+        hands.add(P4, vec![S_3, S_3]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        trick
+            .play_cards(
+                P1,
+                &mut hands,
+                &[H_4, S_4],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P2,
+                &mut hands,
+                &[D_4, S_2],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P3,
+                &mut hands,
+                &[S_3, S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        trick
+            .play_cards(
+                P4,
+                &mut hands,
+                &[S_3, S_3],
+                TrickDrawPolicy::NoProtections,
+                ThrowEvaluationPolicy::All,
+            )
+            .unwrap();
+        let TrickEnded {
+            winner: winner_id,
+            points,
+            largest_trick_unit_size,
+            ..
+        } = trick.complete().unwrap();
+        assert_eq!(largest_trick_unit_size, 1);
+        assert_eq!(winner_id, P1);
+        assert_eq!(points, vec![]);
     }
 }
