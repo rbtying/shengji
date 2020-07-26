@@ -29,6 +29,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>7/26/2020:</p>
+        <ul>
+          <li>
+            Fix a bug where throws in trump of the trump-rank-card would be
+            incorrectly blocked
+          </li>
+        </ul>
         <p>7/23/2020:</p>
         <ul>
           <li>
