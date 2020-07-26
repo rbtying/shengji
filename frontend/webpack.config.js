@@ -1,7 +1,10 @@
 const path = require("path");
+const TerserJsPlugin = require("terser-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = {
   mode: "production",
@@ -21,6 +24,10 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.css$/i,
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      }
     ],
   },
   optimization: {
@@ -36,6 +43,10 @@ module.exports = {
         },
       },
     },
+    minimizer: [
+      new TerserJsPlugin({}),
+      new OptimizeCssAssetsPlugin({}),
+    ],
   },
   output: {
     filename: "[name].[contenthash].js",
@@ -52,6 +63,9 @@ module.exports = {
       filename: "index.html",
       template: "static/index.html",
     }),
+    new MiniCssExtractPlugin({
+      filename: 'style.css',
+    }),
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -61,10 +75,6 @@ module.exports = {
         {
           from: "static/timer-worker.js",
           to: "timer-worker.js",
-        },
-        {
-          from: "static/style.css",
-          to: "style.css",
         },
       ],
     }),
