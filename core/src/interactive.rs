@@ -48,8 +48,8 @@ impl InteractiveGame {
         self.state.game_shadowing_policy == GameShadowingPolicy::AllowMultipleSessions
     }
 
-    pub fn dump_state_for_player(&self, id: PlayerID) -> Result<(GameState, Vec<Card>), Error> {
-        Ok((self.state.for_player(id), self.state.cards(id)))
+    pub fn dump_state_for_player(&self, id: PlayerID) -> Result<GameState, Error> {
+        Ok(self.state.for_player(id))
     }
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {

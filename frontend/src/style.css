@@ -56,6 +56,11 @@ button.normal {
   position: relative;
 }
 
+.card.highlighted {
+  border-bottom: 1px solid;
+  margin-bottom: -1px;
+}
+
 .card > svg {
   background: #fff;
   margin-left: 1px;
@@ -110,6 +115,10 @@ button.normal {
 .hand .unselected-cards .card.svg:hover .card-label {
   left: 0.15em;
   bottom: 5.4em;
+}
+
+.kitty {
+  margin-top: 40px;
 }
 
 .always-show-labels .card .card-label,

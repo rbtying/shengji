@@ -17,7 +17,6 @@ import { WebsocketContext } from "./WebsocketProvider";
 interface IProps {
   playPhase: IPlayPhase;
   name: string;
-  cards: string[];
   beepOnTurn: boolean;
   showLastTrick: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
@@ -140,7 +139,9 @@ const Play = (props: IProps): JSX.Element => {
       {canFinish && <button onClick={startNewGame}>Finish game</button>}
       <BeepButton />
       <Cards
-        cardsInHand={props.cards}
+        hands={playPhase.hands}
+        playerId={currentPlayer.id}
+        trump={playPhase.trump}
         selectedCards={selected}
         onSelect={setSelected}
         notifyEmpty={isCurrentPlayerTurn}
@@ -171,7 +172,7 @@ const Play = (props: IProps): JSX.Element => {
         hideLandlordPoints={playPhase.propagated.hide_landlord_points}
         bonusLevel={bonusLevel}
       />
-      <LabeledPlay cards={playPhase.kitty} label="底牌" />
+      <LabeledPlay className="kitty" cards={playPhase.kitty} label="底牌" />
     </div>
   );
 };

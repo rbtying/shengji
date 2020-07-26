@@ -14,7 +14,6 @@ export interface AppState {
   roomName: string;
   name: string;
   game_state: IGameState | null;
-  cards: string[];
   errors: string[];
   messages: IMessage[];
   confetti: string | null;
@@ -28,7 +27,6 @@ const appState: State<AppState> = combineState({
   roomName: noPersistence(() => window.location.hash.slice(1)),
   name: stringLocalStorageState("name"),
   game_state: noPersistence(() => null),
-  cards: noPersistence(() => []),
   errors: noPersistence(() => []),
   messages: noPersistence(() => []),
   confetti: noPersistence(() => null),

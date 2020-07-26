@@ -750,32 +750,6 @@ impl GameState {
         bail!("Couldn't find player id")
     }
 
-    pub fn cards(&self, id: PlayerID) -> Vec<Card> {
-        match self {
-            GameState::Initialize { .. } => vec![],
-            GameState::Draw(DrawPhase {
-                ref hands,
-                ref propagated,
-                ..
-            }) => {
-                let level_id = propagated.landlord.unwrap_or(id);
-                propagated
-                    .players
-                    .iter()
-                    .filter(|p| p.id == level_id)
-                    .flat_map(|p| hands.cards(id, p.level).ok())
-                    .next()
-                    .unwrap_or_default()
-            }
-            GameState::Exchange(ExchangePhase {
-                ref hands, trump, ..
-            })
-            | GameState::Play(PlayPhase {
-                ref hands, trump, ..
-            }) => hands.cards(id, trump.number()).unwrap_or_else(|_| vec![]),
-        }
-    }
-
     pub fn register(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
         if let Ok(pid) = self.player_id(&name) {
             return Ok((

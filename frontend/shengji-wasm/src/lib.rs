@@ -4,7 +4,7 @@ use shengji_core::{
     game_state::Player,
     hands::Hands,
     trick::TrickUnit,
-    types::{Card, PlayerID, Trump},
+    types::{Card, EffectiveSuit, PlayerID, Trump},
 };
 use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
@@ -26,6 +26,7 @@ struct FindViablePlaysResult {
 
 #[wasm_bindgen]
 pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
     let FindViablePlaysRequest { trump, cards } = req
@@ -75,4 +76,51 @@ pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
         .unwrap_or_default(),
     })
     .map_err(|_| "failed to serialize response")?)
+}
+
+#[derive(Deserialize)]
+struct SortAndGroupCardsRequest {
+    trump: Trump,
+    cards: Vec<Card>,
+}
+
+#[derive(Serialize)]
+struct SortAndGroupCardsResponse {
+    results: Vec<SuitGroup>,
+}
+
+#[derive(Serialize)]
+struct SuitGroup {
+    suit: EffectiveSuit,
+    cards: Vec<Card>,
+}
+
+#[wasm_bindgen]
+pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let SortAndGroupCardsRequest { trump, mut cards } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+
+    cards.sort_by(|a, b| trump.compare(*a, *b));
+
+    let mut results: Vec<SuitGroup> = vec![];
+    for card in cards {
+        let suit = trump.effective_suit(card);
+        if let Some(group) = results.last_mut() {
+            if group.suit == suit {
+                group.cards.push(card);
+                continue;
+            }
+        }
+        results.push(SuitGroup {
+            suit,
+            cards: vec![card],
+        })
+    }
+
+    Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results })
+        .map_err(|_| "failed to serialize response")?)
 }

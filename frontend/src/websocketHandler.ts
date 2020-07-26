@@ -60,7 +60,7 @@ const stateHandler: WebsocketHandler = (
   message: IGameMessageUnion
 ) => {
   if (message.State !== undefined) {
-    return { game_state: message.State.state, cards: message.State.cards };
+    return { game_state: message.State.state };
   } else {
     return null;
   }
