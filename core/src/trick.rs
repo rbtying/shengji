@@ -745,15 +745,15 @@ impl UnitLike {
             UnitLike::Tractor {
                 count: 2,
                 length: 2,
-            } => format!("tractor"),
+            } => "tractor".to_string(),
             UnitLike::Tractor { count: 3, length } => format!("{}-tractor of triples", length),
             UnitLike::Tractor { count: 4, length } => format!("{}-tractor of quadruples", length),
             UnitLike::Tractor { count, length } => format!("{} by {} tractor", count, length),
-            UnitLike::Repeated { count: 1 } => format!("single"),
-            UnitLike::Repeated { count: 2 } => format!("pair"),
-            UnitLike::Repeated { count: 3 } => format!("triple"),
-            UnitLike::Repeated { count: 4 } => format!("quadruple"),
-            UnitLike::Repeated { count: 5 } => format!("quintuple"),
+            UnitLike::Repeated { count: 1 } => "single".to_string(),
+            UnitLike::Repeated { count: 2 } => "pair".to_string(),
+            UnitLike::Repeated { count: 3 } => "triple".to_string(),
+            UnitLike::Repeated { count: 4 } => "quadruple".to_string(),
+            UnitLike::Repeated { count: 5 } => "quintuple".to_string(),
             UnitLike::Repeated { count } => format!("{}-tuple", count),
         }
     }
@@ -864,7 +864,7 @@ impl OrderedCard {
         iter.flat_map(|(card, count)| (0..*count).map(move |_| card))
     }
 
-    pub fn cmp_effective(&self, o: OrderedCard) -> Ordering {
+    pub fn cmp_effective(self, o: OrderedCard) -> Ordering {
         self.trump.compare_effective(self.card, o.card)
     }
 }
