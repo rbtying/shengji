@@ -20,6 +20,12 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         sortAndGroupCards: (req) => {
           return Shengji.sort_and_group_cards(req).results;
         },
+        decomposeTrickFormat: (req) => {
+          return Shengji.decompose_trick_format(req).results;
+        },
+        canPlayCards: (req) => {
+          return Shengji.can_play_cards(req).playable;
+        },
       }}
     >
       {props.children}

@@ -3,7 +3,7 @@ use shengji_core::{
     bidding::{Bid, BidPolicy},
     game_state::Player,
     hands::Hands,
-    trick::TrickUnit,
+    trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
 use smallvec::SmallVec;
@@ -21,7 +21,13 @@ struct FindViablePlaysRequest {
 
 #[derive(Serialize)]
 struct FindViablePlaysResult {
-    results: Vec<SmallVec<[TrickUnit; 4]>>,
+    results: Vec<FoundViablePlay>,
+}
+
+#[derive(Serialize)]
+struct FoundViablePlay {
+    grouping: SmallVec<[TrickUnit; 4]>,
+    description: String,
 }
 
 #[wasm_bindgen]
@@ -34,9 +40,123 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
         .map_err(|_| "Failed to deserialize request")?;
     let results = TrickUnit::find_plays(trump, cards)
         .into_iter()
+        .map(|p| {
+            let description = UnitLike::multi_description(p.iter().map(UnitLike::from));
+            FoundViablePlay {
+                grouping: p,
+                description,
+            }
+        })
         .collect::<Vec<_>>();
     Ok(JsValue::from_serde(&FindViablePlaysResult { results })
         .map_err(|_| "failed to serialize response")?)
+}
+
+#[derive(Deserialize)]
+struct DecomposeTrickFormatRequest {
+    trick_format: TrickFormat,
+    hands: Hands,
+    player_id: PlayerID,
+    trick_draw_policy: TrickDrawPolicy,
+}
+
+#[derive(Serialize)]
+struct DecomposeTrickFormatResponse {
+    results: Vec<DecomposedTrickFormat>,
+}
+
+#[derive(Serialize)]
+struct DecomposedTrickFormat {
+    format: SmallVec<[UnitLike; 4]>,
+    description: String,
+    playable: Vec<Card>,
+}
+
+#[wasm_bindgen]
+pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let DecomposeTrickFormatRequest {
+        trick_format,
+        hands,
+        player_id,
+        trick_draw_policy,
+    } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+
+    let hand = hands
+        .get(player_id)
+        .map_err(|_| "Couldn't find hand for player")?;
+    let available_cards = Card::cards(
+        hand.iter()
+            .filter(|(c, _)| trick_format.trump().effective_suit(**c) == trick_format.suit()),
+    )
+    .copied()
+    .collect::<Vec<_>>();
+
+    let results = trick_format
+        .decomposition()
+        .map(|format| {
+            let description = UnitLike::multi_description(format.iter().copied());
+            let (playable, units) = UnitLike::check_play(
+                trick_format.trump(),
+                available_cards.iter().copied(),
+                format.iter().copied(),
+                trick_draw_policy,
+            );
+            DecomposedTrickFormat {
+                format,
+                description,
+                playable: if playable {
+                    units.into_iter().flat_map(|u| u.cards()).collect()
+                } else {
+                    vec![]
+                },
+            }
+        })
+        .collect();
+    Ok(
+        JsValue::from_serde(&DecomposeTrickFormatResponse { results })
+            .map_err(|_| "failed to serialize response")?,
+    )
+}
+
+#[derive(Deserialize)]
+struct CanPlayCardsRequest {
+    trick: Trick,
+    id: PlayerID,
+    hands: Hands,
+    cards: Vec<Card>,
+    trick_draw_policy: TrickDrawPolicy,
+}
+
+#[derive(Serialize)]
+struct CanPlayCardsResponse {
+    playable: bool,
+}
+
+#[wasm_bindgen]
+pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let CanPlayCardsRequest {
+        trick,
+        id,
+        hands,
+        cards,
+        trick_draw_policy,
+    } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+    Ok(JsValue::from_serde(&CanPlayCardsResponse {
+        playable: trick
+            .can_play_cards(id, &hands, &cards, trick_draw_policy)
+            .is_ok(),
+    })
+    .map_err(|_| "failed to serialize response")?)
 }
 
 #[derive(Deserialize)]

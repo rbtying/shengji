@@ -126,6 +126,7 @@ export interface IPlayPhase {
 }
 
 export type BidPolicy = "JokerOrGreaterLenght" | "GreaterLength";
+export type TrickDrawPolicy = "NoProtections" | "LongerTuplesProtected";
 
 export interface IPropagatedState {
   game_mode: IGameModeSettings;
@@ -145,7 +146,7 @@ export interface IPropagatedState {
   kitty_penalty: "Times" | "Power";
   kitty_bid_policy: "FirstCard" | "FirstCardOfLevelOrHighest";
   throw_penalty: "None" | "TenPointsPerAttempt";
-  trick_draw_policy: "NoProtections" | "LongerTuplesProtected";
+  trick_draw_policy: TrickDrawPolicy;
   throw_evaluation_policy: "All" | "Highest";
   hide_played_cards: boolean;
   landlord_emoji: string | null;
@@ -193,6 +194,7 @@ export interface ITrick {
   played_card_mappings: ICardMapping[];
   current_winner: number | null;
   trump: ITrump;
+  trick_format: ITrickFormat | null;
 }
 
 export interface IPlayedCards {
@@ -211,6 +213,22 @@ export interface ITrickUnit {
   };
   Tractor?: {
     members: IOrderedCard[];
+    count: number;
+  };
+}
+
+export interface ITrickFormat {
+  suit: string;
+  trump: ITrump;
+  units: ITrickUnit[];
+}
+
+export interface IUnitLike {
+  Repeated?: {
+    count: number;
+  };
+  Tractor?: {
+    length: number;
     count: number;
   };
 }

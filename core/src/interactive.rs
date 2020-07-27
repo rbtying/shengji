@@ -10,7 +10,7 @@ use crate::game_state::{
     ThrowPenalty,
 };
 use crate::message::MessageVariant;
-use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
+use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy, TrickUnit};
 use crate::types::{Card, Number, PlayerID};
 
 pub struct InteractiveGame {
@@ -284,6 +284,13 @@ impl InteractiveGame {
                 debug!(logger, "Playing cards");
                 state.play_cards(id, cards)?
             }
+            (
+                Message::PlayCardsWithHint(ref cards, ref format_hint),
+                GameState::Play(ref mut state),
+            ) => {
+                debug!(logger, "Playing cards with formatting hint");
+                state.play_cards_with_hint(id, cards, Some(format_hint))?
+            }
             (Message::EndTrick, GameState::Play(ref mut state)) => {
                 info!(logger, "Finishing trick");
                 state.finish_trick()?
@@ -367,6 +374,7 @@ pub enum Message {
     SetFriends(Vec<FriendSelection>),
     BeginPlay,
     PlayCards(Vec<Card>),
+    PlayCardsWithHint(Vec<Card>, Vec<TrickUnit>),
     EndTrick,
     TakeBackCards,
     TakeBackBid,
