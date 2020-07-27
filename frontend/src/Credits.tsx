@@ -35,6 +35,16 @@ const ChangeLog = (): JSX.Element => {
             Fix a bug where throws in trump of the trump-rank-card would be
             incorrectly blocked
           </li>
+          <li>
+            Implement helper which lets you know what plays you can make and
+            tells you about format-decompositions
+          </li>
+          <li>
+            Allow player to specify preferred grouping in case of ambiguity,
+            e.g. 22333 as either [22][333] or [2233][3]
+          </li>
+          <li>Add UI hint which shows you cards in the same suit</li>
+          <li>Add UI setting which allows you to separate cards by suit</li>
         </ul>
         <p>7/23/2020:</p>
         <ul>

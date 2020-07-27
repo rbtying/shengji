@@ -9,7 +9,7 @@ use url::Url;
 use crate::bidding::{Bid, BidPolicy, BidTakebackPolicy};
 use crate::hands::Hands;
 use crate::message::MessageVariant;
-use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded};
+use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 macro_rules! bail_unwrap {
@@ -942,12 +942,22 @@ impl PlayPhase {
         id: PlayerID,
         cards: &[Card],
     ) -> Result<Vec<MessageVariant>, Error> {
+        self.play_cards_with_hint(id, cards, None)
+    }
+
+    pub fn play_cards_with_hint(
+        &mut self,
+        id: PlayerID,
+        cards: &[Card],
+        format_hint: Option<&'_ [TrickUnit]>,
+    ) -> Result<Vec<MessageVariant>, Error> {
         let mut msgs = self.trick.play_cards(
             id,
             &mut self.hands,
             cards,
             self.propagated.trick_draw_policy,
             self.propagated.throw_evaluation_policy,
+            format_hint,
         )?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {

@@ -2,6 +2,7 @@ import * as React from "react";
 
 interface IProps {
   onSubmit: () => void;
+  playDescription: null | string;
   canSubmit: boolean;
   currentWinner: number | null;
   isCurrentPlayerTurn: boolean;
@@ -17,6 +18,7 @@ const AutoPlayButton = (props: IProps): JSX.Element => {
     onSubmit,
     canSubmit,
     isCurrentPlayerTurn,
+    playDescription,
     currentWinner,
     unsetAutoPlayWhenWinnerChanges,
   } = props;
@@ -57,7 +59,9 @@ const AutoPlayButton = (props: IProps): JSX.Element => {
   return (
     <button onClick={handleClick} disabled={!canSubmit}>
       {isCurrentPlayerTurn
-        ? "Play selected cards"
+        ? `Play selected cards${
+            playDescription !== null ? " (" + playDescription + ")" : ""
+          }`
         : autoplay !== null
         ? "Don't autoplay selected cards"
         : "Autoplay selected cards"}

@@ -26,6 +26,8 @@ pub enum TrickError {
     IllegalPlay,
     #[error("this play doesn't match the format")]
     NonMatchingPlay,
+    #[error("the proposed grouping is invalid")]
+    NonMatchingProposal,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -134,6 +136,37 @@ impl std::fmt::Debug for TrickUnit {
     }
 }
 
+pub struct TrickFormatDecomposition {
+    requirements: VecDeque<SmallVec<[UnitLike; 4]>>,
+}
+
+impl Iterator for TrickFormatDecomposition {
+    type Item = SmallVec<[UnitLike; 4]>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let n = self.requirements.pop_front();
+        // Update requirements
+        if let Some(mut requirement) = n.clone() {
+            let mut suffix_units = vec![];
+            while let Some(unit) = requirement.pop() {
+                let decomposed = unit.decompose();
+                if !decomposed.is_empty() {
+                    for subunits in decomposed {
+                        let mut r = requirement.clone();
+                        r.extend(subunits);
+                        r.extend(suffix_units.iter().copied());
+                        self.requirements.push_back(r);
+                    }
+                    break;
+                } else {
+                    suffix_units.push(unit);
+                }
+            }
+        }
+        n
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TrickFormat {
     suit: EffectiveSuit,
@@ -142,6 +175,25 @@ pub struct TrickFormat {
 }
 
 impl TrickFormat {
+    pub fn trump(&self) -> Trump {
+        self.trump
+    }
+
+    pub fn suit(&self) -> EffectiveSuit {
+        self.suit
+    }
+
+    pub fn decomposition(&self) -> impl Iterator<Item = SmallVec<[UnitLike; 4]>> {
+        let mut requirements = VecDeque::new();
+        requirements.push_back(
+            self.units
+                .iter()
+                .map(UnitLike::from)
+                .collect::<SmallVec<[_; 4]>>(),
+        );
+        TrickFormatDecomposition { requirements }
+    }
+
     pub fn is_legal_play(
         &self,
         hand: &HashMap<Card, usize>,
@@ -180,15 +232,7 @@ impl TrickFormat {
             .copied()
             .collect::<Vec<_>>();
 
-            let mut requirements = VecDeque::new();
-            requirements.push_back(
-                self.units
-                    .iter()
-                    .map(UnitLike::from)
-                    .collect::<SmallVec<[_; 4]>>(),
-            );
-
-            while let Some(mut requirement) = requirements.pop_front() {
+            for requirement in self.decomposition() {
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
                     self.trump,
@@ -211,23 +255,6 @@ impl TrickFormat {
                 .0;
                 if hand_can_play {
                     return false;
-                }
-
-                // Otherwise, downgrade the requirements.
-                let mut suffix_units = vec![];
-                while let Some(unit) = requirement.pop() {
-                    let decomposed = unit.decompose();
-                    if !decomposed.is_empty() {
-                        for subunits in decomposed {
-                            let mut r = requirement.clone();
-                            r.extend(subunits);
-                            r.extend(suffix_units.iter().copied());
-                            requirements.push_back(r);
-                        }
-                        break;
-                    } else {
-                        suffix_units.push(unit);
-                    }
                 }
             }
 
@@ -276,7 +303,11 @@ impl TrickFormat {
         }
     }
 
-    pub fn from_cards(trump: Trump, cards: &'_ [Card]) -> Result<TrickFormat, TrickError> {
+    pub fn from_cards(
+        trump: Trump,
+        cards: &'_ [Card],
+        proposed: Option<&'_ [TrickUnit]>,
+    ) -> Result<TrickFormat, TrickError> {
         if cards.is_empty() {
             return Err(TrickError::WrongNumberOfSuits);
         }
@@ -289,16 +320,41 @@ impl TrickFormat {
         let mut possibilities = TrickUnit::find_plays(trump, cards.iter().copied())
             .into_iter()
             .collect::<Vec<Units>>();
-        possibilities.sort_by_key(|units| units.iter().map(|u| (u.size(), u.is_tractor())).max());
-        let mut units = possibilities.pop().ok_or(TrickError::IllegalPlay)?;
 
-        units.sort_by(|a, b| {
-            a.size()
-                .cmp(&b.size())
-                .then(a.first_card().cmp(&b.first_card()))
-        });
+        let sort = |mut u: Units| {
+            u.sort_by(|a, b| {
+                a.size()
+                    .cmp(&b.size())
+                    .then(a.first_card().cmp(&b.first_card()))
+            });
+            u
+        };
 
-        Ok(TrickFormat { suit, units, trump })
+        match proposed {
+            Some(proposed) => {
+                let proposed = sort(proposed.iter().cloned().collect());
+                for possibility in possibilities {
+                    if sort(possibility) == proposed {
+                        return Ok(TrickFormat {
+                            suit,
+                            units: proposed,
+                            trump,
+                        });
+                    }
+                }
+                Err(TrickError::NonMatchingProposal)
+            }
+            None => {
+                possibilities
+                    .sort_by_key(|units| units.iter().map(|u| (u.size(), u.is_tractor())).max());
+                let units = possibilities.pop().ok_or(TrickError::IllegalPlay)?;
+                Ok(TrickFormat {
+                    suit,
+                    units: sort(units),
+                    trump,
+                })
+            }
+        }
     }
 }
 
@@ -364,9 +420,6 @@ impl Trick {
         trick_draw_policy: TrickDrawPolicy,
     ) -> Result<(), TrickError> {
         hands.contains(id, cards.iter().cloned())?;
-        if self.player_queue.front().cloned() != Some(id) {
-            return Err(TrickError::OutOfOrder);
-        }
         match self.trick_format.as_ref() {
             Some(tf) => {
                 if tf.is_legal_play(hands.get(id)?, cards, trick_draw_policy) {
@@ -402,14 +455,18 @@ impl Trick {
         cards: &'b [Card],
         trick_draw_policy: TrickDrawPolicy,
         throw_eval_policy: ThrowEvaluationPolicy,
+        format_hint: Option<&'_ [TrickUnit]>,
     ) -> Result<Vec<MessageVariant>, TrickError> {
+        if self.player_queue.front().cloned() != Some(id) {
+            return Err(TrickError::OutOfOrder);
+        }
         self.can_play_cards(id, hands, cards, trick_draw_policy)?;
         let mut msgs = vec![];
         let mut cards = cards.to_vec();
         cards.sort_by(|a, b| self.trump.compare(*a, *b));
 
         let (cards, bad_throw_cards, better_player) = if self.trick_format.is_none() {
-            let mut tf = TrickFormat::from_cards(self.trump, &cards)?;
+            let mut tf = TrickFormat::from_cards(self.trump, &cards, format_hint)?;
             let mut invalid = None;
             if tf.units.len() > 1 {
                 // This is a throw, let's see if any of the units can be strictly defeated by any
@@ -646,13 +703,61 @@ pub struct TrickEnded {
     pub failed_throw_size: usize,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-enum UnitLike {
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub enum UnitLike {
     Tractor { count: usize, length: usize },
     Repeated { count: usize },
 }
 
 impl UnitLike {
+    pub fn multi_description(iter: impl Iterator<Item = UnitLike>) -> String {
+        let mut counts = BTreeMap::new();
+        for u in iter {
+            *counts.entry(u.description()).or_default() += 1;
+        }
+        if counts.len() == 1 {
+            let (desc, ct) = counts
+                .into_iter()
+                .next()
+                .expect("only one item in description");
+            if ct == 1 {
+                format!("a {}", desc)
+            } else {
+                format!("{} {}", ct, desc)
+            }
+        } else {
+            let mut s =
+                counts
+                    .into_iter()
+                    .fold(String::new(), |mut s, (desc, ct): (String, usize)| {
+                        use std::fmt::Write;
+                        let _ = write!(s, "{} {}, ", ct, desc);
+                        s
+                    });
+            s.pop();
+            s.pop();
+            s
+        }
+    }
+
+    pub fn description(&self) -> String {
+        match self {
+            UnitLike::Tractor {
+                count: 2,
+                length: 2,
+            } => format!("tractor"),
+            UnitLike::Tractor { count: 3, length } => format!("{}-tractor of triples", length),
+            UnitLike::Tractor { count: 4, length } => format!("{}-tractor of quadruples", length),
+            UnitLike::Tractor { count, length } => format!("{} by {} tractor", count, length),
+            UnitLike::Repeated { count: 1 } => format!("single"),
+            UnitLike::Repeated { count: 2 } => format!("pair"),
+            UnitLike::Repeated { count: 3 } => format!("triple"),
+            UnitLike::Repeated { count: 4 } => format!("quadruple"),
+            UnitLike::Repeated { count: 5 } => format!("quintuple"),
+            UnitLike::Repeated { count } => format!("{}-tuple", count),
+        }
+    }
+
     #[allow(clippy::comparison_chain)]
     fn decompose(&self) -> SmallVec<[SmallVec<[UnitLike; 2]>; 2]> {
         let mut units = smallvec![];
@@ -694,7 +799,7 @@ impl UnitLike {
         units
     }
 
-    fn check_play(
+    pub fn check_play(
         trump: Trump,
         iter: impl IntoIterator<Item = Card>,
         units: impl Iterator<Item = UnitLike> + Clone,
@@ -1134,6 +1239,7 @@ mod tests {
                 &[S_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1143,6 +1249,7 @@ mod tests {
                 &[S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1152,6 +1259,7 @@ mod tests {
                 &[S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1161,6 +1269,7 @@ mod tests {
                 &[S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1190,6 +1299,7 @@ mod tests {
                 &[S_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1199,6 +1309,7 @@ mod tests {
                 &[S_4],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1208,6 +1319,7 @@ mod tests {
                 &[S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1217,6 +1329,7 @@ mod tests {
                 &[S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1246,6 +1359,7 @@ mod tests {
                 &[S_2, S_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1255,6 +1369,7 @@ mod tests {
                 &[S_3, S_4],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1264,6 +1379,7 @@ mod tests {
                 &[S_5, S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1273,6 +1389,7 @@ mod tests {
                 &[S_3, S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1302,6 +1419,7 @@ mod tests {
                 &[S_2, S_2, S_3, S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1311,6 +1429,7 @@ mod tests {
                 &[S_6, S_6, S_7, S_7],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1320,6 +1439,7 @@ mod tests {
                 &[S_2, S_5, S_5, S_5],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1329,6 +1449,7 @@ mod tests {
                 &[S_6, S_6, S_6, S_6],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1357,6 +1478,7 @@ mod tests {
                 &[H_8, H_8, H_7, H_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1366,6 +1488,7 @@ mod tests {
                 &[H_2, S_2, S_2, S_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1375,6 +1498,7 @@ mod tests {
                 &[S_2, S_2, S_3, S_4],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1384,6 +1508,7 @@ mod tests {
                 &[S_4, S_4, S_4, S_4],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1412,6 +1537,7 @@ mod tests {
                 &[H_8, H_8, H_7, H_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1421,6 +1547,7 @@ mod tests {
                 &[H_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1430,6 +1557,7 @@ mod tests {
                 &[S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1439,6 +1567,7 @@ mod tests {
                 &[H_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1469,6 +1598,7 @@ mod tests {
                 &[S_Q, S_Q, S_K, S_K, S_A],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1478,6 +1608,7 @@ mod tests {
                 &[S_2, S_3, S_3, S_5, H_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1487,6 +1618,7 @@ mod tests {
                 &[S_A, S_A, H_3, H_3, H_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1496,6 +1628,7 @@ mod tests {
                 &[H_3, H_3, H_3, H_3, H_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1526,7 +1659,7 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2]).unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2], None).unwrap(),
             expected_tf
         );
 
@@ -1546,7 +1679,8 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5]).unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5], None)
+                .unwrap(),
             expected_tf,
         );
         assert!(expected_tf
@@ -1580,7 +1714,8 @@ mod tests {
         assert_eq!(
             TrickFormat::from_cards(
                 TRUMP,
-                &[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]
+                &[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5],
+                None
             )
             .unwrap(),
             expected_tf
@@ -1592,12 +1727,14 @@ mod tests {
             .matches(&[S_8, S_8, S_8, S_8, S_8, S_8, S_8, S_3, S_3, S_5, S_5])
             .is_ok());
 
-        assert!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_3, S_3, S_5, S_5, S_8, S_8, S_8])
-                .unwrap()
-                .matches(&[S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5])
-                .is_ok()
-        );
+        assert!(TrickFormat::from_cards(
+            TRUMP,
+            &[S_2, S_2, S_3, S_3, S_5, S_5, S_8, S_8, S_8],
+            None
+        )
+        .unwrap()
+        .matches(&[S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5])
+        .is_ok());
     }
 
     #[test]
@@ -1622,7 +1759,7 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_5, S_5, S_5]).unwrap(),
+            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_5, S_5, S_5], None).unwrap(),
             expected_tf
         );
 
@@ -1862,6 +1999,7 @@ mod tests {
                 &p1_hand,
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1871,6 +2009,7 @@ mod tests {
                 &p2_hand,
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1880,6 +2019,7 @@ mod tests {
                 &p3_hand,
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -1889,6 +2029,7 @@ mod tests {
                 &p4_hand,
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
@@ -1936,6 +2077,7 @@ mod tests {
                     &[S_7, S_7, S_8, S_8, S_9, S_9],
                     *policy,
                     ThrowEvaluationPolicy::All,
+                    None,
                 )
                 .unwrap();
             // This play should not succeed, because P2 also has S_K, S_K which is a pair.
@@ -1945,6 +2087,7 @@ mod tests {
                 &[S_4, S_10, S_A, H_K, D_K, C_K],
                 *policy,
                 ThrowEvaluationPolicy::All,
+                None,
             ) {
                 trick
                     .play_cards(
@@ -1953,6 +2096,7 @@ mod tests {
                         &[S_4, S_10, S_A, H_K, S_K, S_K],
                         *policy,
                         ThrowEvaluationPolicy::All,
+                        None,
                     )
                     .unwrap();
             } else {
@@ -1965,6 +2109,7 @@ mod tests {
                     &[S_2, S_6, S_J, S_Q, H_K, C_K],
                     *policy,
                     ThrowEvaluationPolicy::All,
+                    None,
                 )
                 .unwrap();
             trick
@@ -1974,6 +2119,7 @@ mod tests {
                     &[C_4, C_6, C_7, S_3, S_3, Card::BigJoker],
                     *policy,
                     ThrowEvaluationPolicy::All,
+                    None,
                 )
                 .unwrap();
         }
@@ -2008,6 +2154,7 @@ mod tests {
                     &p1_hand,
                     TrickDrawPolicy::NoProtections,
                     policy,
+                    None,
                 )
                 .unwrap();
             trick
@@ -2017,6 +2164,7 @@ mod tests {
                     &p2_hand,
                     TrickDrawPolicy::NoProtections,
                     policy,
+                    None,
                 )
                 .unwrap();
             trick
@@ -2026,6 +2174,7 @@ mod tests {
                     &p3_hand,
                     TrickDrawPolicy::NoProtections,
                     policy,
+                    None,
                 )
                 .unwrap();
             trick
@@ -2035,6 +2184,7 @@ mod tests {
                     &p4_hand,
                     TrickDrawPolicy::NoProtections,
                     policy,
+                    None,
                 )
                 .unwrap();
             let TrickEnded { winner, .. } = trick.complete().unwrap();
@@ -2065,6 +2215,7 @@ mod tests {
                 &[H_4, S_4],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -2074,6 +2225,7 @@ mod tests {
                 &[D_4, S_2],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -2083,6 +2235,7 @@ mod tests {
                 &[S_3, S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         trick
@@ -2092,6 +2245,7 @@ mod tests {
                 &[S_3, S_3],
                 TrickDrawPolicy::NoProtections,
                 ThrowEvaluationPolicy::All,
+                None,
             )
             .unwrap();
         let TrickEnded {
