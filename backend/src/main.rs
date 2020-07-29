@@ -18,6 +18,7 @@ use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
 use shengji_core::{game_state, interactive, types};
+use shengji_types::GameMessage;
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -100,10 +101,8 @@ async fn send_to_user(
     tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
     msg: &GameMessage,
 ) -> bool {
-    if let Ok(s) = serde_json::to_string(msg) {
-        if let Ok(compressed) = zstd::stream::encode_all(&mut std::io::Cursor::new(s), 0) {
-            return tx.send(Ok(Message::binary(compressed))).is_ok();
-        }
+    if let Ok(s) = bincode::serialize(msg) {
+        return tx.send(Ok(Message::binary(s))).is_ok();
     }
     false
 }
@@ -122,25 +121,6 @@ pub enum UserMessage {
     Action(interactive::Message),
     Kick(types::PlayerID),
     Beep,
-}
-
-#[allow(clippy::large_enum_variant)]
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum GameMessage {
-    State {
-        state: game_state::GameState,
-    },
-    Message {
-        from: String,
-        message: String,
-    },
-    Broadcast {
-        data: interactive::BroadcastMessage,
-        message: String,
-    },
-    Beep,
-    Error(String),
-    Kicked,
 }
 
 const DUMP_PATH: &str = "/tmp/shengji_state.json";

@@ -1,6 +1,3 @@
-use std::io::{Cursor, Read};
-
-use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy},
@@ -10,6 +7,7 @@ use shengji_core::{
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
+use shengji_types::GameMessage;
 use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
 // use web_sys::console;
@@ -342,13 +340,7 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
-    let mut reader = Cursor::new(req);
-    let mut decoder =
-        StreamingDecoder::new(&mut reader).map_err(|_| "Failed to construct decoder")?;
-    let mut v = Vec::new();
-    decoder
-        .read_to_end(&mut v)
-        .map_err(|e| format!("Failed to decode data {:?}", e))?;
-    Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
+pub fn bincode_deserialize(req: &[u8]) -> Result<String, JsValue> {
+    let m: GameMessage = bincode::deserialize(req).map_err(|_| "Failed to deserialize data")?;
+    Ok(serde_json::to_string(&m).map_err(|_| "Failed to serialize to JSON")?)
 }
