@@ -79,12 +79,13 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       props.landlord !== null && props.landlord !== undefined
         ? props.landlord
         : playerId;
+
     const trump: any =
       props.trump !== null && props.trump !== undefined
         ? props.trump
         : {
             NoTrump: {
-              number: props.players[levelId].level,
+              number: players[levelId].level,
             },
           };
 
