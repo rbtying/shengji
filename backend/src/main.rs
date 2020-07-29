@@ -91,11 +91,21 @@ struct UserState {
 }
 
 impl UserState {
-    pub fn send(&self, msg: &GameMessage) {
-        if let Ok(s) = serde_json::to_string(msg) {
-            let _ = self.tx.send(Ok(Message::text(s)));
+    pub async fn send(&self, msg: &GameMessage) -> bool {
+        send_to_user(&self.tx, msg).await
+    }
+}
+
+async fn send_to_user(
+    tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
+    msg: &GameMessage,
+) -> bool {
+    if let Ok(s) = serde_json::to_string(msg) {
+        if let Ok(compressed) = zstd::stream::encode_all(&mut std::io::Cursor::new(s), 0) {
+            return tx.send(Ok(Message::binary(compressed))).is_ok();
         }
     }
+    false
 }
 
 type Games = Arc<Mutex<HashMap<String, GameState>>>;
@@ -337,16 +347,6 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
 
     let mut val = None;
 
-    let tx_ = tx.clone();
-    let send_to_user = move |msg| {
-        if let Ok(msg) = serde_json::to_string(&msg) {
-            if tx_.send(Ok(Message::text(msg))).is_err() {
-                return false;
-            }
-        }
-        true
-    };
-
     while let Some(result) = user_ws_rx.next().await {
         if let Ok(msg) = result {
             match serde_json::from_slice::<JoinRoom>(msg.as_bytes()) {
@@ -355,13 +355,15 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     break;
                 }
                 Ok(_) => {
-                    if !send_to_user(GameMessage::Error("invalid room or name".to_string())) {
+                    if !send_to_user(&tx, &GameMessage::Error("invalid room or name".to_string()))
+                        .await
+                    {
                         break;
                     }
                 }
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't deserialize message {:?}", err));
-                    if !send_to_user(err) {
+                    if !send_to_user(&tx, &err).await {
                         break;
                     }
                 }
@@ -393,12 +395,18 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 Err(err) => {
                     error!(logger, "Failed to join room"; "error" => format!("{:?}", err));
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
-                    let _ = send_to_user(err);
+                    let _ = send_to_user(&tx, &err).await;
                     return;
                 }
             };
             info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
-            game.users.insert(ws_id, UserState { player_id, tx });
+            game.users.insert(
+                ws_id,
+                UserState {
+                    player_id,
+                    tx: tx.clone(),
+                },
+            );
 
             // if the same user joined before, remove its previous entry from the user list
             if !game.game.allows_multiple_sessions_per_user() {
@@ -409,14 +417,15 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             // send the updated game state to everyone!
             for user in game.users.values() {
                 if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                    user.send(&GameMessage::State { state });
+                    user.send(&GameMessage::State { state }).await;
                 }
 
                 for (data, message) in &msgs {
                     user.send(&GameMessage::Broadcast {
                         data: data.clone(),
                         message: message.clone(),
-                    });
+                    })
+                    .await;
                 }
             }
             (player_id, game.monotonic_id)
@@ -436,7 +445,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 Err(e) => {
                     error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
                     let err = GameMessage::Error(format!("couldn't deserialize message {:?}", e));
-                    if !send_to_user(err) {
+                    if !send_to_user(&tx, &err).await {
                         break;
                     } else {
                         continue;
@@ -458,15 +467,16 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                             user.send(&GameMessage::Message {
                                 from: name.clone(),
                                 message: "BEEP".to_owned(),
-                            });
+                            })
+                            .await;
                             if user.player_id == player_id {
-                                user.send(&GameMessage::Beep);
+                                user.send(&GameMessage::Beep).await;
                             }
                         }
                     }
                     Err(err) => {
                         let err = GameMessage::Error(format!("{}", err));
-                        if !send_to_user(err) {
+                        if !send_to_user(&tx, &err).await {
                             break;
                         }
                     }
@@ -477,7 +487,8 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                         user.send(&GameMessage::Message {
                             from: name.clone(),
                             message: m.clone(),
-                        });
+                        })
+                        .await;
                     }
                 }
                 UserMessage::Kick(id) => {
@@ -486,24 +497,25 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                         Ok(msgs) => {
                             for user in game.users.values() {
                                 if user.player_id == id {
-                                    user.send(&GameMessage::Kicked);
+                                    user.send(&GameMessage::Kicked).await;
                                 } else if let Ok(state) =
                                     game.game.dump_state_for_player(user.player_id)
                                 {
-                                    user.send(&GameMessage::State { state });
+                                    user.send(&GameMessage::State { state }).await;
                                 }
                                 for (data, message) in &msgs {
                                     user.send(&GameMessage::Broadcast {
                                         data: data.clone(),
                                         message: message.clone(),
-                                    });
+                                    })
+                                    .await;
                                 }
                             }
                             game.users.retain(|_, u| u.player_id != id);
                         }
                         Err(err) => {
                             let err = GameMessage::Error(format!("{}", err));
-                            if !send_to_user(err) {
+                            if !send_to_user(&tx, &err).await {
                                 break;
                             }
                         }
@@ -519,16 +531,17 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                         user.send(&GameMessage::Broadcast {
                                             data: data.clone(),
                                             message: message.clone(),
-                                        });
+                                        })
+                                        .await;
                                     }
-                                    user.send(&GameMessage::State { state });
+                                    user.send(&GameMessage::State { state }).await;
                                 }
                             }
                         }
                         Err(err) => {
                             // send the error back to the requester
                             let err = GameMessage::Error(format!("{}", err));
-                            if !send_to_user(err) {
+                            if !send_to_user(&tx, &err).await {
                                 break;
                             }
                         }

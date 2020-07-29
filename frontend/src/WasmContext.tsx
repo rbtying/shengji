@@ -25,6 +25,7 @@ interface Context {
   canPlayCards: (req: ICanPlayCardsRequest) => boolean;
   explainScoring: (req: IExplainScoringRequest) => IScoreSegment[];
   computeScore: (req: IComputeScoreRequest) => IComputeScoreResponse;
+  decodeWireFormat: (req: any) => any;
 }
 
 export interface IFoundViablePlay {
@@ -119,6 +120,7 @@ export const WasmContext = React.createContext<Context>({
     },
     next_threshold: 0,
   }),
+  decodeWireFormat: (req) => {},
 });
 
 export default WasmContext;

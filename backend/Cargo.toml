@@ -25,6 +25,7 @@ slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 tokio = { version = "0.2", features = ["macros", "fs"] }
 warp = "0.2"
+zstd = "0.5"
 
 [build-dependencies]
 vergen = "3"

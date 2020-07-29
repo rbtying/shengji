@@ -1,3 +1,6 @@
+use std::io::{Cursor, Read};
+
+use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy},
@@ -336,4 +339,16 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
         next_threshold,
     })
     .map_err(|_| "failed to serialize response")?)
+}
+
+#[wasm_bindgen]
+pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
+    let mut reader = Cursor::new(req);
+    let mut decoder =
+        StreamingDecoder::new(&mut reader).map_err(|_| "Failed to construct decoder")?;
+    let mut v = Vec::new();
+    decoder
+        .read_to_end(&mut v)
+        .map_err(|e| format!("Failed to decode data {:?}", e))?;
+    Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
 }
