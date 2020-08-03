@@ -1,5 +1,6 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from "react";
+import BeepButton from "./BeepButton";
 import BidArea from "./BidArea";
 import Trump from "./Trump";
 import FriendSelect from "./FriendSelect";
@@ -119,8 +120,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         ? this.props.state.landlord
         : this.props.state.exchanger;
 
-    let landlordIdx = 0;
-    let exchangerIdx = 0;
+    let landlordIdx = -1;
+    let exchangerIdx = -1;
     let playerId = -1;
     this.props.state.propagated.players.forEach((player, idx) => {
       if (player.id === this.props.state.landlord) {
@@ -141,6 +142,13 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       this.props.name;
     const kittyTheftEnabled =
       this.props.state.propagated.kitty_theft_policy === "AllowKittyTheft";
+
+    const nextPlayer =
+      kittyTheftEnabled &&
+      !this.props.state.finalized &&
+      this.props.state.exchanger !== null
+        ? this.props.state.exchanger
+        : this.props.state.landlord;
 
     const exchangeUI =
       isExchanger && !this.props.state.finalized ? (
@@ -286,6 +294,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             <p>Waiting...</p>
           </>
         ) : null}
+        {playerId !== nextPlayer && <BeepButton />}
         {isLandlord && bidUI === null ? startGame : null}
         {bidUI}
       </div>
