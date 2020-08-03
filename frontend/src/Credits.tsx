@@ -29,6 +29,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>8/02/2020:</p>
+        <ul>
+          <li>Support beeps in exchange phase</li>
+        </ul>
         <p>7/26/2020:</p>
         <ul>
           <li>

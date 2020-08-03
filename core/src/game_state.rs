@@ -705,6 +705,7 @@ impl GameState {
         match self {
             GameState::Play(p) => Ok(p.next_player()?),
             GameState::Draw(p) => Ok(p.next_player()?),
+            GameState::Exchange(p) => Ok(p.next_player()?),
             _ => bail!("Not valid in this phase!"),
         }
     }
@@ -1515,6 +1516,17 @@ impl ExchangePhase {
             &mut self.bids,
             self.epoch,
         )
+    }
+
+    pub fn next_player(&self) -> Result<PlayerID, Error> {
+        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
+            && self.autobid.is_none()
+            && !self.finalized
+        {
+            Ok(self.exchanger.unwrap_or(self.landlord))
+        } else {
+            Ok(self.landlord)
+        }
     }
 
     pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
