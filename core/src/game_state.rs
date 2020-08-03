@@ -11,6 +11,7 @@ use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+//use crate::scoring::GameScoringParameters;
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -917,6 +918,8 @@ pub struct PlayPhase {
     last_trick: Option<Trick>,
     #[serde(default)]
     exchanger: Option<PlayerID>,
+    //#[serde(default)]
+    //scoring_parameters: GameScoringParameters
 }
 
 impl PlayPhase {
