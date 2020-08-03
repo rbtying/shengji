@@ -7,3 +7,6 @@ members = [
 
 [profile.release]
 lto = true
+
+[profile.release.package."shengji-wasm"]
+opt-level = 's'
