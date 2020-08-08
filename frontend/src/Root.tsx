@@ -82,6 +82,7 @@ const Root = (): JSX.Element => {
             {state.game_state.Draw !== undefined ? (
               <Draw
                 state={state.game_state.Draw}
+                playDrawCardSound={state.settings.playDrawCardSound}
                 name={state.name}
                 setTimeout={timerContext.setTimeout}
                 clearTimeout={timerContext.clearTimeout}

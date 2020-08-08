@@ -26,12 +26,12 @@ module.exports = {
       },
       {
         test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
-      }
+        use: [MiniCssExtractPlugin.loader, "css-loader"],
+      },
     ],
   },
   optimization: {
-    moduleIds: 'hashed',
+    moduleIds: "hashed",
     splitChunks: {
       chunks: "all",
       cacheGroups: {
@@ -43,10 +43,7 @@ module.exports = {
         },
       },
     },
-    minimizer: [
-      new TerserJsPlugin({}),
-      new OptimizeCssAssetsPlugin({}),
-    ],
+    minimizer: [new TerserJsPlugin({}), new OptimizeCssAssetsPlugin({})],
   },
   output: {
     filename: "[name].[contenthash].js",
@@ -64,7 +61,7 @@ module.exports = {
       template: "static/index.html",
     }),
     new MiniCssExtractPlugin({
-      filename: 'style.css',
+      filename: "style.css",
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -75,6 +72,10 @@ module.exports = {
         {
           from: "static/timer-worker.js",
           to: "timer-worker.js",
+        },
+        {
+          from: "static/434472_dersuperanton_taking-card.mp3",
+          to: "434472_dersuperanton_taking-card.mp3",
         },
       ],
     }),

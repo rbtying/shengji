@@ -15,6 +15,7 @@ export interface Settings {
   separateCardsBySuit: boolean;
   disableSuitHighlights: boolean;
   svgCards: boolean;
+  playDrawCardSound: boolean;
   suitColorOverrides: ISuitOverrides;
 }
 
@@ -56,6 +57,9 @@ const suitColorOverrides: State<ISuitOverrides> = JSONLocalStorageState(
   "suit_color_overrides",
   {}
 );
+const playDrawCardSound: State<boolean> = booleanLocalStorageState(
+  "play_draw_card_sound"
+);
 const settings: State<Settings> = combineState({
   fourColor,
   showCardLabels,
@@ -68,6 +72,7 @@ const settings: State<Settings> = combineState({
   separateCardsBySuit,
   disableSuitHighlights,
   suitColorOverrides,
+  playDrawCardSound,
 });
 
 export default settings;

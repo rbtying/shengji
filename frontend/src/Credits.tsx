@@ -32,6 +32,10 @@ const ChangeLog = (): JSX.Element => {
         <p>8/07/2020:</p>
         <ul>
           <li>Allow card colors to be customized</li>
+          <li>
+            Add option to play sound during draw. Sound sourced from
+            dersuperanton at freesound.org
+          </li>
         </ul>
         <p>8/02/2020:</p>
         <ul>
