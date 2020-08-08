@@ -43,3 +43,25 @@ export const numberLocalStorageState = (
       value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue,
     (state: number) => state
   );
+
+export function JSONLocalStorageState<T>(
+  key: string,
+  defaultValue: T
+): State<T> {
+  return localStorageState(
+    key,
+    (value: any): T => {
+      try {
+        const val = JSON.parse(value);
+        if (val !== undefined && val !== null) {
+          return val;
+        } else {
+          return defaultValue;
+        }
+      } catch (e) {
+        return defaultValue;
+      }
+    },
+    (state: T) => JSON.stringify(state)
+  );
+}

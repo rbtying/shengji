@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Settings } from "./state/Settings";
+import { Settings, ISuitOverrides } from "./state/Settings";
+import { CompactPicker } from "react-color";
 import styled from "styled-components";
 
 const Row = styled.div`
@@ -179,6 +180,24 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>suit color overrides</LabelCell>
+          <Cell>
+            {settings.svgCards ? (
+              "disabled with SVG cards"
+            ) : (
+              <SuitOverrides
+                suitColors={settings.suitColorOverrides}
+                setSuitColors={(newOverrides: ISuitOverrides) =>
+                  props.onChangeSettings({
+                    ...props.settings,
+                    suitColorOverrides: newOverrides,
+                  })
+                }
+              />
+            )}
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>
@@ -188,6 +207,72 @@ const SettingsPane = (props: IProps): JSX.Element => {
         </Row>
       </div>
     </div>
+  );
+};
+
+const SuitOverrides = (props: {
+  suitColors: ISuitOverrides;
+  setSuitColors: (overrides: ISuitOverrides) => void;
+}): JSX.Element => {
+  const suits: Array<keyof ISuitOverrides> = ["♢", "♡", "♤", "♧", "🃟", "🃏"];
+  const labels = ["♦", "♥", "♠", "♣", "LJ", "HJ"];
+  return (
+    <>
+      {suits.map((suit, idx) => (
+        <SuitColorPicker
+          key={suit}
+          suit={suit}
+          label={labels[idx]}
+          suitColor={props.suitColors[suit]}
+          setSuitColor={(color: string) => {
+            const n = { ...props.suitColors };
+            n[suit] = color;
+            props.setSuitColors(n);
+          }}
+        />
+      ))}
+      <button
+        className="normal"
+        onClick={(evt) => {
+          evt.preventDefault();
+          props.setSuitColors({});
+        }}
+      >
+        reset
+      </button>
+    </>
+  );
+};
+
+const SuitColorPicker = (props: {
+  suit: string;
+  label: string;
+  suitColor?: string;
+  setSuitColor: (color: string) => void;
+}): JSX.Element => {
+  const [showPicker, setShowPicker] = React.useState<boolean>(false);
+  return (
+    <>
+      <span
+        className={props.suit}
+        style={{ color: props.suitColor, cursor: "pointer" }}
+        onClick={() => setShowPicker(true)}
+      >
+        {props.label}
+      </span>
+      {showPicker ? (
+        <div style={{ position: "absolute" }}>
+          <div
+            style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 }}
+            onClick={() => setShowPicker(false)}
+          />
+          <CompactPicker
+            color={props.suitColor}
+            onChangeComplete={(c: any) => props.setSuitColor(c.hex)}
+          />
+        </div>
+      ) : null}
+    </>
   );
 };
 
