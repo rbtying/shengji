@@ -5,6 +5,7 @@ import memoize from "./memoize";
 import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 import { SettingsContext } from "./AppStateProvider";
+import { ISuitOverrides } from "./state/Settings";
 
 const SvgCard = React.lazy(async () => await import("./SvgCard"));
 
@@ -66,6 +67,9 @@ const Card = (props: IProps): JSX.Element => {
             cardInfo.typ,
             settings.fourColor ? "four-color" : null
           )}
+          colorOverride={
+            settings.suitColorOverrides[cardInfo.typ as keyof ISuitOverrides]
+          }
         />
       </span>
     );
@@ -126,6 +130,7 @@ interface ICardCanvasProps {
   card: string;
   height: number;
   suit: string;
+  colorOverride?: string;
 }
 
 const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
@@ -165,7 +170,7 @@ const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
         height={effectiveHeight}
       ></rect>
       <text
-        fill={style}
+        fill={props.colorOverride !== undefined ? props.colorOverride : style}
         fontSize={`${props.height}px`}
         textLength={`${textMetrics.width}px`}
         x={Math.min(textMetrics.actualBoundingBoxLeft, 0) + 1}

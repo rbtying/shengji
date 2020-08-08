@@ -1,5 +1,8 @@
 import { State, combineState } from "../State";
-import { booleanLocalStorageState } from "../localStorageState";
+import {
+  booleanLocalStorageState,
+  JSONLocalStorageState,
+} from "../localStorageState";
 
 export interface Settings {
   fourColor: boolean;
@@ -12,6 +15,17 @@ export interface Settings {
   separateCardsBySuit: boolean;
   disableSuitHighlights: boolean;
   svgCards: boolean;
+  suitColorOverrides: ISuitOverrides;
+}
+
+export interface ISuitOverrides {
+  "♢"?: string;
+  "♡"?: string;
+  "♤"?: string;
+  "♧"?: string;
+  "🃟"?: string;
+  "🃏"?: string;
+  "🂠"?: string;
 }
 
 const fourColor: State<boolean> = booleanLocalStorageState("four_color");
@@ -38,6 +52,10 @@ const separateCardsBySuit: State<boolean> = booleanLocalStorageState(
 const disableSuitHighlights: State<boolean> = booleanLocalStorageState(
   "disable_suit_highlights"
 );
+const suitColorOverrides: State<ISuitOverrides> = JSONLocalStorageState(
+  "suit_color_overrides",
+  {}
+);
 const settings: State<Settings> = combineState({
   fourColor,
   showCardLabels,
@@ -49,6 +67,7 @@ const settings: State<Settings> = combineState({
   svgCards,
   separateCardsBySuit,
   disableSuitHighlights,
+  suitColorOverrides,
 });
 
 export default settings;

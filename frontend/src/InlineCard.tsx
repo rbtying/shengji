@@ -5,15 +5,26 @@ import {
   ISuitCard,
   unicodeToCard,
 } from "./util/cardHelpers";
+import { SettingsContext } from "./AppStateProvider";
+import { ISuitOverrides } from "./state/Settings";
 
 const InlineCardBase = styled.span`
   padding-left: 0.1em;
   padding-right: 0.1em;
 `;
 
-const Suit = (className: string): React.FunctionComponent<{}> => (props) => (
-  <InlineCardBase className={className} {...props} />
-);
+const Suit = (className: string): React.FunctionComponent<{}> => (props) => {
+  const settings = React.useContext(SettingsContext);
+  return (
+    <InlineCardBase
+      className={className}
+      {...props}
+      style={{
+        color: settings.suitColorOverrides[className as keyof ISuitOverrides],
+      }}
+    />
+  );
+};
 const Diamonds = Suit("♢");
 const Hearts = Suit("♡");
 const Spades = Suit("♤");
