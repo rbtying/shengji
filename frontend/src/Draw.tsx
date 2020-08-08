@@ -31,7 +31,6 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     this.pickUpKitty = this.pickUpKitty.bind(this);
     this.revealCard = this.revealCard.bind(this);
     this.onAutodrawClicked = this.onAutodrawClicked.bind(this);
-    console.log(this.drawCardAudio);
   }
 
   drawCard(): void {
