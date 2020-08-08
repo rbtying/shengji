@@ -198,6 +198,19 @@ const SettingsPane = (props: IProps): JSX.Element => {
             )}
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>play sound when drawing card</LabelCell>
+          <Cell>
+            <input
+              name="play-sound-when-drawing-card"
+              type="checkbox"
+              checked={settings.playDrawCardSound}
+              onChange={handleChange({
+                playDrawCardSound: !settings.playDrawCardSound,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>

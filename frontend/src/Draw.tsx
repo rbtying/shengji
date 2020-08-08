@@ -9,6 +9,7 @@ import BidArea from "./BidArea";
 
 interface IDrawProps {
   state: IDrawPhase;
+  playDrawCardSound: boolean;
   name: string;
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
@@ -19,6 +20,7 @@ interface IDrawState {
 class Draw extends React.Component<IDrawProps, IDrawState> {
   private could_draw: boolean = false;
   private timeout: number | null = null;
+  private drawCardAudio: HTMLAudioElement | null = null;
 
   constructor(props: IDrawProps) {
     super(props);
@@ -40,6 +42,15 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       this.timeout = null;
     }
     if (canDraw) {
+      if (this.props.playDrawCardSound) {
+        if (this.drawCardAudio === null) {
+          this.drawCardAudio = new Audio(
+            "434472_dersuperanton_taking-card.mp3"
+          );
+        }
+        // eslint-disable-next-line
+        this.drawCardAudio.play();
+      }
       (window as any).send({ Action: "DrawCard" });
     }
   }
