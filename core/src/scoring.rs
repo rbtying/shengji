@@ -15,10 +15,50 @@ impl Default for BonusLevelPolicy {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
-pub struct GameScoreResult {
+pub struct PartialGameScoreResult {
     landlord_won: bool,
     landlord_delta: usize,
     non_landlord_delta: usize,
+}
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+pub struct GameScoreResult {
+    landlord_won: bool,
+    landlord_bonus: bool,
+    landlord_delta: usize,
+    non_landlord_delta: usize,
+}
+
+impl GameScoreResult {
+    pub fn new(
+        gsr: PartialGameScoreResult,
+        bonus_level_policy: BonusLevelPolicy,
+        smaller_landlord_team_size: bool,
+    ) -> GameScoreResult {
+        let PartialGameScoreResult {
+            non_landlord_delta,
+            landlord_delta,
+            landlord_won,
+        } = gsr;
+
+        if landlord_won
+            && bonus_level_policy == BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
+            && smaller_landlord_team_size
+        {
+            GameScoreResult {
+                non_landlord_delta,
+                landlord_delta: landlord_delta + 1,
+                landlord_won,
+                landlord_bonus: true,
+            }
+        } else {
+            GameScoreResult {
+                non_landlord_delta,
+                landlord_delta: landlord_delta,
+                landlord_won,
+                landlord_bonus: false,
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
@@ -32,7 +72,7 @@ pub struct GameScoringParameters {
     /// control is turned over, but neither side goes up a level.
     deadzone_size: usize,
     truncate_zero_crossing_window: bool,
-    // TODO: move `BonusLevelPolicy` in here.
+    bonus_level_policy: BonusLevelPolicy,
 }
 
 impl Default for GameScoringParameters {
@@ -42,6 +82,7 @@ impl Default for GameScoringParameters {
             num_steps_to_non_landlord_turnover: 2,
             deadzone_size: 1,
             truncate_zero_crossing_window: true,
+            bonus_level_policy: BonusLevelPolicy::default(),
         }
     }
 }
@@ -118,6 +159,8 @@ impl GameScoringParameters {
         Ok(MaterializedScoringParameters::new(
             landlord_wins.into_iter().rev(),
             landlord_loses,
+            num_decks,
+            num_points_per_deck,
         )?)
     }
 }
@@ -126,16 +169,22 @@ impl GameScoringParameters {
 pub struct MaterializedScoringParameters {
     landlord_wins: SmallVec<[LandlordWinningScoreSegment; 3]>,
     landlord_loses: SmallVec<[LandlordLosingScoreSegment; 1]>,
+    num_decks: usize,
+    num_points_per_deck: usize,
 }
 
 impl MaterializedScoringParameters {
     pub fn new(
         landlord_wins: impl IntoIterator<Item = LandlordWinningScoreSegment>,
         landlord_loses: impl IntoIterator<Item = LandlordLosingScoreSegment>,
+        num_decks: usize,
+        num_points_per_deck: usize,
     ) -> Result<Self, Error> {
         let mut gsp = Self {
             landlord_wins: landlord_wins.into_iter().collect(),
             landlord_loses: landlord_loses.into_iter().collect(),
+            num_decks,
+            num_points_per_deck,
         };
         gsp.landlord_wins.sort_by_key(|s| s.start);
         gsp.landlord_loses.sort_by_key(|s| s.start);
@@ -181,7 +230,7 @@ impl MaterializedScoringParameters {
         Ok(gsp)
     }
 
-    pub fn score(&self, non_landlords_points: isize) -> Result<GameScoreResult, Error> {
+    pub fn score(&self, non_landlords_points: isize) -> Result<PartialGameScoreResult, Error> {
         let landlord_won = non_landlords_points
             < self
                 .landlord_wins
@@ -192,7 +241,7 @@ impl MaterializedScoringParameters {
         if landlord_won {
             for s in PropagateMore::new(self.landlord_wins.iter().rev().copied()).take(10) {
                 if s.start <= non_landlords_points && non_landlords_points < s.end {
-                    return Ok(GameScoreResult {
+                    return Ok(PartialGameScoreResult {
                         non_landlord_delta: 0,
                         landlord_delta: s.landlord_delta,
                         landlord_won: true,
@@ -202,7 +251,7 @@ impl MaterializedScoringParameters {
         } else {
             for s in PropagateMore::new(self.landlord_loses.iter().copied()).take(10) {
                 if s.start <= non_landlords_points && non_landlords_points < s.end {
-                    return Ok(GameScoreResult {
+                    return Ok(PartialGameScoreResult {
                         non_landlord_delta: s.non_landlord_delta,
                         landlord_delta: 0,
                         landlord_won: false,
@@ -216,7 +265,7 @@ impl MaterializedScoringParameters {
     pub fn next_relevant_score(
         &self,
         current_score: isize,
-    ) -> Result<(isize, GameScoreResult), Error> {
+    ) -> Result<(isize, PartialGameScoreResult), Error> {
         let gsr = self.score(current_score)?;
         for offset in 1..1000 {
             let offset_gsr = self.score(current_score + offset * 5)?;
@@ -227,13 +276,9 @@ impl MaterializedScoringParameters {
         bail!("Failed to find next relevant score")
     }
 
-    pub fn explain(
-        &self,
-        num_decks: usize,
-        num_points_per_deck: usize,
-    ) -> Result<Vec<(isize, GameScoreResult)>, Error> {
+    pub fn explain(&self) -> Result<Vec<(isize, PartialGameScoreResult)>, Error> {
         let mut current_score = 0;
-        let total_points = (num_decks * num_points_per_deck) as isize;
+        let total_points = (self.num_decks * self.num_points_per_deck) as isize;
         let mut explanatory = vec![(0, self.score(current_score)?)];
         loop {
             let (next, score) = self.next_relevant_score(current_score)?;
@@ -321,144 +366,243 @@ impl Propagatable for LandlordLosingScoreSegment {
     }
 }
 
+pub fn explain_level_deltas(
+    gsp: GameScoringParameters,
+    num_decks: usize,
+    smaller_landlord_team_size: bool,
+) -> Result<Vec<(isize, GameScoreResult)>, Error> {
+    gsp.materialize(num_decks, 100)?
+        .explain()
+        .map(|explanation| {
+            explanation
+                .into_iter()
+                .map(|(pts, gsr)| {
+                    (
+                        pts,
+                        GameScoreResult::new(
+                            gsr,
+                            gsp.bonus_level_policy,
+                            smaller_landlord_team_size,
+                        ),
+                    )
+                })
+                .collect()
+        })
+}
+
 pub fn compute_level_deltas(
+    gsp: GameScoringParameters,
     num_decks: usize,
     non_landlords_points: isize,
-    bonus_level_policy: BonusLevelPolicy,
     smaller_landlord_team_size: bool,
-) -> (usize, usize, bool, bool) {
-    let GameScoreResult {
-        non_landlord_delta,
-        landlord_delta,
-        landlord_won,
-    } = GameScoringParameters::default()
-        .materialize(num_decks, 100)
-        .unwrap()
-        .score(non_landlords_points)
-        .expect("Should always resolve");
-
-    eprintln!(
-        "{:?}",
-        GameScoringParameters::default()
-            .materialize(num_decks, 100)
-            .unwrap()
-            .explain(num_decks, 100)
-    );
-
-    if landlord_won
-        && bonus_level_policy == BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
-        && smaller_landlord_team_size
-    {
-        (non_landlord_delta, landlord_delta + 1, landlord_won, true)
-    } else {
-        (non_landlord_delta, landlord_delta, landlord_won, false)
-    }
+) -> Result<GameScoreResult, Error> {
+    Ok(GameScoreResult::new(
+        gsp.materialize(num_decks, 100)?
+            .score(non_landlords_points)?,
+        gsp.bonus_level_policy,
+        smaller_landlord_team_size,
+    ))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{compute_level_deltas, BonusLevelPolicy};
+    use super::{compute_level_deltas, BonusLevelPolicy, GameScoreResult, GameScoringParameters};
 
     #[test]
     fn test_level_deltas() {
+        let gsp_nobonus = {
+            let mut gsp = GameScoringParameters::default();
+            gsp.bonus_level_policy = BonusLevelPolicy::NoBonusLevel;
+            gsp
+        };
         assert_eq!(
-            compute_level_deltas(2, -80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 5, true, false)
+            compute_level_deltas(gsp_nobonus, 2, -80, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 5,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, -40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 4, true, false)
+            compute_level_deltas(gsp_nobonus, 2, -40, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 4,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, -35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true, false)
+            compute_level_deltas(gsp_nobonus, 2, -35, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 3,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 0, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true, false)
+            compute_level_deltas(gsp_nobonus, 2, 0, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 3,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 5, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true, false)
+            compute_level_deltas(gsp_nobonus, 2, 5, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 2,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true, false)
+            compute_level_deltas(gsp_nobonus, 2, 35, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 2,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true, false)
+            compute_level_deltas(gsp_nobonus, 2, 40, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 1,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 75, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true, false)
+            compute_level_deltas(gsp_nobonus, 2, 75, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 1,
+                landlord_won: true,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 80, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 115, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 115, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 120, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 120, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 1,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 155, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 155, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 1,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 160, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 160, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 2,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 195, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 195, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 2,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 200, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 200, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 3,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 235, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 235, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 3,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 240, BonusLevelPolicy::NoBonusLevel, false),
-            (4, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 240, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 4,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(2, 280, BonusLevelPolicy::NoBonusLevel, false),
-            (5, 0, false, false)
+            compute_level_deltas(gsp_nobonus, 2, 280, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 5,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
         );
         assert_eq!(
-            compute_level_deltas(
-                2,
-                0,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 4, true, true)
+            compute_level_deltas(GameScoringParameters::default(), 2, 0, true,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 4,
+                landlord_won: true,
+                landlord_bonus: true
+            })
         );
         assert_eq!(
-            compute_level_deltas(
-                3,
-                0,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 4, true, true)
+            compute_level_deltas(GameScoringParameters::default(), 3, 0, true,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 4,
+                landlord_won: true,
+                landlord_bonus: true
+            })
         );
         assert_eq!(
-            compute_level_deltas(
-                3,
-                50,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 3, true, true)
+            compute_level_deltas(GameScoringParameters::default(), 3, 50, true,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 3,
+                landlord_won: true,
+                landlord_bonus: true
+            })
         );
     }
 }
