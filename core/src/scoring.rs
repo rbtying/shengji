@@ -22,10 +22,10 @@ pub struct PartialGameScoreResult {
 }
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GameScoreResult {
-    landlord_won: bool,
-    landlord_bonus: bool,
-    landlord_delta: usize,
-    non_landlord_delta: usize,
+    pub landlord_won: bool,
+    pub landlord_bonus: bool,
+    pub landlord_delta: usize,
+    pub non_landlord_delta: usize,
 }
 
 impl GameScoreResult {
@@ -72,7 +72,7 @@ pub struct GameScoringParameters {
     /// control is turned over, but neither side goes up a level.
     deadzone_size: usize,
     truncate_zero_crossing_window: bool,
-    bonus_level_policy: BonusLevelPolicy,
+    pub bonus_level_policy: BonusLevelPolicy,
 }
 
 impl Default for GameScoringParameters {
@@ -103,9 +103,10 @@ impl GameScoringParameters {
         if self.step_size_per_deck <= 0 || self.step_size_per_deck >= num_points_per_deck {
             bail!("Step size must be between 5 and {}", num_points_per_deck);
         }
-        if self.num_steps_to_non_landlord_turnover <= 1 {
+        if self.num_steps_to_non_landlord_turnover == 0 {
             bail!("Landlord team must be able to win")
         }
+
         let s = num_decks as isize * self.step_size_per_deck as isize;
         let landlord_wins = if self.truncate_zero_crossing_window {
             let mut landlord_wins = vec![];
