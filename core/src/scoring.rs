@@ -101,7 +101,7 @@ impl GameScoringParameters {
                 self.step_size_per_deck
             );
         }
-        if self.step_size_per_deck <= 0 || self.step_size_per_deck >= total_points {
+        if self.step_size_per_deck == 0 || self.step_size_per_deck >= total_points {
             bail!("Step size must be between 5 and {}", total_points);
         }
         if self.num_steps_to_non_landlord_turnover == 0 {
@@ -176,6 +176,7 @@ pub struct MaterializedScoringParameters {
 }
 
 impl MaterializedScoringParameters {
+    #[allow(clippy::comparison_chain)]
     pub fn new(
         landlord_wins: impl IntoIterator<Item = LandlordWinningScoreSegment>,
         landlord_loses: impl IntoIterator<Item = LandlordLosingScoreSegment>,
@@ -310,18 +311,16 @@ impl<I: Iterator<Item = P>, P: Propagatable + Clone> PropagateMore<I, P> {
 impl<I: Iterator<Item = P>, P: Propagatable + Clone> Iterator for PropagateMore<I, P> {
     type Item = P;
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some(n) = self.initial.as_mut().and_then(|i| i.next()) {
-                self.propagatable = Some(n.clone());
-                break Some(n);
+        if let Some(n) = self.initial.as_mut().and_then(|i| i.next()) {
+            self.propagatable = Some(n.clone());
+            return Some(n);
+        }
+        match self.propagatable.take() {
+            Some(p) => {
+                self.propagatable = Some(p.propagate());
+                self.propagatable.clone()
             }
-            match self.propagatable.take() {
-                Some(p) => {
-                    self.propagatable = Some(p.propagate());
-                    break self.propagatable.clone();
-                }
-                None => break None,
-            }
+            None => None,
         }
     }
 }
