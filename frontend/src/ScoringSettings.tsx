@@ -8,15 +8,6 @@ interface IProps {
   numDecks: number;
 }
 
-/*
-
-  step_size_per_deck: number;
-  num_steps_to_non_landlord_turnover: number;
-  deadzone_size: number;
-  truncate_zero_crossing_window: boolean;
-  bonus_level_policy: "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
-*/
-
 export const GameScoringSettings = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const { explainScoring } = React.useContext(WasmContext);
