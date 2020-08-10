@@ -53,7 +53,7 @@ impl GameScoreResult {
         } else {
             GameScoreResult {
                 non_landlord_delta,
-                landlord_delta: landlord_delta,
+                landlord_delta,
                 landlord_won,
                 landlord_bonus: false,
             }
