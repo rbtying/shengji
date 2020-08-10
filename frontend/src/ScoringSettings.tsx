@@ -88,17 +88,33 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
       : null,
   });
   maxPts += 5 * props.numDecks;
+  maxNonLandlordDelta = Math.max(
+    scoreTransitions[last].results.non_landlord_delta,
+    maxNonLandlordDelta
+  );
+  maxLandlordDelta = Math.max(
+    scoreTransitions[last].results.landlord_delta,
+    maxLandlordDelta
+  );
 
   const text = (idx: number): JSX.Element => {
     let txt = "Attacking team wins, but doesn't level up.";
     const segment = scoreSegments[idx];
     if (segment.segment.results.landlord_won) {
-      txt = `Defending team wins, and goes up ${segment.segment.results.landlord_delta} levels.`;
-      if (segment.bonusSegment) {
-        txt += ` If the team is unexpectedly small, they go up ${segment.bonusSegment.results.landlord_delta} levels.`;
+      txt = `Defending team wins, and goes up ${
+        segment.segment.results.landlord_delta
+      } level${segment.segment.results.landlord_delta === 1 ? "" : "s"}.`;
+      if (segment.bonusSegment !== null) {
+        txt += ` If the team is unexpectedly small, they go up ${
+          segment.bonusSegment.results.landlord_delta
+        } level${
+          segment.bonusSegment.results.landlord_delta === 1 ? "" : "s"
+        }.`;
       }
     } else if (segment.segment.results.non_landlord_delta > 0) {
-      txt = `Attacking team wins, and goes up ${segment.segment.results.non_landlord_delta} levels.`;
+      txt = `Attacking team wins, and goes up ${
+        segment.segment.results.non_landlord_delta
+      } level${segment.segment.results.non_landlord_delta === 1 ? "" : "s"}.`;
     }
     return <>{txt}</>;
   };
@@ -110,10 +126,10 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
     curStepSize <= totalPoints / 3;
     curStepSize += 5 * props.numDecks
   ) {
-    if (curStepSize == 0) {
+    if (curStepSize === 0) {
       continue;
     }
-    if (totalPoints % curStepSize == 0) {
+    if (totalPoints % curStepSize === 0) {
       validStepSizes.push(`${curStepSize}`);
     }
   }
@@ -160,7 +176,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
           {highlighted !== null ? (
             <p> {text(highlighted)}</p>
           ) : (
-            <p>Hover over the attacking team scores for details</p>
+            <p>Hover over the scores above for more details.</p>
           )}
         </div>
         <div>
@@ -179,7 +195,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
             {validStepSizes.map((ss, idx) => (
               <option key={idx}>{ss}</option>
             ))}
-          </select>
+          </select>{" "}
+          (default: {20 * props.numDecks})
         </div>
         <div>
           <label>Number of steps where nobody gains a level: </label>
@@ -199,7 +216,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
               .map((_, idx) => (
                 <option key={idx}>{idx}</option>
               ))}
-          </select>
+          </select>{" "}
+          (default: 1)
         </div>
         <div>
           <label>Number of steps for the attacking team to win: </label>
@@ -224,7 +242,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
               .map((_, idx) => (
                 <option key={idx + 1}>{idx + 1}</option>
               ))}
-          </select>
+          </select>{" "}
+          (default: 2)
         </div>
         <div>
           <label>Grant a bonus level for unexpectedly small team</label>{" "}

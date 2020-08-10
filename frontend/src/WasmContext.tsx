@@ -24,6 +24,7 @@ interface Context {
   ) => IDecomposedTrickFormat[];
   canPlayCards: (req: ICanPlayCardsRequest) => boolean;
   explainScoring: (req: IExplainScoringRequest) => IScoreSegment[];
+  computeScore: (req: IComputeScoreRequest) => IComputeScoreResponse;
 }
 
 export interface IFoundViablePlay {
@@ -90,6 +91,18 @@ interface IGameScoreResult {
   non_landlord_delta: number;
 }
 
+interface IComputeScoreRequest {
+  num_decks: number;
+  params: IGameScoringParameters;
+  smaller_landlord_team_size: boolean;
+  non_landlord_points: number;
+}
+
+interface IComputeScoreResponse {
+  score: IGameScoreResult;
+  next_threshold: number;
+}
+
 export const WasmContext = React.createContext<Context>({
   findViablePlays: (trump, cards) => [],
   findValidBids: (req) => [],
@@ -97,6 +110,15 @@ export const WasmContext = React.createContext<Context>({
   decomposeTrickFormat: (req) => [],
   canPlayCards: (req) => false,
   explainScoring: (req) => [],
+  computeScore: (req) => ({
+    score: {
+      landlord_won: true,
+      landlord_bonus: false,
+      landlord_delta: 0,
+      non_landlord_delta: 0,
+    },
+    next_threshold: 0,
+  }),
 });
 
 export default WasmContext;

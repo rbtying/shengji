@@ -290,3 +290,50 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
     })
     .map_err(|_| "failed to serialize response")?)
 }
+
+#[derive(Deserialize)]
+struct ComputeScoreRequest {
+    num_decks: usize,
+    params: GameScoringParameters,
+    smaller_landlord_team_size: bool,
+    non_landlord_points: isize,
+}
+
+#[derive(Serialize)]
+struct ComputeScoreResponse {
+    score: GameScoreResult,
+    next_threshold: isize,
+}
+
+#[wasm_bindgen]
+pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let ComputeScoreRequest {
+        num_decks,
+        params,
+        smaller_landlord_team_size,
+        non_landlord_points,
+    } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+    let score = compute_level_deltas(
+        params,
+        num_decks,
+        non_landlord_points,
+        smaller_landlord_team_size,
+    )
+    .map_err(|_| "Failed to compute score")?;
+    let next_threshold = params
+        .materialize(num_decks, 100)
+        .and_then(|n| n.next_relevant_score(non_landlord_points))
+        .map_err(|_| "Couldn't find next valid score")?
+        .0;
+
+    Ok(JsValue::from_serde(&ComputeScoreResponse {
+        score,
+        next_threshold,
+    })
+    .map_err(|_| "failed to serialize response")?)
+}

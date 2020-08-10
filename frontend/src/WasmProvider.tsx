@@ -29,6 +29,9 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         explainScoring: (req) => {
           return Shengji.explain_scoring(req).results;
         },
+        computeScore: (req) => {
+          return Shengji.compute_score(req);
+        },
       }}
     >
       {props.children}

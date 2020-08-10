@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>8/09/2020:</p>
+        <ul>
+          <li>Support configuring different score thresholds for each game.</li>
+        </ul>
         <p>8/07/2020:</p>
         <ul>
           <li>Allow card colors to be customized</li>
