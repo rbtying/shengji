@@ -106,16 +106,13 @@ const Play = (props: IProps): JSX.Element => {
 
   const landlordTeamSize = playPhase.landlords_team.length;
   let configFriendTeamSize = 0;
-  let bonusLevel = false;
+  let smallerTeamSize = false;
   if (playPhase.game_mode !== "Tractor") {
     configFriendTeamSize =
       playPhase.game_mode.FindingFriends.num_friends != null
         ? playPhase.game_mode.FindingFriends.num_friends + 1
         : playPhase.propagated.players.length / 2;
-    bonusLevel =
-      playPhase.propagated.bonus_level_policy ===
-        "BonusLevelForSmallerLandlordTeam" &&
-      landlordTeamSize < configFriendTeamSize;
+    smallerTeamSize = landlordTeamSize < configFriendTeamSize;
   }
 
   return (
@@ -236,7 +233,8 @@ const Play = (props: IProps): JSX.Element => {
         landlordTeam={playPhase.landlords_team}
         landlord={playPhase.landlord}
         hideLandlordPoints={playPhase.propagated.hide_landlord_points}
-        bonusLevel={bonusLevel}
+        gameScoringParameters={playPhase.propagated.game_scoring_parameters}
+        smallerTeamSize={smallerTeamSize}
       />
       <LabeledPlay className="kitty" cards={playPhase.kitty} label="底牌" />
     </div>

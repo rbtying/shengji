@@ -1,10 +1,11 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { IPlayer, IGameScoringParameters } from "./types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
+import WasmContext from "./WasmContext";
 
 interface IProps {
   players: IPlayer[];
@@ -14,7 +15,8 @@ interface IProps {
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
-  bonusLevel: boolean;
+  smallerTeamSize: boolean;
+  gameScoringParameters: IGameScoringParameters;
 }
 
 const Points = (props: IProps): JSX.Element => {
@@ -72,19 +74,19 @@ const Points = (props: IProps): JSX.Element => {
   let thresholdStr = "";
 
   if (nonLandlordPointsWithPenalties === 0) {
-    if (props.bonusLevel) {
+    if (props.smallerTeamSize) {
       thresholdStr = `${landlord.name}'s team will go up 4 levels, including a small-team bonus (next threshold: 5分)`;
     } else {
       thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
     }
   } else if (nonLandlordPointsWithPenalties < segment) {
-    if (props.bonusLevel) {
+    if (props.smallerTeamSize) {
       thresholdStr = `${landlord.name}'s team will go up 3 levels, including a small-team bonus (next threshold: ${segment}分)`;
     } else {
       thresholdStr = `${landlord.name}'s team will go up 2 levels (next threshold: ${segment}分)`;
     }
   } else if (nonLandlordPointsWithPenalties < 2 * segment) {
-    if (props.bonusLevel) {
+    if (props.smallerTeamSize) {
       thresholdStr = `${
         landlord.name
       }'s team will go up 2 levels, including a small-team bonus (next threshold: ${

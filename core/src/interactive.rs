@@ -419,7 +419,7 @@ impl BroadcastMessage {
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} allowed players to bypass defending on points", n?),
             AdvancementPolicySet { policy: AdvancementPolicy::DefendPoints } => format!("{} required players to defend on points", n?),
-            GameScoringParametersChanged { parameters } => format!("Game scoring parameters changed {:?}", parameters),
+            GameScoringParametersChanged { .. } => format!("{} changed the game's scoring parameters", n?),
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),

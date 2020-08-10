@@ -93,15 +93,16 @@ impl GameScoringParameters {
         num_decks: usize,
         num_points_per_deck: usize,
     ) -> Result<MaterializedScoringParameters, Error> {
-        if num_points_per_deck % self.step_size_per_deck != 0 {
+        let total_points = num_decks * num_points_per_deck;
+        if total_points % self.step_size_per_deck != 0 {
             bail!(
                 "Step size must evenly divide the number of points available ({} mod {} != 0)",
-                num_points_per_deck,
+                total_points,
                 self.step_size_per_deck
             );
         }
-        if self.step_size_per_deck <= 0 || self.step_size_per_deck >= num_points_per_deck {
-            bail!("Step size must be between 5 and {}", num_points_per_deck);
+        if self.step_size_per_deck <= 0 || self.step_size_per_deck >= total_points {
+            bail!("Step size must be between 5 and {}", total_points);
         }
         if self.num_steps_to_non_landlord_turnover == 0 {
             bail!("Landlord team must be able to win")
@@ -240,7 +241,7 @@ impl MaterializedScoringParameters {
                 .end;
 
         if landlord_won {
-            for s in PropagateMore::new(self.landlord_wins.iter().rev().copied()).take(10) {
+            for s in PropagateMore::new(self.landlord_wins.iter().rev().copied()).take(50) {
                 if s.start <= non_landlords_points && non_landlords_points < s.end {
                     return Ok(PartialGameScoreResult {
                         non_landlord_delta: 0,
@@ -250,7 +251,7 @@ impl MaterializedScoringParameters {
                 }
             }
         } else {
-            for s in PropagateMore::new(self.landlord_loses.iter().copied()).take(10) {
+            for s in PropagateMore::new(self.landlord_loses.iter().copied()).take(50) {
                 if s.start <= non_landlords_points && non_landlords_points < s.end {
                     return Ok(PartialGameScoreResult {
                         non_landlord_delta: s.non_landlord_delta,

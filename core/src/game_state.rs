@@ -591,12 +591,17 @@ impl PropagatedState {
         parameters: GameScoringParameters,
     ) -> Result<Vec<MessageVariant>, Error> {
         if parameters != self.game_scoring_parameters {
-            parameters.materialize(self.num_decks(), 100)?;
+            let materialized = parameters.materialize(self.num_decks(), 100)?;
+            // Explain exercises all the search paths, so make sure to try
+            // explaining before accepting the new parameters!
+            materialized.explain()?;
+            let msgs = vec![MessageVariant::GameScoringParametersChanged {
+                parameters,
+                old_parameters: self.game_scoring_parameters,
+            }];
             self.game_scoring_parameters = parameters;
             self.bonus_level_policy = self.game_scoring_parameters.bonus_level_policy;
-            Ok(vec![MessageVariant::GameScoringParametersChanged {
-                parameters,
-            }])
+            Ok(msgs)
         } else {
             Ok(vec![])
         }

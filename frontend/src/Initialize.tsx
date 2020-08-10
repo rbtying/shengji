@@ -12,6 +12,7 @@ import { WebsocketContext } from "./WebsocketProvider";
 
 import Header from "./Header";
 import Players from "./Players";
+import { GameScoringSettings } from "./ScoringSettings";
 
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
@@ -174,6 +175,42 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
   );
 };
 
+interface IScoringSettings {
+  state: IInitializePhase;
+  numDecks: number;
+}
+const ScoringSettings = (props: IScoringSettings): JSX.Element => {
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  return (
+    <div>
+      <label>
+        Scoring settings:{" "}
+        <button
+          className="normal"
+          onClick={(evt) => {
+            evt.preventDefault();
+            setModalOpen(true);
+          }}
+        >
+          Open
+        </button>
+        <ReactModal
+          isOpen={modalOpen}
+          onRequestClose={() => setModalOpen(false)}
+          shouldCloseOnOverlayClick
+          shouldCloseOnEsc
+          style={{ content: contentStyle }}
+        >
+          <GameScoringSettings
+            params={props.state.propagated.game_scoring_parameters}
+            numDecks={props.numDecks}
+          />
+        </ReactModal>
+      </label>
+    </div>
+  );
+};
+
 interface IUncommonSettings {
   state: IInitializePhase;
   setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -182,7 +219,6 @@ interface IUncommonSettings {
   ) => void;
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
-  setBonusLevelPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -264,22 +300,6 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             </option>
             <option value="GreaterLength">
               All bids must have more cards than the previous bids
-            </option>
-          </select>
-        </label>
-      </div>
-      <div>
-        <label>
-          Small defending team bonus rank policy:{" "}
-          <select
-            value={props.state.propagated.bonus_level_policy}
-            onChange={props.setBonusLevelPolicy}
-          >
-            <option value="BonusLevelForSmallerLandlordTeam">
-              Bonus level for smaller defending team
-            </option>
-            <option value="NoBonusLevel">
-              No bonus level for defending team
             </option>
           </select>
         </label>
@@ -546,25 +566,6 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setBonusLevelPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetBonusLevelPolicy: evt.target.value,
-        },
-      });
-    } else {
-      send({
-        Action: {
-          SetBonusLevelPolicy: "NoBonusLevel",
-        },
-      });
-    }
-  };
-
   const setBidTakebackPolicy = (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -785,10 +786,10 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
-          case "bonus_level_policy":
+          case "game_scoring_parameters":
             send({
               Action: {
-                SetBonusLevelPolicy: value,
+                SetGameScoringParameters: value,
               },
             });
             break;
@@ -832,7 +833,30 @@ const Initialize = (props: IProps): JSX.Element => {
       let gameSettings: IPropagatedState;
       try {
         gameSettings = JSON.parse(settings);
-        setGameSettings(gameSettings);
+
+        const fetchAsync = async (): Promise<void> => {
+          const fetchResult = await fetch("default_settings.json");
+          const fetchJSON = await fetchResult.json();
+          const combined = { ...fetchJSON, ...gameSettings };
+          if (
+            combined.bonus_level_policy !== undefined &&
+            combined.game_scoring_parameters !== undefined &&
+            combined.bonus_level_policy !==
+              combined.game_scoring_parameters.bonus_level_policy
+          ) {
+            combined.game_scoring_parameters.bonus_level_policy =
+              combined.bonus_level_policy;
+          }
+          setGameSettings(combined);
+        };
+
+        fetchAsync().catch((e) => {
+          console.error(e);
+          localStorage.setItem(
+            "gameSettingsInLocalStorage",
+            JSON.stringify(props.state.propagated)
+          );
+        });
       } catch (err) {
         localStorage.setItem(
           "gameSettingsInLocalStorage",
@@ -1006,13 +1030,13 @@ const Initialize = (props: IProps): JSX.Element => {
             </select>
           </label>
         </div>
+        <ScoringSettings state={props.state} numDecks={decksEffective} />
         <UncommonSettings
           state={props.state}
           setBidPolicy={setBidPolicy}
           setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}
-          setBonusLevelPolicy={setBonusLevelPolicy}
           setKittyBidPolicy={setKittyBidPolicy}
         />
         <DifficultySettings

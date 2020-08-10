@@ -53,6 +53,11 @@ export type MessageVariant =
           confetti: boolean;
         };
       };
+    }
+  | {
+      type: "GameScoringParametersChanged";
+      parameters: IGameScoringParameters;
+      old_parameters: IGameScoringParameters;
     };
 
 export interface IPlayer {
@@ -142,7 +147,6 @@ export interface IPropagatedState {
   landlord: number | null;
   chat_link: string | null;
   advancement_policy: "Unrestricted" | "DefendPoints";
-  bonus_level_policy: "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
   kitty_penalty: "Times" | "Power";
   kitty_bid_policy: "FirstCard" | "FirstCardOfLevelOrHighest";
   throw_penalty: "None" | "TenPointsPerAttempt";
@@ -155,6 +159,15 @@ export interface IPropagatedState {
   kitty_theft_policy: "AllowKittyTheft" | "NoKittyTheft";
   game_shadowing_policy: "AllowMultipleSessions" | "SingleSessionOnly";
   game_start_policy: "AllowAnyPlayer" | "AllowLandlordOnly";
+  game_scoring_parameters: IGameScoringParameters;
+}
+
+export interface IGameScoringParameters {
+  step_size_per_deck: number;
+  num_steps_to_non_landlord_turnover: number;
+  deadzone_size: number;
+  truncate_zero_crossing_window: boolean;
+  bonus_level_policy: "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
 }
 
 export interface IHands {

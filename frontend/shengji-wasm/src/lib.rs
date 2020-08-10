@@ -3,6 +3,7 @@ use shengji_core::{
     bidding::{Bid, BidPolicy},
     game_state::Player,
     hands::Hands,
+    scoring::{compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters},
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
@@ -243,4 +244,49 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
 
     Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results })
         .map_err(|_| "failed to serialize response")?)
+}
+
+#[derive(Deserialize)]
+struct ExplainScoringRequest {
+    num_decks: usize,
+    params: GameScoringParameters,
+    smaller_landlord_team_size: bool,
+}
+
+#[derive(Serialize)]
+struct ExplainScoringResponse {
+    results: Vec<ScoreSegment>,
+}
+
+#[derive(Serialize)]
+struct ScoreSegment {
+    point_threshold: isize,
+    results: GameScoreResult,
+}
+
+#[wasm_bindgen]
+pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let ExplainScoringRequest {
+        num_decks,
+        params,
+        smaller_landlord_team_size,
+    } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+    let deltas = explain_level_deltas(params, num_decks, smaller_landlord_team_size)
+        .map_err(|_| "Failed to explain scores")?;
+
+    Ok(JsValue::from_serde(&ExplainScoringResponse {
+        results: deltas
+            .into_iter()
+            .map(|(pts, res)| ScoreSegment {
+                point_threshold: pts,
+                results: res,
+            })
+            .collect(),
+    })
+    .map_err(|_| "failed to serialize response")?)
 }

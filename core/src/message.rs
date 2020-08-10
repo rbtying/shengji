@@ -133,6 +133,7 @@ pub enum MessageVariant {
     },
     GameScoringParametersChanged {
         parameters: GameScoringParameters,
+        old_parameters: GameScoringParameters,
     },
     PickedUpCards,
     PutDownCards,
