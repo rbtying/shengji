@@ -930,8 +930,6 @@ pub struct PlayPhase {
     last_trick: Option<Trick>,
     #[serde(default)]
     exchanger: Option<PlayerID>,
-    //#[serde(default)]
-    //scoring_parameters: GameScoringParameters
 }
 
 impl PlayPhase {
