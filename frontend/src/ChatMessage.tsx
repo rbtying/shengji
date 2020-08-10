@@ -63,7 +63,7 @@ const renderScoringMessage = (message: IMessage): JSX.Element => {
       );
     }
     if (
-      variant.old_parameters.num_steps_to_non_landlord_turnover !=
+      variant.old_parameters.num_steps_to_non_landlord_turnover !==
       variant.parameters.num_steps_to_non_landlord_turnover
     ) {
       changes.push(
