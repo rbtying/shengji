@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactModal from "react-modal";
+import { AppStateContext } from "./AppStateProvider";
 
 const contentStyle = {
   position: "absolute",
@@ -8,8 +9,16 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
+const changeLogVersion: number = 1;
+
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const { state, updateState } = React.useContext(AppStateContext);
+  React.useEffect(() => {
+    if (state.changeLogLastViewed !== changeLogVersion) {
+      setModalOpen(true);
+    }
+  }, []);
   return (
     <>
       <a
@@ -23,12 +32,19 @@ const ChangeLog = (): JSX.Element => {
       </a>
       <ReactModal
         isOpen={modalOpen}
-        onRequestClose={() => setModalOpen(false)}
+        onRequestClose={() => {
+          setModalOpen(false);
+          updateState({ changeLogLastViewed: changeLogVersion });
+        }}
         shouldCloseOnOverlayClick
         shouldCloseOnEsc
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>8/09/2020:</p>
+        <ul>
+          <li>Support configuring different score thresholds for each game.</li>
+        </ul>
         <p>8/07/2020:</p>
         <ul>
           <li>Allow card colors to be customized</li>

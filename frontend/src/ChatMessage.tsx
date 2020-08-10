@@ -32,8 +32,71 @@ const renderMessage = (message: IMessage): JSX.Element => {
           ))}
         </span>
       );
+    case "GameScoringParametersChanged":
+      return renderScoringMessage(message);
     default:
       return <span>{message.message}</span>;
+  }
+};
+
+const renderScoringMessage = (message: IMessage): JSX.Element => {
+  const changes = [];
+  const variant = message.data?.variant;
+  if (variant?.type === "GameScoringParametersChanged") {
+    if (
+      variant.old_parameters.step_size_per_deck !==
+      variant.parameters.step_size_per_deck
+    ) {
+      changes.push(
+        <span key={changes.length}>
+          step size: {variant.parameters.step_size_per_deck}分 per deck
+        </span>
+      );
+    }
+    if (
+      variant.old_parameters.deadzone_size !== variant.parameters.deadzone_size
+    ) {
+      changes.push(
+        <span key={changes.length}>
+          non-leveling steps: {variant.parameters.deadzone_size}{" "}
+        </span>
+      );
+    }
+    if (
+      variant.old_parameters.num_steps_to_non_landlord_turnover !==
+      variant.parameters.num_steps_to_non_landlord_turnover
+    ) {
+      changes.push(
+        <span key={changes.length}>
+          steps to turnover:{" "}
+          {variant.parameters.num_steps_to_non_landlord_turnover}{" "}
+        </span>
+      );
+    }
+    if (
+      variant.old_parameters.bonus_level_policy !==
+      variant.parameters.bonus_level_policy
+    ) {
+      if (
+        variant.parameters.bonus_level_policy ===
+        "BonusLevelForSmallerLandlordTeam"
+      ) {
+        changes.push(
+          <span key={changes.length}>small-team bonus enabled</span>
+        );
+      } else {
+        changes.push(
+          <span key={changes.length}>small-team bonus disabled</span>
+        );
+      }
+    }
+    return (
+      <span>
+        {message.data.actor_name} updated the scoring parameters: {changes}
+      </span>
+    );
+  } else {
+    return null;
   }
 };
 

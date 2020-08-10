@@ -10,6 +10,7 @@ import {
   BidPolicy,
   ITrick,
   TrickDrawPolicy,
+  IGameScoringParameters,
 } from "./types";
 
 interface Context {
@@ -22,6 +23,8 @@ interface Context {
     req: IDecomposeTrickFormatRequest
   ) => IDecomposedTrickFormat[];
   canPlayCards: (req: ICanPlayCardsRequest) => boolean;
+  explainScoring: (req: IExplainScoringRequest) => IScoreSegment[];
+  computeScore: (req: IComputeScoreRequest) => IComputeScoreResponse;
 }
 
 export interface IFoundViablePlay {
@@ -70,12 +73,52 @@ interface ICanPlayCardsRequest {
   trick_draw_policy: TrickDrawPolicy;
 }
 
+interface IExplainScoringRequest {
+  num_decks: number;
+  params: IGameScoringParameters;
+  smaller_landlord_team_size: boolean;
+}
+
+export interface IScoreSegment {
+  point_threshold: number;
+  results: IGameScoreResult;
+}
+
+interface IGameScoreResult {
+  landlord_won: boolean;
+  landlord_bonus: boolean;
+  landlord_delta: number;
+  non_landlord_delta: number;
+}
+
+interface IComputeScoreRequest {
+  num_decks: number;
+  params: IGameScoringParameters;
+  smaller_landlord_team_size: boolean;
+  non_landlord_points: number;
+}
+
+interface IComputeScoreResponse {
+  score: IGameScoreResult;
+  next_threshold: number;
+}
+
 export const WasmContext = React.createContext<Context>({
   findViablePlays: (trump, cards) => [],
   findValidBids: (req) => [],
   sortAndGroupCards: (req) => [],
   decomposeTrickFormat: (req) => [],
   canPlayCards: (req) => false,
+  explainScoring: (req) => [],
+  computeScore: (req) => ({
+    score: {
+      landlord_won: true,
+      landlord_bonus: false,
+      landlord_delta: 0,
+      non_landlord_delta: 0,
+    },
+    next_threshold: 0,
+  }),
 });
 
 export default WasmContext;

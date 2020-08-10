@@ -1,10 +1,11 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { IPlayer, IGameScoringParameters } from "./types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
+import WasmContext from "./WasmContext";
 
 interface IProps {
   players: IPlayer[];
@@ -14,13 +15,15 @@ interface IProps {
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
-  bonusLevel: boolean;
+  smallerTeamSize: boolean;
+  gameScoringParameters: IGameScoringParameters;
 }
 
 const Points = (props: IProps): JSX.Element => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
+  const { computeScore } = React.useContext(WasmContext);
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
     props.players
@@ -35,14 +38,18 @@ const Points = (props: IProps): JSX.Element => {
       if (props.landlordTeam.includes(p.id)) {
         nonLandlordPointsWithPenalties += penalty;
       } else {
-        nonLandlordPointsWithPenalties = Math.max(
-          0,
-          nonLandlordPoints - penalty
-        );
+        nonLandlordPointsWithPenalties -= penalty;
       }
     }
   });
   const penaltyDelta = nonLandlordPointsWithPenalties - nonLandlordPoints;
+
+  const { score, next_threshold: nextThreshold } = computeScore({
+    params: props.gameScoringParameters,
+    num_decks: props.numDecks,
+    smaller_landlord_team_size: props.smallerTeamSize,
+    non_landlord_points: nonLandlordPointsWithPenalties,
+  });
 
   const playerPointElements = props.players.map((player) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
@@ -68,48 +75,23 @@ const Points = (props: IProps): JSX.Element => {
   // TODO: Pass the landlord as a Player object instead of numeric ID
   const landlord = props.players.find((p) => p.id === props.landlord);
 
-  const segment = props.numDecks * 20;
   let thresholdStr = "";
-
-  if (nonLandlordPointsWithPenalties === 0) {
-    if (props.bonusLevel) {
-      thresholdStr = `${landlord.name}'s team will go up 4 levels, including a small-team bonus (next threshold: 5分)`;
-    } else {
-      thresholdStr = `${landlord.name}'s team will go up 3 levels (next threshold: 5分)`;
+  if (score.landlord_won) {
+    thresholdStr = `${landlord.name}'s team will go up ${
+      score.landlord_delta
+    } level${score.landlord_delta === 1 ? "" : "s"}`;
+    if (score.landlord_bonus) {
+      thresholdStr += ", including a small-team bonus";
     }
-  } else if (nonLandlordPointsWithPenalties < segment) {
-    if (props.bonusLevel) {
-      thresholdStr = `${landlord.name}'s team will go up 3 levels, including a small-team bonus (next threshold: ${segment}分)`;
-    } else {
-      thresholdStr = `${landlord.name}'s team will go up 2 levels (next threshold: ${segment}分)`;
-    }
-  } else if (nonLandlordPointsWithPenalties < 2 * segment) {
-    if (props.bonusLevel) {
-      thresholdStr = `${
-        landlord.name
-      }'s team will go up 2 levels, including a small-team bonus (next threshold: ${
-        2 * segment
-      }分)`;
-    } else {
-      thresholdStr = `${
-        landlord.name
-      }'s team will go up 1 level (next threshold: ${2 * segment}分)`;
-    }
-  } else if (nonLandlordPointsWithPenalties < 3 * segment) {
-    thresholdStr = `Neither team will go up a level (next threshold: ${
-      3 * segment
-    }分)`;
-  } else if (nonLandlordPointsWithPenalties < 4 * segment) {
-    thresholdStr = `The attacking team will go up 1 level (next threshold: ${
-      4 * segment
-    }分)`;
-  } else if (nonLandlordPointsWithPenalties < 5 * segment) {
-    thresholdStr = `The attacking team will go up 2 levels (next threshold: ${
-      5 * segment
-    }分)`;
+  } else if (score.non_landlord_delta === 0) {
+    thresholdStr = "Neither team will go up a level";
   } else {
-    thresholdStr = "The attacking team will go up 3 levels.";
+    thresholdStr = `The attacking team will go up ${
+      score.non_landlord_delta
+    } level${score.non_landlord_delta === 1 ? "" : "s"}`;
   }
+
+  thresholdStr += ` (next threshold: ${nextThreshold}分)`;
 
   return (
     <div className="points">

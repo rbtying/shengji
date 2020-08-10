@@ -4,7 +4,10 @@ import gameStatistics, { GameStatistics } from "./state/GameStatistics";
 import settings, { Settings } from "./state/Settings";
 import { IGameState } from "./types";
 import { State, combineState, noPersistence } from "./State";
-import { stringLocalStorageState } from "./localStorageState";
+import {
+  stringLocalStorageState,
+  numberLocalStorageState,
+} from "./localStorageState";
 
 export interface AppState {
   settings: Settings;
@@ -17,6 +20,7 @@ export interface AppState {
   errors: string[];
   messages: IMessage[];
   confetti: string | null;
+  changeLogLastViewed: number;
 }
 
 const appState: State<AppState> = combineState({
@@ -26,6 +30,7 @@ const appState: State<AppState> = combineState({
   everConnected: noPersistence(() => false),
   roomName: noPersistence(() => window.location.hash.slice(1)),
   name: stringLocalStorageState("name"),
+  changeLogLastViewed: numberLocalStorageState("change_log_last_viewed"),
   game_state: noPersistence(() => null),
   errors: noPersistence(() => []),
   messages: noPersistence(() => []),

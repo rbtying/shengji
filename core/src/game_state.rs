@@ -9,6 +9,9 @@ use url::Url;
 use crate::bidding::{Bid, BidPolicy, BidTakebackPolicy};
 use crate::hands::Hands;
 use crate::message::MessageVariant;
+use crate::scoring::{
+    compute_level_deltas, BonusLevelPolicy, GameScoreResult, GameScoringParameters,
+};
 use crate::trick::{ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
@@ -158,19 +161,6 @@ impl Default for FirstLandlordSelectionPolicy {
         FirstLandlordSelectionPolicy::ByWinningBid
     }
 }
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum BonusLevelPolicy {
-    NoBonusLevel,
-    BonusLevelForSmallerLandlordTeam,
-}
-
-impl Default for BonusLevelPolicy {
-    fn default() -> Self {
-        BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
-    }
-}
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum PlayTakebackPolicy {
     AllowPlayTakeback,
@@ -258,8 +248,6 @@ pub struct PropagatedState {
     #[serde(default)]
     bid_policy: BidPolicy,
     #[serde(default)]
-    bonus_level_policy: BonusLevelPolicy,
-    #[serde(default)]
     play_takeback_policy: PlayTakebackPolicy,
     #[serde(default)]
     bid_takeback_policy: BidTakebackPolicy,
@@ -267,9 +255,18 @@ pub struct PropagatedState {
     pub game_shadowing_policy: GameShadowingPolicy,
     #[serde(default)]
     pub game_start_policy: GameStartPolicy,
+    #[serde(default)]
+    game_scoring_parameters: GameScoringParameters,
+    // TODO: remove
+    #[serde(default)]
+    bonus_level_policy: BonusLevelPolicy,
 }
 
 impl PropagatedState {
+    pub fn num_decks(&self) -> usize {
+        self.num_decks.unwrap_or(self.players.len() / 2)
+    }
+
     pub fn set_game_mode(
         &mut self,
         game_mode: GameModeSettings,
@@ -391,6 +388,13 @@ impl PropagatedState {
             msgs.push(MessageVariant::NumDecksSet { num_decks });
             self.num_decks = num_decks;
             msgs.extend(self.set_kitty_size(None)?);
+            if self
+                .game_scoring_parameters
+                .materialize(self.num_decks(), 100)
+                .is_err()
+            {
+                msgs.extend(self.set_game_scoring_parameters(GameScoringParameters::default())?);
+            };
         }
         Ok(msgs)
     }
@@ -582,13 +586,22 @@ impl PropagatedState {
         }
     }
 
-    pub fn set_bonus_level_policy(
+    pub fn set_game_scoring_parameters(
         &mut self,
-        policy: BonusLevelPolicy,
+        parameters: GameScoringParameters,
     ) -> Result<Vec<MessageVariant>, Error> {
-        if policy != self.bonus_level_policy {
-            self.bonus_level_policy = policy;
-            Ok(vec![MessageVariant::BonusLevelPolicySet { policy }])
+        if parameters != self.game_scoring_parameters {
+            let materialized = parameters.materialize(self.num_decks(), 100)?;
+            // Explain exercises all the search paths, so make sure to try
+            // explaining before accepting the new parameters!
+            materialized.explain()?;
+            let msgs = vec![MessageVariant::GameScoringParametersChanged {
+                parameters,
+                old_parameters: self.game_scoring_parameters,
+            }];
+            self.game_scoring_parameters = parameters;
+            self.bonus_level_policy = self.game_scoring_parameters.bonus_level_policy;
+            Ok(msgs)
         } else {
             Ok(vec![])
         }
@@ -1221,19 +1234,32 @@ impl PlayPhase {
             smaller_landlord_team = actual_team_size < setting_team_size;
         }
 
-        let (non_landlord_level_bump, landlord_level_bump, landlord_won, bonus_level_earned) =
-            Self::compute_level_deltas(
-                self.num_decks,
-                non_landlords_points,
-                self.propagated.bonus_level_policy,
-                smaller_landlord_team,
-            );
+        let mut propagated = self.propagated.clone();
+
+        let GameScoreResult {
+            non_landlord_delta: non_landlord_level_bump,
+            landlord_delta: landlord_level_bump,
+            landlord_won,
+            landlord_bonus: bonus_level_earned,
+        } = compute_level_deltas(
+            {
+                // TODO: remove when bonus_level_policy can be removed entirely
+                if propagated.bonus_level_policy
+                    != propagated.game_scoring_parameters.bonus_level_policy
+                {
+                    propagated.game_scoring_parameters.bonus_level_policy =
+                        propagated.bonus_level_policy;
+                }
+                propagated.game_scoring_parameters
+            },
+            self.num_decks,
+            non_landlords_points,
+            smaller_landlord_team,
+        )?;
 
         if bonus_level_earned {
             msgs.push(MessageVariant::BonusLevelEarned);
         };
-
-        let mut propagated = self.propagated.clone();
 
         let landlord_idx = bail_unwrap!(propagated
             .players
@@ -1275,49 +1301,6 @@ impl PlayPhase {
         msgs.extend(propagated.make_all_observers_into_players()?);
 
         Ok((InitializePhase { propagated }, msgs))
-    }
-
-    pub fn compute_level_deltas(
-        num_decks: usize,
-        non_landlords_points: isize,
-        bonus_level_policy: BonusLevelPolicy,
-        smaller_landlord_team_size: bool,
-    ) -> (usize, usize, bool, bool) {
-        let point_segments = (num_decks * 20) as isize;
-        let landlord_won = non_landlords_points < 2 * point_segments;
-        let bonus_level;
-
-        if landlord_won
-            && bonus_level_policy == BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
-            && smaller_landlord_team_size
-        {
-            bonus_level = 1;
-        } else {
-            bonus_level = 0;
-        };
-
-        if landlord_won && non_landlords_points <= 0 {
-            (
-                0,
-                bonus_level + ((3 - non_landlords_points / point_segments) as usize),
-                true,
-                bonus_level == 1,
-            )
-        } else if landlord_won {
-            (
-                0,
-                bonus_level + ((2 - non_landlords_points / point_segments) as usize),
-                true,
-                bonus_level == 1,
-            )
-        } else {
-            (
-                (non_landlords_points / point_segments - 2) as usize,
-                0,
-                false,
-                bonus_level == 1,
-            )
-        }
     }
 }
 
@@ -1855,10 +1838,7 @@ impl InitializePhase {
             }
         };
 
-        let num_decks = self
-            .propagated
-            .num_decks
-            .unwrap_or(self.propagated.players.len() / 2);
+        let num_decks = self.propagated.num_decks();
         let mut deck = Vec::with_capacity(num_decks * FULL_DECK.len());
         for _ in 0..num_decks {
             deck.extend(FULL_DECK.iter());
@@ -1903,14 +1883,21 @@ impl InitializePhase {
             None
         };
 
+        let mut propagated = self.propagated.clone();
+        // TODO: remove when bonus_level_policy can be removed entirely
+        if propagated.bonus_level_policy != propagated.game_scoring_parameters.bonus_level_policy {
+            propagated.game_scoring_parameters.bonus_level_policy =
+                self.propagated.bonus_level_policy;
+        }
+
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
             kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
             hands: Hands::new(self.propagated.players.iter().map(|p| p.id)),
-            propagated: self.propagated.clone(),
             bids: Vec::new(),
             revealed_cards: 0,
             autobid: None,
+            propagated,
             position,
             num_decks,
             game_mode,
@@ -1936,114 +1923,11 @@ impl DerefMut for InitializePhase {
 #[cfg(test)]
 mod tests {
     use super::{
-        AdvancementPolicy, BonusLevelPolicy, FriendSelection, GameMode, GameModeSettings,
-        InitializePhase, KittyTheftPolicy, MessageVariant, PlayPhase, Player,
+        AdvancementPolicy, FriendSelection, GameMode, GameModeSettings, InitializePhase,
+        KittyTheftPolicy, MessageVariant, PlayPhase, Player,
     };
 
     use crate::types::{cards, Card, Number, PlayerID};
-
-    #[test]
-    fn test_level_deltas() {
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, -80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 5, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, -40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 4, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, -35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 0, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 3, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 5, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 35, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 2, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 40, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 75, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 1, true, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 80, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 115, BonusLevelPolicy::NoBonusLevel, false),
-            (0, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 120, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 155, BonusLevelPolicy::NoBonusLevel, false),
-            (1, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 160, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 195, BonusLevelPolicy::NoBonusLevel, false),
-            (2, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 200, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 235, BonusLevelPolicy::NoBonusLevel, false),
-            (3, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 240, BonusLevelPolicy::NoBonusLevel, false),
-            (4, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(2, 280, BonusLevelPolicy::NoBonusLevel, false),
-            (5, 0, false, false)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(
-                2,
-                0,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 4, true, true)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(
-                3,
-                0,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 4, true, true)
-        );
-        assert_eq!(
-            PlayPhase::compute_level_deltas(
-                3,
-                50,
-                BonusLevelPolicy::BonusLevelForSmallerLandlordTeam,
-                true
-            ),
-            (0, 3, true, true)
-        );
-    }
 
     #[test]
     fn test_player_level_deltas() {
