@@ -9,4 +9,4 @@ members = [
 lto = true
 
 [profile.release.package."shengji-wasm"]
-opt-level = 's'
+opt-level = 'z'
