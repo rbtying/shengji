@@ -654,6 +654,9 @@ const Initialize = (props: IProps): JSX.Element => {
     );
   }
 
+  const landlordIndex = props.state.propagated.players.findIndex(
+    (p) => p.id === props.state.propagated.landlord
+  );
   const saveGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     localStorage.setItem(
@@ -902,9 +905,8 @@ const Initialize = (props: IProps): JSX.Element => {
         <button
           disabled={
             props.state.propagated.game_start_policy === "AllowLandlordOnly" &&
-            props.state.propagated.landlord != null &&
-            props.state.propagated.players[props.state.propagated.landlord]
-              .name !== props.name
+            landlordIndex !== -1 &&
+            props.state.propagated.players[landlordIndex].name !== props.name
           }
           onClick={startGame}
         >
