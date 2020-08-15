@@ -277,7 +277,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
         .into_serde()
         .map_err(|_| "Failed to deserialize request")?;
     let deltas = explain_level_deltas(params, num_decks, smaller_landlord_team_size)
-        .map_err(|_| "Failed to explain scores")?;
+        .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
 
     Ok(JsValue::from_serde(&ExplainScoringResponse {
         results: deltas
