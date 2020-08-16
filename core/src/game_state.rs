@@ -117,6 +117,7 @@ impl Default for KittyPenalty {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum AdvancementPolicy {
     Unrestricted,
+    FullyUnrestricted,
     DefendPoints,
 }
 
@@ -1138,6 +1139,8 @@ impl PlayPhase {
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
+                        AdvancementPolicy::FullyUnrestricted => (),
+
                         // Player *must* defend on Ace and win to advance.
                         _ if player.rank() == Number::Ace
                             && !(is_defending
@@ -1147,7 +1150,6 @@ impl PlayPhase {
                             was_blocked = true;
                             break;
                         }
-
                         AdvancementPolicy::Unrestricted => (),
                         AdvancementPolicy::DefendPoints => match player.rank().points() {
                             None => (),
