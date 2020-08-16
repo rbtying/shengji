@@ -60,9 +60,10 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
             value={props.state.propagated.advancement_policy}
             onChange={props.setAdvancementPolicy}
           >
-            <option value="Unrestricted">Unrestricted</option>
+            <option value="Unrestricted">A must be defended</option>
+            <option value="FullyUnrestricted">Unrestricted</option>
             <option value="DefendPoints">
-              Points (5, 10, K) must be defended
+              Points (5, 10, K) and A must be defended
             </option>
           </select>
         </label>
