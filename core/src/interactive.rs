@@ -125,6 +125,13 @@ impl InteractiveGame {
                 info!(logger, "Setting bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_policy(policy)?
             }
+            (
+                Message::SetShouldRevealKittyAtEndOfGame(should_reveal),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting should reveal kitty at end of game"; "should_reveal" => format!("{:?}", should_reveal));
+                state.set_should_reveal_kitty_at_end_of_game(should_reveal)?
+            }
             (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
                 state.set_landlord(landlord)?;
@@ -366,6 +373,7 @@ pub enum Message {
     SetKittyTheftPolicy(KittyTheftPolicy),
     SetGameShadowingPolicy(GameShadowingPolicy),
     SetGameStartPolicy(GameStartPolicy),
+    SetShouldRevealKittyAtEndOfGame(bool),
     StartGame,
     DrawCard,
     RevealCard,
@@ -378,6 +386,7 @@ pub enum Message {
     BeginPlay,
     PlayCards(Vec<Card>),
     PlayCardsWithHint(Vec<Card>, Vec<TrickUnit>),
+    EndOfGameKittyReveal(Vec<Card>),
     EndTrick,
     TakeBackCards,
     TakeBackBid,
@@ -428,7 +437,9 @@ impl BroadcastMessage {
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid} => format!("{} set winning bid to decide both landlord and trump", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength} => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
-            BidPolicySet { policy: BidPolicy::GreaterLength} => format!("{} required all bids to have more cards than the previous bids", n?),            
+            BidPolicySet { policy: BidPolicy::GreaterLength} => format!("{} required all bids to have more cards than the previous bids", n?),
+            ShouldRevealKittyAtEndOfGameSet { should_reveal: true } => format!("{} enabled the kitty to be revealed at the end of each game", n?),
+            ShouldRevealKittyAtEndOfGameSet { should_reveal: false } => format!("{} disabled the kitty from being revealed at the end of each game", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
             NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),
@@ -440,6 +451,7 @@ impl BroadcastMessage {
             TookBackBid => format!("{} took back their last bid", n?),
             TookBackPlay => format!("{} took back their last play", n?),
             PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
+            EndOfGameKittyReveal { ref cards } => format!("{} in kitty", cards.iter().map(|c| c.as_char()).collect::<String>()),
             ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
             SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
             SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
@@ -464,7 +476,7 @@ impl BroadcastMessage {
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::AllowPlayTakeback } => format!("{} allowed taking back plays", n?),
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::NoPlayTakeback } => format!("{} disallowed taking back plays", n?),
             BidTakebackPolicySet { policy: BidTakebackPolicy::AllowBidTakeback } => format!("{} allowed taking back bids", n?),
-            BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),            
+            BidTakebackPolicySet { policy: BidTakebackPolicy::NoBidTakeback } => format!("{} disallowed taking back bids", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::AllowKittyTheft } => format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } => format!("{} disabled stealing the bottom cards after the leader", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} allowed players to be shadowed by joining with the same name", n?),

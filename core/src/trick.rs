@@ -586,6 +586,7 @@ impl Trick {
             self.trump,
             throw_eval_policy,
         );
+
         Ok(msgs)
     }
 

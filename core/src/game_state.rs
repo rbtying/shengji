@@ -249,6 +249,8 @@ pub struct PropagatedState {
     #[serde(default)]
     bid_policy: BidPolicy,
     #[serde(default)]
+    should_reveal_kitty_at_end_of_game: bool,
+    #[serde(default)]
     play_takeback_policy: PlayTakebackPolicy,
     #[serde(default)]
     bid_takeback_policy: BidTakebackPolicy,
@@ -449,6 +451,16 @@ impl PropagatedState {
     pub fn set_bid_policy(&mut self, policy: BidPolicy) -> Result<Vec<MessageVariant>, Error> {
         self.bid_policy = policy;
         Ok(vec![MessageVariant::BidPolicySet { policy }])
+    }
+
+    pub fn set_should_reveal_kitty_at_end_of_game(
+        &mut self,
+        should_reveal: bool,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.should_reveal_kitty_at_end_of_game = should_reveal;
+        Ok(vec![MessageVariant::ShouldRevealKittyAtEndOfGameSet {
+            should_reveal,
+        }])
     }
 
     pub fn set_landlord(&mut self, landlord: Option<PlayerID>) -> Result<(), Error> {
@@ -1078,6 +1090,11 @@ impl PlayPhase {
                     points: kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(),
                     multiplier: kitty_multipler,
                 });
+                if self.propagated.should_reveal_kitty_at_end_of_game {
+                    msgs.push(MessageVariant::EndOfGameKittyReveal {
+                        cards: self.kitty.clone(),
+                    });
+                }
             }
         }
         let winner_idx = bail_unwrap!(self.propagated.players.iter().position(|p| p.id == winner));
