@@ -215,6 +215,9 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
 interface IUncommonSettings {
   state: IInitializePhase;
   setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setShouldRevealKittyAtEndOfGame: (
+    v: React.ChangeEvent<HTMLSelectElement>
+  ) => void;
   setFirstLandlordSelectionPolicy: (
     v: React.ChangeEvent<HTMLSelectElement>
   ) => void;
@@ -301,6 +304,26 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             </option>
             <option value="GreaterLength">
               All bids must have more cards than the previous bids
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Should Reveal Kitty at End of Game:{" "}
+          <select
+            value={
+              props.state.propagated.should_reveal_kitty_at_end_of_game
+                ? "show"
+                : "hide"
+            }
+            onChange={props.setShouldRevealKittyAtEndOfGame}
+          >
+            <option value="hide">
+              Do not reveal contents of the kitty at the end of the game in chat
+            </option>
+            <option value="show">
+              Reveal contents of the kitty at the end of the game in chat
             </option>
           </select>
         </label>
@@ -435,6 +458,19 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetBidPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+
+  const setShouldRevealKittyAtEndOfGame = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetShouldRevealKittyAtEndOfGame: evt.target.value === "show",
         },
       });
     }
@@ -790,6 +826,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "should_reveal_kitty_at_end_of_game":
+            send({
+              Action: {
+                SetShouldRevealKittyAtEndOfGame: value,
+              },
+            });
+            break;
           case "game_scoring_parameters":
             send({
               Action: {
@@ -1037,6 +1080,7 @@ const Initialize = (props: IProps): JSX.Element => {
         <UncommonSettings
           state={props.state}
           setBidPolicy={setBidPolicy}
+          setShouldRevealKittyAtEndOfGame={setShouldRevealKittyAtEndOfGame}
           setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}

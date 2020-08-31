@@ -36,6 +36,9 @@ pub enum MessageVariant {
         points: usize,
         multiplier: usize,
     },
+    EndOfGameKittyReveal {
+        cards: Vec<Card>,
+    },
     JoinedGame {
         player: PlayerID,
     },
@@ -63,6 +66,9 @@ pub enum MessageVariant {
     },
     BidPolicySet {
         policy: BidPolicy,
+    },
+    ShouldRevealKittyAtEndOfGameSet {
+        should_reveal: bool,
     },
     NumDecksSet {
         num_decks: Option<usize>,

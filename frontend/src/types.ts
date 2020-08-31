@@ -33,6 +33,7 @@ export type MessageVariant =
   | { type: "NumDecksSet"; num_decks: number | null }
   | { type: "NumFriendsSet"; num_friends: number | null }
   | { type: "PlayedCards"; cards: string[] }
+  | { type: "EndOfGameKittyReveal"; cards: string[] }
   | { type: "PointsInKitty"; points: number; multiplier: number }
   | { type: "RankAdvanced"; player: number; new_rank: number }
   | { type: "ResettingGame" }
@@ -160,6 +161,7 @@ export interface IPropagatedState {
   game_shadowing_policy: "AllowMultipleSessions" | "SingleSessionOnly";
   game_start_policy: "AllowAnyPlayer" | "AllowLandlordOnly";
   game_scoring_parameters: IGameScoringParameters;
+  should_reveal_kitty_at_end_of_game: boolean;
 }
 
 export interface IGameScoringParameters {

@@ -32,6 +32,15 @@ const renderMessage = (message: IMessage): JSX.Element => {
           ))}
         </span>
       );
+    case "EndOfGameKittyReveal":
+      return (
+        <span>
+          {variant.cards.map((card, i) => (
+            <InlineCard card={card} key={i} />
+          ))}{" "}
+          in kitty
+        </span>
+      );
     case "GameScoringParametersChanged":
       return renderScoringMessage(message);
     default:
