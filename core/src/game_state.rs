@@ -1082,6 +1082,11 @@ impl PlayPhase {
             .collect::<Vec<_>>();
 
         if self.hands.is_empty() {
+            if self.propagated.should_reveal_kitty_at_end_of_game {
+                msgs.push(MessageVariant::EndOfGameKittyReveal {
+                    cards: self.kitty.clone(),
+                });
+            }
             for _ in 0..kitty_multipler {
                 new_points.extend(kitty_points.iter().copied());
             }
@@ -1090,11 +1095,6 @@ impl PlayPhase {
                     points: kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(),
                     multiplier: kitty_multipler,
                 });
-                if self.propagated.should_reveal_kitty_at_end_of_game {
-                    msgs.push(MessageVariant::EndOfGameKittyReveal {
-                        cards: self.kitty.clone(),
-                    });
-                }
             }
         }
         let winner_idx = bail_unwrap!(self.propagated.players.iter().position(|p| p.id == winner));
