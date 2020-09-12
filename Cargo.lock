@@ -1387,7 +1387,6 @@ dependencies = [
  "lazy_static",
  "ruzstd",
  "serde",
- "serde_json",
  "shengji-core",
  "shengji-types",
  "smallvec",
