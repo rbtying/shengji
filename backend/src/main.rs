@@ -101,8 +101,11 @@ async fn send_to_user(
     tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
     msg: &GameMessage,
 ) -> bool {
-    if let Ok(s) = bincode::serialize(msg) {
-        return tx.send(Ok(Message::binary(s))).is_ok();
+    let mut c = zstd::block::Compressor::new();
+    if let Ok(j) = serde_json::to_vec(&msg) {
+        if let Ok(s) = c.compress(&j, 0) {
+            return tx.send(Ok(Message::binary(s))).is_ok();
+        }
     }
     false
 }

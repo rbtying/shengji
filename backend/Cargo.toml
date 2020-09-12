@@ -13,7 +13,6 @@ dynamic = ["slog-term"]
 [dependencies]
 anyhow = "1.0"
 shengji-types = { path = "./backend-types" }
-bincode = "1.3"
 futures = { version = "0.3" }
 lazy_static = "1.4.0"
 phf = "0.8.0"
@@ -27,6 +26,7 @@ slog-term = { version = "2.5", optional = true }
 static_dir = "0.1.3"
 tokio = { version = "0.2", features = ["macros", "fs"] }
 warp = "0.2"
+zstd = "0.5"
 
 [build-dependencies]
 vergen = "3"
