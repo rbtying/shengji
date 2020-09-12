@@ -19,3 +19,6 @@ pub enum GameMessage {
     Error(String),
     Kicked,
 }
+
+/// zstd dictionary, compressed with zstd.
+pub const ZSTD_ZSTD_DICT: &[u8] = include_bytes!("../dict.zstd");

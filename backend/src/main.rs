@@ -18,7 +18,7 @@ use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
 use shengji_core::{game_state, interactive, types};
-use shengji_types::GameMessage;
+use shengji_types::{GameMessage, ZSTD_ZSTD_DICT};
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -38,6 +38,13 @@ lazy_static::lazy_static! {
             slog_async::Async::new(drain.fuse()).build().fuse(),
             o!("commit" => env!("VERGEN_SHA_SHORT"))
         )
+    };
+
+    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
+        let mut decomp = zstd::block::Decompressor::new();
+        // default zstd dictionary size is 112640
+        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112640).unwrap());
+        std::sync::Mutex::new(comp)
     };
 }
 
@@ -101,9 +108,8 @@ async fn send_to_user(
     tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
     msg: &GameMessage,
 ) -> bool {
-    let mut c = zstd::block::Compressor::new();
     if let Ok(j) = serde_json::to_vec(&msg) {
-        if let Ok(s) = c.compress(&j, 0) {
+        if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
             return tx.send(Ok(Message::binary(s))).is_ok();
         }
     }
