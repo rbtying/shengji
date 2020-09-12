@@ -1,3 +1,8 @@
+use std::io::{Cursor, Read};
+use std::sync::Mutex;
+
+use ruzstd::frame_decoder::FrameDecoder;
+use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy},
@@ -7,12 +12,31 @@ use shengji_core::{
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
+use shengji_types::ZSTD_ZSTD_DICT;
 use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
 // use web_sys::console;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+lazy_static::lazy_static! {
+    static ref ZSTD_DICT: Vec<u8> = {
+        let mut reader = Cursor::new(ZSTD_ZSTD_DICT);
+        let mut decoder =
+            StreamingDecoder::new(&mut reader).map_err(|_| "Failed to construct decoder").unwrap();
+        let mut v = Vec::new();
+        decoder
+            .read_to_end(&mut v)
+            .map_err(|e| format!("Failed to decode data {:?}", e)).unwrap();
+        v
+    };
+    static ref ZSTD_DECODER: Mutex<Option<FrameDecoder>> = {
+        let mut fd = FrameDecoder::new();
+        fd.add_dict(&ZSTD_DICT).unwrap();
+        Mutex::new(Some(fd))
+    };
+}
 
 #[derive(Deserialize)]
 struct FindViablePlaysRequest {
@@ -336,4 +360,20 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
         next_threshold,
     })
     .map_err(|_| "failed to serialize response")?)
+}
+
+#[wasm_bindgen]
+pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
+    let mut reader = Cursor::new(req);
+    let mut frame_decoder = ZSTD_DECODER.lock().unwrap();
+    let mut decoder =
+        StreamingDecoder::new_with_decoder(&mut reader, frame_decoder.take().unwrap())
+            .map_err(|_| "Failed to construct decoder")?;
+    let mut v = Vec::new();
+    decoder
+        .read_to_end(&mut v)
+        .map_err(|e| format!("Failed to decode data {:?}", e))?;
+    *frame_decoder = Some(decoder.inner());
+    drop(frame_decoder);
+    Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
 }

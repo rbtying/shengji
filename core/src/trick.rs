@@ -179,6 +179,10 @@ impl TrickFormat {
         self.trump
     }
 
+    pub fn size(&self) -> usize {
+        self.units.iter().map(|u| u.size()).sum()
+    }
+
     pub fn suit(&self) -> EffectiveSuit {
         self.suit
     }
@@ -404,6 +408,14 @@ impl Trick {
 
     pub fn player_queue(&self) -> impl Iterator<Item = PlayerID> + '_ {
         self.player_queue.iter().copied()
+    }
+
+    pub fn trump(&self) -> Trump {
+        self.trump
+    }
+
+    pub fn trick_format(&self) -> Option<&'_ TrickFormat> {
+        self.trick_format.as_ref()
     }
 
     ///
