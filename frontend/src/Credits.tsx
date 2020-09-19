@@ -9,7 +9,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 1;
+const changeLogVersion: number = 2;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>9/18/2020:</p>
+        <ul>
+          <li>Fix performance issues in long games.</li>
+        </ul>
         <p>8/30/2020:</p>
         <ul>
           <li>Support end of game kitty reveal.</li>

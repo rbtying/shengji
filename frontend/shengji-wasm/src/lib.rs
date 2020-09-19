@@ -17,9 +17,6 @@ use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
 // use web_sys::console;
 
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 lazy_static::lazy_static! {
     static ref ZSTD_DICT: Vec<u8> = {
         let mut reader = Cursor::new(ZSTD_ZSTD_DICT);
