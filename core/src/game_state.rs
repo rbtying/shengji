@@ -222,7 +222,7 @@ pub struct PropagatedState {
     max_player_id: usize,
     pub players: Vec<Player>,
     pub observers: Vec<Player>,
-    pub landlord: Option<PlayerID>,
+    landlord: Option<PlayerID>,
     #[serde(default)]
     landlord_emoji: Option<String>,
     chat_link: Option<String>,
@@ -241,7 +241,7 @@ pub struct PropagatedState {
     #[serde(default)]
     kitty_theft_policy: KittyTheftPolicy,
     #[serde(default)]
-    pub trick_draw_policy: TrickDrawPolicy,
+    trick_draw_policy: TrickDrawPolicy,
     #[serde(default)]
     throw_evaluation_policy: ThrowEvaluationPolicy,
     #[serde(default)]
@@ -713,8 +713,8 @@ pub struct Friend {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct FriendSelection {
-    pub card: Card,
-    pub initial_skip: usize,
+    card: Card,
+    initial_skip: usize,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -956,18 +956,6 @@ impl PlayPhase {
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         Ok(bail_unwrap!(self.trick.next_player()))
-    }
-
-    pub fn trick(&self) -> &Trick {
-        &self.trick
-    }
-
-    pub fn hands(&self) -> &Hands {
-        &self.hands
-    }
-
-    pub fn propagated(&self) -> &PropagatedState {
-        &self.propagated
     }
 
     pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
@@ -1396,13 +1384,6 @@ impl ExchangePhase {
         }
     }
 
-    pub fn num_friends(&self) -> usize {
-        match self.game_mode {
-            GameMode::FindingFriends { num_friends, .. } => num_friends,
-            GameMode::Tractor => 0,
-        }
-    }
-
     pub fn set_friends(
         &mut self,
         id: PlayerID,
@@ -1539,18 +1520,6 @@ impl ExchangePhase {
         )
     }
 
-    pub fn landlord(&self) -> PlayerID {
-        self.landlord
-    }
-
-    pub fn hands(&self) -> &Hands {
-        &self.hands
-    }
-
-    pub fn trump(&self) -> Trump {
-        self.trump
-    }
-
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
             && self.autobid.is_none()
@@ -1678,18 +1647,9 @@ impl DrawPhase {
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         if self.deck.is_empty() {
-            let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
-            let landlord = self.propagated.landlord.unwrap_or_else(|| {
-                match self.propagated.first_landlord_selection_policy {
-                    FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
-                    FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
-                }
-            });
-
-            Ok(landlord)
-        } else {
-            Ok(self.propagated.players[self.position].id)
+            bail!("Deck has been fully drawn")
         }
+        Ok(self.propagated.players[self.position].id)
     }
 
     pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {
@@ -1790,10 +1750,6 @@ impl DrawPhase {
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
         Bid::take_back_bid(id, self.propagated.bid_takeback_policy, &mut self.bids, 0)
-    }
-
-    pub fn done_drawing(&self) -> bool {
-        self.deck.is_empty()
     }
 
     pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {

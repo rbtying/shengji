@@ -2,7 +2,6 @@ import * as React from "react";
 import { AppStateContext } from "./AppStateProvider";
 import websocketHandler from "./websocketHandler";
 import { TimerContext } from "./TimerProvider";
-import WasmContext from "./WasmContext";
 
 interface Context {
   send: (value: any) => void;
@@ -18,7 +17,6 @@ interface IProps {
 
 const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   const { state, updateState } = React.useContext(AppStateContext);
-  const { decodeWireFormat } = React.useContext(WasmContext);
   const { setTimeout, clearTimeout } = React.useContext(TimerContext);
   const [timer, setTimer] = React.useState<number | null>(null);
   const [websocket, setWebsocket] = React.useState<WebSocket | null>(null);
@@ -75,18 +73,16 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       }
       setTimerRef.current(null);
 
-      event.data.arrayBuffer().then((buf: ArrayBuffer) => {
-        const message = decodeWireFormat(new Uint8Array(buf));
-        if (message === "Kicked") {
-          ws.close();
-        } else {
-          updateStateRef.current({
-            connected: true,
-            everConnected: true,
-            ...websocketHandler(stateRef.current, message),
-          });
-        }
-      });
+      const message = JSON.parse(event.data);
+      if (message === "Kicked") {
+        ws.close();
+      } else {
+        updateStateRef.current({
+          connected: true,
+          everConnected: true,
+          ...websocketHandler(stateRef.current, message),
+        });
+      }
     });
 
     return () => {

@@ -18,7 +18,6 @@ use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
 use shengji_core::{game_state, interactive, types};
-use shengji_types::{GameMessage, ZSTD_ZSTD_DICT};
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -38,13 +37,6 @@ lazy_static::lazy_static! {
             slog_async::Async::new(drain.fuse()).build().fuse(),
             o!("commit" => env!("VERGEN_SHA_SHORT"))
         )
-    };
-
-    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
-        let mut decomp = zstd::block::Decompressor::new();
-        // default zstd dictionary size is 112640
-        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112640).unwrap());
-        std::sync::Mutex::new(comp)
     };
 }
 
@@ -99,21 +91,11 @@ struct UserState {
 }
 
 impl UserState {
-    pub async fn send(&self, msg: &GameMessage) -> bool {
-        send_to_user(&self.tx, msg).await
-    }
-}
-
-async fn send_to_user(
-    tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
-    msg: &GameMessage,
-) -> bool {
-    if let Ok(j) = serde_json::to_vec(&msg) {
-        if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
-            return tx.send(Ok(Message::binary(s))).is_ok();
+    pub fn send(&self, msg: &GameMessage) {
+        if let Ok(s) = serde_json::to_string(msg) {
+            let _ = self.tx.send(Ok(Message::text(s)));
         }
     }
-    false
 }
 
 type Games = Arc<Mutex<HashMap<String, GameState>>>;
@@ -130,6 +112,25 @@ pub enum UserMessage {
     Action(interactive::Message),
     Kick(types::PlayerID),
     Beep,
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum GameMessage {
+    State {
+        state: game_state::GameState,
+    },
+    Message {
+        from: String,
+        message: String,
+    },
+    Broadcast {
+        data: interactive::BroadcastMessage,
+        message: String,
+    },
+    Beep,
+    Error(String),
+    Kicked,
 }
 
 const DUMP_PATH: &str = "/tmp/shengji_state.json";
@@ -336,6 +337,16 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
 
     let mut val = None;
 
+    let tx_ = tx.clone();
+    let send_to_user = move |msg| {
+        if let Ok(msg) = serde_json::to_string(&msg) {
+            if tx_.send(Ok(Message::text(msg))).is_err() {
+                return false;
+            }
+        }
+        true
+    };
+
     while let Some(result) = user_ws_rx.next().await {
         if let Ok(msg) = result {
             match serde_json::from_slice::<JoinRoom>(msg.as_bytes()) {
@@ -344,15 +355,13 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     break;
                 }
                 Ok(_) => {
-                    if !send_to_user(&tx, &GameMessage::Error("invalid room or name".to_string()))
-                        .await
-                    {
+                    if !send_to_user(GameMessage::Error("invalid room or name".to_string())) {
                         break;
                     }
                 }
                 Err(err) => {
                     let err = GameMessage::Error(format!("couldn't deserialize message {:?}", err));
-                    if !send_to_user(&tx, &err).await {
+                    if !send_to_user(err) {
                         break;
                     }
                 }
@@ -384,18 +393,12 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 Err(err) => {
                     error!(logger, "Failed to join room"; "error" => format!("{:?}", err));
                     let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
-                    let _ = send_to_user(&tx, &err).await;
+                    let _ = send_to_user(err);
                     return;
                 }
             };
             info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
-            game.users.insert(
-                ws_id,
-                UserState {
-                    player_id,
-                    tx: tx.clone(),
-                },
-            );
+            game.users.insert(ws_id, UserState { player_id, tx });
 
             // if the same user joined before, remove its previous entry from the user list
             if !game.game.allows_multiple_sessions_per_user() {
@@ -406,15 +409,14 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
             // send the updated game state to everyone!
             for user in game.users.values() {
                 if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                    user.send(&GameMessage::State { state }).await;
+                    user.send(&GameMessage::State { state });
                 }
 
                 for (data, message) in &msgs {
                     user.send(&GameMessage::Broadcast {
                         data: data.clone(),
                         message: message.clone(),
-                    })
-                    .await;
+                    });
                 }
             }
             (player_id, game.monotonic_id)
@@ -434,7 +436,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 Err(e) => {
                     error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
                     let err = GameMessage::Error(format!("couldn't deserialize message {:?}", e));
-                    if !send_to_user(&tx, &err).await {
+                    if !send_to_user(err) {
                         break;
                     } else {
                         continue;
@@ -456,16 +458,15 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                             user.send(&GameMessage::Message {
                                 from: name.clone(),
                                 message: "BEEP".to_owned(),
-                            })
-                            .await;
+                            });
                             if user.player_id == player_id {
-                                user.send(&GameMessage::Beep).await;
+                                user.send(&GameMessage::Beep);
                             }
                         }
                     }
                     Err(err) => {
                         let err = GameMessage::Error(format!("{}", err));
-                        if !send_to_user(&tx, &err).await {
+                        if !send_to_user(err) {
                             break;
                         }
                     }
@@ -476,8 +477,7 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                         user.send(&GameMessage::Message {
                             from: name.clone(),
                             message: m.clone(),
-                        })
-                        .await;
+                        });
                     }
                 }
                 UserMessage::Kick(id) => {
@@ -486,25 +486,24 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                         Ok(msgs) => {
                             for user in game.users.values() {
                                 if user.player_id == id {
-                                    user.send(&GameMessage::Kicked).await;
+                                    user.send(&GameMessage::Kicked);
                                 } else if let Ok(state) =
                                     game.game.dump_state_for_player(user.player_id)
                                 {
-                                    user.send(&GameMessage::State { state }).await;
+                                    user.send(&GameMessage::State { state });
                                 }
                                 for (data, message) in &msgs {
                                     user.send(&GameMessage::Broadcast {
                                         data: data.clone(),
                                         message: message.clone(),
-                                    })
-                                    .await;
+                                    });
                                 }
                             }
                             game.users.retain(|_, u| u.player_id != id);
                         }
                         Err(err) => {
                             let err = GameMessage::Error(format!("{}", err));
-                            if !send_to_user(&tx, &err).await {
+                            if !send_to_user(err) {
                                 break;
                             }
                         }
@@ -520,17 +519,16 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                                         user.send(&GameMessage::Broadcast {
                                             data: data.clone(),
                                             message: message.clone(),
-                                        })
-                                        .await;
+                                        });
                                     }
-                                    user.send(&GameMessage::State { state }).await;
+                                    user.send(&GameMessage::State { state });
                                 }
                             }
                         }
                         Err(err) => {
                             // send the error back to the requester
                             let err = GameMessage::Error(format!("{}", err));
-                            if !send_to_user(&tx, &err).await {
+                            if !send_to_user(err) {
                                 break;
                             }
                         }

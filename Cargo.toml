@@ -2,7 +2,6 @@
 members = [
   "core",
   "backend",
-  "backend/backend-types",
   "frontend/shengji-wasm"
 ]
 
