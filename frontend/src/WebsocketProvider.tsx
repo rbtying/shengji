@@ -75,7 +75,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       }
       setTimerRef.current(null);
 
-      const f = (buf: ArrayBuffer): void => {
+      event.data.arrayBuffer().then((buf: ArrayBuffer) => {
         const message = decodeWireFormat(new Uint8Array(buf));
         if (message === "Kicked") {
           ws.close();
@@ -86,17 +86,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
             ...websocketHandler(stateRef.current, message),
           });
         }
-      };
-
-      if (event.data.arrayBuffer !== undefined) {
-        event.data.arrayBuffer().then(f);
-      } else {
-        const fr = new FileReader();
-        fr.onload = () => {
-          f(fr.result as ArrayBuffer);
-        };
-        fr.readAsArrayBuffer(event.data);
-      }
+      });
     });
 
     return () => {
