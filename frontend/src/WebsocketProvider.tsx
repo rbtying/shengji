@@ -2,6 +2,7 @@ import * as React from "react";
 import { AppStateContext } from "./AppStateProvider";
 import websocketHandler from "./websocketHandler";
 import { TimerContext } from "./TimerProvider";
+import memoize from "./memoize";
 import WasmContext from "./WasmContext";
 
 interface Context {
@@ -15,6 +16,38 @@ export const WebsocketContext = React.createContext<Context>({
 interface IProps {
   children: JSX.Element[] | JSX.Element;
 }
+
+interface IFileReaderState {
+  fr: FileReader;
+  enqueue: (blob: Blob, handler: (arr: ArrayBuffer) => void) => void;
+}
+
+const getFileReader: () => IFileReaderState = memoize(() => {
+  const queue: Array<{ blob: Blob; handler: (arr: ArrayBuffer) => void }> = [];
+  const fr = new FileReader();
+  fr.onload = () => {
+    const next = queue.shift();
+    next.handler(fr.result as ArrayBuffer);
+    if (queue.length > 0) {
+      fr.readAsArrayBuffer(queue[0].blob);
+    }
+  };
+  const frs = {
+    fr,
+    enqueue: (blob: Blob, handler: (arr: ArrayBuffer) => void) => {
+      queue.push({ blob, handler });
+      if (
+        queue.length > 0 &&
+        (fr.readyState === FileReader.EMPTY ||
+          fr.readyState === FileReader.DONE)
+      ) {
+        fr.readAsArrayBuffer(queue[0].blob);
+      }
+    },
+  };
+
+  return frs;
+});
 
 const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   const { state, updateState } = React.useContext(AppStateContext);
@@ -91,11 +124,8 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       if (event.data.arrayBuffer !== undefined) {
         event.data.arrayBuffer().then(f);
       } else {
-        const fr = new FileReader();
-        fr.onload = () => {
-          f(fr.result as ArrayBuffer);
-        };
-        fr.readAsArrayBuffer(event.data);
+        const frs = getFileReader();
+        frs.enqueue(event.data, f);
       }
     });
 
