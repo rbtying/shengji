@@ -4,6 +4,9 @@ export interface IGameMessageUnion {
   Error?: string;
   Message?: IGameMessageMessage;
   State?: IGameMessageState;
+  Header?: {
+    messages: string[];
+  };
 }
 
 export interface IGameMessageMessage {

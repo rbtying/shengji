@@ -17,6 +17,17 @@ button.normal {
   line-height: 1em;
 }
 
+.header-message {
+  background-color: rgba(255, 255, 0, 0.7);
+  position: fixed;
+  width: 100%;
+  left: 0;
+  top: 0;
+  text-align: center;
+  border-bottom: 1px #000 solid;
+  cursor: pointer;
+}
+
 .emoji-picker-react button {
   margin: 0;
 }

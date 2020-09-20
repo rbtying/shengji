@@ -16,7 +16,8 @@ export interface AppState {
   everConnected: boolean;
   roomName: string;
   name: string;
-  game_state: IGameState | null;
+  gameState: IGameState | null;
+  headerMessages: string[];
   errors: string[];
   messages: IMessage[];
   confetti: string | null;
@@ -31,7 +32,8 @@ const appState: State<AppState> = combineState({
   roomName: noPersistence(() => window.location.hash.slice(1)),
   name: stringLocalStorageState("name"),
   changeLogLastViewed: numberLocalStorageState("change_log_last_viewed"),
-  game_state: noPersistence(() => null),
+  gameState: noPersistence(() => null),
+  headerMessages: noPersistence(() => []),
   errors: noPersistence(() => []),
   messages: noPersistence(() => []),
   confetti: noPersistence(() => null),
