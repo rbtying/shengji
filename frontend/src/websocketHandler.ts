@@ -60,7 +60,18 @@ const stateHandler: WebsocketHandler = (
   message: IGameMessageUnion
 ) => {
   if (message.State !== undefined) {
-    return { game_state: message.State.state };
+    return { gameState: message.State.state };
+  } else {
+    return null;
+  }
+};
+
+const headerMessageHandler: WebsocketHandler = (
+  _: AppState,
+  message: IGameMessageUnion
+) => {
+  if (message.Header !== undefined) {
+    return { headerMessages: message.Header.messages };
   } else {
     return null;
   }
@@ -139,6 +150,7 @@ const allHandlers: WebsocketHandler[] = [
   broadcastHandler,
   errorHandler,
   stateHandler,
+  headerMessageHandler,
   gameFinishedHandler,
 ];
 

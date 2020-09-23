@@ -56,6 +56,7 @@ struct CardsBlob {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct InMemoryStats {
     num_games_created: usize,
+    header_messages: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -133,6 +134,7 @@ pub enum UserMessage {
 }
 
 const DUMP_PATH: &str = "/tmp/shengji_state.json";
+const MESSAGE_PATH: &str = "/tmp/shengji_messages.json";
 
 #[tokio::main]
 async fn main() {
@@ -140,36 +142,18 @@ async fn main() {
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => DUMP_PATH));
 
-    match tokio::fs::File::open(DUMP_PATH).await {
-        Ok(mut f) => {
-            let mut data = vec![];
-            match f.read_to_end(&mut data).await {
-                Ok(n) => {
-                    info!(init_logger, "Read state dump"; "num_bytes" => n);
-                    match serde_json::from_slice::<HashMap<String, game_state::GameState>>(&data) {
-                        Ok(dump) => {
-                            for (room_name, game_dump) in dump {
-                                game_state.insert(
-                                    room_name,
-                                    GameState {
-                                        game: interactive::InteractiveGame::new_from_state(
-                                            game_dump,
-                                        ),
-                                        users: HashMap::new(),
-                                        last_updated: Instant::now(),
-                                        monotonic_id: 0,
-                                    },
-                                );
-                            }
-                        }
-                        Err(e) => {
-                            error!(init_logger, "Failed to deserialize file"; "error" => format!("{:?}", e));
-                        }
-                    }
-                }
-                Err(e) => {
-                    error!(init_logger, "Failed to read file"; "error" => format!("{:?}", e));
-                }
+    match try_read_file::<HashMap<String, game_state::GameState>>(DUMP_PATH).await {
+        Ok(dump) => {
+            for (room_name, game_dump) in dump {
+                game_state.insert(
+                    room_name,
+                    GameState {
+                        game: interactive::InteractiveGame::new_from_state(game_dump),
+                        users: HashMap::new(),
+                        last_updated: Instant::now(),
+                        monotonic_id: 0,
+                    },
+                );
             }
         }
         Err(e) => {
@@ -178,10 +162,23 @@ async fn main() {
             }
         }
     }
+
     info!(init_logger, "Loaded games from state dump"; "num_games" => game_state.len());
 
     let games = Arc::new(Mutex::new(game_state));
     let stats = Arc::new(Mutex::new(InMemoryStats::default()));
+
+    match try_read_file::<Vec<String>>(MESSAGE_PATH).await {
+        Ok(messages) => {
+            let mut stats = stats.lock().await;
+            stats.header_messages = messages;
+        }
+        Err(e) => {
+            if e.kind() != ErrorKind::NotFound {
+                error!(init_logger, "Failed to open message file"; "error" => format!("{:?}", e));
+            }
+        }
+    }
 
     let games = warp::any().map(move || (games.clone(), stats.clone()));
 
@@ -205,7 +202,7 @@ async fn main() {
 
     let dump_state = warp::path("full_state.json")
         .and(games.clone())
-        .and_then(|(game, _)| dump_state(game));
+        .and_then(|(game, stats)| dump_state(game, stats));
     let game_stats = warp::path("stats")
         .and(games)
         .and_then(|(game, stats)| get_stats(game, stats));
@@ -236,8 +233,32 @@ async fn main() {
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
-async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
+async fn try_read_file<M: serde::de::DeserializeOwned>(path: &'_ str) -> Result<M, io::Error> {
+    let mut f = tokio::fs::File::open(path).await?;
+    let mut data = vec![];
+    f.read_to_end(&mut data).await?;
+    Ok(serde_json::from_slice(&data)?)
+}
+
+async fn dump_state(
+    games: Games,
+    stats: Arc<Mutex<InMemoryStats>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
     let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
+
+    let header_messages = try_read_file::<Vec<String>>(MESSAGE_PATH)
+        .await
+        .unwrap_or_default();
+    let send_header_messages = {
+        let mut stats = stats.lock().await;
+        if stats.header_messages != header_messages {
+            stats.header_messages = header_messages.clone();
+            true
+        } else {
+            false
+        }
+    };
+
     let mut games = games.lock().await;
     games.retain(|_, game| {
         // Drop all games where we haven't seen an update for over an hour.
@@ -259,6 +280,16 @@ async fn dump_state(games: Games) -> Result<impl warp::Reply, warp::Rejection> {
                 num_zombies += 1;
             }
             state_dump.insert(room_name.clone(), snapshot);
+        }
+    }
+    if send_header_messages {
+        let msg = GameMessage::Header {
+            messages: header_messages,
+        };
+        for (_, game) in games.iter() {
+            for user in game.users.values() {
+                let _ = user.send(&msg).await;
+            }
         }
     }
 
@@ -303,7 +334,10 @@ async fn get_stats(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let games = games.lock().await;
     let stats = stats.lock().await;
-    let InMemoryStats { num_games_created } = *stats;
+    let InMemoryStats {
+        num_games_created,
+        header_messages: _,
+    } = *stats;
     let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
     Ok(warp::reply::json(&GameStats {
         num_games_created,
@@ -373,6 +407,19 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 last_updated: Instant::now(),
                 monotonic_id: 0,
             });
+
+            let header_messages = {
+                let stats = stats.lock().await;
+                stats.header_messages.clone()
+            };
+            let _ = send_to_user(
+                &tx,
+                &GameMessage::Header {
+                    messages: header_messages,
+                },
+            )
+            .await;
+
             if game.users.is_empty() {
                 info!(game.tracer(&logger, &room, None), "Creating new room");
                 let mut stats = stats.lock().await;

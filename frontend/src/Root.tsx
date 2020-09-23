@@ -11,16 +11,47 @@ import Credits from "./Credits";
 import Chat from "./Chat";
 import Play from "./Play";
 
-const Confetti = React.lazy(async () => await import("./Confetti.tsx"));
+const Confetti = React.lazy(async () => await import("./Confetti"));
 
 const Root = (): JSX.Element => {
   const send = (window as any).send;
   const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
+
+  const [previousHeaderMessages, setPreviousHeaderMessages] = React.useState<
+    string[]
+  >([]);
+  const [showHeaderMessages, setShowHeaderMessages] = React.useState<boolean>(
+    state.headerMessages.length > 0
+  );
+  React.useEffect(() => {
+    if (
+      state.headerMessages.length > 0 &&
+      (previousHeaderMessages.length !== state.headerMessages.length ||
+        !previousHeaderMessages.every((m, i) => state.headerMessages[i] === m))
+    ) {
+      setShowHeaderMessages(true);
+    } else if (state.headerMessages.length === 0) {
+      setShowHeaderMessages(false);
+    }
+    setPreviousHeaderMessages(state.headerMessages);
+  }, [state.headerMessages]);
+
+  const headerMessages = showHeaderMessages ? (
+    <div
+      className="header-message"
+      onClick={() => setShowHeaderMessages(false)}
+    >
+      {state.headerMessages.map((msg, idx) => (
+        <p key={idx}>{msg}</p>
+      ))}
+    </div>
+  ) : null;
   if (state.connected) {
-    if (state.game_state === null || state.roomName.length !== 16) {
+    if (state.gameState === null || state.roomName.length !== 16) {
       return (
         <div>
+          {headerMessages}
           <Errors errors={state.errors} />
           <div className="game">
             <h1>
@@ -49,6 +80,7 @@ const Root = (): JSX.Element => {
             state.settings.showCardLabels ? "always-show-labels" : ""
           )}
         >
+          {headerMessages}
           <Errors errors={state.errors} />
           {state.confetti !== null ? (
             <React.Suspense fallback={null}>
@@ -59,7 +91,7 @@ const Root = (): JSX.Element => {
             </React.Suspense>
           ) : null}
           <div className="game">
-            {state.game_state.Initialize !== undefined ? null : (
+            {state.gameState.Initialize !== undefined ? null : (
               <a
                 href={window.location.href}
                 className="reset-link"
@@ -73,27 +105,27 @@ const Root = (): JSX.Element => {
                 Reset game
               </a>
             )}
-            {state.game_state.Initialize !== undefined ? (
+            {state.gameState.Initialize !== undefined ? (
               <Initialize
-                state={state.game_state.Initialize}
+                state={state.gameState.Initialize}
                 name={state.name}
               />
             ) : null}
-            {state.game_state.Draw !== undefined ? (
+            {state.gameState.Draw !== undefined ? (
               <Draw
-                state={state.game_state.Draw}
+                state={state.gameState.Draw}
                 playDrawCardSound={state.settings.playDrawCardSound}
                 name={state.name}
                 setTimeout={timerContext.setTimeout}
                 clearTimeout={timerContext.clearTimeout}
               />
             ) : null}
-            {state.game_state.Exchange !== undefined ? (
-              <Exchange state={state.game_state.Exchange} name={state.name} />
+            {state.gameState.Exchange !== undefined ? (
+              <Exchange state={state.gameState.Exchange} name={state.name} />
             ) : null}
-            {state.game_state.Play !== undefined ? (
+            {state.gameState.Play !== undefined ? (
               <Play
-                playPhase={state.game_state.Play}
+                playPhase={state.gameState.Play}
                 name={state.name}
                 showLastTrick={state.settings.showLastTrick}
                 unsetAutoPlayWhenWinnerChanges={

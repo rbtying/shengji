@@ -17,6 +17,9 @@ pub enum GameMessage {
     },
     Beep,
     Error(String),
+    Header {
+        messages: Vec<String>,
+    },
     Kicked,
 }
 
