@@ -488,6 +488,8 @@ impl BroadcastMessage {
             PutDownCards => format!("{} put down the bottom cards", n?),
             GameFinished { result: _ } => "The game has finished.".to_string(),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
+            EndOfGameSummary { landlord_won : true, non_landlords_points } => format!("Landlord team won, opposing team only collected {} points", non_landlords_points),
+            EndOfGameSummary { landlord_won: false, non_landlords_points } => format!("Landlord team lost, opposing team collected {} points", non_landlords_points),
         })
     }
 }

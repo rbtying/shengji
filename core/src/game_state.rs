@@ -1288,6 +1288,11 @@ impl PlayPhase {
             smaller_landlord_team,
         )?;
 
+        msgs.push(MessageVariant::EndOfGameSummary {
+            landlord_won,
+            non_landlords_points,
+        });
+
         if bonus_level_earned {
             msgs.push(MessageVariant::BonusLevelEarned);
         };

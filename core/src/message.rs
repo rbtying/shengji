@@ -148,4 +148,8 @@ pub enum MessageVariant {
         result: HashMap<String, PlayerGameFinishedResult>,
     },
     BonusLevelEarned,
+    EndOfGameSummary {
+        landlord_won: bool,
+        non_landlords_points: isize,
+    },
 }
