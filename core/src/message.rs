@@ -151,5 +151,5 @@ pub enum MessageVariant {
     EndOfGameSummary {
         landlord_won: bool,
         non_landlords_points: isize,
-    }
+    },
 }
