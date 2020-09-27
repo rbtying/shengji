@@ -5,7 +5,8 @@ use rand::distributions::Alphanumeric;
 use rand::prelude::*;
 use rand_distr::WeightedIndex;
 use shengji_core::{
-    game_state::{FriendSelection, GameModeSettings, GameState, InitializePhase},
+    game_state::{GameState, InitializePhase},
+    settings::{FriendSelection, GameModeSettings},
     trick::{TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, Number, Suit},
 };
@@ -79,7 +80,7 @@ fn main() {
             println!("game {}", num + 1);
             loop {
                 match game_state {
-                    GameState::Initialize(ref mut s) => match s.landlord {
+                    GameState::Initialize(ref mut s) => match s.landlord() {
                         None => {
                             s.set_landlord(players_ids.choose(&mut rng).copied())
                                 .unwrap();
@@ -187,7 +188,7 @@ fn main() {
                                     trick_format.trump(),
                                     available_cards.iter().copied(),
                                     format.iter().copied(),
-                                    s.propagated().trick_draw_policy,
+                                    s.propagated().trick_draw_policy(),
                                 );
                                 if playable {
                                     Some(

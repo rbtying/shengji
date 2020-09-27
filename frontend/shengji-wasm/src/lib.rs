@@ -6,8 +6,8 @@ use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy},
-    game_state::Player,
     hands::Hands,
+    player::Player,
     scoring::{compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters},
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},

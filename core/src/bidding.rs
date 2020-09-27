@@ -1,8 +1,8 @@
 use anyhow::{anyhow, bail, Error};
 use serde::{Deserialize, Serialize};
 
-use crate::game_state::Player;
 use crate::hands::Hands;
+use crate::player::Player;
 use crate::types::{Card, PlayerID};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]

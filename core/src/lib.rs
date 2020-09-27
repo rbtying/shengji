@@ -8,6 +8,8 @@ pub mod game_state;
 pub mod hands;
 pub mod interactive;
 pub mod message;
+pub mod player;
 pub mod scoring;
+pub mod settings;
 pub mod trick;
 pub mod types;

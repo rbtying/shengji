@@ -3,13 +3,14 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::bidding::{BidPolicy, BidTakebackPolicy};
-use crate::game_state::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameState, InitializePhase,
-    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
-};
+use crate::game_state::{GameState, InitializePhase};
 use crate::message::MessageVariant;
 use crate::scoring::GameScoringParameters;
+use crate::settings::{
+    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
+    KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
+};
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy, TrickUnit};
 use crate::types::{Card, Number, PlayerID};
 
