@@ -9,7 +9,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 2;
+const changeLogVersion: number = 3;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>9/27/2020:</p>
+        <ul>
+          <li>
+            Support limiting joker/no-trump bids in games with more than two
+            decks.
+          </li>
+        </ul>
         <p>9/18/2020:</p>
         <ul>
           <li>Fix performance issues in long games.</li>
