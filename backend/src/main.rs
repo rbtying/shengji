@@ -560,7 +560,6 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                 UserMessage::Action(m) => {
                     match game.game.interact(m, player_id, &logger) {
                         Ok(msgs) => {
-                            println!("messages: {:?}", msgs);
                             // send the updated game state to everyone!
                             for user in game.users.values() {
                                 if let Ok(state) = game.game.dump_state_for_player(user.player_id) {

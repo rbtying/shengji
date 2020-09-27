@@ -73,7 +73,6 @@ const Root = (): JSX.Element => {
         </div>
       );
     } else {
-      console.log(state.messages);
       return (
         <div
           className={classNames(

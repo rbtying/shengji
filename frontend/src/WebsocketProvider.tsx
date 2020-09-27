@@ -17,12 +17,11 @@ interface IProps {
   children: JSX.Element[] | JSX.Element;
 }
 
-interface IFileReaderState {
-  fr: FileReader;
+interface IBlobToArrayBufferQueue {
   enqueue: (blob: Blob, handler: (arr: ArrayBuffer) => void) => void;
 }
 
-const getFileReader: () => IFileReaderState = memoize(() => {
+const getFileReader: () => IBlobToArrayBufferQueue = memoize(() => {
   const queue: Array<{ blob: Blob; handler: (arr: ArrayBuffer) => void }> = [];
   const fr = new FileReader();
   fr.onload = () => {
@@ -32,8 +31,7 @@ const getFileReader: () => IFileReaderState = memoize(() => {
       fr.readAsArrayBuffer(queue[0].blob);
     }
   };
-  const frs = {
-    fr,
+  return {
     enqueue: (blob: Blob, handler: (arr: ArrayBuffer) => void) => {
       queue.push({ blob, handler });
       if (
@@ -45,8 +43,29 @@ const getFileReader: () => IFileReaderState = memoize(() => {
       }
     },
   };
+});
 
-  return frs;
+const getBlobArrayBuffer: () => IBlobToArrayBufferQueue = memoize(() => {
+  const queue: Array<{ blob: Blob; handler: (arr: ArrayBuffer) => void }> = [];
+  const inflight: number[] = [];
+  const onload = (arr: ArrayBuffer): void => {
+    const next = queue.shift();
+    inflight.shift();
+    next.handler(arr);
+    if (queue.length > 0) {
+      inflight.push(0);
+      queue[0].blob.arrayBuffer().then(onload, (err) => console.log(err));
+    }
+  };
+  return {
+    enqueue: (blob: Blob, handler: (arr: ArrayBuffer) => void) => {
+      queue.push({ blob, handler });
+      if (inflight.length === 0 && queue.length > 0) {
+        inflight.push(0);
+        blob.arrayBuffer().then(onload, (err) => console.log(err));
+      }
+    },
+  };
 });
 
 const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
@@ -110,7 +129,6 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
 
       const f = (buf: ArrayBuffer): void => {
         const message = decodeWireFormat(new Uint8Array(buf));
-        console.log("websocket message: " + JSON.stringify(message));
         if (message === "Kicked") {
           ws.close();
         } else {
@@ -123,7 +141,8 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       };
 
       if (event.data.arrayBuffer !== undefined) {
-        event.data.arrayBuffer().then(f);
+        const b2a = getBlobArrayBuffer();
+        b2a.enqueue(event.data, f);
       } else {
         const frs = getFileReader();
         frs.enqueue(event.data, f);
