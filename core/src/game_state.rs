@@ -583,16 +583,7 @@ impl PlayPhase {
             landlord_won,
             landlord_bonus: bonus_level_earned,
         } = compute_level_deltas(
-            {
-                // TODO: remove when bonus_level_policy can be removed entirely
-                if propagated.bonus_level_policy
-                    != propagated.game_scoring_parameters.bonus_level_policy
-                {
-                    propagated.game_scoring_parameters.bonus_level_policy =
-                        propagated.bonus_level_policy;
-                }
-                propagated.game_scoring_parameters
-            },
+            propagated.game_scoring_parameters,
             self.num_decks,
             non_landlords_points,
             smaller_landlord_team,
@@ -835,6 +826,8 @@ impl ExchangePhase {
             &self.propagated.players,
             self.propagated.landlord,
             self.propagated.bid_policy,
+            self.propagated.joker_bid_policy,
+            self.num_decks,
             self.epoch,
         )
     }
@@ -1100,6 +1093,8 @@ impl DrawPhase {
             &self.propagated.players,
             self.propagated.landlord,
             self.propagated.bid_policy,
+            self.propagated.joker_bid_policy,
+            self.num_decks,
             0,
         )
     }
@@ -1262,12 +1257,7 @@ impl InitializePhase {
             None
         };
 
-        let mut propagated = self.propagated.clone();
-        // TODO: remove when bonus_level_policy can be removed entirely
-        if propagated.bonus_level_policy != propagated.game_scoring_parameters.bonus_level_policy {
-            propagated.game_scoring_parameters.bonus_level_policy =
-                self.propagated.bonus_level_policy;
-        }
+        let propagated = self.propagated.clone();
 
         Ok(DrawPhase {
             deck: (&deck[0..deck.len() - kitty_size]).to_vec(),

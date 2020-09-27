@@ -16,6 +16,18 @@ impl Default for BidPolicy {
         BidPolicy::JokerOrGreaterLength
     }
 }
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum JokerBidPolicy {
+    BothTwoOrMore,
+    BothNumDecks,
+    LJNumDecksHJNumDecksLessOne,
+}
+
+impl Default for JokerBidPolicy {
+    fn default() -> Self {
+        JokerBidPolicy::BothTwoOrMore
+    }
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BidTakebackPolicy {
@@ -48,6 +60,8 @@ impl Bid {
         landlord: Option<PlayerID>,
         epoch: usize,
         bid_policy: BidPolicy,
+        joker_bid_policy: JokerBidPolicy,
+        num_decks: usize,
     ) -> Result<Vec<Bid>, Error> {
         // Compute all valid bids.
         if bids.last().map(|b| b.id) == Some(id) {
@@ -79,8 +93,27 @@ impl Bid {
                     continue;
                 }
                 for inner_count in 1..=*count {
-                    if card.is_joker() && inner_count == 1 {
-                        continue;
+                    if card.is_joker() {
+                        match (card, joker_bid_policy) {
+                            (_, JokerBidPolicy::BothTwoOrMore) if inner_count <= 1 => continue,
+                            (Card::SmallJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
+                            | (Card::SmallJoker, JokerBidPolicy::BothNumDecks)
+                                if inner_count < num_decks =>
+                            {
+                                continue
+                            }
+                            (Card::BigJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
+                                if inner_count < num_decks - 1 =>
+                            {
+                                continue
+                            }
+                            (Card::BigJoker, JokerBidPolicy::BothNumDecks)
+                                if inner_count < num_decks =>
+                            {
+                                continue
+                            }
+                            (_, _) => (),
+                        }
                     }
                     let new_bid = Bid {
                         id,
@@ -132,6 +165,8 @@ impl Bid {
         players: &'_ [Player],
         landlord: Option<PlayerID>,
         bid_policy: BidPolicy,
+        joker_bid_policy: JokerBidPolicy,
+        num_decks: usize,
         epoch: usize,
     ) -> bool {
         if autobid.is_some() {
@@ -144,9 +179,19 @@ impl Bid {
             count,
             epoch,
         };
-        if Self::valid_bids(id, bids, hands, players, landlord, epoch, bid_policy)
-            .map(|b| b.contains(&new_bid))
-            .unwrap_or(false)
+        if Self::valid_bids(
+            id,
+            bids,
+            hands,
+            players,
+            landlord,
+            epoch,
+            bid_policy,
+            joker_bid_policy,
+            num_decks,
+        )
+        .map(|b| b.contains(&new_bid))
+        .unwrap_or(false)
         {
             bids.push(new_bid);
             true

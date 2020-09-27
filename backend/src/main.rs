@@ -42,8 +42,8 @@ lazy_static::lazy_static! {
 
     static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
         let mut decomp = zstd::block::Decompressor::new();
-        // default zstd dictionary size is 112640
-        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112640).unwrap());
+        // default zstd dictionary size is 112_640
+        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112_640).unwrap());
         std::sync::Mutex::new(comp)
     };
 }

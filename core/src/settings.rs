@@ -4,10 +4,10 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy};
+use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::message::MessageVariant;
 use crate::player::Player;
-use crate::scoring::{BonusLevelPolicy, GameScoringParameters};
+use crate::scoring::GameScoringParameters;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID, FULL_DECK};
 
@@ -214,6 +214,8 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) bid_policy: BidPolicy,
     #[serde(default)]
+    pub(crate) joker_bid_policy: JokerBidPolicy,
+    #[serde(default)]
     pub(crate) should_reveal_kitty_at_end_of_game: bool,
     #[serde(default)]
     pub(crate) play_takeback_policy: PlayTakebackPolicy,
@@ -225,9 +227,6 @@ pub struct PropagatedState {
     pub(crate) game_start_policy: GameStartPolicy,
     #[serde(default)]
     pub(crate) game_scoring_parameters: GameScoringParameters,
-    // TODO: remove
-    #[serde(default)]
-    pub(crate) bonus_level_policy: BonusLevelPolicy,
 }
 
 impl PropagatedState {
@@ -434,6 +433,14 @@ impl PropagatedState {
         Ok(vec![MessageVariant::BidPolicySet { policy }])
     }
 
+    pub fn set_joker_bid_policy(
+        &mut self,
+        policy: JokerBidPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.joker_bid_policy = policy;
+        Ok(vec![MessageVariant::JokerBidPolicySet { policy }])
+    }
+
     pub fn set_should_reveal_kitty_at_end_of_game(
         &mut self,
         should_reveal: bool,
@@ -594,7 +601,6 @@ impl PropagatedState {
                 old_parameters: self.game_scoring_parameters,
             }];
             self.game_scoring_parameters = parameters;
-            self.bonus_level_policy = self.game_scoring_parameters.bonus_level_policy;
             Ok(msgs)
         } else {
             Ok(vec![])

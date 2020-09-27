@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy};
+use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::game_state::PlayerGameFinishedResult;
 use crate::scoring::GameScoringParameters;
 use crate::settings::{
@@ -67,6 +67,9 @@ pub enum MessageVariant {
     },
     BidPolicySet {
         policy: BidPolicy,
+    },
+    JokerBidPolicySet {
+        policy: JokerBidPolicy,
     },
     ShouldRevealKittyAtEndOfGameSet {
         should_reveal: bool,

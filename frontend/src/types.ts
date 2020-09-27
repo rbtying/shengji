@@ -134,7 +134,11 @@ export interface IPlayPhase {
   last_trick: ITrick | null;
 }
 
-export type BidPolicy = "JokerOrGreaterLenght" | "GreaterLength";
+export type BidPolicy = "JokerOrGreaterLength" | "GreaterLength";
+export type JokerBidPolicy =
+  | "BothTwoOrMore"
+  | "BothNumDecks"
+  | "LJNumDecksHJNumDecksLessOne";
 export type TrickDrawPolicy = "NoProtections" | "LongerTuplesProtected";
 
 export interface IPropagatedState {
@@ -144,6 +148,7 @@ export interface IPropagatedState {
   friend_selection_policy: "Unrestricted" | "HighestCardNotAllowed";
   first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
   bid_policy: BidPolicy;
+  joker_bid_policy: JokerBidPolicy;
   num_decks: number | null;
   max_player_id: number;
   players: IPlayer[];
