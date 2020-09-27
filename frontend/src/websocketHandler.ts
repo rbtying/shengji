@@ -31,6 +31,7 @@ const broadcastHandler: WebsocketHandler = (
   state: AppState,
   message: IGameMessageUnion
 ) => {
+  console.log("broadcast handler: " + JSON.stringify(message));
   if (message.Broadcast !== undefined) {
     const newMessage = {
       from: "GAME",
@@ -38,7 +39,10 @@ const broadcastHandler: WebsocketHandler = (
       data: message.Broadcast.data,
       from_game: true,
     };
-    return { messages: truncateMessages([...state.messages, newMessage]) };
+
+    const newMsgs = truncateMessages([...state.messages, newMessage]);
+    console.log("after broadcast handler: " + JSON.stringify(newMsgs));
+    return { messages: newMsgs };
   } else {
     return null;
   }
