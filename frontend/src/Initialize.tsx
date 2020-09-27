@@ -215,6 +215,7 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
 interface IUncommonSettings {
   state: IInitializePhase;
   setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setJokerBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setShouldRevealKittyAtEndOfGame: (
     v: React.ChangeEvent<HTMLSelectElement>
   ) => void;
@@ -304,6 +305,25 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             </option>
             <option value="GreaterLength">
               All bids must have more cards than the previous bids
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Joker Bid Policy:{" "}
+          <select
+            value={props.state.propagated.joker_bid_policy}
+            onChange={props.setJokerBidPolicy}
+          >
+            <option value="BothTwoOrMore">
+              At least two jokers (or number of decks) to bid no trump
+            </option>
+            <option value="BothNumDecks">
+              All the low or high jokers to bid no trump
+            </option>
+            <option value="LJNumDecksHJNumDecksLessOne">
+              All the low jokers or all but one high joker to bid no trump
             </option>
           </select>
         </label>
@@ -458,6 +478,18 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetBidPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+  const setJokerBidPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetJokerBidPolicy: evt.target.value,
         },
       });
     }
@@ -826,6 +858,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "joker_bid_policy":
+            send({
+              Action: {
+                SetJokerBidPolicy: value,
+              },
+            });
+            break;
           case "should_reveal_kitty_at_end_of_game":
             send({
               Action: {
@@ -1080,6 +1119,7 @@ const Initialize = (props: IProps): JSX.Element => {
         <UncommonSettings
           state={props.state}
           setBidPolicy={setBidPolicy}
+          setJokerBidPolicy={setJokerBidPolicy}
           setShouldRevealKittyAtEndOfGame={setShouldRevealKittyAtEndOfGame}
           setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
           setGameStartPolicy={setGameStartPolicy}

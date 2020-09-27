@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy};
-use crate::game_state::{
+use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::game_state::PlayerGameFinishedResult;
+use crate::scoring::GameScoringParameters;
+use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
     GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
-    PlayTakebackPolicy, PlayerGameFinishedResult, ThrowPenalty,
+    PlayTakebackPolicy, ThrowPenalty,
 };
-use crate::scoring::GameScoringParameters;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
 
@@ -66,6 +67,9 @@ pub enum MessageVariant {
     },
     BidPolicySet {
         policy: BidPolicy,
+    },
+    JokerBidPolicySet {
+        policy: JokerBidPolicy,
     },
     ShouldRevealKittyAtEndOfGameSet {
         should_reveal: bool,

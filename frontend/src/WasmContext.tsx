@@ -11,6 +11,7 @@ import {
   ITrick,
   TrickDrawPolicy,
   IGameScoringParameters,
+  JokerBidPolicy,
 } from "./types";
 
 interface Context {
@@ -41,6 +42,8 @@ interface IFindValidBidsRequest {
   landlord: number | null;
   epoch: number;
   bid_policy: BidPolicy;
+  joker_bid_policy: JokerBidPolicy;
+  num_decks: number;
 }
 
 interface ISortAndGroupCardsRequest {

@@ -17,7 +17,7 @@ use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
-use shengji_core::{game_state, interactive, types};
+use shengji_core::{game_state, interactive, settings, types};
 use shengji_types::{GameMessage, ZSTD_ZSTD_DICT};
 
 /// Our global unique user id counter.
@@ -42,8 +42,8 @@ lazy_static::lazy_static! {
 
     static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
         let mut decomp = zstd::block::Decompressor::new();
-        // default zstd dictionary size is 112640
-        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112640).unwrap());
+        // default zstd dictionary size is 112_640
+        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112_640).unwrap());
         std::sync::Mutex::new(comp)
     };
 }
@@ -274,8 +274,8 @@ async fn dump_state(
     for (room_name, game_state) in games.iter() {
         if let Ok(snapshot) = game_state.game.dump_state() {
             if !game_state.users.is_empty() {
-                num_players += snapshot.players.len();
-                num_observers = snapshot.observers.len();
+                num_players += snapshot.players().len();
+                num_observers = snapshot.observers().len();
             } else {
                 num_zombies += 1;
             }
@@ -348,7 +348,7 @@ async fn get_stats(
 }
 
 async fn default_propagated() -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::json(&game_state::PropagatedState::default()))
+    Ok(warp::reply::json(&settings::PropagatedState::default()))
 }
 
 #[allow(clippy::cognitive_complexity)]

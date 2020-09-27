@@ -1,6 +1,13 @@
 import * as React from "react";
 import Cards from "./Cards";
-import { IBid, IPlayer, IHands, ITrump, BidPolicy } from "./types";
+import {
+  IBid,
+  IPlayer,
+  IHands,
+  ITrump,
+  BidPolicy,
+  JokerBidPolicy,
+} from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
 import WasmContext from "./WasmContext";
@@ -18,7 +25,9 @@ interface IBidAreaProps {
   suffixButtons?: JSX.Element | JSX.Element[];
   bidTakeBacksEnabled: boolean;
   bidPolicy: BidPolicy;
+  jokerBidPolicy: JokerBidPolicy;
   hands: IHands;
+  numDecks: number;
 }
 
 const BidArea = (props: IBidAreaProps): JSX.Element => {
@@ -74,6 +83,8 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       landlord: props.landlord,
       epoch: props.epoch,
       bid_policy: props.bidPolicy,
+      joker_bid_policy: props.jokerBidPolicy,
+      num_decks: props.numDecks,
     });
     const levelId =
       props.landlord !== null && props.landlord !== undefined

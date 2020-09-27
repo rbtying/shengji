@@ -2,14 +2,15 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy};
-use crate::game_state::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameState, InitializePhase,
-    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
-};
+use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::game_state::{GameState, InitializePhase};
 use crate::message::MessageVariant;
 use crate::scoring::GameScoringParameters;
+use crate::settings::{
+    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
+    KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
+};
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy, TrickUnit};
 use crate::types::{Card, Number, PlayerID};
 
@@ -124,6 +125,10 @@ impl InteractiveGame {
             (Message::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_policy(policy)?
+            }
+            (Message::SetJokerBidPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting joker bid selection policy"; "policy" => format!("{:?}", policy));
+                state.set_joker_bid_policy(policy)?
             }
             (
                 Message::SetShouldRevealKittyAtEndOfGame(should_reveal),
@@ -354,6 +359,7 @@ pub enum Message {
     SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetFirstLandlordSelectionPolicy(FirstLandlordSelectionPolicy),
     SetBidPolicy(BidPolicy),
+    SetJokerBidPolicy(JokerBidPolicy),
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),
@@ -438,6 +444,9 @@ impl BroadcastMessage {
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength} => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
             BidPolicySet { policy: BidPolicy::GreaterLength} => format!("{} required all bids to have more cards than the previous bids", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::BothNumDecks} => format!("{} required no-trump bids to have every low or high joker", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::LJNumDecksHJNumDecksLessOne} => format!("{} required low no-trump bids to have every low joker (one less required for high joker)", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::BothTwoOrMore} => format!("{} required no-trump bids to have at least two low or high jokers", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: true } => format!("{} enabled the kitty to be revealed at the end of each game", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: false } => format!("{} disabled the kitty from being revealed at the end of each game", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),

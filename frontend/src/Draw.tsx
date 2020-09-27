@@ -136,6 +136,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           landlord={this.props.state.propagated.landlord}
           players={this.props.state.propagated.players}
           bidPolicy={this.props.state.propagated.bid_policy}
+          jokerBidPolicy={this.props.state.propagated.joker_bid_policy}
+          numDecks={this.props.state.num_decks}
           header={
             <h2>
               Bids ({this.props.state.deck.length} cards remaining in the deck)
