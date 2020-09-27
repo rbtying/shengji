@@ -52,6 +52,7 @@ pub struct Bid {
 
 impl Bid {
     #[allow(clippy::comparison_chain)]
+    #[allow(clippy::too_many_arguments)]
     pub fn valid_bids(
         id: PlayerID,
         bids: &'_ [Bid],
