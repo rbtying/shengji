@@ -955,10 +955,9 @@ fn check_format_inner(
     mut units: impl Iterator<Item = UnitLike> + Clone,
     allow_breaking_larger_tuples: bool,
 ) -> (bool, Units) {
-    let all_single_repeated = units.clone().all(|u| match u {
-        UnitLike::Repeated { count: 1, .. } => true,
-        _ => false,
-    });
+    let all_single_repeated = units
+        .clone()
+        .all(|u| matches!(u, UnitLike::Repeated { count: 1, .. }));
 
     match units.next() {
         Some(UnitLike::Tractor {

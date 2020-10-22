@@ -2128,10 +2128,7 @@ mod tests {
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| match m {
-                    MessageVariant::JoinedTeam { player } if *player == p2 => true,
-                    _ => false,
-                })
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player } if *player == p2))
                 .count(),
             1
         );
@@ -2154,10 +2151,7 @@ mod tests {
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| match m {
-                    MessageVariant::JoinedTeam { .. } => true,
-                    _ => false,
-                })
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { .. }))
                 .count(),
             0
         );
