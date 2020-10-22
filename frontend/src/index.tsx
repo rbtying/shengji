@@ -11,9 +11,6 @@ import Root from "./Root";
 const WasmProvider = React.lazy(async () => await import("./WasmProvider"));
 
 const bootstrap = (): void => {
-  if (!window.location.href.endsWith("/")) {
-    window.location.href = window.location.href + "/";
-  }
   const root = document.getElementById("root");
   ReactModal.setAppElement(root);
   ReactDOM.render(

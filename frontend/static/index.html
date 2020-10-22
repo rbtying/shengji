@@ -38,6 +38,11 @@
             please make sure that Javascript and WebSockets are enabled!
           </p>
         </div>
+        <script type="text/javascript">
+          if (!window.location.href.endsWith("/")) {
+            window.location.href = window.location.href + "/";
+          }
+        </script>
         <script type="text/javascript" src="runtime.js"></script>
     </body>
 </html>
