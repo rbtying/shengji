@@ -82,6 +82,24 @@ const renderScoringMessage = (message: IMessage): JSX.Element => {
         </span>
       );
     }
+    for (const k in variant.parameters.step_adjustments) {
+      const adj = variant.parameters.step_adjustments[k];
+      if (adj !== variant.old_parameters.step_adjustments[k]) {
+        changes.push(
+          <span key={changes.length}>
+            step size adjustment for {k} decks set to {adj}{" "}
+          </span>
+        );
+      }
+    }
+    for (const k in variant.old_parameters.step_adjustments) {
+      const adj = variant.parameters.step_adjustments[k];
+      if (adj === undefined || adj === null || adj === 0) {
+        changes.push(
+          <span key={changes.length}>adjustment for {k} decks removed </span>
+        );
+      }
+    }
     if (
       variant.old_parameters.bonus_level_policy !==
       variant.parameters.bonus_level_policy

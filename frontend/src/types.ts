@@ -174,6 +174,7 @@ export interface IPropagatedState {
 
 export interface IGameScoringParameters {
   step_size_per_deck: number;
+  step_adjustments: { [num_decks: number]: number };
   num_steps_to_non_landlord_turnover: number;
   deadzone_size: number;
   truncate_zero_crossing_window: boolean;

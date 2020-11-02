@@ -9,7 +9,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 3;
+const changeLogVersion: number = 4;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>11/01/2020:</p>
+        <ul>
+          <li>
+            Support more granular step sizes in scoring settings on a
+            per-number-of-decks basis.
+          </li>
+        </ul>
         <p>9/27/2020:</p>
         <ul>
           <li>

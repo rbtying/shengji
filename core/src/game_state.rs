@@ -583,8 +583,9 @@ impl PlayPhase {
             landlord_won,
             landlord_bonus: bonus_level_earned,
         } = compute_level_deltas(
-            propagated.game_scoring_parameters,
+            &propagated.game_scoring_parameters,
             self.num_decks,
+            crate::scoring::POINTS_PER_DECK,
             non_landlords_points,
             smaller_landlord_team,
         )?;

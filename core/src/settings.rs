@@ -596,11 +596,12 @@ impl PropagatedState {
             // Explain exercises all the search paths, so make sure to try
             // explaining before accepting the new parameters!
             materialized.explain()?;
+            let old_parameters =
+                std::mem::replace(&mut self.game_scoring_parameters, parameters.clone());
             let msgs = vec![MessageVariant::GameScoringParametersChanged {
                 parameters,
-                old_parameters: self.game_scoring_parameters,
+                old_parameters,
             }];
-            self.game_scoring_parameters = parameters;
             Ok(msgs)
         } else {
             Ok(vec![])

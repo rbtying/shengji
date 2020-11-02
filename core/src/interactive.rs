@@ -191,11 +191,11 @@ impl InteractiveGame {
                 state.set_advancement_policy(policy)?
             }
             (
-                Message::SetGameScoringParameters(parameters),
+                Message::SetGameScoringParameters(ref parameters),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting game scoring parameters"; "parameters" => format!("{:?}", parameters));
-                state.set_game_scoring_parameters(parameters)?
+                state.set_game_scoring_parameters(parameters.clone())?
             }
             (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));

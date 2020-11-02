@@ -8,7 +8,10 @@ use shengji_core::{
     bidding::{Bid, BidPolicy, JokerBidPolicy},
     hands::Hands,
     player::Player,
-    scoring::{compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters},
+    scoring::{
+        compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
+        POINTS_PER_DECK,
+    },
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
@@ -281,6 +284,7 @@ struct ExplainScoringRequest {
 #[derive(Serialize)]
 struct ExplainScoringResponse {
     results: Vec<ScoreSegment>,
+    step_size: usize,
 }
 
 #[derive(Serialize)]
@@ -301,8 +305,13 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
     } = req
         .into_serde()
         .map_err(|_| "Failed to deserialize request")?;
-    let deltas = explain_level_deltas(params, num_decks, smaller_landlord_team_size)
-        .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
+    let deltas = explain_level_deltas(
+        &params,
+        num_decks,
+        POINTS_PER_DECK,
+        smaller_landlord_team_size,
+    )
+    .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
 
     Ok(JsValue::from_serde(&ExplainScoringResponse {
         results: deltas
@@ -312,6 +321,9 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
                 results: res,
             })
             .collect(),
+        step_size: params
+            .step_size(num_decks, 100)
+            .map_err(|e| format!("Failed to compute step size: {:?}", e))?,
     })
     .map_err(|_| "failed to serialize response")?)
 }
@@ -344,8 +356,9 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
         .into_serde()
         .map_err(|_| "Failed to deserialize request")?;
     let score = compute_level_deltas(
-        params,
+        &params,
         num_decks,
+        POINTS_PER_DECK,
         non_landlord_points,
         smaller_landlord_team_size,
     )

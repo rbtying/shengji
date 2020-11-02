@@ -24,7 +24,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   const bonusEnabled =
     props.params.bonus_level_policy === "BonusLevelForSmallerLandlordTeam";
 
-  const scoreTransitions = explainScoring({
+  const { results: scoreTransitions, step_size: stepSize } = explainScoring({
     params: props.params,
     smaller_landlord_team_size: false,
     num_decks: props.numDecks,
@@ -35,7 +35,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
         params: props.params,
         smaller_landlord_team_size: true,
         num_decks: props.numDecks,
-      })
+      }).results
     : scoreTransitions;
 
   const scoreSegments: Array<{
@@ -124,7 +124,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
       validStepSizes.push(`${curStepSize}`);
     }
   }
-  const maxSteps = Math.floor(100 / props.params.step_size_per_deck);
+  const maxSteps = Math.floor(100 / stepSize);
 
   return (
     <>
@@ -146,10 +146,10 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
             return (
               <div
                 key={idx}
-                onMouseEnter={(evt) => {
+                onMouseEnter={(_) => {
                   setHighlighted(idx);
                 }}
-                onMouseLeave={(evt) => {
+                onMouseLeave={(_) => {
                   setHighlighted(null);
                 }}
                 style={{
@@ -171,7 +171,10 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
           )}
         </div>
         <div>
-          <label>Step size: </label>
+          <label>Step size: {stepSize} points</label>
+        </div>
+        <div>
+          <label>Base step size: </label>
           <select
             value={`${props.params.step_size_per_deck * props.numDecks}`}
             onChange={(evt) => {
@@ -188,6 +191,40 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
             ))}
           </select>{" "}
           (default: {20 * props.numDecks})
+        </div>
+        <div>
+          <label>Adjustment to step size for {props.numDecks} decks: </label>
+          <select
+            value={
+              props.params.step_adjustments[props.numDecks] !== undefined
+                ? props.params.step_adjustments[props.numDecks]
+                : "none"
+            }
+            onChange={(evt) => {
+              evt.preventDefault();
+              if (evt.target.value === "none") {
+                const {
+                  [props.numDecks]: _,
+                  ...adjustments
+                } = props.params.step_adjustments;
+                updateSettings({ step_adjustments: adjustments });
+              } else {
+                const adjustments = {
+                  ...props.params.step_adjustments,
+                  [props.numDecks]: parseInt(evt.target.value, 10),
+                };
+                updateSettings({ step_adjustments: adjustments });
+              }
+            }}
+          >
+            <option key="none">none</option>
+            {Array((props.params.step_size_per_deck * props.numDecks) / 5)
+              .fill(undefined)
+              .map((_, idx) => (
+                <option key={idx}>{(idx + 1) * 5}</option>
+              ))}
+          </select>{" "}
+          (default: none)
         </div>
         <div>
           <label>Number of steps where nobody gains a level: </label>
