@@ -104,7 +104,11 @@ impl GameScoringParameters {
                 .copied()
                 .unwrap_or_default();
         if step_size == 0 || step_size > total_points {
-            bail!("Step size must be between 5 and {}", total_points);
+            bail!(
+                "Step size of {} must be between 5 and {}",
+                step_size,
+                total_points
+            );
         } else if step_size % 5 != 0 {
             bail!("Step size must be a multiple of 5");
         } else {
@@ -435,7 +439,7 @@ mod tests {
             gsp
         };
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, -80, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, -80, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 5,
@@ -444,7 +448,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, -40, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, -40, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 4,
@@ -453,7 +457,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, -35, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, -35, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 3,
@@ -462,7 +466,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 0, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 0, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 3,
@@ -471,7 +475,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 5, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 5, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 2,
@@ -480,7 +484,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 35, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 35, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 2,
@@ -489,7 +493,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 40, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 40, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 1,
@@ -498,7 +502,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 75, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 75, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 1,
@@ -507,7 +511,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 80, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 80, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 0,
@@ -516,7 +520,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 115, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 115, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 0,
                 landlord_delta: 0,
@@ -525,7 +529,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 120, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 120, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 1,
                 landlord_delta: 0,
@@ -534,7 +538,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 155, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 155, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 1,
                 landlord_delta: 0,
@@ -543,7 +547,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 160, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 160, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 2,
                 landlord_delta: 0,
@@ -552,7 +556,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 195, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 195, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 2,
                 landlord_delta: 0,
@@ -561,7 +565,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 200, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 200, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 3,
                 landlord_delta: 0,
@@ -570,7 +574,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 235, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 235, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 3,
                 landlord_delta: 0,
@@ -579,7 +583,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 240, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 240, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 4,
                 landlord_delta: 0,
@@ -588,7 +592,7 @@ mod tests {
             })
         );
         assert_eq!(
-            compute_level_deltas(&gsp_nobonus, POINTS_PER_DECK, 2, 280, false,).unwrap(),
+            compute_level_deltas(&gsp_nobonus, 2, POINTS_PER_DECK, 280, false,).unwrap(),
             (GameScoreResult {
                 non_landlord_delta: 5,
                 landlord_delta: 0,
@@ -599,8 +603,8 @@ mod tests {
         assert_eq!(
             compute_level_deltas(
                 &GameScoringParameters::default(),
-                POINTS_PER_DECK,
                 2,
+                POINTS_PER_DECK,
                 0,
                 true,
             )
@@ -615,8 +619,8 @@ mod tests {
         assert_eq!(
             compute_level_deltas(
                 &GameScoringParameters::default(),
-                POINTS_PER_DECK,
                 3,
+                POINTS_PER_DECK,
                 0,
                 true,
             )
@@ -631,8 +635,8 @@ mod tests {
         assert_eq!(
             compute_level_deltas(
                 &GameScoringParameters::default(),
-                POINTS_PER_DECK,
                 3,
+                POINTS_PER_DECK,
                 50,
                 true,
             )
