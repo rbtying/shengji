@@ -24,7 +24,7 @@ interface Context {
     req: IDecomposeTrickFormatRequest
   ) => IDecomposedTrickFormat[];
   canPlayCards: (req: ICanPlayCardsRequest) => boolean;
-  explainScoring: (req: IExplainScoringRequest) => IScoreSegment[];
+  explainScoring: (req: IExplainScoringRequest) => IExplainScoringResponse;
   computeScore: (req: IComputeScoreRequest) => IComputeScoreResponse;
   decodeWireFormat: (req: any) => any;
 }
@@ -107,14 +107,19 @@ interface IComputeScoreResponse {
   next_threshold: number;
 }
 
+interface IExplainScoringResponse {
+  results: IScoreSegment[];
+  step_size: number;
+}
+
 export const WasmContext = React.createContext<Context>({
-  findViablePlays: (trump, cards) => [],
-  findValidBids: (req) => [],
-  sortAndGroupCards: (req) => [],
-  decomposeTrickFormat: (req) => [],
-  canPlayCards: (req) => false,
-  explainScoring: (req) => [],
-  computeScore: (req) => ({
+  findViablePlays: (_, __) => [],
+  findValidBids: (_) => [],
+  sortAndGroupCards: (_) => [],
+  decomposeTrickFormat: (_) => [],
+  canPlayCards: (_) => false,
+  explainScoring: (_) => ({ results: [], step_size: 0 }),
+  computeScore: (_) => ({
     score: {
       landlord_won: true,
       landlord_bonus: false,
@@ -123,7 +128,7 @@ export const WasmContext = React.createContext<Context>({
     },
     next_threshold: 0,
   }),
-  decodeWireFormat: (req) => {},
+  decodeWireFormat: (_) => {},
 });
 
 export default WasmContext;

@@ -27,7 +27,7 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
           return Shengji.can_play_cards(req).playable;
         },
         explainScoring: (req) => {
-          return Shengji.explain_scoring(req).results;
+          return Shengji.explain_scoring(req);
         },
         computeScore: (req) => {
           return Shengji.compute_score(req);
