@@ -160,7 +160,7 @@ export interface IPropagatedState {
   kitty_bid_policy: "FirstCard" | "FirstCardOfLevelOrHighest";
   throw_penalty: "None" | "TenPointsPerAttempt";
   trick_draw_policy: TrickDrawPolicy;
-  throw_evaluation_policy: "All" | "Highest";
+  throw_evaluation_policy: "All" | "Highest" | "TrickUnitLength";
   hide_played_cards: boolean;
   landlord_emoji: string | null;
   play_takeback_policy: "AllowPlayTakeback" | "NoPlayTakeback";

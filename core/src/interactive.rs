@@ -482,6 +482,7 @@ impl BroadcastMessage {
                 protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::All } => format!("{} set throws to be evaluated based on all of the cards", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
+            ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::TrickUnitLength } => format!("{} set throws to be evaluated based on the longest component", n?),
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::AllowPlayTakeback } => format!("{} allowed taking back plays", n?),
             PlayTakebackPolicySet { policy: PlayTakebackPolicy::NoPlayTakeback } => format!("{} disallowed taking back plays", n?),
             BidTakebackPolicySet { policy: BidTakebackPolicy::AllowBidTakeback } => format!("{} allowed taking back bids", n?),

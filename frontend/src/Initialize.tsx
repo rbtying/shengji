@@ -1112,6 +1112,9 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="Highest">
                 Subsequent throw must beat highest card to win
               </option>
+              <option value="TrickUnitLength">
+                Subsequent throw must beat largest component to win
+              </option>
             </select>
           </label>
         </div>
