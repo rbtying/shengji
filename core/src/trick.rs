@@ -46,6 +46,7 @@ impl Default for TrickDrawPolicy {
 pub enum ThrowEvaluationPolicy {
     All,
     Highest,
+    TrickUnitLength,
 }
 
 impl Default for ThrowEvaluationPolicy {
@@ -696,6 +697,34 @@ impl Trick {
                                     .expect("trick format cannot be empty");
                                 trump.compare_effective(n_max.card, w_max.card) == Ordering::Greater
                             }
+                            ThrowEvaluationPolicy::TrickUnitLength => {
+                                let mut comparisons = m
+                                    .iter()
+                                    .zip(winner.1.iter())
+                                    // Don't worry about single cards
+                                    .filter(|(n, _)| n.size() > 1)
+                                    .map(|(n, w)| {
+                                        (
+                                            n.size(),
+                                            trump.compare_effective(
+                                                n.first_card().card,
+                                                w.first_card().card,
+                                            ),
+                                        )
+                                    })
+                                    .collect::<Vec<_>>();
+                                // Compare by size first, then try to skip equal-comparisons.
+                                comparisons
+                                    .sort_by_key(|(s, c)| (-(*s as isize), *c == Ordering::Equal));
+                                let mut iter = comparisons.into_iter().map(|(_, c)| c);
+                                loop {
+                                    match iter.next() {
+                                        Some(Ordering::Equal) => {}
+                                        Some(Ordering::Greater) => break true,
+                                        Some(Ordering::Less) | None => break false,
+                                    }
+                                }
+                            }
                         };
                         if greater {
                             winner = (idx, m);
@@ -1159,8 +1188,8 @@ mod tests {
     use crate::hands::Hands;
     use crate::types::{
         cards::{
-            C_10, C_4, C_5, C_6, C_7, C_8, C_K, D_4, D_K, H_2, H_3, H_4, H_5, H_7, H_8, H_A, H_K,
-            S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
+            C_10, C_4, C_5, C_6, C_7, C_8, C_K, D_4, D_K, H_2, H_3, H_4, H_5, H_7, H_8, H_9, H_A,
+            H_K, S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
         },
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
@@ -2209,6 +2238,81 @@ mod tests {
         assert_eq!(run(ThrowEvaluationPolicy::All), P3);
         // In the "highest" cas, P4 wins because P4 played a higher card.
         assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
+    }
+
+    #[test]
+    fn test_throw_evaluation_policy_trick_unit_length() {
+        let trump = Trump::Standard {
+            number: Number::Two,
+            suit: Suit::Spades,
+        };
+
+        let p1_hand = vec![H_A, H_K, H_K, H_K, H_9, H_9];
+        let p2_hand = vec![S_5, S_5, S_5, S_Q, S_Q, S_A];
+        let p3_hand = vec![S_5, S_5, S_5, S_A, S_A, S_4];
+        let p4_hand = vec![S_4, S_4, S_4, S_3, S_3, Card::BigJoker];
+
+        let run = |policy: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+
+            hands.add(P1, p1_hand.clone()).unwrap();
+            hands.add(P2, p2_hand.clone()).unwrap();
+            hands.add(P3, p3_hand.clone()).unwrap();
+            hands.add(P4, p4_hand.clone()).unwrap();
+
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &p1_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &p2_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &p3_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &p4_hand,
+                    TrickDrawPolicy::NoProtections,
+                    policy,
+                    None,
+                )
+                .unwrap();
+            let TrickEnded { winner, .. } = trick.complete().unwrap();
+            winner
+        };
+
+        // In the "all" case, P2 retains the "winner" status, since there are no strictly higher
+        // plays
+        assert_eq!(run(ThrowEvaluationPolicy::All), P2);
+        // In the "highest" case, P4 wins because P4 played the highest card (and matched format)
+        assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
+        // In the "trick unit length" case, P3 wins because P3 matched-or-beat P2's longest tuples.
+        assert_eq!(run(ThrowEvaluationPolicy::TrickUnitLength), P3);
     }
 
     #[test]

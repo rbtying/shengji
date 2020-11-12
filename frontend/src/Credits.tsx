@@ -9,7 +9,7 @@ const contentStyle = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 4;
+const changeLogVersion: number = 5;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>11/11/2020:</p>
+        <ul>
+          Support a throw evaluation policy based on the longest component.
+        </ul>
         <p>11/01/2020:</p>
         <ul>
           <li>
