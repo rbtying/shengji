@@ -124,7 +124,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
       validStepSizes.push(`${curStepSize}`);
     }
   }
-  const maxSteps = Math.floor(100 / stepSize);
+  const maxSteps = Math.floor(totalPoints / stepSize);
 
   return (
     <>
