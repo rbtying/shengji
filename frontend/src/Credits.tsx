@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 5;
+const changeLogVersion: number = 6;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,11 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>11/13/2020:</p>
+        <ul>
+          Fix bug in longest-component throw-evaluation policy where the winner
+          for tricks of single cards was always the first player.
+        </ul>
         <p>11/11/2020:</p>
         <ul>
           Support a throw evaluation policy based on the longest component.
