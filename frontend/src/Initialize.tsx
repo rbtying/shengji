@@ -28,7 +28,7 @@ interface IDifficultyProps {
   setBidTakebackPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-const contentStyle = {
+const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",
   left: "50%",

@@ -46,6 +46,8 @@ lazy_static::lazy_static! {
         let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112_640).unwrap());
         std::sync::Mutex::new(comp)
     };
+
+    static ref VERSION: &'static str = env!("VERGEN_SHA");
 }
 
 #[derive(Clone, Serialize)]
@@ -195,8 +197,14 @@ async fn main() {
         warp::http::Response::builder()
             .header("Content-Type", "text/javascript; charset=utf-8")
             .body(match websocket_host.as_ref() {
-                Some(s) => format!("window._WEBSOCKET_HOST = \"{}\";", s),
-                None => "window._WEBSOCKET_HOST = null;".to_string(),
+                Some(s) => format!(
+                    "window._WEBSOCKET_HOST = \"{}\";window._VERSION = \"{}\";",
+                    s, *VERSION,
+                ),
+                None => format!(
+                    "window._WEBSOCKET_HOST = null;window._VERSION = \"{}\";",
+                    *VERSION
+                ),
             })
     });
 
@@ -343,7 +351,7 @@ async fn get_stats(
         num_games_created,
         num_players_online_now,
         num_active_games: games.len(),
-        sha: env!("VERGEN_SHA"),
+        sha: *VERSION,
     }))
 }
 

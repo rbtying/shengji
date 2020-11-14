@@ -6,7 +6,7 @@ import SettingsPane from "./SettingsPane";
 import { Settings } from "./state/Settings";
 import { AppStateContext } from "./AppStateProvider";
 
-const contentStyle = {
+const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",
   left: "50%",

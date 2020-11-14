@@ -17,7 +17,7 @@ import { WebsocketContext } from "./WebsocketProvider";
 import WasmContext, { IFoundViablePlay } from "./WasmContext";
 import InlineCard from "./InlineCard";
 
-const contentStyle = {
+const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",
   left: "50%",
