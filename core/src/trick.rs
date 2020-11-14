@@ -701,8 +701,9 @@ impl Trick {
                                 let mut comparisons = m
                                     .iter()
                                     .zip(winner.1.iter())
-                                    // Don't worry about single cards
-                                    .filter(|(n, _)| n.size() > 1)
+                                    // Don't worry about single cards if this is a throw, but do
+                                    // evaluate them if it isn't!
+                                    .filter(|(n, _)| m.len() == 1 || n.size() > 1)
                                     .map(|(n, w)| {
                                         (
                                             n.size(),
@@ -1266,242 +1267,262 @@ mod tests {
 
     #[test]
     fn test_play_singles_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
-        hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
-        hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
-        hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let run = |tep: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
+            hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
+            hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
+            hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[S_2],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P2,
-                &mut hands,
-                &[S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P3,
-                &mut hands,
-                &[S_3],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P4,
-                &mut hands,
-                &[S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        let TrickEnded {
-            winner: winner_id,
-            points,
-            largest_trick_unit_size,
-            ..
-        } = trick.complete().unwrap();
-        assert_eq!(winner_id, P2);
-        assert_eq!(largest_trick_unit_size, 1);
-        assert_eq!(points, vec![S_5, S_5]);
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &[S_2],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &[S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &[S_3],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &[S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            let TrickEnded {
+                winner: winner_id,
+                points,
+                largest_trick_unit_size,
+                ..
+            } = trick.complete().unwrap();
+            assert_eq!(winner_id, P2);
+            assert_eq!(largest_trick_unit_size, 1);
+            assert_eq!(points, vec![S_5, S_5]);
+        };
+        run(ThrowEvaluationPolicy::All);
+        run(ThrowEvaluationPolicy::Highest);
+        run(ThrowEvaluationPolicy::TrickUnitLength);
     }
 
     #[test]
     fn test_play_trump_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
-        hands.add(P2, vec![H_2, H_3, S_4]).unwrap();
-        hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
-        hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let run = |tep: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.add(P1, vec![S_2, S_3, S_5]).unwrap();
+            hands.add(P2, vec![H_2, H_3, S_4]).unwrap();
+            hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
+            hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[S_2],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P2,
-                &mut hands,
-                &[S_4],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P3,
-                &mut hands,
-                &[S_3],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P4,
-                &mut hands,
-                &[S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        let TrickEnded {
-            winner: winner_id,
-            points,
-            largest_trick_unit_size,
-            ..
-        } = trick.complete().unwrap();
-        assert_eq!(winner_id, P2);
-        assert_eq!(largest_trick_unit_size, 1);
-        assert_eq!(points, vec![S_5]);
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &[S_2],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &[S_4],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &[S_3],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &[S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            let TrickEnded {
+                winner: winner_id,
+                points,
+                largest_trick_unit_size,
+                ..
+            } = trick.complete().unwrap();
+            assert_eq!(winner_id, P2);
+            assert_eq!(largest_trick_unit_size, 1);
+            assert_eq!(points, vec![S_5]);
+        };
+        run(ThrowEvaluationPolicy::All);
+        run(ThrowEvaluationPolicy::Highest);
+        run(ThrowEvaluationPolicy::TrickUnitLength);
     }
 
     #[test]
     fn test_play_pairs_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![S_2, S_2, S_5]).unwrap();
-        hands.add(P2, vec![H_2, S_3, S_4]).unwrap();
-        hands.add(P3, vec![S_5, S_5, S_5]).unwrap();
-        hands.add(P4, vec![S_3, S_4, S_5]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let run = |tep: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.add(P1, vec![S_2, S_2, S_5]).unwrap();
+            hands.add(P2, vec![H_2, S_3, S_4]).unwrap();
+            hands.add(P3, vec![S_5, S_5, S_5]).unwrap();
+            hands.add(P4, vec![S_3, S_4, S_5]).unwrap();
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[S_2, S_2],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P2,
-                &mut hands,
-                &[S_3, S_4],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P3,
-                &mut hands,
-                &[S_5, S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P4,
-                &mut hands,
-                &[S_3, S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        let TrickEnded {
-            winner: winner_id,
-            points,
-            largest_trick_unit_size,
-            ..
-        } = trick.complete().unwrap();
-        assert_eq!(winner_id, P3);
-        assert_eq!(largest_trick_unit_size, 2);
-        assert_eq!(points, vec![S_5, S_5, S_5]);
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &[S_2, S_2],
+                    TrickDrawPolicy::NoProtections,
+                    ThrowEvaluationPolicy::All,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &[S_3, S_4],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &[S_5, S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &[S_3, S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            let TrickEnded {
+                winner: winner_id,
+                points,
+                largest_trick_unit_size,
+                ..
+            } = trick.complete().unwrap();
+            assert_eq!(winner_id, P3);
+            assert_eq!(largest_trick_unit_size, 2);
+            assert_eq!(points, vec![S_5, S_5, S_5]);
+        };
+        run(ThrowEvaluationPolicy::All);
+        run(ThrowEvaluationPolicy::Highest);
+        run(ThrowEvaluationPolicy::TrickUnitLength);
     }
 
     #[test]
     fn test_play_tractor_trick() {
-        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
-        hands.add(P1, vec![S_2, S_2, S_3, S_3, S_4]).unwrap();
-        hands.add(P2, vec![S_6, S_6, S_7, S_7, S_4]).unwrap();
-        hands.add(P3, vec![S_2, S_5, S_5, S_5, S_4]).unwrap();
-        hands.add(P4, vec![S_6, S_6, S_6, S_6, S_4]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let run = |tep: ThrowEvaluationPolicy| {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.add(P1, vec![S_2, S_2, S_3, S_3, S_4]).unwrap();
+            hands.add(P2, vec![S_6, S_6, S_7, S_7, S_4]).unwrap();
+            hands.add(P3, vec![S_2, S_5, S_5, S_5, S_4]).unwrap();
+            hands.add(P4, vec![S_6, S_6, S_6, S_6, S_4]).unwrap();
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
 
-        trick
-            .play_cards(
-                P1,
-                &mut hands,
-                &[S_2, S_2, S_3, S_3],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P2,
-                &mut hands,
-                &[S_6, S_6, S_7, S_7],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P3,
-                &mut hands,
-                &[S_2, S_5, S_5, S_5],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        trick
-            .play_cards(
-                P4,
-                &mut hands,
-                &[S_6, S_6, S_6, S_6],
-                TrickDrawPolicy::NoProtections,
-                ThrowEvaluationPolicy::All,
-                None,
-            )
-            .unwrap();
-        let TrickEnded {
-            winner: winner_id,
-            points,
-            largest_trick_unit_size,
-            ..
-        } = trick.complete().unwrap();
-        assert_eq!(winner_id, P2);
-        assert_eq!(largest_trick_unit_size, 4);
-        assert_eq!(points, vec![S_5, S_5, S_5]);
+            trick
+                .play_cards(
+                    P1,
+                    &mut hands,
+                    &[S_2, S_2, S_3, S_3],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P2,
+                    &mut hands,
+                    &[S_6, S_6, S_7, S_7],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P3,
+                    &mut hands,
+                    &[S_2, S_5, S_5, S_5],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            trick
+                .play_cards(
+                    P4,
+                    &mut hands,
+                    &[S_6, S_6, S_6, S_6],
+                    TrickDrawPolicy::NoProtections,
+                    tep,
+                    None,
+                )
+                .unwrap();
+            let TrickEnded {
+                winner: winner_id,
+                points,
+                largest_trick_unit_size,
+                ..
+            } = trick.complete().unwrap();
+            assert_eq!(winner_id, P2);
+            assert_eq!(largest_trick_unit_size, 4);
+            assert_eq!(points, vec![S_5, S_5, S_5]);
+        };
+        run(ThrowEvaluationPolicy::All);
+        run(ThrowEvaluationPolicy::Highest);
+        run(ThrowEvaluationPolicy::TrickUnitLength);
     }
 
     #[test]
