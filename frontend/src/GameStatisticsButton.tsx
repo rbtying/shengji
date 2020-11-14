@@ -5,7 +5,7 @@ import BarChart from "./icons/BarChart";
 import GameStatisticsPane from "./GameStatisticsPane";
 import { AppStateContext } from "./AppStateProvider";
 
-const contentStyle = {
+const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",
   left: "50%",
