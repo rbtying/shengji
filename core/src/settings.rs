@@ -366,7 +366,7 @@ impl PropagatedState {
         if num_decks == Some(0) {
             bail!("At least one deck is necessary to play the game")
         }
-        if num_decks.unwrap_or(0) >= self.players.len() * 2 {
+        if num_decks.unwrap_or(0) > self.players.len() * 2 {
             bail!("Using more than two decks per player is not supported");
         }
         let mut msgs = vec![];
