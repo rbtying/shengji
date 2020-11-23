@@ -8,7 +8,8 @@ use thiserror::Error;
 use crate::hands::{HandError, Hands};
 use crate::message::MessageVariant;
 use crate::ordered_card::{
-    attempt_format_match, subsequent_decomposition_ordering, AdjacentTupleSizes, OrderedCard,
+    attempt_format_match, subsequent_decomposition_ordering, AdjacentTupleSizes, MatchingCards,
+    OrderedCard,
 };
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
@@ -272,12 +273,31 @@ impl TrickFormat {
             return Err(TrickError::NonMatchingPlay);
         }
 
-        let (found, found_units) = UnitLike::check_play(
+        let (found, matches) = UnitLike::check_play(
             self.trump,
             cards.iter().copied(),
             self.units.iter().map(UnitLike::from),
             TrickDrawPolicy::NoProtections,
         );
+
+        let found_units: Units = matches
+            .into_iter()
+            .map(|m| {
+                if m.len() == 1 {
+                    let (card, count) = m[0];
+                    TrickUnit::Repeated { count, card }
+                } else {
+                    let min = m.iter().map(|(_, count)| count).min().unwrap();
+                    let max = m.iter().map(|(_, count)| count).max().unwrap();
+                    debug_assert_eq!(min, max);
+                    TrickUnit::Tractor {
+                        count: *min,
+                        members: m.iter().map(|(card, _)| *card).collect(),
+                    }
+                }
+            })
+            .collect();
+
         if found {
             debug_assert_eq!(
                 self.units
@@ -833,13 +853,13 @@ impl UnitLike {
         iter: impl IntoIterator<Item = Card>,
         units: impl Iterator<Item = UnitLike> + Clone,
         trick_draw_policy: TrickDrawPolicy,
-    ) -> (bool, Units) {
+    ) -> (bool, SmallVec<[MatchingCards; 4]>) {
         let mut counts = BTreeMap::new();
         for card in iter.into_iter() {
             let card = OrderedCard { card, trump };
             *counts.entry(card).or_insert(0) += 1;
         }
-        let (matched, matches) = attempt_format_match(
+        attempt_format_match(
             &mut counts,
             0,
             units.map(|u| u.adjacent_tuples),
@@ -849,26 +869,6 @@ impl UnitLike {
                     .iter()
                     .any(|(card, count)| counts.get(card).copied().unwrap_or_default() > *count),
             },
-        );
-        (
-            matched,
-            matches
-                .into_iter()
-                .map(|m| {
-                    if m.len() == 1 {
-                        let (card, count) = m[0];
-                        TrickUnit::Repeated { count, card }
-                    } else {
-                        let min = m.iter().map(|(_, count)| count).min().unwrap();
-                        let max = m.iter().map(|(_, count)| count).max().unwrap();
-                        assert_eq!(min, max);
-                        TrickUnit::Tractor {
-                            count: *min,
-                            members: m.iter().map(|(card, _)| *card).collect(),
-                        }
-                    }
-                })
-                .collect(),
         )
     }
 }
@@ -884,6 +884,22 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
             TrickUnit::Repeated { count, .. } => UnitLike {
                 adjacent_tuples: smallvec![*count],
             },
+        }
+    }
+}
+
+impl<'a> From<&'a AdjacentTupleSizes> for UnitLike {
+    fn from(u: &'a AdjacentTupleSizes) -> Self {
+        UnitLike {
+            adjacent_tuples: u.clone(),
+        }
+    }
+}
+
+impl<'a> From<&'a MatchingCards> for UnitLike {
+    fn from(u: &'a MatchingCards) -> Self {
+        UnitLike {
+            adjacent_tuples: u.iter().map(|(_, len)| *len).collect(),
         }
     }
 }

@@ -135,7 +135,14 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
                 format,
                 description,
                 playable: if playable {
-                    units.into_iter().flat_map(|u| u.cards()).collect()
+                    units
+                        .into_iter()
+                        .flat_map(|u| {
+                            u.into_iter()
+                                .flat_map(|(card, count)| std::iter::repeat(card.card).take(count))
+                                .collect::<Vec<_>>()
+                        })
+                        .collect()
                 } else {
                     vec![]
                 },
