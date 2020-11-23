@@ -187,14 +187,18 @@ fn main() {
                                 let (playable, units) = UnitLike::check_play(
                                     trick_format.trump(),
                                     available_cards.iter().copied(),
-                                    format.iter().copied(),
+                                    format.iter().cloned(),
                                     s.propagated().trick_draw_policy(),
                                 );
                                 if playable {
                                     Some(
                                         units
                                             .into_iter()
-                                            .flat_map(|u| u.cards())
+                                            .flat_map(|x| {
+                                                x.into_iter().flat_map(|(card, count)| {
+                                                    std::iter::repeat(card.card).take(count)
+                                                })
+                                            })
                                             .collect::<Vec<_>>(),
                                     )
                                 } else {

@@ -8,6 +8,7 @@ pub mod game_state;
 pub mod hands;
 pub mod interactive;
 pub mod message;
+pub mod ordered_card;
 pub mod player;
 pub mod scoring;
 pub mod settings;
