@@ -7,6 +7,9 @@ use thiserror::Error;
 
 use crate::hands::{HandError, Hands};
 use crate::message::MessageVariant;
+use crate::ordered_card::{
+    attempt_format_match, subsequent_decomposition_ordering, AdjacentTupleSizes, OrderedCard,
+};
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
 #[derive(Error, Clone, Debug, Serialize, Deserialize)]
@@ -137,37 +140,6 @@ impl std::fmt::Debug for TrickUnit {
     }
 }
 
-pub struct TrickFormatDecomposition {
-    requirements: VecDeque<SmallVec<[UnitLike; 4]>>,
-}
-
-impl Iterator for TrickFormatDecomposition {
-    type Item = SmallVec<[UnitLike; 4]>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let n = self.requirements.pop_front();
-        // Update requirements
-        if let Some(mut requirement) = n.clone() {
-            let mut suffix_units = vec![];
-            while let Some(unit) = requirement.pop() {
-                let decomposed = unit.decompose();
-                if !decomposed.is_empty() {
-                    for subunits in decomposed {
-                        let mut r = requirement.clone();
-                        r.extend(subunits);
-                        r.extend(suffix_units.iter().copied());
-                        self.requirements.push_back(r);
-                    }
-                    break;
-                } else {
-                    suffix_units.push(unit);
-                }
-            }
-        }
-        n
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TrickFormat {
     suit: EffectiveSuit,
@@ -189,14 +161,29 @@ impl TrickFormat {
     }
 
     pub fn decomposition(&self) -> impl Iterator<Item = SmallVec<[UnitLike; 4]>> {
-        let mut requirements = VecDeque::new();
-        requirements.push_back(
-            self.units
-                .iter()
-                .map(UnitLike::from)
-                .collect::<SmallVec<[_; 4]>>(),
-        );
-        TrickFormatDecomposition { requirements }
+        let units = self.units.iter().map(UnitLike::from).collect();
+        let adj_tuples = self
+            .units
+            .iter()
+            .map(UnitLike::from)
+            .map(|u| u.adjacent_tuples)
+            .collect();
+
+        // Include the current trick-format, and then the subsequent decomposition if we get that
+        // far. Compute the latter lazily, since we usually won't.
+        std::iter::once(units).chain(
+            std::iter::once_with(|| {
+                subsequent_decomposition_ordering(adj_tuples)
+                    .into_iter()
+                    .map(|requirements| {
+                        requirements
+                            .into_iter()
+                            .map(|adjacent_tuples| UnitLike { adjacent_tuples })
+                            .collect()
+                    })
+            })
+            .flatten(),
+        )
     }
 
     pub fn is_legal_play(
@@ -242,7 +229,7 @@ impl TrickFormat {
                 let play_matches = UnitLike::check_play(
                     self.trump,
                     proposed.iter().copied(),
-                    requirement.iter().copied(),
+                    requirement.iter().cloned(),
                     TrickDrawPolicy::NoProtections,
                 )
                 .0;
@@ -254,7 +241,7 @@ impl TrickFormat {
                 let hand_can_play = UnitLike::check_play(
                     self.trump,
                     available_cards.iter().copied(),
-                    requirement.iter().copied(),
+                    requirement.iter().cloned(),
                     trick_draw_policy,
                 )
                 .0;
@@ -746,10 +733,9 @@ pub struct TrickEnded {
     pub failed_throw_size: usize,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub enum UnitLike {
-    Tractor { count: usize, length: usize },
-    Repeated { count: usize },
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub struct UnitLike {
+    adjacent_tuples: AdjacentTupleSizes,
 }
 
 impl UnitLike {
@@ -784,62 +770,62 @@ impl UnitLike {
     }
 
     pub fn description(&self) -> String {
-        match self {
-            UnitLike::Tractor {
-                count: 2,
-                length: 2,
-            } => "tractor".to_string(),
-            UnitLike::Tractor { count: 3, length } => format!("{}-tractor of triples", length),
-            UnitLike::Tractor { count: 4, length } => format!("{}-tractor of quadruples", length),
-            UnitLike::Tractor { count, length } => format!("{} by {} tractor", count, length),
-            UnitLike::Repeated { count: 1 } => "single".to_string(),
-            UnitLike::Repeated { count: 2 } => "pair".to_string(),
-            UnitLike::Repeated { count: 3 } => "triple".to_string(),
-            UnitLike::Repeated { count: 4 } => "quadruple".to_string(),
-            UnitLike::Repeated { count: 5 } => "quintuple".to_string(),
-            UnitLike::Repeated { count } => format!("{}-tuple", count),
+        let length = self.adjacent_tuples.len();
+        if length == 1 {
+            Self::tuple_description(self.adjacent_tuples[0])
+        } else if self.rectangular() {
+            let count = self.adjacent_tuples[0];
+
+            if length == 2 {
+                if count == 2 {
+                    "tractor".to_string()
+                } else {
+                    format!("tractor of {}s", Self::tuple_description(count))
+                }
+            } else {
+                format!("{}-tractor of {}s", length, Self::tuple_description(count))
+            }
+        } else {
+            match length {
+                2 => format!(
+                    "an adjacent {} and a {}",
+                    Self::tuple_description(self.adjacent_tuples[0]),
+                    Self::tuple_description(self.adjacent_tuples[1])
+                ),
+                _ => {
+                    let tuples = self.adjacent_tuples[1..length]
+                        .iter()
+                        .map(|l| Self::tuple_description(*l))
+                        .collect::<Vec<_>>();
+                    format!(
+                        "an adjacent {}, and a {}",
+                        tuples.join(", "),
+                        Self::tuple_description(self.adjacent_tuples[0])
+                    )
+                }
+            }
         }
     }
 
-    #[allow(clippy::comparison_chain)]
-    fn decompose(&self) -> SmallVec<[SmallVec<[UnitLike; 2]>; 2]> {
-        let mut units = smallvec![];
+    pub fn rectangular(&self) -> bool {
+        self.adjacent_tuples
+            .iter()
+            .all(|v| *v == self.adjacent_tuples[0])
+    }
 
-        match self {
-            UnitLike::Tractor { count, length } => {
-                // Try making the tractor smaller
-                if *count > 2 {
-                    units.push(smallvec![UnitLike::Tractor {
-                        length: *length,
-                        count: count - 1,
-                    }]);
-                }
-                // Also try separating the tractor into pieces
-                if *length > 2 {
-                    units.push(smallvec![
-                        UnitLike::Tractor {
-                            length: length - 1,
-                            count: *count,
-                        },
-                        UnitLike::Repeated { count: *count }
-                    ]);
-                } else if *length == 2 {
-                    units.push(smallvec![
-                        UnitLike::Repeated { count: *count },
-                        UnitLike::Repeated { count: *count }
-                    ]);
-                }
-            }
-            UnitLike::Repeated { count } if *count > 1 => {
-                units.push(smallvec![
-                    UnitLike::Repeated { count: count - 1 },
-                    UnitLike::Repeated { count: 1 },
-                ]);
-            }
-            _ => (),
+    pub fn num_cards(&self) -> usize {
+        self.adjacent_tuples.iter().sum()
+    }
+
+    pub fn tuple_description(len: usize) -> String {
+        match len {
+            1 => "single".to_string(),
+            2 => "pair".to_string(),
+            3 => "triple".to_string(),
+            4 => "quadruple".to_string(),
+            5 => "quintuple".to_string(),
+            count => format!("{}-tuple", count),
         }
-
-        units
     }
 
     pub fn check_play(
@@ -853,12 +839,36 @@ impl UnitLike {
             let card = OrderedCard { card, trump };
             *counts.entry(card).or_insert(0) += 1;
         }
-
-        check_format_inner(
+        let (matched, matches) = attempt_format_match(
             &mut counts,
             0,
-            units,
-            trick_draw_policy != TrickDrawPolicy::LongerTuplesProtected,
+            units.map(|u| u.adjacent_tuples),
+            |counts, matching| match trick_draw_policy {
+                TrickDrawPolicy::NoProtections => true,
+                TrickDrawPolicy::LongerTuplesProtected => !matching
+                    .iter()
+                    .any(|(card, count)| counts.get(card).copied().unwrap_or_default() > *count),
+            },
+        );
+        (
+            matched,
+            matches
+                .into_iter()
+                .map(|m| {
+                    if m.len() == 1 {
+                        let (card, count) = m[0];
+                        TrickUnit::Repeated { count, card }
+                    } else {
+                        let min = m.iter().map(|(_, count)| count).min().unwrap();
+                        let max = m.iter().map(|(_, count)| count).max().unwrap();
+                        assert_eq!(min, max);
+                        TrickUnit::Tractor {
+                            count: *min,
+                            members: m.iter().map(|(card, _)| *card).collect(),
+                        }
+                    }
+                })
+                .collect(),
         )
     }
 }
@@ -866,74 +876,21 @@ impl UnitLike {
 impl<'a> From<&'a TrickUnit> for UnitLike {
     fn from(u: &'a TrickUnit) -> Self {
         match u {
-            TrickUnit::Tractor { ref members, count } => UnitLike::Tractor {
-                count: *count,
-                length: members.len() as usize,
+            TrickUnit::Tractor { ref members, count } => UnitLike {
+                adjacent_tuples: std::iter::repeat(*count)
+                    .take(members.len() as usize)
+                    .collect(),
             },
-            TrickUnit::Repeated { count, .. } => UnitLike::Repeated { count: *count },
+            TrickUnit::Repeated { count, .. } => UnitLike {
+                adjacent_tuples: smallvec![*count],
+            },
         }
     }
 }
 
 type Units = SmallVec<[TrickUnit; 4]>;
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct OrderedCard {
-    card: Card,
-    trump: Trump,
-}
-
-impl std::fmt::Debug for OrderedCard {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.card)
-    }
-}
-
-impl OrderedCard {
-    fn successor(self) -> SmallVec<[OrderedCard; 4]> {
-        self.trump
-            .successor(self.card)
-            .into_iter()
-            .map(|card| Self {
-                card,
-                trump: self.trump,
-            })
-            .collect()
-    }
-
-    pub fn cards<'a, 'b: 'a>(
-        iter: impl Iterator<Item = (&'b OrderedCard, &'b usize)> + 'a,
-    ) -> impl Iterator<Item = &'b OrderedCard> + 'a {
-        iter.flat_map(|(card, count)| (0..*count).map(move |_| card))
-    }
-
-    pub fn cmp_effective(self, o: OrderedCard) -> Ordering {
-        self.trump.compare_effective(self.card, o.card)
-    }
-}
-
-impl Ord for OrderedCard {
-    fn cmp(&self, o: &OrderedCard) -> Ordering {
-        self.trump.compare(self.card, o.card)
-    }
-}
-
-impl PartialOrd for OrderedCard {
-    fn partial_cmp(&self, o: &OrderedCard) -> Option<Ordering> {
-        Some(self.cmp(o))
-    }
-}
-
-fn breaks_longer_tuple(counts: &BTreeMap<OrderedCard, usize>, unit: &TrickUnit) -> bool {
-    match unit {
-        TrickUnit::Repeated { card, count } => counts[&card] > *count,
-        TrickUnit::Tractor { ref members, count } => {
-            members.iter().any(|card| counts[&card] > *count)
-        }
-    }
-}
-
-fn without_cards<T>(
+fn without_trick_unit<T>(
     counts: &mut BTreeMap<OrderedCard, usize>,
     unit: &TrickUnit,
     mut f: impl FnMut(&mut BTreeMap<OrderedCard, usize>) -> T,
@@ -977,99 +934,6 @@ fn without_cards<T>(
     }
 
     res
-}
-
-fn check_format_inner(
-    counts: &mut BTreeMap<OrderedCard, usize>,
-    depth: usize,
-    mut units: impl Iterator<Item = UnitLike> + Clone,
-    allow_breaking_larger_tuples: bool,
-) -> (bool, Units) {
-    let all_single_repeated = units
-        .clone()
-        .all(|u| matches!(u, UnitLike::Repeated { count: 1, .. }));
-
-    match units.next() {
-        Some(UnitLike::Tractor {
-            length,
-            count: width,
-        }) => {
-            let mut potential_starts = Units::new();
-            for (card, count) in &*counts {
-                potential_starts.extend(
-                    find_tractors_from_start(*card, *count, counts, width, length as usize)
-                        .into_iter()
-                        .map(|t| match t {
-                            // The tractors we find might actually be wider
-                            // (higher count) than requested, so let's downgrade
-                            // the start accordingly.
-                            TrickUnit::Tractor { members, .. } => TrickUnit::Tractor {
-                                members,
-                                count: width,
-                            },
-                            // This is unreachable, but let's defensively handle it.
-                            r @ TrickUnit::Repeated { .. } => r,
-                        }),
-                );
-            }
-            for tractor in potential_starts {
-                if !allow_breaking_larger_tuples && breaks_longer_tuple(counts, &tractor) {
-                    // Check if the tractor involves breaking any longer tuples
-                    continue;
-                }
-                let (found, mut path) = without_cards(counts, &tractor, |subcounts| {
-                    check_format_inner(
-                        subcounts,
-                        depth + 1,
-                        units.clone(),
-                        allow_breaking_larger_tuples,
-                    )
-                });
-                if found {
-                    path.push(tractor);
-                    return (true, path);
-                }
-            }
-            (false, smallvec![])
-        }
-        Some(UnitLike::Repeated { count }) => {
-            let viable_repeated = counts
-                .iter()
-                .filter(|(_, ct)| **ct >= count)
-                .map(|(card, _)| *card)
-                .collect::<SmallVec<[OrderedCard; 4]>>();
-
-            for card in viable_repeated {
-                let repeated = TrickUnit::Repeated { count, card };
-                if !allow_breaking_larger_tuples
-                    // If there's only single repeated units left, we should
-                    // allow breaking longer tuples, since this implies that we
-                    // have already tried to match all of the stricter
-                    // requirements and failed.
-                    && !all_single_repeated
-                    && breaks_longer_tuple(counts, &repeated)
-                {
-                    // Check if the play involves breaking any longer tuples
-                    continue;
-                }
-                let (found, mut path) = without_cards(counts, &repeated, |subcounts| {
-                    check_format_inner(
-                        subcounts,
-                        depth + 1,
-                        units.clone(),
-                        allow_breaking_larger_tuples,
-                    )
-                });
-
-                if found {
-                    path.push(TrickUnit::Repeated { count, card });
-                    return (true, path);
-                }
-            }
-            (false, smallvec![])
-        }
-        None => (true, smallvec![]),
-    }
 }
 
 fn find_tractors_from_start(
@@ -1162,7 +1026,7 @@ fn find_plays_inner(
     } else {
         let mut plays = smallvec![];
         for start in potential_starts {
-            without_cards(counts, &start, |subcounts| {
+            without_trick_unit(counts, &start, |subcounts| {
                 let sub_plays = find_plays_inner(
                     subcounts,
                     num_cards - start.size(),
@@ -1980,6 +1844,37 @@ mod tests {
     }
 
     #[test]
+    fn test_protected_tuple() {
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: smallvec![TrickUnit::Repeated {
+                card: oc!(S_3),
+                count: 3,
+            },],
+        };
+        let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_6, S_7, S_8]);
+        assert!(!tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_5, S_6, S_7, S_8]);
+        assert!(!tf.is_legal_play(&hand, &[S_5, S_5, S_6], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_5, S_6],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+    }
+
+    #[test]
     fn test_protected_wider_tractor() {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -2257,7 +2152,7 @@ mod tests {
 
         // In the "all" case, P3 retains the "winner" status.
         assert_eq!(run(ThrowEvaluationPolicy::All), P3);
-        // In the "highest" cas, P4 wins because P4 played a higher card.
+        // In the "highest" case, P4 wins because P4 played a higher card.
         assert_eq!(run(ThrowEvaluationPolicy::Highest), P4);
     }
 

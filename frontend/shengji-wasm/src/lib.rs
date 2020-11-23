@@ -124,11 +124,11 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
     let results = trick_format
         .decomposition()
         .map(|format| {
-            let description = UnitLike::multi_description(format.iter().copied());
+            let description = UnitLike::multi_description(format.iter().cloned());
             let (playable, units) = UnitLike::check_play(
                 trick_format.trump(),
                 available_cards.iter().copied(),
-                format.iter().copied(),
+                format.iter().cloned(),
                 trick_draw_policy,
             );
             DecomposedTrickFormat {

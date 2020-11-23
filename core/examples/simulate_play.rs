@@ -187,7 +187,7 @@ fn main() {
                                 let (playable, units) = UnitLike::check_play(
                                     trick_format.trump(),
                                     available_cards.iter().copied(),
-                                    format.iter().copied(),
+                                    format.iter().cloned(),
                                     s.propagated().trick_draw_policy(),
                                 );
                                 if playable {
