@@ -16,6 +16,8 @@ impl Default for BidPolicy {
         BidPolicy::JokerOrGreaterLength
     }
 }
+impl_slog_value!(BidPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum JokerBidPolicy {
     BothTwoOrMore,
@@ -29,6 +31,8 @@ impl Default for JokerBidPolicy {
     }
 }
 
+impl_slog_value!(JokerBidPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BidTakebackPolicy {
     AllowBidTakeback,
@@ -40,6 +44,8 @@ impl Default for BidTakebackPolicy {
         BidTakebackPolicy::AllowBidTakeback
     }
 }
+
+impl_slog_value!(BidTakebackPolicy);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Bid {

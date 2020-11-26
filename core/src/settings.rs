@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
+use slog_derive::KV;
 use url::Url;
 
 use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
@@ -10,6 +11,22 @@ use crate::player::Player;
 use crate::scoring::GameScoringParameters;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID, FULL_DECK};
+
+#[macro_export]
+macro_rules! impl_slog_value {
+    ($x: ident) => {
+        impl slog::Value for $x {
+            fn serialize(
+                &self,
+                _: &slog::Record,
+                key: slog::Key,
+                serializer: &mut dyn slog::Serializer,
+            ) -> slog::Result {
+                serializer.emit_str(key, &format!("{:?}", self))
+            }
+        }
+    };
+}
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct Friend {
@@ -49,11 +66,29 @@ impl GameModeSettings {
     }
 }
 
+impl slog::KV for GameModeSettings {
+    fn serialize(&self, _: &slog::Record, serializer: &mut dyn slog::Serializer) -> slog::Result {
+        match self {
+            GameModeSettings::Tractor => serializer.emit_str("game_mode", "Tractor")?,
+            GameModeSettings::FindingFriends { num_friends } => {
+                serializer.emit_str("game_mode", "FindingFriends")?;
+                match num_friends {
+                    Some(num_friends) => serializer.emit_usize("num_friends", *num_friends)?,
+                    None => serializer.emit_none("num_friends")?,
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 impl Default for GameModeSettings {
     fn default() -> Self {
         GameModeSettings::Tractor
     }
 }
+
+impl_slog_value!(GameModeSettings);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ThrowPenalty {
@@ -67,6 +102,8 @@ impl Default for ThrowPenalty {
     }
 }
 
+impl_slog_value!(ThrowPenalty);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum KittyPenalty {
     Times,
@@ -78,6 +115,8 @@ impl Default for KittyPenalty {
         KittyPenalty::Times
     }
 }
+
+impl_slog_value!(KittyPenalty);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum AdvancementPolicy {
@@ -92,6 +131,8 @@ impl Default for AdvancementPolicy {
     }
 }
 
+impl_slog_value!(AdvancementPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FriendSelectionPolicy {
     Unrestricted,
@@ -104,11 +145,21 @@ impl Default for FriendSelectionPolicy {
     }
 }
 
+impl_slog_value!(FriendSelectionPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FirstLandlordSelectionPolicy {
     ByWinningBid,
     ByFirstBid,
 }
+
+impl Default for FirstLandlordSelectionPolicy {
+    fn default() -> Self {
+        FirstLandlordSelectionPolicy::ByWinningBid
+    }
+}
+
+impl_slog_value!(FirstLandlordSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum KittyBidPolicy {
@@ -122,11 +173,8 @@ impl Default for KittyBidPolicy {
     }
 }
 
-impl Default for FirstLandlordSelectionPolicy {
-    fn default() -> Self {
-        FirstLandlordSelectionPolicy::ByWinningBid
-    }
-}
+impl_slog_value!(KittyBidPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum PlayTakebackPolicy {
     AllowPlayTakeback,
@@ -138,6 +186,8 @@ impl Default for PlayTakebackPolicy {
         PlayTakebackPolicy::AllowPlayTakeback
     }
 }
+
+impl_slog_value!(PlayTakebackPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum KittyTheftPolicy {
@@ -151,6 +201,8 @@ impl Default for KittyTheftPolicy {
     }
 }
 
+impl_slog_value!(KittyTheftPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameShadowingPolicy {
     AllowMultipleSessions,
@@ -162,6 +214,8 @@ impl Default for GameShadowingPolicy {
         GameShadowingPolicy::AllowMultipleSessions
     }
 }
+
+impl_slog_value!(GameShadowingPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameStartPolicy {
@@ -175,8 +229,22 @@ impl Default for GameStartPolicy {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl_slog_value!(GameStartPolicy);
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, KV)]
 pub struct PropagatedState {
+    #[slog(skip)]
+    pub(crate) players: Vec<Player>,
+    #[slog(skip)]
+    pub(crate) observers: Vec<Player>,
+    #[slog(skip)]
+    pub(crate) landlord: Option<PlayerID>,
+    #[slog(skip)]
+    max_player_id: usize,
+    #[slog(skip)]
+    #[serde(default)]
+    pub(crate) num_games_finished: usize,
+
     pub(crate) game_mode: GameModeSettings,
     #[serde(default)]
     pub(crate) hide_landlord_points: bool,
@@ -184,10 +252,6 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) friend_selection_policy: FriendSelectionPolicy,
     pub(crate) num_decks: Option<usize>,
-    max_player_id: usize,
-    pub(crate) players: Vec<Player>,
-    pub(crate) observers: Vec<Player>,
-    pub(crate) landlord: Option<PlayerID>,
     #[serde(default)]
     pub(crate) landlord_emoji: Option<String>,
     pub(crate) chat_link: Option<String>,
@@ -199,8 +263,6 @@ pub struct PropagatedState {
     pub(crate) throw_penalty: ThrowPenalty,
     #[serde(default)]
     pub(crate) hide_played_cards: bool,
-    #[serde(default)]
-    pub(crate) num_games_finished: usize,
     #[serde(default)]
     pub(crate) kitty_bid_policy: KittyBidPolicy,
     #[serde(default)]

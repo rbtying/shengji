@@ -9,7 +9,7 @@ use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
     GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
-    KittyTheftPolicy, PlayTakebackPolicy, ThrowPenalty,
+    KittyTheftPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy, TrickUnit};
 use crate::types::{Card, Number, PlayerID};
@@ -81,7 +81,8 @@ impl InteractiveGame {
                 vec![]
             }
             (Message::StartGame, GameState::Initialize(ref mut state)) => {
-                info!(logger, "Starting game");
+                let s: &'_ PropagatedState = state;
+                info!(logger, "Starting game"; s);
                 self.state = GameState::Draw(state.start(id)?);
                 vec![MessageVariant::StartingGame]
             }
