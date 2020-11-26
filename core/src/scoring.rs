@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, bail, Error};
 use serde::{Deserialize, Serialize};
+use slog_derive::KV;
 use smallvec::SmallVec;
 
 pub const POINTS_PER_DECK: usize = 100;
@@ -17,6 +18,7 @@ impl Default for BonusLevelPolicy {
         BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
     }
 }
+impl_slog_value!(BonusLevelPolicy);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub struct PartialGameScoreResult {
@@ -65,10 +67,11 @@ impl GameScoreResult {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, KV)]
 pub struct GameScoringParameters {
     /// Number of points per "step" in the deck.
     step_size_per_deck: usize,
+    #[slog(skip)]
     /// Number-of-deck-based adjustments to the step size
     step_adjustments: HashMap<usize, isize>,
     /// Number of steps (as a fraction of the overall number in the deck)
@@ -80,6 +83,7 @@ pub struct GameScoringParameters {
     truncate_zero_crossing_window: bool,
     pub bonus_level_policy: BonusLevelPolicy,
 }
+impl_slog_value!(GameScoringParameters);
 
 impl Default for GameScoringParameters {
     fn default() -> Self {

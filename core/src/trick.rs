@@ -46,12 +46,16 @@ impl Default for TrickDrawPolicy {
     }
 }
 
+impl_slog_value!(TrickDrawPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ThrowEvaluationPolicy {
     All,
     Highest,
     TrickUnitLength,
 }
+
+impl_slog_value!(ThrowEvaluationPolicy);
 
 impl Default for ThrowEvaluationPolicy {
     fn default() -> Self {
