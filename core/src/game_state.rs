@@ -15,7 +15,7 @@ use crate::settings::{
     FriendSelectionPolicy, GameMode, GameModeSettings, GameStartPolicy, KittyBidPolicy,
     KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
-use crate::trick::{Trick, TrickEnded, TrickUnit};
+use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
 
 macro_rules! bail_unwrap {
@@ -300,14 +300,15 @@ impl PlayPhase {
         cards: &[Card],
         format_hint: Option<&'_ [TrickUnit]>,
     ) -> Result<Vec<MessageVariant>, Error> {
-        let mut msgs = self.trick.play_cards(
+        let mut msgs = self.trick.play_cards(PlayCards {
             id,
-            &mut self.hands,
+            hands: &mut self.hands,
             cards,
-            self.propagated.trick_draw_policy,
-            self.propagated.throw_evaluation_policy,
+            trick_draw_policy: self.propagated.trick_draw_policy,
+            throw_eval_policy: self.propagated.throw_evaluation_policy,
             format_hint,
-        )?;
+            hide_throw_halting_player: self.propagated.hide_throw_halting_player,
+        })?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {
                 match msg {

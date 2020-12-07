@@ -93,7 +93,7 @@ pub enum MessageVariant {
     },
     ThrowFailed {
         original_cards: Vec<Card>,
-        better_player: PlayerID,
+        better_player: Option<PlayerID>,
     },
     SetDefendingPointVisibility {
         visible: bool,
@@ -155,5 +155,8 @@ pub enum MessageVariant {
     EndOfGameSummary {
         landlord_won: bool,
         non_landlords_points: isize,
+    },
+    HideThrowHaltingPlayer {
+        set: bool,
     },
 }

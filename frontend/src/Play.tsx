@@ -288,7 +288,7 @@ const TrickFormatHelper = (props: {
           </p>
         )}
 
-        {decomp.length > 1 && (
+        {decomp.length > 1 && props.trickDrawPolicy !== "NoFormatBasedDraw" && (
           <>
             <p>
               If you can&apos;t play that, but you <em>can</em> play one of the

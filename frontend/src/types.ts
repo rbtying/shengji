@@ -139,7 +139,10 @@ export type JokerBidPolicy =
   | "BothTwoOrMore"
   | "BothNumDecks"
   | "LJNumDecksHJNumDecksLessOne";
-export type TrickDrawPolicy = "NoProtections" | "LongerTuplesProtected";
+export type TrickDrawPolicy =
+  | "NoProtections"
+  | "LongerTuplesProtected"
+  | "NoFormatBasedDraw";
 
 export interface IPropagatedState {
   game_mode: IGameModeSettings;
@@ -170,6 +173,7 @@ export interface IPropagatedState {
   game_start_policy: "AllowAnyPlayer" | "AllowLandlordOnly";
   game_scoring_parameters: IGameScoringParameters;
   should_reveal_kitty_at_end_of_game: boolean;
+  hide_throw_halting_player: boolean;
 }
 
 export interface IGameScoringParameters {

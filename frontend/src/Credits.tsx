@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 7;
+const changeLogVersion: number = 8;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,27 +41,44 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>12/07/2020:</p>
+        <ul>
+          <li>
+            Add a setting which hides the indication of which player that can
+            defeat a throw.
+          </li>
+          <li>
+            Add a card-protection setting which disables format-based play
+            requirements.
+          </li>
+        </ul>
         <p>11/22/2020:</p>
         <ul>
-          More rigorously define trick-format decomposition, especially when
-          more than four decks are involved. See the issues referenced in{" "}
-          <a
-            href="https://github.com/rbtying/shengji/pull/258/files"
-            target="_blank"
-            rel="noreferrer"
-          >
-            PR #258
-          </a>{" "}
-          for details.
+          <li>
+            More rigorously define trick-format decomposition, especially when
+            more than four decks are involved. See the issues referenced in{" "}
+            <a
+              href="https://github.com/rbtying/shengji/pull/258/files"
+              target="_blank"
+              rel="noreferrer"
+            >
+              PR #258
+            </a>{" "}
+            for details.
+          </li>
         </ul>
         <p>11/13/2020:</p>
         <ul>
-          Fix bug in longest-component throw-evaluation policy where the winner
-          for tricks of single cards was always the first player.
+          <li>
+            Fix bug in longest-component throw-evaluation policy where the
+            winner for tricks of single cards was always the first player.
+          </li>
         </ul>
         <p>11/11/2020:</p>
         <ul>
-          Support a throw evaluation policy based on the longest component.
+          <li>
+            Support a throw evaluation policy based on the longest component.
+          </li>
         </ul>
         <p>11/01/2020:</p>
         <ul>
