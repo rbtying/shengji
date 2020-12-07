@@ -38,6 +38,7 @@ pub enum TrickError {
 pub enum TrickDrawPolicy {
     NoProtections,
     LongerTuplesProtected,
+    NoFormatBasedDraw,
 }
 
 impl Default for TrickDrawPolicy {
@@ -222,6 +223,9 @@ impl TrickFormat {
             // Otherwise, this is an invalid play.
             num_correct_suit == num_proposed_correct_suit
         } else {
+            if let TrickDrawPolicy::NoFormatBasedDraw = trick_draw_policy {
+                return true;
+            }
             let available_cards = Card::cards(
                 hand.iter()
                     .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
@@ -251,7 +255,6 @@ impl TrickFormat {
                 )
                 .0;
                 if hand_can_play {
-                    eprintln!("ahhh");
                     return false;
                 }
             }
@@ -460,13 +463,6 @@ impl Trick {
                 if tf.is_legal_play(hands.get(id)?, cards, trick_draw_policy) {
                     Ok(())
                 } else {
-                    eprintln!(
-                        "not legal play? {:?} {:?} {:?} {:?}",
-                        id,
-                        hands,
-                        cards,
-                        hands.get(id)
-                    );
                     Err(TrickError::IllegalPlay)
                 }
             }
@@ -903,7 +899,7 @@ impl UnitLike {
             0,
             units.map(|u| u.adjacent_tuples),
             |counts, matching| match trick_draw_policy {
-                TrickDrawPolicy::NoProtections => true,
+                TrickDrawPolicy::NoFormatBasedDraw | TrickDrawPolicy::NoProtections => true,
                 TrickDrawPolicy::LongerTuplesProtected => !matching
                     .iter()
                     .any(|(card, count)| counts.get(card).copied().unwrap_or_default() > *count),
@@ -1593,13 +1589,14 @@ mod tests {
         assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoProtections));
         assert!(!tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoProtections));
         assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoFormatBasedDraw));
 
         // Check that we don't break longer tuples if that's not required
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_5]);
         assert!(tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::LongerTuplesProtected));
+        assert!(tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::NoFormatBasedDraw));
         assert!(!tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::NoProtections));
 
         let tf = TrickFormat {
@@ -1612,10 +1609,11 @@ mod tests {
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections,));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections,));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections,));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections,));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
+        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoFormatBasedDraw));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1635,6 +1633,11 @@ mod tests {
             &[S_2, S_2, S_3, S_3, S_5],
             TrickDrawPolicy::NoProtections
         ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]);
         assert!(tf.is_legal_play(
@@ -1646,6 +1649,11 @@ mod tests {
             &hand,
             &[S_2, S_2, S_2, S_2, S_5],
             TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw
         ));
 
         let tf = TrickFormat {
@@ -1674,11 +1682,41 @@ mod tests {
             &[S_3, S_3, S_5, S_5],
             TrickDrawPolicy::LongerTuplesProtected
         ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_3, S_5, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5], TrickDrawPolicy::NoProtections));
         assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_3],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
@@ -1715,6 +1753,8 @@ mod tests {
         let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
         assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoFormatBasedDraw));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2],
@@ -1739,6 +1779,7 @@ mod tests {
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoFormatBasedDraw));
         assert!(tf.is_legal_play(
             &hand,
             &[S_6, S_7, S_8],
@@ -1746,6 +1787,7 @@ mod tests {
         ));
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(&hand, &[S_5, S_5, S_6], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(&hand, &[S_5, S_5, S_6], TrickDrawPolicy::NoFormatBasedDraw));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_5, S_6],
@@ -1770,6 +1812,11 @@ mod tests {
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
@@ -1805,8 +1852,18 @@ mod tests {
         ));
         assert!(tf.is_legal_play(
             &hand,
+            &[S_3, S_5, S_10, S_J, S_Q],
+            TrickDrawPolicy::NoFormatBasedDraw
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
             &[S_3, S_6, S_8, S_8, S_8],
             TrickDrawPolicy::NoProtections
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_6, S_8, S_8, S_8],
+            TrickDrawPolicy::NoFormatBasedDraw
         ));
         assert!(tf.is_legal_play(
             &hand,
@@ -1865,6 +1922,7 @@ mod tests {
         for policy in &[
             TrickDrawPolicy::NoProtections,
             TrickDrawPolicy::LongerTuplesProtected,
+            TrickDrawPolicy::NoFormatBasedDraw,
         ] {
             let mut hands = Hands::new(vec![P1, P2, P3, P4]);
 
@@ -1884,25 +1942,41 @@ mod tests {
                     ThrowEvaluationPolicy::All
                 ))
                 .unwrap();
-            // This play should not succeed, because P2 also has S_K, S_K which is a pair.
-            if let Err(TrickError::IllegalPlay) = trick.play_cards(pc!(
-                P2,
-                &mut hands,
-                &[S_4, S_10, S_A, H_K, D_K, C_K],
-                *policy,
-                ThrowEvaluationPolicy::All
-            )) {
-                trick
-                    .play_cards(pc!(
+            match *policy {
+                TrickDrawPolicy::NoFormatBasedDraw => {
+                    // This play should succeed, since we don't draw cards based on format
+                    trick
+                        .play_cards(pc!(
+                            P2,
+                            &mut hands,
+                            &[S_4, S_10, S_A, H_K, D_K, C_K],
+                            *policy,
+                            ThrowEvaluationPolicy::All
+                        ))
+                        .unwrap();
+                }
+                TrickDrawPolicy::LongerTuplesProtected | TrickDrawPolicy::NoProtections => {
+                    // This play should not succeed, because P2 also has S_K, S_K which is a pair.
+                    if let Err(TrickError::IllegalPlay) = trick.play_cards(pc!(
                         P2,
                         &mut hands,
-                        &[S_4, S_10, S_A, H_K, S_K, S_K],
+                        &[S_4, S_10, S_A, H_K, D_K, C_K],
                         *policy,
                         ThrowEvaluationPolicy::All
-                    ))
-                    .unwrap();
-            } else {
-                panic!("Expected play to be illegal, but it wasn't")
+                    )) {
+                        trick
+                            .play_cards(pc!(
+                                P2,
+                                &mut hands,
+                                &[S_4, S_10, S_A, H_K, S_K, S_K],
+                                *policy,
+                                ThrowEvaluationPolicy::All
+                            ))
+                            .unwrap();
+                    } else {
+                        panic!("Expected play to be illegal, but it wasn't")
+                    }
+                }
             }
             trick
                 .play_cards(pc!(

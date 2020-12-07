@@ -487,9 +487,9 @@ impl BroadcastMessage {
             ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerAttempt } => format!("{} set the throw penalty to 10 points per throw", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCard } => format!("{} set the bid-from-bottom policy to be the first card revealed", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCardOfLevelOrHighest } => format!("{} set the bid-from-bottom policy to be the first card of the appropriate level, or the highest if none are found", n?),
-            TrickDrawPolicySet { policy: TrickDrawPolicy::NoProtections } => format!("{} removed long-tuple protections (pair can draw triple)", n?),
-            TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{}
-                protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::NoProtections } => format!("{} removed all protections (pair can draw triple)", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::NoFormatBasedDraw } => format!("{} removed format-based forced-plays (pairs do not draw pairs)", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{} protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::All } => format!("{} set throws to be evaluated based on all of the cards", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::TrickUnitLength } => format!("{} set throws to be evaluated based on the longest component", n?),

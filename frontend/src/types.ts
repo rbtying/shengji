@@ -139,7 +139,10 @@ export type JokerBidPolicy =
   | "BothTwoOrMore"
   | "BothNumDecks"
   | "LJNumDecksHJNumDecksLessOne";
-export type TrickDrawPolicy = "NoProtections" | "LongerTuplesProtected";
+export type TrickDrawPolicy =
+  | "NoProtections"
+  | "LongerTuplesProtected"
+  | "NoFormatBasedDraw";
 
 export interface IPropagatedState {
   game_mode: IGameModeSettings;

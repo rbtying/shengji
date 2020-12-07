@@ -47,6 +47,10 @@ const ChangeLog = (): JSX.Element => {
             Add a setting which hides the indication of which player that can
             defeat a throw.
           </li>
+          <li>
+            Add a card-protection setting which disables format-based play
+            requirements.
+          </li>
         </ul>
         <p>11/22/2020:</p>
         <ul>
