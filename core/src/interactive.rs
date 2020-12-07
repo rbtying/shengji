@@ -168,6 +168,13 @@ impl InteractiveGame {
                 info!(logger, "Setting hide played cards"; "hide_played_cards" => hide_played_cards);
                 vec![state.hide_played_cards(hide_played_cards)?]
             }
+            (
+                Message::SetHideThrowHaltingPlayer(hide_throw_halting_player),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting hide throw halting player"; "hide_throw_halting_player" => hide_throw_halting_player);
+                state.set_hide_throw_halting_player(hide_throw_halting_player)?
+            }
             (Message::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
                 state.set_game_mode(game_mode)?
@@ -381,6 +388,7 @@ pub enum Message {
     SetGameShadowingPolicy(GameShadowingPolicy),
     SetGameStartPolicy(GameStartPolicy),
     SetShouldRevealKittyAtEndOfGame(bool),
+    SetHideThrowHaltingPlayer(bool),
     StartGame,
     DrawCard,
     RevealCard,
@@ -462,7 +470,8 @@ impl BroadcastMessage {
             TookBackPlay => format!("{} took back their last play", n?),
             PlayedCards { ref cards } => format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
             EndOfGameKittyReveal { ref cards } => format!("{} in kitty", cards.iter().map(|c| c.as_char()).collect::<String>()),
-            ThrowFailed { ref original_cards, better_player } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
+            ThrowFailed { ref original_cards, better_player: Some(better_player) } => format!("{} tried to throw {}, but {} can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>(), player_name(better_player)?),
+            ThrowFailed { ref original_cards, better_player: None } => format!("{} tried to throw {}, but someone can beat it", n?, original_cards.iter().map(|c| c.as_char()).collect::<String>()),
             SetDefendingPointVisibility { visible: true } => format!("{} made the defending team's points visible", n?),
             SetDefendingPointVisibility { visible: false } => format!("{} hid the defending team's points", n?),
             SetCardVisibility { visible: true } => format!("{} made the played cards visible in the chat", n?),
@@ -501,6 +510,8 @@ impl BroadcastMessage {
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
             EndOfGameSummary { landlord_won : true, non_landlords_points } => format!("Landlord team won, opposing team only collected {} points", non_landlords_points),
             EndOfGameSummary { landlord_won: false, non_landlords_points } => format!("Landlord team lost, opposing team collected {} points", non_landlords_points),
+            HideThrowHaltingPlayer { set: true } => format!("{} hid the player who prevents throws", n?),
+            HideThrowHaltingPlayer { set: false } => format!("{} un-hid the player who prevents throws", n?),
         })
     }
 }

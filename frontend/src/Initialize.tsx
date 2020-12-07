@@ -225,6 +225,7 @@ interface IUncommonSettings {
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setHideThrowHaltingPlayer: (v: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
@@ -344,6 +345,24 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             </option>
             <option value="show">
               Reveal contents of the kitty at the end of the game in chat
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Show player which defeats throw:{" "}
+          <select
+            value={
+              props.state.propagated.hide_throw_halting_player ? "hide" : "show"
+            }
+            onChange={props.setHideThrowHaltingPlayer}
+          >
+            <option value="hide">
+              Hide the player who defeats a potential throw
+            </option>
+            <option value="show">
+              Show the player who defeats a potential throw
             </option>
           </select>
         </label>
@@ -503,6 +522,18 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetShouldRevealKittyAtEndOfGame: evt.target.value === "show",
+        },
+      });
+    }
+  };
+  const setHideThrowHaltingPlayer = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetHideThrowHaltingPlayer: evt.target.value === "hide",
         },
       });
     }
@@ -872,6 +903,9 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "hide_throw_halting_player":
+            send({ Action: { SetHideThrowHaltingPlayer: value } });
+            break;
           case "game_scoring_parameters":
             send({
               Action: {
@@ -1124,6 +1158,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setBidPolicy={setBidPolicy}
           setJokerBidPolicy={setJokerBidPolicy}
           setShouldRevealKittyAtEndOfGame={setShouldRevealKittyAtEndOfGame}
+          setHideThrowHaltingPlayer={setHideThrowHaltingPlayer}
           setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}

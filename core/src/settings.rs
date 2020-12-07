@@ -289,6 +289,8 @@ pub struct PropagatedState {
     pub(crate) game_start_policy: GameStartPolicy,
     #[serde(default)]
     pub(crate) game_scoring_parameters: GameScoringParameters,
+    #[serde(default)]
+    pub(crate) hide_throw_halting_player: bool,
 }
 
 impl PropagatedState {
@@ -704,6 +706,20 @@ impl PropagatedState {
         if policy != self.game_start_policy {
             self.game_start_policy = policy;
             Ok(vec![MessageVariant::GameStartPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_hide_throw_halting_player(
+        &mut self,
+        hide_throw_halting_player: bool,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if self.hide_throw_halting_player != hide_throw_halting_player {
+            self.hide_throw_halting_player = hide_throw_halting_player;
+            Ok(vec![MessageVariant::HideThrowHaltingPlayer {
+                set: hide_throw_halting_player,
+            }])
         } else {
             Ok(vec![])
         }
