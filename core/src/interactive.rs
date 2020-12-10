@@ -324,8 +324,9 @@ impl InteractiveGame {
                 vec![MessageVariant::TookBackPlay]
             }
             (Message::StartNewGame, GameState::Play(ref mut state)) => {
-                info!(logger, "Starting new game");
-                let (new_s, msgs) = state.finish_game()?;
+                let s = state.propagated();
+                let (new_s, landlord_won, msgs) = state.finish_game()?;
+                info!(logger, "Starting new game"; s, "landlord_won_last_game" => landlord_won);
                 self.state = GameState::Initialize(new_s);
                 msgs
             }
