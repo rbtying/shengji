@@ -537,7 +537,7 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
         if !self.game_finished() {
             bail!("not done playing yet!")
         }
@@ -630,7 +630,7 @@ impl PlayPhase {
         propagated.num_games_finished += 1;
         msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((InitializePhase { propagated }, msgs))
+        Ok((InitializePhase { propagated }, landlord_won, msgs))
     }
 
     pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
@@ -2020,7 +2020,7 @@ mod tests {
         {
             assert_eq!(num_friends, 2);
         }
-        if let Ok((phase, _msgs)) = play.finish_game() {
+        if let Ok((phase, _, _msgs)) = play.finish_game() {
             assert_eq!(phase.propagated.landlord, Some(p3));
         };
     }
@@ -2172,7 +2172,7 @@ mod tests {
         // Finish the game; we should see the landlord go up 4 levels (3 for
         // keeping the opposing team at 0, and a bonus level)
 
-        let (new_init_phase, msgs) = play.finish_game().unwrap();
+        let (new_init_phase, _, msgs) = play.finish_game().unwrap();
         assert_eq!(
             msgs.into_iter()
                 .filter(|m| match m {

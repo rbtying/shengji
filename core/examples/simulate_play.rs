@@ -250,7 +250,7 @@ fn main() {
                         s.finish_trick().unwrap();
                     }
                     GameState::Play(ref mut s) => {
-                        let (init, _) = s.finish_game().unwrap();
+                        let (init, _, _) = s.finish_game().unwrap();
                         game_state = GameState::Initialize(init);
                         break;
                     }
