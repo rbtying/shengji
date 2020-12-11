@@ -148,7 +148,10 @@ export interface IPropagatedState {
   game_mode: IGameModeSettings;
   hide_landlord_points: boolean | null;
   kitty_size: number | null;
-  friend_selection_policy: "Unrestricted" | "HighestCardNotAllowed";
+  friend_selection_policy:
+    | "Unrestricted"
+    | "HighestCardNotAllowed"
+    | "PointCardNotAllowed";
   first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
   bid_policy: BidPolicy;
   joker_bid_policy: JokerBidPolicy;

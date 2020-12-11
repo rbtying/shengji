@@ -755,6 +755,18 @@ impl ExchangePhase {
                         _ => (),
                     }
                 }
+
+                if let FriendSelectionPolicy::PointCardNotAllowed =
+                    self.propagated.friend_selection_policy
+                {
+                    match friend.card.points() {
+                        Some(points) if points > 0 => {
+                            bail!("you can't pick a point card as your friend")
+                        },
+                        _ => ()
+                    }
+                }
+
                 friends.push(Friend {
                     card: friend.card,
                     initial_skip: friend.initial_skip,

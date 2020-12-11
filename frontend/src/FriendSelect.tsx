@@ -1,6 +1,6 @@
 import * as React from "react";
 import Select from "react-select";
-import { ITrump } from "./types";
+import { ICardInfo, ITrump } from "./types";
 import ArrayUtils from "./util/array";
 import preloadedCards from "./preloadedCards";
 import InlineCard from "./InlineCard";
@@ -53,26 +53,33 @@ const FriendSelect = (props: IProps): JSX.Element => {
     currentValue.value = c.value;
   }
 
-  preloadedCards.forEach((c) => {
-    if (
+  const notTrumpFilter = (c: ICardInfo) => {
+    return (
       c.number !== null &&
       c.number !== rank &&
       (props.trump.Standard == null || c.typ !== props.trump.Standard.suit)
-    ) {
-      // exclude highest card
-      if (
-        (props.friend_selection_policy === "HighestCardNotAllowed" &&
-          ((rank !== "A" && c.number !== "A") ||
-            (rank === "A" && c.number !== "K"))) ||
-        props.friend_selection_policy === "Unrestricted"
-      ) {
-        cardOptions.push({
-          label: `${c.number}${c.typ}`,
-          value: c.value,
-        });
-      }
-    }
-  });
+    );
+  };
+  const policyFilters: { [s: string]: (c: ICardInfo) => boolean } = {
+    PointCardNotAllowed: (c: ICardInfo) => c.points === 0,
+    HighestCardNotAllowed: (c: ICardInfo) => {
+      return (
+        (rank !== "A" && c.number !== "A") || (rank === "A" && c.number !== "K")
+      );
+    },
+    Unrestricted: (_c: ICardInfo) => true,
+  };
+  const policyFilter =
+    policyFilters[props.friend_selection_policy] || ((_c: ICardInfo) => true);
+
+  preloadedCards
+    .filter((c: ICardInfo) => notTrumpFilter(c) && policyFilter(c))
+    .forEach((c: ICardInfo) =>
+      cardOptions.push({
+        label: `${c.number}${c.typ}`,
+        value: c.value,
+      })
+    );
 
   return (
     <div className="friend-select">
