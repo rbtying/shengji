@@ -1307,8 +1307,8 @@ mod tests {
         KittyTheftPolicy, MessageVariant, PlayPhase, Player,
     };
 
-    use crate::types::{cards, Card, Number, PlayerID};
     use crate::settings::FriendSelectionPolicy;
+    use crate::types::{cards, Card, Number, PlayerID};
 
     #[test]
     fn test_player_level_deltas() {
@@ -1517,7 +1517,7 @@ mod tests {
         play.play_cards(p3, &[S_3, S_5, S_10, S_J, S_Q]).unwrap();
         play.play_cards(p4, &[S_6, S_6, S_6, C_8, C_9]).unwrap();
     }
-    
+
     #[test]
     fn test_set_friends() {
         use cards::*;
@@ -1540,16 +1540,14 @@ mod tests {
         draw.draw_card(p3).unwrap();
         draw.draw_card(p4).unwrap();
         draw.draw_card(p1).unwrap();
-        
+
         assert!(draw.bid(p1, S_7, 2));
-        
+
         let mut exchange = draw.advance(p2).unwrap();
-        let friends = vec![
-            FriendSelection {
-                card: C_K,
-                initial_skip: 0,
-            },
-        ];
+        let friends = vec![FriendSelection {
+            card: C_K,
+            initial_skip: 0,
+        }];
         exchange.set_friends(p2, friends).unwrap_err();
     }
 
