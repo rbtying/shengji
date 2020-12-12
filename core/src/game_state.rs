@@ -759,11 +759,8 @@ impl ExchangePhase {
                 if let FriendSelectionPolicy::PointCardNotAllowed =
                     self.propagated.friend_selection_policy
                 {
-                    match friend.card.points() {
-                        Some(points) if points > 0 => {
-                            bail!("you can't pick a point card as your friend")
-                        }
-                        _ => (),
+                    if friend.card.points().is_some() {
+                        bail!("you can't pick a point card as your friend");
                     }
                 }
 
@@ -1311,6 +1308,7 @@ mod tests {
     };
 
     use crate::types::{cards, Card, Number, PlayerID};
+    use crate::settings::FriendSelectionPolicy;
 
     #[test]
     fn test_player_level_deltas() {
@@ -1519,6 +1517,41 @@ mod tests {
         play.play_cards(p3, &[S_3, S_5, S_10, S_J, S_Q]).unwrap();
         play.play_cards(p4, &[S_6, S_6, S_6, C_8, C_9]).unwrap();
     }
+    
+    #[test]
+    fn test_set_friends() {
+        use cards::*;
+
+        let mut init = InitializePhase::new();
+        init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
+            .unwrap();
+        init.set_friend_selection_policy(FriendSelectionPolicy::PointCardNotAllowed)
+            .unwrap();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        init.set_landlord(Some(p2)).unwrap();
+        init.set_rank(p2, Number::Seven).unwrap();
+
+        let mut draw = init.start(PlayerID(1)).unwrap();
+        draw.deck = vec![S_7, S_7, S_7, S_7];
+        draw.draw_card(p2).unwrap();
+        draw.draw_card(p3).unwrap();
+        draw.draw_card(p4).unwrap();
+        draw.draw_card(p1).unwrap();
+        
+        assert!(draw.bid(p1, S_7, 2));
+        
+        let mut exchange = draw.advance(p2).unwrap();
+        let friends = vec![
+            FriendSelection {
+                card: C_K,
+                initial_skip: 0,
+            },
+        ];
+        exchange.set_friends(p2, friends).unwrap_err();
+    }
 
     #[test]
     fn test_full_game_play() {
@@ -1526,10 +1559,8 @@ mod tests {
 
         let mut init = InitializePhase::new();
 
-        init.set_game_mode(GameModeSettings::FindingFriends {
-            num_friends: Option::None,
-        })
-        .unwrap();
+        init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
+            .unwrap();
         let p1 = init.add_player("p1".into()).unwrap().0;
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;
