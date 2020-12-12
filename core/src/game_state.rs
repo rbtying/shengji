@@ -755,6 +755,15 @@ impl ExchangePhase {
                         _ => (),
                     }
                 }
+
+                if let FriendSelectionPolicy::PointCardNotAllowed =
+                    self.propagated.friend_selection_policy
+                {
+                    if friend.card.points().is_some() {
+                        bail!("you can't pick a point card as your friend");
+                    }
+                }
+
                 friends.push(Friend {
                     card: friend.card,
                     initial_skip: friend.initial_skip,
@@ -1298,6 +1307,7 @@ mod tests {
         KittyTheftPolicy, MessageVariant, PlayPhase, Player,
     };
 
+    use crate::settings::FriendSelectionPolicy;
     use crate::types::{cards, Card, Number, PlayerID};
 
     #[test]
@@ -1509,15 +1519,81 @@ mod tests {
     }
 
     #[test]
+    fn test_set_friends() {
+        use cards::*;
+
+        let setup_exchange = |friend_selection_policy| {
+            let mut init = InitializePhase::new();
+            init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
+                .unwrap();
+            init.set_friend_selection_policy(friend_selection_policy)
+                .unwrap();
+            let p1 = init.add_player("p1".into()).unwrap().0;
+            let p2 = init.add_player("p2".into()).unwrap().0;
+            let p3 = init.add_player("p3".into()).unwrap().0;
+            let p4 = init.add_player("p4".into()).unwrap().0;
+            init.set_landlord(Some(p2)).unwrap();
+            init.set_rank(p2, Number::Seven).unwrap();
+
+            let mut draw = init.start(PlayerID(1)).unwrap();
+            draw.deck = vec![S_7, S_7, S_7, S_7];
+            draw.draw_card(p2).unwrap();
+            draw.draw_card(p3).unwrap();
+            draw.draw_card(p4).unwrap();
+            draw.draw_card(p1).unwrap();
+
+            assert!(draw.bid(p1, S_7, 1));
+
+            (p2, draw.advance(p2).unwrap())
+        };
+
+        let test_cases = vec![
+            (
+                FriendSelectionPolicy::Unrestricted,
+                vec![(C_K, true), (S_3, false), (C_3, true), (C_A, true)],
+            ),
+            (
+                FriendSelectionPolicy::PointCardNotAllowed,
+                vec![(C_K, false), (S_3, false), (C_3, true), (C_A, true)],
+            ),
+            (
+                FriendSelectionPolicy::HighestCardNotAllowed,
+                vec![(C_K, true), (S_3, false), (C_3, true), (C_A, false)],
+            ),
+        ];
+
+        for (friend_selection_policy, friends) in test_cases {
+            for (friend, ok) in friends {
+                let (p2, mut exchange) = setup_exchange(friend_selection_policy);
+
+                assert_eq!(
+                    exchange
+                        .set_friends(
+                            p2,
+                            vec![FriendSelection {
+                                card: friend,
+                                initial_skip: 0,
+                            }],
+                        )
+                        .is_ok(),
+                    ok,
+                    "Expected {:?} to be a {} friend for {:?}",
+                    friend,
+                    if ok { "legal" } else { "illegal" },
+                    friend_selection_policy
+                );
+            }
+        }
+    }
+
+    #[test]
     fn test_full_game_play() {
         use cards::*;
 
         let mut init = InitializePhase::new();
 
-        init.set_game_mode(GameModeSettings::FindingFriends {
-            num_friends: Option::None,
-        })
-        .unwrap();
+        init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
+            .unwrap();
         let p1 = init.add_player("p1".into()).unwrap().0;
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;

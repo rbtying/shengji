@@ -137,6 +137,7 @@ impl_slog_value!(AdvancementPolicy);
 pub enum FriendSelectionPolicy {
     Unrestricted,
     HighestCardNotAllowed,
+    PointCardNotAllowed,
 }
 
 impl Default for FriendSelectionPolicy {

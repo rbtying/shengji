@@ -450,6 +450,7 @@ impl BroadcastMessage {
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::PointCardNotAllowed} => format!("{} disallowed point cards, as well as trump cards, from being selected as a friend", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid} => format!("{} set winning bid to decide both landlord and trump", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength} => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
