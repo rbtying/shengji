@@ -53,7 +53,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
     currentValue.value = c.value;
   }
 
-  const notTrumpFilter = (c: ICardInfo) => {
+  const notTrumpFilter: (c: ICardInfo) => boolean = (c: ICardInfo) => {
     return (
       c.number !== null &&
       c.number !== rank &&
@@ -69,8 +69,8 @@ const FriendSelect = (props: IProps): JSX.Element => {
     },
     Unrestricted: (_c: ICardInfo) => true,
   };
-  const policyFilter =
-    policyFilters[props.friend_selection_policy] || ((_c: ICardInfo) => true);
+  const policyFilter: (c: ICardInfo) => boolean =
+    policyFilters[props.friend_selection_policy];
 
   preloadedCards
     .filter((c: ICardInfo) => notTrumpFilter(c) && policyFilter(c))

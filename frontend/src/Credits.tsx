@@ -43,9 +43,7 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>12/11/2020:</p>
         <ul>
-          <li>
-            Support a friend selection policy that disallows point cards.
-          </li>
+          <li>Support a friend selection policy that disallows point cards.</li>
         </ul>
         <p>12/07/2020:</p>
         <ul>
