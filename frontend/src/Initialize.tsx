@@ -51,7 +51,7 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
               Non-trump cards, except the highest
             </option>
             <option value="PointCardNotAllowed">
-              Non-point cards, except the highest
+              Non-trump, non-point cards
             </option>
           </select>
         </label>
