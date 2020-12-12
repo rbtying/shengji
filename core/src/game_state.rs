@@ -762,8 +762,8 @@ impl ExchangePhase {
                     match friend.card.points() {
                         Some(points) if points > 0 => {
                             bail!("you can't pick a point card as your friend")
-                        },
-                        _ => ()
+                        }
+                        _ => (),
                     }
                 }
 
