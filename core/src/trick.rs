@@ -450,11 +450,11 @@ impl Trick {
     /// Note: this does not account for throw validity, nor is it intended to
     /// catch all illegal plays.
     ///
-    pub fn can_play_cards<'a, 'b>(
+    pub fn can_play_cards(
         &self,
         id: PlayerID,
-        hands: &'a Hands,
-        cards: &'b [Card],
+        hands: &Hands,
+        cards: &[Card],
         trick_draw_policy: TrickDrawPolicy,
     ) -> Result<(), TrickError> {
         hands.contains(id, cards.iter().cloned())?;
@@ -486,9 +486,9 @@ impl Trick {
     ///
     /// Note: this does not account throw validity, nor is it intended to catch all illegal plays.
     ///
-    pub fn play_cards<'a, 'b, 'c>(
+    pub fn play_cards(
         &mut self,
-        args: PlayCards<'a, 'b, 'c>,
+        args: PlayCards<'_, '_, '_>,
     ) -> Result<Vec<MessageVariant>, TrickError> {
         let PlayCards {
             id,
