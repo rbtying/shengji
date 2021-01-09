@@ -2,7 +2,7 @@ use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::game_state::{GameState, InitializePhase};
 use crate::message::MessageVariant;
 use crate::scoring::GameScoringParameters;
@@ -126,6 +126,10 @@ impl InteractiveGame {
             (Message::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_policy(policy)?
+            }
+            (Message::SetBidReinforcementPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting bid reinforcement policy"; "policy" => format!("{:?}", policy));
+                state.set_bid_reinforcement_policy(policy)?
             }
             (Message::SetJokerBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting joker bid selection policy"; "policy" => format!("{:?}", policy));
@@ -368,6 +372,7 @@ pub enum Message {
     SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetFirstLandlordSelectionPolicy(FirstLandlordSelectionPolicy),
     SetBidPolicy(BidPolicy),
+    SetBidReinforcementPolicy(BidReinforcementPolicy),
     SetJokerBidPolicy(JokerBidPolicy),
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
@@ -455,6 +460,9 @@ impl BroadcastMessage {
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength} => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
             BidPolicySet { policy: BidPolicy::GreaterLength} => format!("{} required all bids to have more cards than the previous bids", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileWinning} => format!("{} allowed reinforcing the winning bid", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileEquivalent} => format!("{} allowed reinforcing bids after they have been overturned", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::OverturnOrReinforceWhileWinning} => format!("{} allowed overturning your own bids", n?),
             JokerBidPolicySet { policy: JokerBidPolicy::BothNumDecks} => format!("{} required no-trump bids to have every low or high joker", n?),
             JokerBidPolicySet { policy: JokerBidPolicy::LJNumDecksHJNumDecksLessOne} => format!("{} required low no-trump bids to have every low joker (one less required for high joker)", n?),
             JokerBidPolicySet { policy: JokerBidPolicy::BothTwoOrMore} => format!("{} required no-trump bids to have at least two low or high jokers", n?),

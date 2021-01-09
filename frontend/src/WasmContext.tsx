@@ -8,6 +8,7 @@ import {
   IUnitLike,
   ITrickFormat,
   BidPolicy,
+  BidReinforcementPolicy,
   ITrick,
   TrickDrawPolicy,
   IGameScoringParameters,
@@ -42,6 +43,7 @@ interface IFindValidBidsRequest {
   landlord: number | null;
   epoch: number;
   bid_policy: BidPolicy;
+  bid_reinforcement_policy: BidReinforcementPolicy;
   joker_bid_policy: JokerBidPolicy;
   num_decks: number;
 }

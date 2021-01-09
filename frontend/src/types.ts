@@ -135,6 +135,10 @@ export interface IPlayPhase {
 }
 
 export type BidPolicy = "JokerOrGreaterLength" | "GreaterLength";
+export type BidReinforcementPolicy =
+  | "ReinforceWhileWinning"
+  | "ReinforceWhileEquivalent"
+  | "OverturnOrReinforceWhileWinning";
 export type JokerBidPolicy =
   | "BothTwoOrMore"
   | "BothNumDecks"
@@ -154,6 +158,7 @@ export interface IPropagatedState {
     | "PointCardNotAllowed";
   first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
   bid_policy: BidPolicy;
+  bid_reinforcement_policy: BidReinforcementPolicy;
   joker_bid_policy: JokerBidPolicy;
   num_decks: number | null;
   max_player_id: number;

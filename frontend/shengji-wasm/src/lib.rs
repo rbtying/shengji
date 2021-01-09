@@ -5,7 +5,7 @@ use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
-    bidding::{Bid, BidPolicy, JokerBidPolicy},
+    bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
     hands::Hands,
     player::Player,
     scoring::{
@@ -200,6 +200,7 @@ struct FindValidBidsRequest {
     landlord: Option<PlayerID>,
     epoch: usize,
     bid_policy: BidPolicy,
+    bid_reinforcement_policy: BidReinforcementPolicy,
     joker_bid_policy: JokerBidPolicy,
     num_decks: usize,
 }
@@ -226,6 +227,7 @@ pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
             req.landlord,
             req.epoch,
             req.bid_policy,
+            req.bid_reinforcement_policy,
             req.joker_bid_policy,
             req.num_decks,
         )

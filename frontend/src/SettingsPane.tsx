@@ -211,6 +211,19 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>show debugging information</LabelCell>
+          <Cell>
+            <input
+              name="show-debug-info"
+              type="checkbox"
+              checked={settings.showDebugInfo}
+              onChange={handleChange({
+                showDebugInfo: !settings.showDebugInfo,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>

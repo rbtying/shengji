@@ -6,6 +6,7 @@ import {
   IHands,
   ITrump,
   BidPolicy,
+  BidReinforcementPolicy,
   JokerBidPolicy,
 } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
@@ -25,6 +26,7 @@ interface IBidAreaProps {
   suffixButtons?: JSX.Element | JSX.Element[];
   bidTakeBacksEnabled: boolean;
   bidPolicy: BidPolicy;
+  bidReinforcementPolicy: BidReinforcementPolicy;
   jokerBidPolicy: JokerBidPolicy;
   hands: IHands;
   numDecks: number;
@@ -83,6 +85,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       landlord: props.landlord,
       epoch: props.epoch,
       bid_policy: props.bidPolicy,
+      bid_reinforcement_policy: props.bidReinforcementPolicy,
       joker_bid_policy: props.jokerBidPolicy,
       num_decks: props.numDecks,
     });

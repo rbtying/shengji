@@ -211,6 +211,9 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             landlord={this.props.state.propagated.landlord}
             players={this.props.state.propagated.players}
             bidPolicy={this.props.state.propagated.bid_policy}
+            bidReinforcementPolicy={
+              this.props.state.propagated.bid_reinforcement_policy
+            }
             jokerBidPolicy={this.props.state.propagated.joker_bid_policy}
             numDecks={this.props.state.num_decks}
             header={

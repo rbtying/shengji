@@ -218,6 +218,7 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
 interface IUncommonSettings {
   state: IInitializePhase;
   setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setBidReinforcementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setJokerBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setShouldRevealKittyAtEndOfGame: (
     v: React.ChangeEvent<HTMLSelectElement>
@@ -299,7 +300,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
       </div>
       <div>
         <label>
-          Bid Policy:{" "}
+          Bid policy:{" "}
           <select
             value={props.state.propagated.bid_policy}
             onChange={props.setBidPolicy}
@@ -315,7 +316,26 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
       </div>
       <div>
         <label>
-          Joker Bid Policy:{" "}
+          Bid reinforcement policy:{" "}
+          <select
+            value={props.state.propagated.bid_reinforcement_policy}
+            onChange={props.setBidReinforcementPolicy}
+          >
+            <option value="ReinforceWhileWinning">
+              The current winning bid can be reinforced
+            </option>
+            <option value="ReinforceWhileEquivalent">
+              A bid can be reinforced after it is overturned
+            </option>
+            <option value="OverturnOrReinforceWhileWinning">
+              The current winning bid can be overturned by the same bidder
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Joker bid policy:{" "}
           <select
             value={props.state.propagated.joker_bid_policy}
             onChange={props.setJokerBidPolicy}
@@ -334,7 +354,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
       </div>
       <div>
         <label>
-          Should Reveal Kitty at End of Game:{" "}
+          Should reveal kitty at end of game:{" "}
           <select
             value={
               props.state.propagated.should_reveal_kitty_at_end_of_game
@@ -500,6 +520,18 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetBidPolicy: evt.target.value,
+        },
+      });
+    }
+  };
+  const setBidReinforcementPolicy = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetBidReinforcementPolicy: evt.target.value,
         },
       });
     }
@@ -892,6 +924,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "bid_reinforcement_policy":
+            send({
+              Action: {
+                SetBidReinforcementPolicy: value,
+              },
+            });
+            break;
           case "joker_bid_policy":
             send({
               Action: {
@@ -1162,6 +1201,7 @@ const Initialize = (props: IProps): JSX.Element => {
         <UncommonSettings
           state={props.state}
           setBidPolicy={setBidPolicy}
+          setBidReinforcementPolicy={setBidReinforcementPolicy}
           setJokerBidPolicy={setJokerBidPolicy}
           setShouldRevealKittyAtEndOfGame={setShouldRevealKittyAtEndOfGame}
           setHideThrowHaltingPlayer={setHideThrowHaltingPlayer}
