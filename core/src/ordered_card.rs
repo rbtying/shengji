@@ -482,8 +482,8 @@ mod tests {
         assert!(attempt_match_permutations(&counts, smallvec![3, 3, 3])
             .into_iter()
             .map(|x| x.to_vec())
-            .collect::<Vec<_>>()
-            .is_empty());
+            .next()
+            .is_none());
     }
 
     #[test]

@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 8;
+const changeLogVersion: number = 9;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,17 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>1/8/2021:</p>
+        <ul>
+          <li>
+            Add settings for reinforcing a bid after it has been overturned, and
+            for overbidding yourself.
+          </li>
+          <li>
+            Add a setting to show debug information, to help with more detailed
+            bug reports.
+          </li>
+        </ul>
         <p>12/11/2020:</p>
         <ul>
           <li>Support a friend selection policy that disallows point cards.</li>

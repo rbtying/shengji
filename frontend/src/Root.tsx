@@ -10,6 +10,7 @@ import { TimerContext } from "./TimerProvider";
 import Credits from "./Credits";
 import Chat from "./Chat";
 import Play from "./Play";
+import DebugInfo from "./DebugInfo";
 
 const Confetti = React.lazy(async () => await import("./Confetti"));
 
@@ -135,6 +136,7 @@ const Root = (): JSX.Element => {
                 beepOnTurn={state.settings.beepOnTurn}
               />
             ) : null}
+            {state.settings.showDebugInfo ? <DebugInfo /> : null}
           </div>
           <Chat messages={state.messages} />
           <hr />

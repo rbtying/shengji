@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use slog_derive::KV;
 use url::Url;
 
-use crate::bidding::{BidPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::message::MessageVariant;
 use crate::player::Player;
 use crate::scoring::GameScoringParameters;
@@ -277,6 +277,8 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) bid_policy: BidPolicy,
     #[serde(default)]
+    pub(crate) bid_reinforcement_policy: BidReinforcementPolicy,
+    #[serde(default)]
     pub(crate) joker_bid_policy: JokerBidPolicy,
     #[serde(default)]
     pub(crate) should_reveal_kitty_at_end_of_game: bool,
@@ -499,6 +501,14 @@ impl PropagatedState {
     pub fn set_bid_policy(&mut self, policy: BidPolicy) -> Result<Vec<MessageVariant>, Error> {
         self.bid_policy = policy;
         Ok(vec![MessageVariant::BidPolicySet { policy }])
+    }
+
+    pub fn set_bid_reinforcement_policy(
+        &mut self,
+        policy: BidReinforcementPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.bid_reinforcement_policy = policy;
+        Ok(vec![MessageVariant::BidReinforcementPolicySet { policy }])
     }
 
     pub fn set_joker_bid_policy(
