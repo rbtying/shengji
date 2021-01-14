@@ -750,7 +750,10 @@ const Initialize = (props: IProps): JSX.Element => {
     send({ Action: "StartGame" });
   };
 
-  const setEmoji = (evt: MouseEvent, emojiObject: IEmojiData | null): void => {
+  const setEmoji = (
+    evt: React.MouseEvent,
+    emojiObject: IEmojiData | null
+  ): void => {
     evt.preventDefault();
     send({
       Action: {

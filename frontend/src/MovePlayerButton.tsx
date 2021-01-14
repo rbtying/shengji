@@ -7,6 +7,7 @@ interface Props {
   player: IPlayer;
 }
 
+// eslint-disable-next-line react/display-name
 const MovePlayerButton = (relative: number, children: string) => (
   props: Props
 ) => {
