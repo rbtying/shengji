@@ -107,7 +107,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
                   value: `${props.friend.initial_skip}`,
                   label: `#${props.friend.initial_skip + 1}`,
                 }
-              : {}
+              : undefined
           }
           onChange={handleOrdinalChange}
           options={ArrayUtils.range(props.num_decks, (idx) => {
