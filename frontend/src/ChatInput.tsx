@@ -42,7 +42,7 @@ const ChatInput = (props: IProps): JSX.Element => {
   const disabled = draft === "";
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} autoComplete="off">
       <ChatBox>
         <Input
           type="text"
