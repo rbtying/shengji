@@ -13,6 +13,7 @@ const InlineCardBase = styled.span`
   padding-right: 0.1em;
 `;
 
+// eslint-disable-next-line react/display-name
 const Suit = (className: string): React.FunctionComponent<{}> => (props) => {
   const settings = React.useContext(SettingsContext);
   return (

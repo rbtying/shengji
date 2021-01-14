@@ -21,7 +21,7 @@
     "canvas-confetti": "^1.2.0",
     "classnames": "^2.2.6",
     "emoji-picker-react": "^3.2.1",
-    "jest": "^25.3.0",
+    "jest": "^26.6.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-is": "^16.13.1",
@@ -29,7 +29,7 @@
     "react-select": "^3.1.0",
     "react-tooltip": "^4.2.7",
     "styled-components": "^5.1.0",
-    "ts-jest": "^25.3.1",
+    "ts-jest": "^26.4.1",
     "ts-loader": "^6.2.2",
     "typescript": "^3.8.3"
   },
