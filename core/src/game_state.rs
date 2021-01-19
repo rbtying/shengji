@@ -759,8 +759,21 @@ impl ExchangePhase {
                 if let FriendSelectionPolicy::PointCardNotAllowed =
                     self.propagated.friend_selection_policy
                 {
-                    if friend.card.points().is_some() {
-                        bail!("you can't pick a point card as your friend");
+                    let landlord = self.landlord;
+                    let landlord_level = self
+                        .propagated
+                        .players
+                        .iter()
+                        .find(|p| p.id == landlord)
+                        .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
+                        .rank();
+
+                    match (landlord_level, friend.card.points(), friend.card.number()) {
+                        (Number::Ace, _, Some(Number::King)) => (),
+                        (_, Some(_), _) => {
+                            bail!("you can't pick a point card as your friend");
+                        }
+                        (_, _, _) => (),
                     }
                 }
 
@@ -1524,7 +1537,7 @@ mod tests {
     fn test_set_friends() {
         use cards::*;
 
-        let setup_exchange = |friend_selection_policy| {
+        let setup_exchange = |friend_selection_policy, bid: Card| {
             let mut init = InitializePhase::new();
             init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
                 .unwrap();
@@ -1535,16 +1548,16 @@ mod tests {
             let p3 = init.add_player("p3".into()).unwrap().0;
             let p4 = init.add_player("p4".into()).unwrap().0;
             init.set_landlord(Some(p2)).unwrap();
-            init.set_rank(p2, Number::Seven).unwrap();
+            init.set_rank(p2, bid.number().unwrap()).unwrap();
 
             let mut draw = init.start(PlayerID(1)).unwrap();
-            draw.deck = vec![S_7, S_7, S_7, S_7];
+            draw.deck = vec![bid, bid, bid, bid];
             draw.draw_card(p2).unwrap();
             draw.draw_card(p3).unwrap();
             draw.draw_card(p4).unwrap();
             draw.draw_card(p1).unwrap();
 
-            assert!(draw.bid(p1, S_7, 1));
+            assert!(draw.bid(p1, bid, 1));
 
             (p2, draw.advance(p2).unwrap())
         };
@@ -1552,21 +1565,29 @@ mod tests {
         let test_cases = vec![
             (
                 FriendSelectionPolicy::Unrestricted,
+                S_7,
                 vec![(C_K, true), (S_3, false), (C_3, true), (C_A, true)],
             ),
             (
                 FriendSelectionPolicy::PointCardNotAllowed,
+                S_7,
                 vec![(C_K, false), (S_3, false), (C_3, true), (C_A, true)],
             ),
             (
+                FriendSelectionPolicy::PointCardNotAllowed,
+                S_A,
+                vec![(C_K, true), (S_3, false), (C_3, true), (C_A, false)],
+            ),
+            (
                 FriendSelectionPolicy::HighestCardNotAllowed,
+                S_7,
                 vec![(C_K, true), (S_3, false), (C_3, true), (C_A, false)],
             ),
         ];
 
-        for (friend_selection_policy, friends) in test_cases {
+        for (friend_selection_policy, landlord_level, friends) in test_cases {
             for (friend, ok) in friends {
-                let (p2, mut exchange) = setup_exchange(friend_selection_policy);
+                let (p2, mut exchange) = setup_exchange(friend_selection_policy, landlord_level);
 
                 assert_eq!(
                     exchange
