@@ -96,7 +96,7 @@ const Points = (props: IProps): JSX.Element => {
 
   const { results: scoreTransitions } = explainScoring({
     params: props.gameScoringParameters,
-    smaller_landlord_team_size: false,
+    smaller_landlord_team_size: props.smallerTeamSize,
     num_decks: props.numDecks,
   });
 
