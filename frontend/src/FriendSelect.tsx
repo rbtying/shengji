@@ -61,7 +61,9 @@ const FriendSelect = (props: IProps): JSX.Element => {
     );
   };
   const policyFilters: { [s: string]: (c: ICardInfo) => boolean } = {
-    PointCardNotAllowed: (c: ICardInfo) => c.points === 0,
+    PointCardNotAllowed: (c: ICardInfo) => {
+      return c.points === 0 || (rank === "A" && c.number === "K");
+    },
     HighestCardNotAllowed: (c: ICardInfo) => {
       return (
         (rank !== "A" && c.number !== "A") || (rank === "A" && c.number !== "K")
