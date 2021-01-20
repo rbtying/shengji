@@ -378,35 +378,3 @@ button.normal {
 label {
   line-height: 25px;
 }
-
-.checkpoint-circle {
-  height: 40px;
-  width: 40px;
-  border-radius: 25px;
-}
-
-.checkpoint-circle-content {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.progress-bar-neutral {
-  width: 100%;
-  border-radius: 5px;
-  background-color: lightgray;
-}
-
-.progress-bar-landlord {
-  height: 20px;
-  border-radius: 5px;
-  background-color: #5bc0de;
-}
-
-.progress-bar-challenger {
-  height: 20px;
-  border-radius: 5px;
-  background-color: #d9534f;
-}
