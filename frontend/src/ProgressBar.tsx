@@ -49,17 +49,17 @@ const convertToPercentage = (proportion: number): string => {
 };
 
 const ProgressBar = (props: IProps): JSX.Element => {
-  const landlordColor = "#5bc0de";
-  const challengerColor = "#d9534f";
+  const landlordColor = "#d9534f";
+  const challengerColor = "#5bc0de";
   const neutralColor = "lightgray";
 
   const { numDecks, challengerPoints, landlordPoints } = props;
   const totalPoints = numDecks * 100;
   const checkpointColors = props.checkpoints.map((checkpoint) => {
-    if (landlordPoints >= checkpoint) {
-      return landlordColor;
-    } else if (challengerPoints >= totalPoints - checkpoint) {
+    if (challengerPoints >= checkpoint) {
       return challengerColor;
+    } else if (landlordPoints >= totalPoints - checkpoint) {
+      return landlordColor;
     } else {
       return neutralColor;
     }
@@ -86,7 +86,7 @@ const ProgressBar = (props: IProps): JSX.Element => {
             width: challengerPosition,
             height: "20px",
             borderRadius: "5px",
-            backgroundColor: "#5bc0de",
+            backgroundColor: challengerColor,
           }}
         />
         {!props.hideLandlordPoints && (
@@ -99,7 +99,7 @@ const ProgressBar = (props: IProps): JSX.Element => {
               width: landlordWidth,
               height: "20px",
               borderRadius: "5px",
-              backgroundColor: "#d9534f",
+              backgroundColor: landlordColor,
             }}
           />
         )}
