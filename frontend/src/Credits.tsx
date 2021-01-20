@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>1/21/2021:</p>
+        <ul>
+          <li>Add a scoring progress bar with point thresholds.</li>
+        </ul>
         <p>1/18/2021:</p>
         <ul>
           <li>

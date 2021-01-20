@@ -1,4 +1,5 @@
 import * as React from "react";
+import ProgressBar from "./ProgressBar";
 import { IPlayer, IGameScoringParameters } from "./types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
@@ -23,7 +24,7 @@ const Points = (props: IProps): JSX.Element => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
-  const { computeScore } = React.useContext(WasmContext);
+  const { computeScore, explainScoring } = React.useContext(WasmContext);
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
     props.players
@@ -93,9 +94,26 @@ const Points = (props: IProps): JSX.Element => {
 
   thresholdStr += ` (next threshold: ${nextThreshold}分)`;
 
+  const { results: scoreTransitions } = explainScoring({
+    params: props.gameScoringParameters,
+    smaller_landlord_team_size: props.smallerTeamSize,
+    num_decks: props.numDecks,
+  });
+
   return (
     <div className="points">
       <h2>Points</h2>
+      <ProgressBar
+        checkpoints={scoreTransitions
+          .map((transition) => transition.point_threshold)
+          .filter(
+            (threshold) => threshold >= 10 && threshold < props.numDecks * 100
+          )}
+        numDecks={props.numDecks}
+        landlordPoints={totalPointsPlayed - nonLandlordPoints}
+        challengerPoints={nonLandlordPoints}
+        hideLandlordPoints={props.hideLandlordPoints}
+      />
       <p>
         {penaltyDelta === 0
           ? nonLandlordPoints
