@@ -1,4 +1,5 @@
 import * as React from "react";
+import ProgressBar from "./ProgressBar";
 import { IPlayer, IGameScoringParameters } from "./types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
@@ -96,6 +97,11 @@ const Points = (props: IProps): JSX.Element => {
   return (
     <div className="points">
       <h2>Points</h2>
+      <ProgressBar
+        numDecks={props.numDecks}
+        landlordPoints={totalPointsPlayed - nonLandlordPoints}
+        challengerPoints={nonLandlordPoints}
+      />
       <p>
         {penaltyDelta === 0
           ? nonLandlordPoints
