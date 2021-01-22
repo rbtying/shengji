@@ -545,9 +545,7 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
-        let mut msgs = vec![];
-
+    pub fn calculate_points(&self) -> (isize, isize) {
         let mut non_landlords_points: isize = self
             .points
             .iter()
@@ -575,6 +573,13 @@ impl PlayPhase {
                 }
             }
         }
+        (non_landlords_points, observed_points)
+    }
+
+    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
+        let mut msgs = vec![];
+
+        let (non_landlords_points, observed_points) = self.calculate_points();
 
         if !self.game_finished(non_landlords_points, observed_points) {
             bail!("not done playing yet!")
