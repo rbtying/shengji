@@ -19,6 +19,7 @@ const Picker = React.lazy(async () => await import("emoji-picker-react"));
 interface IDifficultyProps {
   state: IInitializePhase;
   setFriendSelectionPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setMultipleJoinPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setAdvancementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHideLandlordsPoints: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHidePlayedCards: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -52,6 +53,22 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
             </option>
             <option value="PointCardNotAllowed">
               Non-trump, non-point cards (except K when playing A)
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Multiple joining policy:{" "}
+          <select
+            value={props.state.propagated.multiple_join_policy}
+            onChange={props.setMultipleJoinPolicy}
+          >
+            <option value="Unrestricted">
+              Players can join the defending team multiple times.
+            </option>
+            <option value="NoDoubleJoin">
+              Each player can only join the defending team once.
             </option>
           </select>
         </label>
@@ -470,84 +487,62 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setKittySize = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
+  const onSelectString = (
+    action: string
+  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
-      const size = parseInt(evt.target.value, 10);
-      send({
-        Action: {
-          SetKittySize: size,
-        },
-      });
+      send({ Action: { [action]: evt.target.value } });
+    }
+  };
+
+  const onSelectStringDefault = (
+    action: string,
+    defaultValue: null | string
+  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({ Action: { [action]: evt.target.value } });
     } else {
-      send({
-        Action: {
-          SetKittySize: null,
-        },
-      });
+      send({ Action: { [action]: defaultValue } });
     }
   };
 
-  const setFriendSelectionPolicy = (
+  const onSelectIntNullable = (
+    action: string
+  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
     evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetFriendSelectionPolicy: evt.target.value,
-        },
-      });
+      const v = parseInt(evt.target.value, 10);
+      send({ Action: { [action]: v } });
+    } else {
+      send({ Action: { [action]: null } });
     }
   };
 
-  const setFirstLandlordSelectionPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetFirstLandlordSelectionPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setBidPolicy = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetBidPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-  const setBidReinforcementPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetBidReinforcementPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-  const setJokerBidPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetJokerBidPolicy: evt.target.value,
-        },
-      });
-    }
-  };
+  const setKittySize = onSelectIntNullable("SetKittySize");
+  const setFriendSelectionPolicy = onSelectString("SetFriendSelectionPolicy");
+  const setMultipleJoinPolicy = onSelectString("SetMultipleJoinPolicy");
+  const setFirstLandlordSelectionPolicy = onSelectString(
+    "SetFirstLandlordSelectionPolicy"
+  );
+  const setBidPolicy = onSelectString("SetBidPolicy");
+  const setBidReinforcementPolicy = onSelectString("SetBidReinforcementPolicy");
+  const setJokerBidPolicy = onSelectString("SetJokerBidPolicy");
+  const setKittyTheftPolicy = onSelectString("SetKittyTheftPolicy");
+  const setKittyBidPolicy = onSelectString("SetKittyBidPolicy");
+  const setTrickDrawPolicy = onSelectString("SetTrickDrawPolicy");
+  const setThrowEvaluationPolicy = onSelectString("SetThrowEvaluationPolicy");
+  const setPlayTakebackPolicy = onSelectString("SetPlayTakebackPolicy");
+  const setGameShadowingPolicy = onSelectString("SetGameShadowingPolicy");
+  const setGameStartPolicy = onSelectString("SetGameStartPolicy");
+  const setBidTakebackPolicy = onSelectString("SetBidTakebackPolicy");
 
   const setShouldRevealKittyAtEndOfGame = (
     evt: React.ChangeEvent<HTMLSelectElement>
@@ -574,162 +569,12 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const setKittyTheftPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetKittyTheftPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setKittyPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetKittyPenalty: evt.target.value,
-        },
-      });
-    } else {
-      send({
-        Action: {
-          SetKittyPenalty: null,
-        },
-      });
-    }
-  };
-
-  const setKittyBidPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetKittyBidPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setTrickDrawPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetTrickDrawPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setThrowEvaluationPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetThrowEvaluationPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setPlayTakebackPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetPlayTakebackPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setGameShadowingPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetGameShadowingPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setGameStartPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetGameStartPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setAdvancementPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetAdvancementPolicy: evt.target.value,
-        },
-      });
-    } else {
-      send({
-        Action: {
-          SetAdvancementPolicy: "Unrestricted",
-        },
-      });
-    }
-  };
-
-  const setBidTakebackPolicy = (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetBidTakebackPolicy: evt.target.value,
-        },
-      });
-    }
-  };
-
-  const setThrowPenalty = (evt: React.ChangeEvent<HTMLSelectElement>): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({
-        Action: {
-          SetThrowPenalty: evt.target.value,
-        },
-      });
-    } else {
-      send({
-        Action: {
-          SetThrowPenalty: null,
-        },
-      });
-    }
-  };
+  const setKittyPenalty = onSelectStringDefault("SetKittyPenalty", null);
+  const setAdvancementPolicy = onSelectStringDefault(
+    "SetAdvancementPolicy",
+    "Unrestricted"
+  );
+  const setThrowPenalty = onSelectStringDefault("SetThrowPenalty", null);
 
   const setHideLandlordsPoints = (
     evt: React.ChangeEvent<HTMLSelectElement>
@@ -844,6 +689,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetFriendSelectionPolicy: value,
+              },
+            });
+            break;
+          case "multiple_join_policy":
+            send({
+              Action: {
+                SetMultipleJoinPolicy: value,
               },
             });
             break;
@@ -1216,6 +1068,7 @@ const Initialize = (props: IProps): JSX.Element => {
         <DifficultySettings
           state={props.state}
           setFriendSelectionPolicy={setFriendSelectionPolicy}
+          setMultipleJoinPolicy={setMultipleJoinPolicy}
           setAdvancementPolicy={setAdvancementPolicy}
           setHideLandlordsPoints={setHideLandlordsPoints}
           setHidePlayedCards={setHidePlayedCards}

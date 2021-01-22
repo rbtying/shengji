@@ -149,6 +149,20 @@ impl Default for FriendSelectionPolicy {
 impl_slog_value!(FriendSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum MultipleJoinPolicy {
+    Unrestricted,
+    NoDoubleJoin,
+}
+
+impl Default for MultipleJoinPolicy {
+    fn default() -> Self {
+        MultipleJoinPolicy::Unrestricted
+    }
+}
+
+impl_slog_value!(MultipleJoinPolicy);
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FirstLandlordSelectionPolicy {
     ByWinningBid,
     ByFirstBid,
@@ -252,6 +266,8 @@ pub struct PropagatedState {
     pub(crate) kitty_size: Option<usize>,
     #[serde(default)]
     pub(crate) friend_selection_policy: FriendSelectionPolicy,
+    #[serde(default)]
+    pub(crate) multiple_join_policy: MultipleJoinPolicy,
     pub(crate) num_decks: Option<usize>,
     #[serde(default)]
     pub(crate) landlord_emoji: Option<String>,
@@ -486,6 +502,14 @@ impl PropagatedState {
     ) -> Result<Vec<MessageVariant>, Error> {
         self.friend_selection_policy = policy;
         Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
+    }
+
+    pub fn set_multiple_join_policy(
+        &mut self,
+        policy: MultipleJoinPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.multiple_join_policy = policy;
+        Ok(vec![MessageVariant::MultipleJoinPolicySet { policy }])
     }
 
     pub fn set_first_landlord_selection_policy(

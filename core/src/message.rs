@@ -8,7 +8,7 @@ use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
     GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
-    PlayTakebackPolicy, ThrowPenalty,
+    MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
@@ -49,6 +49,7 @@ pub enum MessageVariant {
     },
     JoinedTeam {
         player: PlayerID,
+        already_joined: bool,
     },
     LeftGame {
         name: String,
@@ -61,6 +62,9 @@ pub enum MessageVariant {
     },
     FriendSelectionPolicySet {
         policy: FriendSelectionPolicy,
+    },
+    MultipleJoinPolicySet {
+        policy: MultipleJoinPolicy,
     },
     FirstLandlordSelectionPolicySet {
         policy: FirstLandlordSelectionPolicy,

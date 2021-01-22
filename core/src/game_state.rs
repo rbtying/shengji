@@ -13,7 +13,8 @@ use crate::scoring::{compute_level_deltas, GameScoreResult};
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, Friend, FriendSelection,
     FriendSelectionPolicy, GameMode, GameModeSettings, GameStartPolicy, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
+    ThrowPenalty,
 };
 use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
@@ -376,15 +377,28 @@ impl PlayPhase {
                         if friend.card == *card {
                             if friend.skip == 0 {
                                 if friend.player_id.is_none() {
-                                    friend.player_id = Some(played.id);
-                                    if !self.landlords_team.contains(&played.id) {
-                                        self.landlords_team.push(played.id);
-                                        for player in &self.propagated.players {
-                                            if player.id == played.id {
-                                                msgs.push(MessageVariant::JoinedTeam {
-                                                    player: player.id,
-                                                });
-                                            }
+                                    let already_on_the_team =
+                                        self.landlords_team.contains(&played.id);
+
+                                    match self.propagated.multiple_join_policy {
+                                        MultipleJoinPolicy::Unrestricted if already_on_the_team => {
+                                            // double-join!
+                                            friend.player_id = Some(played.id);
+                                            msgs.push(MessageVariant::JoinedTeam {
+                                                player: played.id,
+                                                already_joined: true,
+                                            });
+                                        }
+                                        MultipleJoinPolicy::NoDoubleJoin if already_on_the_team => {
+                                        }
+                                        MultipleJoinPolicy::Unrestricted
+                                        | MultipleJoinPolicy::NoDoubleJoin => {
+                                            friend.player_id = Some(played.id);
+                                            self.landlords_team.push(played.id);
+                                            msgs.push(MessageVariant::JoinedTeam {
+                                                player: played.id,
+                                                already_joined: false,
+                                            });
                                         }
                                     }
                                 }
@@ -2229,7 +2243,7 @@ mod tests {
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player } if *player == p2))
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player, already_joined: false } if *player == p2))
                 .count(),
             1
         );
@@ -2247,14 +2261,13 @@ mod tests {
         play.play_cards(p7, &p7_hand[1..2]).unwrap();
         play.play_cards(p8, &p8_hand[1..2]).unwrap();
 
-        // We don't get any joined-team messages, because both team-joiners have
-        // already joined.
+        // We get a re-joined team message, since p2 has already joined.
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| matches!(m, MessageVariant::JoinedTeam { .. }))
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player, already_joined: true } if *player == p2))
                 .count(),
-            0
+            1
         );
 
         // Assert that the team didn't get any bigger

@@ -156,6 +156,7 @@ export interface IPropagatedState {
     | "Unrestricted"
     | "HighestCardNotAllowed"
     | "PointCardNotAllowed";
+  multiple_join_policy: "Unrestricted" | "NoDoubleJoin";
   first_landlord_selection_policy: "ByWinningBid" | "ByFirstBid";
   bid_policy: BidPolicy;
   bid_reinforcement_policy: BidReinforcementPolicy;
