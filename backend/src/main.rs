@@ -555,7 +555,6 @@ async fn handle_user_action(
                 .game
                 .next_player()
                 .map_err(|e| GameMessage::Error(e.to_string()))?;
-            let mut messages = vec![];
             for user in game.users.values() {
                 messages.push((
                     user.clone(),
