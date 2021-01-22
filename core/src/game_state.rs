@@ -391,7 +391,6 @@ impl PlayPhase {
                                             });
                                         }
                                         MultipleJoinPolicy::NoDoubleJoin if already_on_the_team => {
-                                            ()
                                         }
                                         MultipleJoinPolicy::Unrestricted
                                         | MultipleJoinPolicy::NoDoubleJoin => {
