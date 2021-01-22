@@ -504,6 +504,14 @@ impl PropagatedState {
         Ok(vec![MessageVariant::FriendSelectionPolicySet { policy }])
     }
 
+    pub fn set_multiple_join_policy(
+        &mut self,
+        policy: MultipleJoinPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.multiple_join_policy = policy;
+        Ok(vec![MessageVariant::MultipleJoinPolicySet { policy }])
+    }
+
     pub fn set_first_landlord_selection_policy(
         &mut self,
         policy: FirstLandlordSelectionPolicy,

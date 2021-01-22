@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 9;
+const changeLogVersion: number = 10;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -44,6 +44,10 @@ const ChangeLog = (): JSX.Element => {
         <p>1/21/2021:</p>
         <ul>
           <li>Add a scoring progress bar with point thresholds.</li>
+          <li>
+            Add a setting to prevent friends from joining twice (in difficulty
+            settings).
+          </li>
         </ul>
         <p>1/18/2021:</p>
         <ul>

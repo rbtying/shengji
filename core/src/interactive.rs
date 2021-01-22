@@ -9,7 +9,7 @@ use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
     GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
-    KittyTheftPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
+    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy, TrickUnit};
 use crate::types::{Card, Number, PlayerID};
@@ -115,6 +115,10 @@ impl InteractiveGame {
             (Message::SetFriendSelectionPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting friend selection policy"; "policy" => format!("{:?}", policy));
                 state.set_friend_selection_policy(policy)?
+            }
+            (Message::SetMultipleJoinPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting multiple join policy"; "policy" => format!("{:?}", policy));
+                state.set_multiple_join_policy(policy)?
             }
             (
                 Message::SetFirstLandlordSelectionPolicy(policy),
@@ -370,6 +374,7 @@ pub enum Message {
     SetNumDecks(Option<usize>),
     SetKittySize(Option<usize>),
     SetFriendSelectionPolicy(FriendSelectionPolicy),
+    SetMultipleJoinPolicy(MultipleJoinPolicy),
     SetFirstLandlordSelectionPolicy(FirstLandlordSelectionPolicy),
     SetBidPolicy(BidPolicy),
     SetBidReinforcementPolicy(BidReinforcementPolicy),
@@ -445,7 +450,8 @@ impl BroadcastMessage {
             JoinedGame { player } => format!("{} has joined the game", player_name(player)?),
             JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::SingleSessionOnly } => format!("{} has joined the game again, prior connection removed", player_name(player)?),
             JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::AllowMultipleSessions } => format!("{} is being shadowed", player_name(player)?),
-            JoinedTeam { player } => format!("{} has joined the team", player_name(player)?),
+            JoinedTeam { player, already_joined: false } => format!("{} has joined the team", player_name(player)?),
+            JoinedTeam { player, already_joined: true } => format!("{} tried to join the team, but was already a member", player_name(player)?),
             LeftGame { ref name } => format!("{} has left the game", name),
             AdvancementPolicySet { policy: AdvancementPolicy::FullyUnrestricted } => format!("{} removed all advancement restrictions", n?),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } => format!("{} required players to defend on A", n?),
@@ -453,19 +459,21 @@ impl BroadcastMessage {
             GameScoringParametersChanged { .. } => format!("{} changed the game's scoring parameters", n?),
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
-            FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted} => format!("{} allowed any non-trump card to be selected as a friend", n?),
-            FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed} => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
-            FriendSelectionPolicySet { policy: FriendSelectionPolicy::PointCardNotAllowed} => format!("{} disallowed point cards, as well as trump cards, from being selected as a friend", n?),
-            FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid} => format!("{} set winning bid to decide both landlord and trump", n?),
-            FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid} => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
-            BidPolicySet { policy: BidPolicy::JokerOrGreaterLength} => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
-            BidPolicySet { policy: BidPolicy::GreaterLength} => format!("{} required all bids to have more cards than the previous bids", n?),
-            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileWinning} => format!("{} allowed reinforcing the winning bid", n?),
-            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileEquivalent} => format!("{} allowed reinforcing bids after they have been overturned", n?),
-            BidReinforcementPolicySet { policy: BidReinforcementPolicy::OverturnOrReinforceWhileWinning} => format!("{} allowed overturning your own bids", n?),
-            JokerBidPolicySet { policy: JokerBidPolicy::BothNumDecks} => format!("{} required no-trump bids to have every low or high joker", n?),
-            JokerBidPolicySet { policy: JokerBidPolicy::LJNumDecksHJNumDecksLessOne} => format!("{} required low no-trump bids to have every low joker (one less required for high joker)", n?),
-            JokerBidPolicySet { policy: JokerBidPolicy::BothTwoOrMore} => format!("{} required no-trump bids to have at least two low or high jokers", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted } => format!("{} allowed any non-trump card to be selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed } => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::PointCardNotAllowed } => format!("{} disallowed point cards, as well as trump cards, from being selected as a friend", n?),
+            MultipleJoinPolicySet { policy: MultipleJoinPolicy::Unrestricted } => format!("{} allowed players to join the team multiple times", n?),
+            MultipleJoinPolicySet { policy: MultipleJoinPolicy::NoDoubleJoin } => format!("{} prevented players from joining the team multiple times", n?),
+            FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid } => format!("{} set winning bid to decide both landlord and trump", n?),
+            FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid } => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
+            BidPolicySet { policy: BidPolicy::JokerOrGreaterLength } => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
+            BidPolicySet { policy: BidPolicy::GreaterLength } => format!("{} required all bids to have more cards than the previous bids", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileWinning } => format!("{} allowed reinforcing the winning bid", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileEquivalent } => format!("{} allowed reinforcing bids after they have been overturned", n?),
+            BidReinforcementPolicySet { policy: BidReinforcementPolicy::OverturnOrReinforceWhileWinning } => format!("{} allowed overturning your own bids", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::BothNumDecks } => format!("{} required no-trump bids to have every low or high joker", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::LJNumDecksHJNumDecksLessOne } => format!("{} required low no-trump bids to have every low joker (one less required for high joker)", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::BothTwoOrMore } => format!("{} required no-trump bids to have at least two low or high jokers", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: true } => format!("{} enabled the kitty to be revealed at the end of each game", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: false } => format!("{} disabled the kitty from being revealed at the end of each game", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
