@@ -384,7 +384,6 @@ impl PlayPhase {
                                         MultipleJoinPolicy::Unrestricted if already_on_the_team => {
                                             // double-join!
                                             friend.player_id = Some(played.id);
-                                            self.landlords_team.push(played.id);
                                             msgs.push(MessageVariant::JoinedTeam {
                                                 player: played.id,
                                                 already_joined: true,
@@ -2244,7 +2243,7 @@ mod tests {
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player } if *player == p2))
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player, already_joined: false } if *player == p2))
                 .count(),
             1
         );
@@ -2262,14 +2261,13 @@ mod tests {
         play.play_cards(p7, &p7_hand[1..2]).unwrap();
         play.play_cards(p8, &p8_hand[1..2]).unwrap();
 
-        // We don't get any joined-team messages, because both team-joiners have
-        // already joined.
+        // We get a re-joined team message, since p2 has already joined.
         let msgs = play.finish_trick().unwrap();
         assert_eq!(
             msgs.into_iter()
-                .filter(|m| matches!(m, MessageVariant::JoinedTeam { .. }))
+                .filter(|m| matches!(m, MessageVariant::JoinedTeam { player, already_joined: true } if *player == p2))
                 .count(),
-            0
+            1
         );
 
         // Assert that the team didn't get any bigger
