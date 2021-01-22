@@ -78,7 +78,14 @@ fn main() {
 
         for num in 0..10 {
             println!("game {}", num + 1);
+
             loop {
+                let game_finished = if let GameState::Play(ref s) = game_state {
+                    let (non_landlords_points, observed_points) = s.calculate_points();
+                    s.game_finished(non_landlords_points, observed_points)
+                } else {
+                    false
+                };
                 match game_state {
                     GameState::Initialize(ref mut s) => match s.landlord() {
                         None => {
@@ -127,7 +134,7 @@ fn main() {
                         game_state = GameState::Play(s.advance(s.next_player().unwrap()).unwrap());
                     }
                     GameState::Play(ref mut s)
-                        if !s.game_finished() && s.trick().played_cards().is_empty() =>
+                        if !game_finished && s.trick().played_cards().is_empty() =>
                     {
                         // Start the trick
 
@@ -169,7 +176,7 @@ fn main() {
                         s.play_cards(p, &best_play.unwrap()).unwrap();
                     }
                     GameState::Play(ref mut s)
-                        if !s.game_finished() && s.trick().played_cards().len() < num_players =>
+                        if !game_finished && s.trick().played_cards().len() < num_players =>
                     {
                         // Follow the required plays
                         let p = s.next_player().unwrap();
@@ -244,7 +251,7 @@ fn main() {
                         s.play_cards(p, &play).unwrap();
                     }
                     GameState::Play(ref mut s)
-                        if !s.game_finished() && s.trick().played_cards().len() == num_players =>
+                        if !game_finished && s.trick().played_cards().len() == num_players =>
                     {
                         // Finish the trick
                         s.finish_trick().unwrap();

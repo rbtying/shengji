@@ -9,7 +9,7 @@ use shengji_core::{
     hands::Hands,
     player::Player,
     scoring::{
-        compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
+        self, compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
         POINTS_PER_DECK,
     },
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
@@ -281,6 +281,37 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
 
     Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results })
         .map_err(|_| "failed to serialize response")?)
+}
+
+#[derive(Deserialize)]
+struct NextThresholdReachableRequest {
+    num_decks: usize,
+    params: GameScoringParameters,
+    non_landlord_points: isize,
+    observed_points: isize,
+}
+
+#[wasm_bindgen]
+pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
+    #[cfg(debug_assertions)]
+    console_error_panic_hook::set_once();
+
+    let NextThresholdReachableRequest {
+        num_decks,
+        params,
+        non_landlord_points,
+        observed_points,
+    } = req
+        .into_serde()
+        .map_err(|_| "Failed to deserialize request")?;
+    Ok(scoring::next_threshold_reachable(
+        &params,
+        num_decks,
+        POINTS_PER_DECK,
+        non_landlord_points,
+        observed_points,
+    )
+    .map_err(|_| "Failed to determine if next threshold is reachable")?)
 }
 
 #[derive(Deserialize)]

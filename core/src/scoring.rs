@@ -428,6 +428,26 @@ pub fn compute_level_deltas(
     ))
 }
 
+/// Computes whether the game can be considered "finished" (i.e. there are insufficient remaining
+/// points for the attacking team to change the outcome of the game).
+///
+/// Note: does not account for kitty bonuses.
+pub fn next_threshold_reachable(
+    gsp: &GameScoringParameters,
+    num_decks: usize,
+    num_points_per_deck: usize,
+    non_landlords_points: isize,
+    observed_points: isize,
+) -> Result<bool, Error> {
+    let threshold = gsp
+        .materialize(num_decks, num_points_per_deck)?
+        .next_relevant_score(non_landlords_points)?
+        .0;
+    let total_points = (num_decks * num_points_per_deck) as isize;
+    let remaining_points = total_points - observed_points;
+    Ok(non_landlords_points + remaining_points >= threshold)
+}
+
 #[cfg(test)]
 mod tests {
     use super::{

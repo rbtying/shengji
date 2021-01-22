@@ -29,6 +29,9 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         explainScoring: (req) => {
           return Shengji.explain_scoring(req);
         },
+        nextThresholdReachable: (req) => {
+          return Shengji.next_threshold_reachable(req);
+        },
         computeScore: (req) => {
           return Shengji.compute_score(req);
         },

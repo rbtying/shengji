@@ -9,7 +9,7 @@ use crate::bidding::Bid;
 use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::player::Player;
-use crate::scoring::{compute_level_deltas, GameScoreResult};
+use crate::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, Friend, FriendSelection,
     FriendSelectionPolicy, GameMode, GameModeSettings, GameStartPolicy, KittyBidPolicy,
@@ -462,8 +462,16 @@ impl PlayPhase {
         Ok(msgs)
     }
 
-    pub fn game_finished(&self) -> bool {
-        self.hands.is_empty() && self.trick.played_cards().is_empty()
+    pub fn game_finished(&self, non_landlords_points: isize, observed_points: isize) -> bool {
+        (self.hands.is_empty() && self.trick.played_cards().is_empty())
+            || !next_threshold_reachable(
+                &self.propagated.game_scoring_parameters,
+                self.num_decks,
+                crate::scoring::POINTS_PER_DECK,
+                non_landlords_points,
+                observed_points,
+            )
+            .unwrap_or(false)
     }
 
     pub fn compute_player_level_deltas<'a, 'b: 'a>(
@@ -551,17 +559,21 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
-        if !self.game_finished() {
-            bail!("not done playing yet!")
-        }
-
-        let mut msgs = vec![];
-
+    pub fn calculate_points(&self) -> (isize, isize) {
         let mut non_landlords_points: isize = self
             .points
             .iter()
             .filter(|(id, _)| !self.landlords_team.contains(id))
+            .flat_map(|(_, cards)| cards)
+            .flat_map(|c| c.points())
+            .sum::<usize>() as isize;
+
+        let observed_points = self
+            .points
+            .iter()
+            .filter(|(id, _)| {
+                !self.propagated.hide_landlord_points || !self.landlords_team.contains(id)
+            })
             .flat_map(|(_, cards)| cards)
             .flat_map(|c| c.points())
             .sum::<usize>() as isize;
@@ -574,6 +586,17 @@ impl PlayPhase {
                     non_landlords_points -= *penalty as isize;
                 }
             }
+        }
+        (non_landlords_points, observed_points)
+    }
+
+    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
+        let mut msgs = vec![];
+
+        let (non_landlords_points, observed_points) = self.calculate_points();
+
+        if !self.game_finished(non_landlords_points, observed_points) {
+            bail!("not done playing yet!")
         }
 
         let mut smaller_landlord_team = false;
