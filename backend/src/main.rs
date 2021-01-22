@@ -96,7 +96,6 @@ impl GameState {
     }
 }
 
-#[derive(Clone)]
 struct UserState {
     player_id: types::PlayerID,
     tx: mpsc::UnboundedSender<Result<Message, warp::Error>>,
@@ -145,25 +144,18 @@ async fn main() {
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => DUMP_PATH));
 
-    match try_read_file::<HashMap<String, serde_json::Value>>(DUMP_PATH).await {
+    match try_read_file::<HashMap<String, game_state::GameState>>(DUMP_PATH).await {
         Ok(dump) => {
             for (room_name, game_dump) in dump {
-                match serde_json::from_value(game_dump) {
-                    Ok(game_dump) => {
-                        game_state.insert(
-                            room_name,
-                            GameState {
-                                game: interactive::InteractiveGame::new_from_state(game_dump),
-                                users: HashMap::new(),
-                                last_updated: Instant::now(),
-                                monotonic_id: 0,
-                            },
-                        );
-                    }
-                    Err(e) => {
-                        error!(init_logger, "Failed to open per-game dump"; "error" => format!("{:?}", e), "room" => room_name);
-                    }
-                }
+                game_state.insert(
+                    room_name,
+                    GameState {
+                        game: interactive::InteractiveGame::new_from_state(game_dump),
+                        users: HashMap::new(),
+                        last_updated: Instant::now(),
+                        monotonic_id: 0,
+                    },
+                );
             }
         }
         Err(e) => {
@@ -484,8 +476,6 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
         };
         let games2 = games.clone();
 
-        let caller = UserState { player_id, tx };
-
         while let Some(result) = user_ws_rx.next().await {
             let result = match result {
                 Ok(r) => r,
@@ -494,24 +484,112 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
                     break;
                 }
             };
-            match handle_user_action(
-                &logger,
-                &caller,
-                &room,
-                join_span,
-                &games,
-                &name,
-                result.as_bytes(),
-            )
-            .await
-            {
-                Ok(msgs) => {
-                    for (u, m) in msgs {
-                        let _ = u.send(&m).await;
+            let msg = match serde_json::from_slice::<UserMessage>(result.as_bytes()) {
+                Ok(m) => m,
+                Err(e) => {
+                    error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
+                    let err = GameMessage::Error(format!("couldn't deserialize message {:?}", e));
+                    if !send_to_user(&tx, &err).await {
+                        break;
+                    } else {
+                        continue;
                     }
                 }
-                Err(msg) => {
-                    let _ = caller.send(&msg).await;
+            };
+            let mut g = games.lock().await;
+            let game = if let Some(game) = g.get_mut(&room) {
+                game
+            } else {
+                error!(logger, "Game not found");
+                break;
+            };
+            let logger = game.tracer(&logger, &room, Some(join_span));
+            match msg {
+                UserMessage::Beep => match game.game.next_player() {
+                    Ok(player_id) => {
+                        for user in game.users.values() {
+                            user.send(&GameMessage::Message {
+                                from: name.clone(),
+                                message: "BEEP".to_owned(),
+                            })
+                            .await;
+                            if user.player_id == player_id {
+                                user.send(&GameMessage::Beep).await;
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        let err = GameMessage::Error(format!("{}", err));
+                        if !send_to_user(&tx, &err).await {
+                            break;
+                        }
+                    }
+                },
+                UserMessage::Message(m) => {
+                    // Broadcast this msg to everyone
+                    for user in game.users.values() {
+                        user.send(&GameMessage::Message {
+                            from: name.clone(),
+                            message: m.clone(),
+                        })
+                        .await;
+                    }
+                }
+                UserMessage::Kick(id) => {
+                    info!(logger, "Kicking user"; "other" => id.0);
+                    match game.game.kick(id) {
+                        Ok(msgs) => {
+                            for user in game.users.values() {
+                                if user.player_id == id {
+                                    user.send(&GameMessage::Kicked).await;
+                                } else if let Ok(state) =
+                                    game.game.dump_state_for_player(user.player_id)
+                                {
+                                    user.send(&GameMessage::State { state }).await;
+                                }
+                                for (data, message) in &msgs {
+                                    user.send(&GameMessage::Broadcast {
+                                        data: data.clone(),
+                                        message: message.clone(),
+                                    })
+                                    .await;
+                                }
+                            }
+                            game.users.retain(|_, u| u.player_id != id);
+                        }
+                        Err(err) => {
+                            let err = GameMessage::Error(format!("{}", err));
+                            if !send_to_user(&tx, &err).await {
+                                break;
+                            }
+                        }
+                    }
+                }
+                UserMessage::Action(m) => {
+                    match game.game.interact(m, player_id, &logger) {
+                        Ok(msgs) => {
+                            // send the updated game state to everyone!
+                            for user in game.users.values() {
+                                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
+                                    for (data, message) in &msgs {
+                                        user.send(&GameMessage::Broadcast {
+                                            data: data.clone(),
+                                            message: message.clone(),
+                                        })
+                                        .await;
+                                    }
+                                    user.send(&GameMessage::State { state }).await;
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            // send the error back to the requester
+                            let err = GameMessage::Error(format!("{}", err));
+                            if !send_to_user(&tx, &err).await {
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -520,113 +598,6 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
         // connected. Once they disconnect, then...
         user_disconnected(room, ws_id, &games2, logger, join_span).await;
     }
-}
-
-async fn handle_user_action(
-    logger: &Logger,
-    caller: &UserState,
-    room: &str,
-    parent: usize,
-    games: &Games,
-    name: &str,
-    result: &[u8],
-) -> Result<Vec<(UserState, GameMessage)>, GameMessage> {
-    let msg = serde_json::from_slice::<UserMessage>(result).map_err(|e| {
-        error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
-        GameMessage::Error(format!("couldn't deserialize message {:?}", e))
-    })?;
-    let mut g = games.lock().await;
-    let game = if let Some(game) = g.get_mut(room) {
-        game
-    } else {
-        error!(logger, "Game not found");
-        return Err(GameMessage::Error(format!(
-            "Couldn't find game for room {}",
-            room
-        )));
-    };
-    let logger = game.tracer(&logger, &room, Some(parent));
-
-    let mut messages = vec![];
-    let mut broadcast_messages = vec![];
-    match msg {
-        UserMessage::Beep => {
-            let next_player_id = game
-                .game
-                .next_player()
-                .map_err(|e| GameMessage::Error(e.to_string()))?;
-            let mut messages = vec![];
-            for user in game.users.values() {
-                messages.push((
-                    user.clone(),
-                    GameMessage::Message {
-                        from: name.to_owned(),
-                        message: "BEEP".to_owned(),
-                    },
-                ));
-                if user.player_id == next_player_id {
-                    messages.push((user.clone(), GameMessage::Beep));
-                }
-            }
-        }
-        UserMessage::Message(m) => {
-            // Broadcast this msg to everyone
-            for user in game.users.values() {
-                messages.push((
-                    user.clone(),
-                    GameMessage::Message {
-                        from: name.to_owned(),
-                        message: m.clone(),
-                    },
-                ));
-            }
-        }
-        UserMessage::Kick(id) => {
-            info!(logger, "Kicking user"; "other" => id.0);
-            let msgs = game
-                .game
-                .kick(id)
-                .map_err(|e| GameMessage::Error(e.to_string()))?;
-
-            for user in game.users.values() {
-                if user.player_id == id {
-                    messages.push((user.clone(), GameMessage::Kicked));
-                } else if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                    messages.push((user.clone(), GameMessage::State { state }));
-                }
-            }
-            game.users.retain(|_, u| u.player_id != id);
-            broadcast_messages.extend(msgs);
-        }
-        UserMessage::Action(m) => {
-            let msgs = game
-                .game
-                .interact(m, caller.player_id, &logger)
-                .map_err(|e| GameMessage::Error(e.to_string()))?;
-
-            // send the updated game state to everyone!
-            for user in game.users.values() {
-                if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-                    user.send(&GameMessage::State { state }).await;
-                }
-            }
-            broadcast_messages.extend(msgs);
-        }
-    }
-
-    for user in game.users.values() {
-        messages.extend(broadcast_messages.iter().map(|(d, m)| {
-            (
-                user.clone(),
-                GameMessage::Broadcast {
-                    data: d.clone(),
-                    message: m.clone(),
-                },
-            )
-        }));
-    }
-
-    Ok(messages)
 }
 
 async fn user_disconnected(
