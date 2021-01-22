@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>1/22/2021:</p>
+        <ul>
+          <li>
+            Add the ability to end the game early when there are insufficient
+            points remaining to matter.
+          </li>
+        </ul>
         <p>1/21/2021:</p>
         <ul>
           <li>Add a scoring progress bar with point thresholds.</li>

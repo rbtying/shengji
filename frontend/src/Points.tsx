@@ -20,29 +20,60 @@ interface IProps {
   gameScoringParameters: IGameScoringParameters;
 }
 
-const Points = (props: IProps): JSX.Element => {
-  const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
+export const calculatePoints = (
+  players: IPlayer[],
+  landlordTeam: number[],
+  points: { [playerId: number]: string[] },
+  penalties: { [playerId: number]: number }
+): {
+  nonLandlordPoints: number;
+  totalPointsPlayed: number;
+  nonLandlordPointsWithPenalties: number;
+} => {
+  const pointsPerPlayer = ObjectUtils.mapValues(points, (cards) =>
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
-  const { computeScore, explainScoring } = React.useContext(WasmContext);
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
-    props.players
-      .filter((p) => !props.landlordTeam.includes(p.id))
+    players
+      .filter((p) => !landlordTeam.includes(p.id))
       .map((p) => pointsPerPlayer[p.id])
   );
 
   let nonLandlordPointsWithPenalties = nonLandlordPoints;
-  props.players.forEach((p) => {
-    const penalty = props.penalties[p.id];
+  players.forEach((p) => {
+    const penalty = penalties[p.id];
     if (penalty > 0) {
-      if (props.landlordTeam.includes(p.id)) {
+      if (landlordTeam.includes(p.id)) {
         nonLandlordPointsWithPenalties += penalty;
       } else {
         nonLandlordPointsWithPenalties -= penalty;
       }
     }
   });
+
+  return {
+    nonLandlordPoints,
+    nonLandlordPointsWithPenalties,
+    totalPointsPlayed,
+  };
+};
+
+const Points = (props: IProps): JSX.Element => {
+  const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
+    ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
+  );
+  const { computeScore, explainScoring } = React.useContext(WasmContext);
+  const {
+    totalPointsPlayed,
+    nonLandlordPointsWithPenalties,
+    nonLandlordPoints,
+  } = calculatePoints(
+    props.players,
+    props.landlordTeam,
+    props.points,
+    props.penalties
+  );
   const penaltyDelta = nonLandlordPointsWithPenalties - nonLandlordPoints;
 
   const { score, next_threshold: nextThreshold } = computeScore({

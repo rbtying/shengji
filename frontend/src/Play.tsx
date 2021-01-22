@@ -7,7 +7,7 @@ import Trump from "./Trump";
 import Friends from "./Friends";
 import Trick from "./Trick";
 import Cards from "./Cards";
-import Points from "./Points";
+import Points, { calculatePoints } from "./Points";
 import LabeledPlay from "./LabeledPlay";
 import Players from "./Players";
 import ArrayUtils from "./util/array";
@@ -37,7 +37,11 @@ const Play = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [grouping, setGrouping] = React.useState<IFoundViablePlay[]>([]);
-  const { findViablePlays, canPlayCards } = React.useContext(WasmContext);
+  const {
+    findViablePlays,
+    canPlayCards,
+    nextThresholdReachable,
+  } = React.useContext(WasmContext);
 
   const playCards = (): void => {
     send({ Action: { PlayCardsWithHint: [selected, grouping[0].grouping] } });
@@ -94,8 +98,26 @@ const Play = (props: IProps): JSX.Element => {
       ArrayUtils.sum(Object.values(playerHand))
     )
   );
-  const canFinish =
+
+  const { totalPointsPlayed, nonLandlordPointsWithPenalties } = calculatePoints(
+    playPhase.propagated.players,
+    playPhase.landlords_team,
+    playPhase.points,
+    playPhase.penalties
+  );
+
+  const noCardsLeft =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
+  console.log([nonLandlordPointsWithPenalties, totalPointsPlayed]);
+
+  const canFinish =
+    noCardsLeft ||
+    !nextThresholdReachable({
+      num_decks: playPhase.num_decks,
+      params: playPhase.propagated.game_scoring_parameters,
+      non_landlord_points: nonLandlordPointsWithPenalties,
+      observed_points: totalPointsPlayed,
+    });
 
   const landlordSuffix =
     playPhase.propagated.landlord_emoji !== undefined &&
@@ -165,7 +187,19 @@ const Play = (props: IProps): JSX.Element => {
       >
         Finish trick
       </button>
-      {canFinish && <button onClick={startNewGame}>Finish game</button>}
+      {canFinish && (
+        <button
+          onClick={() => {
+            (noCardsLeft ||
+              confirm(
+                "Do you want to end the game early? There may still be points in the bottom..."
+              )) &&
+              startNewGame();
+          }}
+        >
+          Finish game
+        </button>
+      )}
       <BeepButton />
       {playPhase.trick.trick_format !== null &&
       !isSpectator &&
