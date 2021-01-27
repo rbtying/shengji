@@ -132,6 +132,7 @@ export interface IPlayPhase {
   trump: ITrump;
   trick: ITrick;
   last_trick: ITrick | null;
+  game_ended_early: boolean;
 }
 
 export type BidPolicy = "JokerOrGreaterLength" | "GreaterLength";

@@ -54,7 +54,7 @@ interface ISortAndGroupCardsRequest {
   cards: string[];
 }
 
-interface ISortedAndGroupedCards {
+export interface ISortedAndGroupedCards {
   suit: string;
   cards: string[];
 }

@@ -197,6 +197,7 @@ impl GameState {
                 ref propagated,
                 landlord,
                 exchanger,
+                game_ended_early,
                 ..
             }) => {
                 if propagated.hide_landlord_points {
@@ -206,9 +207,12 @@ impl GameState {
                         }
                     }
                 }
-                hands.redact_except(id);
                 // Don't redact at the end of the game.
-                let game_ongoing = !hands.is_empty() || !trick.played_cards().is_empty();
+                let game_ongoing =
+                    !game_ended_early && (!hands.is_empty() || !trick.played_cards().is_empty());
+                if game_ongoing {
+                    hands.redact_except(id);
+                }
                 if game_ongoing && id != exchanger.unwrap_or(landlord) {
                     for card in kitty {
                         *card = Card::Unknown;
@@ -244,7 +248,6 @@ pub struct PlayPhase {
     propagated: PropagatedState,
     hands: Hands,
     points: HashMap<PlayerID, Vec<Card>>,
-    #[serde(default)]
     penalties: HashMap<PlayerID, usize>,
     kitty: Vec<Card>,
     landlord: PlayerID,
@@ -252,8 +255,8 @@ pub struct PlayPhase {
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
-    #[serde(default)]
     exchanger: Option<PlayerID>,
+    game_ended_early: bool,
 }
 
 impl PlayPhase {
@@ -282,6 +285,9 @@ impl PlayPhase {
     }
 
     pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
+        if self.game_ended_early {
+            bail!("Game has already ended; cards can't be played");
+        }
         Ok(self
             .trick
             .can_play_cards(id, &self.hands, cards, self.propagated.trick_draw_policy)?)
@@ -301,6 +307,10 @@ impl PlayPhase {
         cards: &[Card],
         format_hint: Option<&'_ [TrickUnit]>,
     ) -> Result<Vec<MessageVariant>, Error> {
+        if self.game_ended_early {
+            bail!("Game has already ended; cards can't be played");
+        }
+
         let mut msgs = self.trick.play_cards(PlayCards {
             id,
             hands: &mut self.hands,
@@ -334,6 +344,9 @@ impl PlayPhase {
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.game_ended_early {
+            bail!("Game has already ended; cards can't be taken back");
+        }
         if self.propagated.play_takeback_policy == PlayTakebackPolicy::NoPlayTakeback {
             bail!("Taking back played cards is not allowed")
         }
@@ -343,6 +356,9 @@ impl PlayPhase {
     }
 
     pub fn finish_trick(&mut self) -> Result<Vec<MessageVariant>, Error> {
+        if self.game_ended_early {
+            bail!("Game has already ended; trick can't be finished");
+        }
         let TrickEnded {
             winner,
             points: mut new_points,
@@ -462,18 +478,6 @@ impl PlayPhase {
         Ok(msgs)
     }
 
-    pub fn game_finished(&self, non_landlords_points: isize, observed_points: isize) -> bool {
-        (self.hands.is_empty() && self.trick.played_cards().is_empty())
-            || !next_threshold_reachable(
-                &self.propagated.game_scoring_parameters,
-                self.num_decks,
-                crate::scoring::POINTS_PER_DECK,
-                non_landlords_points,
-                observed_points,
-            )
-            .unwrap_or(false)
-    }
-
     pub fn compute_player_level_deltas<'a, 'b: 'a>(
         players: impl Iterator<Item = &'b mut Player>,
         non_landlord_level_bump: usize,
@@ -590,14 +594,38 @@ impl PlayPhase {
         (non_landlords_points, observed_points)
     }
 
+    pub fn game_finished(&self) -> bool {
+        self.game_ended_early || self.hands.is_empty() && self.trick.played_cards().is_empty()
+    }
+
+    pub fn finish_game_early(&mut self) -> Result<MessageVariant, Error> {
+        if self.game_finished() {
+            bail!("Game has already ended");
+        }
+        let (non_landlords_points, observed_points) = self.calculate_points();
+        let can_end_early = !next_threshold_reachable(
+            &self.propagated.game_scoring_parameters,
+            self.num_decks,
+            crate::scoring::POINTS_PER_DECK,
+            non_landlords_points,
+            observed_points,
+        )?;
+
+        if can_end_early {
+            self.game_ended_early = true;
+            Ok(MessageVariant::GameEndedEarly)
+        } else {
+            bail!("Game can't be ended early; there are still points in play")
+        }
+    }
+
     pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
         let mut msgs = vec![];
-
-        let (non_landlords_points, observed_points) = self.calculate_points();
-
-        if !self.game_finished(non_landlords_points, observed_points) {
+        if !self.game_finished() {
             bail!("not done playing yet!")
         }
+
+        let (non_landlords_points, _) = self.calculate_points();
 
         let mut smaller_landlord_team = false;
 
@@ -1008,6 +1036,7 @@ impl ExchangePhase {
             propagated: self.propagated.clone(),
             exchanger: self.exchanger,
             landlords_team,
+            game_ended_early: false,
         })
     }
 

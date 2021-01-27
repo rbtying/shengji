@@ -60,7 +60,7 @@ impl InteractiveGame {
     #[allow(clippy::cognitive_complexity)]
     pub fn interact(
         &mut self,
-        msg: Message,
+        msg: Action,
         id: PlayerID,
         logger: &Logger,
     ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
@@ -72,86 +72,86 @@ impl InteractiveGame {
         ));
 
         let msgs = match (msg, &mut self.state) {
-            (Message::ResetGame, _) => {
+            (Action::ResetGame, _) => {
                 info!(logger, "Resetting game");
                 self.state.reset()?
             }
-            (Message::SetChatLink(ref link), _) => {
+            (Action::SetChatLink(ref link), _) => {
                 self.state.set_chat_link(link.clone())?;
                 vec![]
             }
-            (Message::StartGame, GameState::Initialize(ref mut state)) => {
+            (Action::StartGame, GameState::Initialize(ref mut state)) => {
                 let s: &'_ PropagatedState = state;
                 info!(logger, "Starting game"; s);
                 self.state = GameState::Draw(state.start(id)?);
                 vec![MessageVariant::StartingGame]
             }
-            (Message::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
+            (Action::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Reordering players");
                 state.reorder_players(&players)?;
                 vec![]
             }
-            (Message::MakeObserver(id), GameState::Initialize(ref mut state)) => {
+            (Action::MakeObserver(id), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Making player an observer"; "id" => id.0);
                 state.make_observer(id)?
             }
-            (Message::MakePlayer(id), GameState::Initialize(ref mut state)) => {
+            (Action::MakePlayer(id), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Making observer a player"; "id" => id.0);
                 state.make_player(id)?
             }
-            (Message::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
+            (Action::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting number of decks"; "num_decks" => num_decks);
                 state.set_num_decks(num_decks)?
             }
-            (Message::SetRank(rank), GameState::Initialize(ref mut state)) => {
+            (Action::SetRank(rank), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting rank"; "rank" => rank.as_str());
                 state.set_rank(id, rank)?;
                 vec![MessageVariant::SetRank { rank }]
             }
-            (Message::SetKittySize(size), GameState::Initialize(ref mut state)) => {
+            (Action::SetKittySize(size), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
             }
-            (Message::SetFriendSelectionPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetFriendSelectionPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting friend selection policy"; "policy" => format!("{:?}", policy));
                 state.set_friend_selection_policy(policy)?
             }
-            (Message::SetMultipleJoinPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetMultipleJoinPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting multiple join policy"; "policy" => format!("{:?}", policy));
                 state.set_multiple_join_policy(policy)?
             }
             (
-                Message::SetFirstLandlordSelectionPolicy(policy),
+                Action::SetFirstLandlordSelectionPolicy(policy),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting first landlord selection policy"; "policy" => format!("{:?}", policy));
                 state.set_first_landlord_selection_policy(policy)?
             }
-            (Message::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_policy(policy)?
             }
-            (Message::SetBidReinforcementPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetBidReinforcementPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid reinforcement policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_reinforcement_policy(policy)?
             }
-            (Message::SetJokerBidPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetJokerBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting joker bid selection policy"; "policy" => format!("{:?}", policy));
                 state.set_joker_bid_policy(policy)?
             }
             (
-                Message::SetShouldRevealKittyAtEndOfGame(should_reveal),
+                Action::SetShouldRevealKittyAtEndOfGame(should_reveal),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting should reveal kitty at end of game"; "should_reveal" => format!("{:?}", should_reveal));
                 state.set_should_reveal_kitty_at_end_of_game(should_reveal)?
             }
-            (Message::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
+            (Action::SetLandlord(landlord), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord"; "landlord" => landlord.map(|l| l.0));
                 state.set_landlord(landlord)?;
                 vec![MessageVariant::SetLandlord { landlord }]
             }
-            (Message::SetLandlordEmoji(ref emoji), GameState::Initialize(ref mut state)) => {
+            (Action::SetLandlordEmoji(ref emoji), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting landlord emoji"; "emoji" => emoji);
                 state.set_landlord_emoji(emoji.clone())?;
                 vec![MessageVariant::SetLandlordEmoji {
@@ -163,94 +163,91 @@ impl InteractiveGame {
                 }]
             }
             (
-                Message::SetHideLandlordsPoints(hide_landlord_points),
+                Action::SetHideLandlordsPoints(hide_landlord_points),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting hide landlords points"; "hide_landlord_points" => hide_landlord_points);
                 vec![state.hide_landlord_points(hide_landlord_points)?]
             }
             (
-                Message::SetHidePlayedCards(hide_played_cards),
+                Action::SetHidePlayedCards(hide_played_cards),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting hide played cards"; "hide_played_cards" => hide_played_cards);
                 vec![state.hide_played_cards(hide_played_cards)?]
             }
             (
-                Message::SetHideThrowHaltingPlayer(hide_throw_halting_player),
+                Action::SetHideThrowHaltingPlayer(hide_throw_halting_player),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting hide throw halting player"; "hide_throw_halting_player" => hide_throw_halting_player);
                 state.set_hide_throw_halting_player(hide_throw_halting_player)?
             }
-            (Message::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
+            (Action::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
                 state.set_game_mode(game_mode)?
             }
-            (Message::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
+            (Action::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty penalty"; "penalty" => format!("{:?}", kitty_penalty));
                 state.set_kitty_penalty(kitty_penalty)?
             }
-            (
-                Message::SetKittyBidPolicy(kitty_bid_policy),
-                GameState::Initialize(ref mut state),
-            ) => {
+            (Action::SetKittyBidPolicy(kitty_bid_policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty bid policy"; "bid_policy" => format!("{:?}", kitty_bid_policy));
                 state.set_kitty_bid_policy(kitty_bid_policy)?
             }
-            (Message::SetTrickDrawPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetTrickDrawPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting trick draw policy"; "draw_policy" => format!("{:?}", policy));
                 state.set_trick_draw_policy(policy)?
             }
-            (Message::SetAdvancementPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetAdvancementPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting advancement policy"; "policy" => format!("{:?}", policy));
                 state.set_advancement_policy(policy)?
             }
             (
-                Message::SetGameScoringParameters(ref parameters),
+                Action::SetGameScoringParameters(ref parameters),
                 GameState::Initialize(ref mut state),
             ) => {
                 info!(logger, "Setting game scoring parameters"; "parameters" => format!("{:?}", parameters));
                 state.set_game_scoring_parameters(parameters.clone())?
             }
-            (Message::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
+            (Action::SetThrowPenalty(throw_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting throw penalty"; "penalty" => format!("{:?}", throw_penalty));
                 state.set_throw_penalty(throw_penalty)?
             }
-            (Message::SetThrowEvaluationPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetThrowEvaluationPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting throw evaluation policy"; "policy" => format!("{:?}", policy));
                 state.set_throw_evaluation_policy(policy)?
             }
-            (Message::SetPlayTakebackPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetPlayTakebackPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting play takeback policy"; "policy" => format!("{:?}", policy));
                 state.set_play_takeback_policy(policy)?
             }
-            (Message::SetBidTakebackPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetBidTakebackPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid takeback policy"; "policy" => format!("{:?}", policy));
                 state.set_bid_takeback_policy(policy)?
             }
-            (Message::SetKittyTheftPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetKittyTheftPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty theft policy"; "policy" => format!("{:?}", policy));
                 state.set_kitty_theft_policy(policy)?
             }
-            (Message::SetGameShadowingPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetGameShadowingPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting user multiple game session policy"; "policy" => format!("{:?}", policy));
                 state.set_user_multiple_game_session_policy(policy)?
             }
-            (Message::SetGameStartPolicy(policy), GameState::Initialize(ref mut state)) => {
+            (Action::SetGameStartPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game start policy"; "policy" => format!("{:?}", policy));
                 state.set_game_start_policy(policy)?
             }
-            (Message::DrawCard, GameState::Draw(ref mut state)) => {
+            (Action::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
                 vec![]
             }
-            (Message::RevealCard, GameState::Draw(ref mut state)) => {
+            (Action::RevealCard, GameState::Draw(ref mut state)) => {
                 info!(logger, "Revealing card");
                 vec![state.reveal_card()?]
             }
-            (Message::Bid(card, count), GameState::Draw(ref mut state)) => {
+            (Action::Bid(card, count), GameState::Draw(ref mut state)) => {
                 info!(logger, "Making bid");
                 if state.bid(id, card, count) {
                     vec![MessageVariant::MadeBid { card, count }]
@@ -258,17 +255,17 @@ impl InteractiveGame {
                     bail!("bid was invalid")
                 }
             }
-            (Message::TakeBackBid, GameState::Draw(ref mut state)) => {
+            (Action::TakeBackBid, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Taking back bid");
                 state.take_back_bid(id)?;
                 vec![MessageVariant::TookBackBid]
             }
-            (Message::PickUpKitty, GameState::Draw(ref mut state)) => {
+            (Action::PickUpKitty, GameState::Draw(ref mut state)) => {
                 info!(logger, "Entering exchange phase");
                 self.state = GameState::Exchange(state.advance(id)?);
                 vec![]
             }
-            (Message::Bid(card, count), GameState::Exchange(ref mut state)) => {
+            (Action::Bid(card, count), GameState::Exchange(ref mut state)) => {
                 info!(logger, "Making exchange bid");
                 if state.bid(id, card, count) {
                     vec![MessageVariant::MadeBid { card, count }]
@@ -276,62 +273,66 @@ impl InteractiveGame {
                     bail!("bid was invalid")
                 }
             }
-            (Message::TakeBackBid, GameState::Exchange(ref mut state)) => {
+            (Action::TakeBackBid, GameState::Exchange(ref mut state)) => {
                 debug!(logger, "Taking back bid");
                 state.take_back_bid(id)?;
                 vec![MessageVariant::TookBackBid]
             }
-            (Message::PickUpKitty, GameState::Exchange(ref mut state)) => {
+            (Action::PickUpKitty, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Picking up cards after over-bid");
                 state.pick_up_cards(id)?;
                 vec![MessageVariant::PickedUpCards]
             }
-            (Message::PutDownKitty, GameState::Exchange(ref mut state)) => {
+            (Action::PutDownKitty, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Putting down cards after over-bid");
                 state.finalize(id)?;
                 vec![MessageVariant::PutDownCards]
             }
-            (Message::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
+            (Action::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
                 debug!(logger, "Moving card to kitty");
                 state.move_card_to_kitty(id, card)?;
                 vec![]
             }
-            (Message::MoveCardToHand(card), GameState::Exchange(ref mut state)) => {
+            (Action::MoveCardToHand(card), GameState::Exchange(ref mut state)) => {
                 debug!(logger, "Moving card to hand");
                 state.move_card_to_hand(id, card)?;
                 vec![]
             }
-            (Message::SetFriends(ref friends), GameState::Exchange(ref mut state)) => {
+            (Action::SetFriends(ref friends), GameState::Exchange(ref mut state)) => {
                 info!(logger, "Setting friends");
                 state.set_friends(id, friends.iter().cloned())?;
                 vec![]
             }
-            (Message::BeginPlay, GameState::Exchange(ref mut state)) => {
+            (Action::BeginPlay, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Entering play phase");
                 self.state = GameState::Play(state.advance(id)?);
                 vec![]
             }
-            (Message::PlayCards(ref cards), GameState::Play(ref mut state)) => {
+            (Action::PlayCards(ref cards), GameState::Play(ref mut state)) => {
                 debug!(logger, "Playing cards");
                 state.play_cards(id, cards)?
             }
             (
-                Message::PlayCardsWithHint(ref cards, ref format_hint),
+                Action::PlayCardsWithHint(ref cards, ref format_hint),
                 GameState::Play(ref mut state),
             ) => {
                 debug!(logger, "Playing cards with formatting hint");
                 state.play_cards_with_hint(id, cards, Some(format_hint))?
             }
-            (Message::EndTrick, GameState::Play(ref mut state)) => {
+            (Action::EndTrick, GameState::Play(ref mut state)) => {
                 info!(logger, "Finishing trick");
                 state.finish_trick()?
             }
-            (Message::TakeBackCards, GameState::Play(ref mut state)) => {
+            (Action::TakeBackCards, GameState::Play(ref mut state)) => {
                 debug!(logger, "Taking back cards");
                 state.take_back_cards(id)?;
                 vec![MessageVariant::TookBackPlay]
             }
-            (Message::StartNewGame, GameState::Play(ref mut state)) => {
+            (Action::EndGameEarly, GameState::Play(ref mut state)) => {
+                info!(logger, "Ending game early");
+                vec![state.finish_game_early()?]
+            }
+            (Action::StartNewGame, GameState::Play(ref mut state)) => {
                 let s = state.propagated();
                 let (new_s, landlord_won, msgs) = state.finish_game()?;
                 info!(logger, "Starting new game"; s, "landlord_won_last_game" => landlord_won);
@@ -366,7 +367,7 @@ impl InteractiveGame {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Message {
+pub enum Action {
     ResetGame,
     MakeObserver(PlayerID),
     MakePlayer(PlayerID),
@@ -412,10 +413,10 @@ pub enum Message {
     BeginPlay,
     PlayCards(Vec<Card>),
     PlayCardsWithHint(Vec<Card>, Vec<TrickUnit>),
-    EndOfGameKittyReveal(Vec<Card>),
     EndTrick,
     TakeBackCards,
     TakeBackBid,
+    EndGameEarly,
     StartNewGame,
     Beep,
 }
@@ -524,7 +525,8 @@ impl BroadcastMessage {
             RevealedCardFromKitty => format!("{} revealed a card from the bottom of the deck", n?),
             PickedUpCards => format!("{} picked up the bottom cards", n?),
             PutDownCards => format!("{} put down the bottom cards", n?),
-            GameFinished { result: _ } => "The game has finished.".to_string(),
+            GameFinished { result: _ } => "The game has finished".to_string(),
+            GameEndedEarly => format!("{} ended the game early", n?),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
             EndOfGameSummary { landlord_won : true, non_landlords_points } => format!("Landlord team won, opposing team only collected {} points", non_landlords_points),
             EndOfGameSummary { landlord_won: false, non_landlords_points } => format!("Landlord team lost, opposing team collected {} points", non_landlords_points),

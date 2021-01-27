@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>1/27/2021:</p>
+        <ul>
+          <li>
+            When ending the game early, let players see what cards were
+            remaining.
+          </li>
+        </ul>
         <p>1/22/2021:</p>
         <ul>
           <li>

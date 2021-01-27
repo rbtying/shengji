@@ -14,7 +14,10 @@ import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
-import WasmContext, { IFoundViablePlay } from "./WasmContext";
+import WasmContext, {
+  IFoundViablePlay,
+  ISortedAndGroupedCards,
+} from "./WasmContext";
 import InlineCard from "./InlineCard";
 
 const contentStyle: React.CSSProperties = {
@@ -41,6 +44,7 @@ const Play = (props: IProps): JSX.Element => {
     findViablePlays,
     canPlayCards,
     nextThresholdReachable,
+    sortAndGroupCards,
   } = React.useContext(WasmContext);
 
   const playCards = (): void => {
@@ -52,6 +56,7 @@ const Play = (props: IProps): JSX.Element => {
   const sendEvent = (event: {}) => () => send(event);
   const takeBackCards = sendEvent({ Action: "TakeBackCards" });
   const endTrick = sendEvent({ Action: "EndTrick" });
+  const endGameEarly = sendEvent({ Action: "EndGameEarly" });
   const startNewGame = sendEvent({ Action: "StartNewGame" });
 
   const { playPhase } = props;
@@ -88,10 +93,14 @@ const Play = (props: IProps): JSX.Element => {
       canPlay = canPlay && grouping.length === 1;
     }
   }
+  canPlay = canPlay && !playPhase.game_ended_early;
   const canTakeBack =
-    lastPlay !== undefined && currentPlayer.id === lastPlay.id;
+    lastPlay !== undefined &&
+    currentPlayer.id === lastPlay.id &&
+    !playPhase.game_ended_early;
 
-  const shouldBeBeeping = props.beepOnTurn && isCurrentPlayerTurn;
+  const shouldBeBeeping =
+    props.beepOnTurn && isCurrentPlayerTurn && !playPhase.game_ended_early;
 
   const remainingCardsInHands = ArrayUtils.sum(
     Object.values(playPhase.hands.hands).map((playerHand) =>
@@ -108,10 +117,11 @@ const Play = (props: IProps): JSX.Element => {
 
   const noCardsLeft =
     remainingCardsInHands === 0 && playPhase.trick.played_cards.length === 0;
-  console.log([nonLandlordPointsWithPenalties, totalPointsPlayed]);
 
-  const canFinish =
-    noCardsLeft ||
+  const canFinish = noCardsLeft || playPhase.game_ended_early;
+
+  const canEndGameEarly =
+    !canFinish &&
     !nextThresholdReachable({
       num_decks: playPhase.num_decks,
       params: playPhase.propagated.game_scoring_parameters,
@@ -136,6 +146,19 @@ const Play = (props: IProps): JSX.Element => {
         : playPhase.propagated.players.length / 2;
     smallerTeamSize = landlordTeamSize < configFriendTeamSize;
   }
+
+  const getCardsFromHand = (pid: number): ISortedAndGroupedCards[] => {
+    const cardsInHand =
+      pid in playPhase.hands.hands
+        ? Object.entries(playPhase.hands.hands[pid]).flatMap(([c, ct]) =>
+            Array(ct).fill(c)
+          )
+        : [];
+    return sortAndGroupCards({
+      cards: cardsInHand,
+      trump: props.playPhase.trump,
+    });
+  };
 
   return (
     <div>
@@ -183,66 +206,85 @@ const Play = (props: IProps): JSX.Element => {
       )}
       <button
         onClick={endTrick}
-        disabled={playPhase.trick.player_queue.length > 0}
+        disabled={
+          playPhase.trick.player_queue.length > 0 || playPhase.game_ended_early
+        }
       >
         Finish trick
       </button>
-      {canFinish && (
+      {canEndGameEarly && (
         <button
           onClick={() => {
-            (noCardsLeft ||
-              confirm(
-                "Do you want to end the game early? There may still be points in the bottom..."
-              )) &&
-              startNewGame();
+            confirm(
+              "Do you want to end the game early? There may still be points in the bottom..."
+            ) && endGameEarly();
           }}
         >
-          Finish game
+          End game early
         </button>
       )}
+      {canFinish && <button onClick={startNewGame}>Finish game</button>}
       <BeepButton />
-      {playPhase.trick.trick_format !== null &&
-      !isSpectator &&
-      playPhase.trick.player_queue.includes(currentPlayer.id) ? (
-        <TrickFormatHelper
-          format={playPhase.trick.trick_format}
-          hands={playPhase.hands}
-          playerId={currentPlayer.id}
-          trickDrawPolicy={playPhase.propagated.trick_draw_policy}
-        />
-      ) : null}
-      {lastPlay === undefined && isCurrentPlayerTurn && grouping.length > 1 && (
+      {canFinish && !noCardsLeft && (
         <div>
-          <p>
-            It looks like you are making a play that can be interpreted in
-            multiple ways!
-          </p>
-          <p>Which of the following did you mean?</p>
-          {grouping.map((g, gidx) => (
-            <button
-              key={gidx}
-              onClick={(evt) => {
-                evt.preventDefault();
-                setGrouping([g]);
-              }}
-              className="normal"
-            >
-              {g.description}
-            </button>
+          <p>Cards remaining (that were not played):</p>
+          {playPhase.propagated.players.map((p) => (
+            <LabeledPlay
+              key={p.id}
+              label={p.name}
+              cards={getCardsFromHand(p.id).flatMap((g) => g.cards)}
+            />
           ))}
         </div>
       )}
-      <Cards
-        hands={playPhase.hands}
-        playerId={currentPlayer.id}
-        trump={playPhase.trump}
-        selectedCards={selected}
-        onSelect={(selected) => {
-          setSelected(selected);
-          setGrouping(findViablePlays(playPhase.trump, selected));
-        }}
-        notifyEmpty={isCurrentPlayerTurn}
-      />
+      {!canFinish && (
+        <>
+          {playPhase.trick.trick_format !== null &&
+          !isSpectator &&
+          playPhase.trick.player_queue.includes(currentPlayer.id) ? (
+            <TrickFormatHelper
+              format={playPhase.trick.trick_format}
+              hands={playPhase.hands}
+              playerId={currentPlayer.id}
+              trickDrawPolicy={playPhase.propagated.trick_draw_policy}
+            />
+          ) : null}
+          {lastPlay === undefined &&
+            isCurrentPlayerTurn &&
+            grouping.length > 1 && (
+              <div>
+                <p>
+                  It looks like you are making a play that can be interpreted in
+                  multiple ways!
+                </p>
+                <p>Which of the following did you mean?</p>
+                {grouping.map((g, gidx) => (
+                  <button
+                    key={gidx}
+                    onClick={(evt) => {
+                      evt.preventDefault();
+                      setGrouping([g]);
+                    }}
+                    className="normal"
+                  >
+                    {g.description}
+                  </button>
+                ))}
+              </div>
+            )}
+          <Cards
+            hands={playPhase.hands}
+            playerId={currentPlayer.id}
+            trump={playPhase.trump}
+            selectedCards={selected}
+            onSelect={(selected) => {
+              setSelected(selected);
+              setGrouping(findViablePlays(playPhase.trump, selected));
+            }}
+            notifyEmpty={isCurrentPlayerTurn}
+          />
+        </>
+      )}
       {playPhase.last_trick !== undefined &&
       playPhase.last_trick !== null &&
       props.showLastTrick ? (

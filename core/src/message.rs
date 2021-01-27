@@ -155,6 +155,7 @@ pub enum MessageVariant {
     PickedUpCards,
     PutDownCards,
     RevealedCardFromKitty,
+    GameEndedEarly,
     GameFinished {
         result: HashMap<String, PlayerGameFinishedResult>,
     },
