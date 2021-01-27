@@ -11,6 +11,7 @@ interface IProps {
 interface CheckpointCircleProps {
   text: number;
   color: string;
+  borderColor?: string;
   position: string;
   marginTop: string;
 }
@@ -24,8 +25,12 @@ const CheckpointCircle = (props: CheckpointCircleProps): JSX.Element => {
         transform: "translate(-50%, 0%)",
         backgroundColor: props.color,
         marginTop: props.marginTop,
-        height: "40px",
-        width: "40px",
+        height: "30px",
+        width: "30px",
+        borderWidth: "5px",
+        borderStyle: "solid",
+        borderColor:
+          props.borderColor !== undefined ? props.borderColor : props.color,
         borderRadius: "25px",
       }}
     >
@@ -115,6 +120,22 @@ const ProgressBar = (props: IProps): JSX.Element => {
           />
         );
       })}
+      <CheckpointCircle
+        text={challengerPoints}
+        color={"#fff"}
+        borderColor={challengerColor}
+        position={challengerPosition}
+        marginTop={"-40px"}
+      />
+      {!props.hideLandlordPoints && (
+        <CheckpointCircle
+          text={totalPoints - landlordPoints}
+          color={"#fff"}
+          borderColor={landlordColor}
+          position={landlordPosition}
+          marginTop={"-40px"}
+        />
+      )}
     </div>
   );
 };

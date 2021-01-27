@@ -131,7 +131,7 @@ pub struct JoinRoom {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum UserMessage {
     Message(String),
-    Action(interactive::Message),
+    Action(interactive::Action),
     Kick(types::PlayerID),
     Beep,
 }

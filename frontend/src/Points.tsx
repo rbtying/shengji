@@ -142,7 +142,7 @@ const Points = (props: IProps): JSX.Element => {
           )}
         numDecks={props.numDecks}
         landlordPoints={totalPointsPlayed - nonLandlordPoints}
-        challengerPoints={nonLandlordPoints}
+        challengerPoints={nonLandlordPointsWithPenalties}
         hideLandlordPoints={props.hideLandlordPoints}
       />
       <p>

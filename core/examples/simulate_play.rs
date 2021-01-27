@@ -81,8 +81,7 @@ fn main() {
 
             loop {
                 let game_finished = if let GameState::Play(ref s) = game_state {
-                    let (non_landlords_points, observed_points) = s.calculate_points();
-                    s.game_finished(non_landlords_points, observed_points)
+                    s.game_finished()
                 } else {
                     false
                 };
