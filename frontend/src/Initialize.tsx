@@ -4,6 +4,7 @@ import * as ReactModal from "react-modal";
 import { IEmojiData } from "emoji-picker-react";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
+import KittySizeSelector from "./KittySizeSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
@@ -512,21 +513,6 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const onSelectIntNullable = (
-    action: string
-  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      const v = parseInt(evt.target.value, 10);
-      send({ Action: { [action]: v } });
-    } else {
-      send({ Action: { [action]: null } });
-    }
-  };
-
-  const setKittySize = onSelectIntNullable("SetKittySize");
   const setFriendSelectionPolicy = onSelectString("SetFriendSelectionPolicy");
   const setMultipleJoinPolicy = onSelectString("SetMultipleJoinPolicy");
   const setFirstLandlordSelectionPolicy = onSelectString(
@@ -625,8 +611,6 @@ const Initialize = (props: IProps): JSX.Element => {
     props.state.propagated.num_decks > 0
       ? props.state.propagated.num_decks
       : Math.max(Math.floor(props.state.propagated.players.length / 2), 1);
-  const kittyOffset =
-    (decksEffective * 54) % props.state.propagated.players.length;
 
   let currentPlayer = props.state.propagated.players.find(
     (p: IPlayer) => p.name === props.name
@@ -972,38 +956,14 @@ const Initialize = (props: IProps): JSX.Element => {
             send({ Action: { SetNumDecks: newNumDecks } })
           }
         />
-        <div>
-          <label>
-            Number of cards in the bottom:{" "}
-            <select
-              value={
-                props.state.propagated.kitty_size !== undefined &&
-                props.state.propagated.kitty_size !== null
-                  ? props.state.propagated.kitty_size
-                  : ""
-              }
-              onChange={setKittySize}
-            >
-              <option value="">default</option>
-              <option value={kittyOffset}>{kittyOffset} cards</option>
-              <option
-                value={kittyOffset + props.state.propagated.players.length}
-              >
-                {kittyOffset + props.state.propagated.players.length} cards
-              </option>
-              <option
-                value={kittyOffset + 2 * props.state.propagated.players.length}
-              >
-                {kittyOffset + 2 * props.state.propagated.players.length} cards
-              </option>
-              <option
-                value={kittyOffset + 3 * props.state.propagated.players.length}
-              >
-                {kittyOffset + 3 * props.state.propagated.players.length} cards
-              </option>
-            </select>
-          </label>
-        </div>
+        <KittySizeSelector
+          numPlayers={props.state.propagated.players.length}
+          numDecks={decksEffective}
+          kittySize={props.state.propagated.kitty_size}
+          onChange={(newKittySize: number | null) =>
+            send({ Action: { SetKittySize: newKittySize } })
+          }
+        />
         <div>
           <label>
             Bids after cards are exchanged from the bottom:{" "}

@@ -205,6 +205,15 @@ const Play = (props: IProps): JSX.Element => {
       />
       <Trump trump={playPhase.trump} />
       <Friends gameMode={playPhase.game_mode} showPlayed={true} />
+      {playPhase.removed_cards.length > 0 ? (
+        <p>
+          Note:{" "}
+          {playPhase.removed_cards.map((c) => (
+            <InlineCard key={c} card={c} />
+          ))}{" "}
+          have been removed from the deck
+        </p>
+      ) : null}
       <Trick
         trick={playPhase.trick}
         players={playPhase.propagated.players}

@@ -6,6 +6,7 @@ import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
 import BeepButton from "./BeepButton";
 import BidArea from "./BidArea";
+import InlineCard from "./InlineCard";
 
 interface IDrawProps {
   state: IDrawPhase;
@@ -142,9 +143,21 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           jokerBidPolicy={this.props.state.propagated.joker_bid_policy}
           numDecks={this.props.state.num_decks}
           header={
-            <h2>
-              Bids ({this.props.state.deck.length} cards remaining in the deck)
-            </h2>
+            <>
+              <h2>
+                Bids ({this.props.state.deck.length} cards remaining in the
+                deck)
+              </h2>
+              {this.props.state.removed_cards.length > 0 ? (
+                <p>
+                  Note:{" "}
+                  {this.props.state.removed_cards.map((c) => (
+                    <InlineCard key={c} card={c} />
+                  ))}{" "}
+                  have been removed from the deck
+                </p>
+              ) : null}
+            </>
           }
           prefixButtons={
             <>

@@ -479,14 +479,19 @@ impl PropagatedState {
             if self.players.is_empty() {
                 bail!("no players")
             }
-            let deck_len = self.num_decks.unwrap_or(self.players.len() / 2) * FULL_DECK.len();
+            let n_decks = self.num_decks.unwrap_or(self.players.len() / 2);
+            let deck_len = n_decks * FULL_DECK.len();
             if size >= deck_len {
                 bail!("kitty size too large")
             }
 
-            if deck_len % self.players.len() != size % self.players.len() {
-                bail!("kitty must be a multiple of the remaining cards")
+            // We only allow removing four cards per deck (i.e. one per suit per deck), so check to
+            // make sure that things will work out.
+            let num_cards_to_remove = (deck_len - size) % self.players.len();
+            if num_cards_to_remove > n_decks * 4 {
+                bail!("kitty size requires removing too many cards");
             }
+
             self.kitty_size = Some(size);
         } else {
             self.kitty_size = None;

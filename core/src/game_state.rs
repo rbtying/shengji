@@ -17,7 +17,7 @@ use crate::settings::{
     ThrowPenalty,
 };
 use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
-use crate::types::{Card, Number, PlayerID, Trump, FULL_DECK};
+use crate::types::{Card, Number, PlayerID, Trump, ALL_SUITS, FULL_DECK};
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -257,6 +257,8 @@ pub struct PlayPhase {
     last_trick: Option<Trick>,
     exchanger: Option<PlayerID>,
     game_ended_early: bool,
+    #[serde(default)]
+    removed_cards: Vec<Card>,
 }
 
 impl PlayPhase {
@@ -728,6 +730,8 @@ pub struct ExchangePhase {
     bids: Vec<Bid>,
     #[serde(default)]
     autobid: Option<Bid>,
+    #[serde(default)]
+    removed_cards: Vec<Card>,
 }
 
 impl ExchangePhase {
@@ -1037,6 +1041,7 @@ impl ExchangePhase {
             exchanger: self.exchanger,
             landlords_team,
             game_ended_early: false,
+            removed_cards: self.removed_cards.clone(),
         })
     }
 
@@ -1065,6 +1070,8 @@ pub struct DrawPhase {
     #[serde(default)]
     revealed_cards: usize,
     level: Option<Number>,
+    #[serde(default)]
+    removed_cards: Vec<Card>,
 }
 
 impl DrawPhase {
@@ -1247,6 +1254,7 @@ impl DrawPhase {
                 epoch: 1,
                 bids: self.bids.clone(),
                 autobid: self.autobid,
+                removed_cards: self.removed_cards.clone(),
             })
         }
     }
@@ -1312,26 +1320,6 @@ impl InitializePhase {
         let mut rng = rand::thread_rng();
         deck.shuffle(&mut rng);
 
-        let kitty_size = match self.propagated.kitty_size {
-            Some(size)
-                if deck.len() % self.propagated.players.len()
-                    == size % self.propagated.players.len() =>
-            {
-                size
-            }
-            Some(_) => bail!("kitty size doesn't match player count"),
-            None => {
-                let mut kitty_size = deck.len() % self.propagated.players.len();
-                if kitty_size == 0 {
-                    kitty_size = self.propagated.players.len();
-                }
-                if kitty_size < 5 {
-                    kitty_size += self.propagated.players.len();
-                }
-                kitty_size
-            }
-        };
-
         let position = self
             .propagated
             .landlord
@@ -1349,6 +1337,92 @@ impl InitializePhase {
             None
         };
 
+        let mut removed_cards = vec![];
+
+        let kitty_size = match self.propagated.kitty_size {
+            Some(size)
+                if deck.len() % self.propagated.players.len()
+                    == size % self.propagated.players.len() =>
+            {
+                size
+            }
+            Some(size) => {
+                // Remove cards from the deck, until the deck and kitty together work out to the
+                // appropriate number of cards.
+                let num_players = self.propagated.players.len();
+
+                // Choose a card to remove that doesn't unfairly disadvantage a particular player,
+                // and ideally isn't points either.
+                let removed_card_number = match level {
+                    Some(Number::Two) => Number::Three,
+                    Some(_) => Number::Two,
+                    None => {
+                        let mut bad_levels = self
+                            .propagated
+                            .players
+                            .iter()
+                            .map(|p| p.level)
+                            .collect::<HashSet<Number>>();
+                        bad_levels.insert(Number::Five);
+                        bad_levels.insert(Number::Ten);
+                        bad_levels.insert(Number::King);
+                        let mut n = Number::Two;
+                        loop {
+                            if !bad_levels.contains(&n) {
+                                break n;
+                            }
+                            n = match n.successor() {
+                                Some(nn) => nn,
+                                // If we somehow have enough players that we can't remove cards
+                                // without disadvantaging _someone_, or choosing points,
+                                // arbitrarily choose to remove twos.
+                                None => break Number::Two,
+                            };
+                        }
+                    }
+                };
+
+                let mut suit_idx = ALL_SUITS.len() - 1;
+
+                while deck.len() % num_players != size % num_players {
+                    let card_to_remove = Card::Suited {
+                        suit: ALL_SUITS[suit_idx],
+                        number: removed_card_number,
+                    };
+                    suit_idx = if suit_idx == 0 {
+                        ALL_SUITS.len() - 1
+                    } else {
+                        suit_idx - 1
+                    };
+
+                    // Attempt to remove the card from the deck.
+                    match deck.iter().position(|c| *c == card_to_remove) {
+                        Some(idx) => {
+                            deck.remove(idx);
+                            removed_cards.push(card_to_remove);
+                        }
+                        // Note: we would only hit this case if there are fewer decks than players,
+                        // which should be prevented in the settings layer.
+                        None => bail!(format!(
+                            "Couldn't find {:?} in the deck to remove",
+                            card_to_remove
+                        )),
+                    }
+                }
+                size
+            }
+            None => {
+                let mut kitty_size = deck.len() % self.propagated.players.len();
+                if kitty_size == 0 {
+                    kitty_size = self.propagated.players.len();
+                }
+                if kitty_size < 5 {
+                    kitty_size += self.propagated.players.len();
+                }
+                kitty_size
+            }
+        };
+
         let propagated = self.propagated.clone();
 
         Ok(DrawPhase {
@@ -1363,6 +1437,7 @@ impl InitializePhase {
             num_decks,
             game_mode,
             level,
+            removed_cards,
         })
     }
 }
@@ -1389,7 +1464,7 @@ mod tests {
     };
 
     use crate::settings::FriendSelectionPolicy;
-    use crate::types::{cards, Card, Number, PlayerID};
+    use crate::types::{cards, Card, Number, PlayerID, FULL_DECK};
 
     #[test]
     fn test_player_level_deltas() {
@@ -1465,6 +1540,34 @@ mod tests {
                 assert_eq!(p.rank(), Number::Seven);
             } else {
                 assert_eq!(p.rank(), Number::Five);
+            }
+        }
+    }
+
+    #[test]
+    fn test_unusual_kitty_sizes() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        init.add_player("p2".into()).unwrap();
+        init.add_player("p3".into()).unwrap();
+        init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
+            .unwrap();
+        for n_players in 4..10 {
+            init.add_player(format!("p{}", n_players)).unwrap();
+            for n_decks in 1..n_players {
+                for kitty_size in 1..30 {
+                    let mut init_ = init.clone();
+                    init_.set_num_decks(Some(n_decks)).unwrap();
+                    if init_.set_kitty_size(Some(kitty_size)).is_ok() {
+                        let draw = init_.start(p1).unwrap();
+                        assert_eq!(draw.deck.len() % n_players, 0);
+                        assert_eq!(draw.kitty.len(), kitty_size);
+                        assert_eq!(
+                            draw.removed_cards.len() + draw.deck.len() + draw.kitty.len(),
+                            n_decks * FULL_DECK.len()
+                        );
+                    }
+                }
             }
         }
     }
