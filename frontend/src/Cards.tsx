@@ -129,8 +129,8 @@ const Cards = (props: IProps): JSX.Element => {
                 )}
                 onClick={handleSelect(c.card)}
                 card={c.card}
-                onMouseEnter={(evt) => setHighlightedSuit(c.suit)}
-                onMouseLeave={(evt) => setHighlightedSuit(null)}
+                onMouseEnter={(_) => setHighlightedSuit(c.suit)}
+                onMouseLeave={(_) => setHighlightedSuit(null)}
               />
             ))}
           </div>
