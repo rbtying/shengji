@@ -101,6 +101,7 @@ export interface IDrawPhase {
   kitty: string[];
   revealed_cards: number;
   level: number;
+  removed_cards: string[];
 }
 
 export interface IExchangePhase {
@@ -117,6 +118,7 @@ export interface IExchangePhase {
   epoch: number;
   finalized: boolean;
   exchanger: number | null;
+  removed_cards: string[];
 }
 
 export interface IPlayPhase {
@@ -133,6 +135,7 @@ export interface IPlayPhase {
   trick: ITrick;
   last_trick: ITrick | null;
   game_ended_early: boolean;
+  removed_cards: string[];
 }
 
 export type BidPolicy = "JokerOrGreaterLength" | "GreaterLength";

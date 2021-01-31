@@ -4,6 +4,7 @@ import BeepButton from "./BeepButton";
 import BidArea from "./BidArea";
 import Trump from "./Trump";
 import FriendSelect from "./FriendSelect";
+import InlineCard from "./InlineCard";
 import Card from "./Card";
 import Header from "./Header";
 import Friends from "./Friends";
@@ -287,6 +288,15 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           name={this.props.name}
         />
         <Trump trump={this.props.state.trump} />
+        {this.props.state.removed_cards.length > 0 ? (
+          <p>
+            Note:{" "}
+            {this.props.state.removed_cards.map((c) => (
+              <InlineCard key={c} card={c} />
+            ))}{" "}
+            have been removed from the deck
+          </p>
+        ) : null}
         {friendUI}
         {exchangeUI}
         {exchangeUI === null && bidUI === null && playerId >= 0 ? (

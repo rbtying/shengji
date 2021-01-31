@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 10;
+const changeLogVersion: number = 11;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>1/31/2021:</p>
+        <ul>
+          <li>
+            Players can now choose kitty sizes which require cards to be removed
+            from the game.
+          </li>
+        </ul>
         <p>1/27/2021:</p>
         <ul>
           <li>
