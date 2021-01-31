@@ -16,8 +16,6 @@ const minus = <T>(
     const index = result.findIndex((t: T) => equality(t, valueToRemove));
     if (index >= 0) {
       result.splice(index, 1);
-    } else {
-      throw new Error("Called arrayMinus with a value not in the array");
     }
   });
 

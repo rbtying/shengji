@@ -74,6 +74,34 @@ const Play = (props: IProps): JSX.Element => {
   } else {
     isSpectator = false;
   }
+
+  React.useEffect(() => {
+    // When the hands change, our `selected` cards may become invalid, since we
+    // could have raced and selected cards that we just played.
+    //
+    // In that case, let's fix the selected cards.
+    const hand =
+      currentPlayer.id in playPhase.hands.hands
+        ? playPhase.hands.hands[currentPlayer.id]
+        : {};
+    selected.forEach((card) => {
+      if (card in hand) {
+        hand[card] = hand[card] - 1;
+      } else {
+        hand[card] = -1;
+      }
+    });
+
+    const toRemove = Object.entries(hand)
+      .filter((x) => x[1] < 0)
+      .map((x) => x[0]);
+
+    const newSelected = ArrayUtils.minus(selected, toRemove);
+
+    setSelected(newSelected);
+    setGrouping(findViablePlays(playPhase.trump, newSelected));
+  }, [playPhase.hands.hands, currentPlayer.id]);
+
   const nextPlayer = playPhase.trick.player_queue[0];
   const lastPlay =
     playPhase.trick.played_cards[playPhase.trick.played_cards.length - 1];
