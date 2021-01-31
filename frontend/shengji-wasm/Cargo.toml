@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 lto = true
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz", "--enable-mutable-globals"]
+wasm-opt = ["-Oz"]
 
 [dependencies]
 console_error_panic_hook = "0.1.5"
