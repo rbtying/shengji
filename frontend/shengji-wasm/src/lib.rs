@@ -60,9 +60,7 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
-    let FindViablePlaysRequest { trump, cards } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    let FindViablePlaysRequest { trump, cards } = req.into_serde().map_err(|e| e.to_string())?;
     let results = TrickUnit::find_plays(trump, cards)
         .into_iter()
         .map(|p| {
@@ -73,8 +71,7 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
             }
         })
         .collect::<Vec<_>>();
-    Ok(JsValue::from_serde(&FindViablePlaysResult { results })
-        .map_err(|_| "failed to serialize response")?)
+    Ok(JsValue::from_serde(&FindViablePlaysResult { results }).map_err(|e| e.to_string())?)
 }
 
 #[derive(Deserialize)]
@@ -107,13 +104,9 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
         hands,
         player_id,
         trick_draw_policy,
-    } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    } = req.into_serde().map_err(|e| e.to_string())?;
 
-    let hand = hands
-        .get(player_id)
-        .map_err(|_| "Couldn't find hand for player")?;
+    let hand = hands.get(player_id).map_err(|e| e.to_string())?;
     let available_cards = Card::cards(
         hand.iter()
             .filter(|(c, _)| trick_format.trump().effective_suit(**c) == trick_format.suit()),
@@ -151,7 +144,7 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
         .collect();
     Ok(
         JsValue::from_serde(&DecomposeTrickFormatResponse { results })
-            .map_err(|_| "failed to serialize response")?,
+            .map_err(|e| e.to_string())?,
     )
 }
 
@@ -180,15 +173,13 @@ pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
         hands,
         cards,
         trick_draw_policy,
-    } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    } = req.into_serde().map_err(|e| e.to_string())?;
     Ok(JsValue::from_serde(&CanPlayCardsResponse {
         playable: trick
             .can_play_cards(id, &hands, &cards, trick_draw_policy)
             .is_ok(),
     })
-    .map_err(|_| "failed to serialize response")?)
+    .map_err(|e| e.to_string())?)
 }
 
 #[derive(Deserialize)]
@@ -233,7 +224,7 @@ pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
         )
         .unwrap_or_default(),
     })
-    .map_err(|_| "failed to serialize response")?)
+    .map_err(|e| e.to_string())?)
 }
 
 #[derive(Deserialize)]
@@ -258,9 +249,8 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
-    let SortAndGroupCardsRequest { trump, mut cards } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    let SortAndGroupCardsRequest { trump, mut cards } =
+        req.into_serde().map_err(|e| e.to_string())?;
 
     cards.sort_by(|a, b| trump.compare(*a, *b));
 
@@ -279,8 +269,7 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
         })
     }
 
-    Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results })
-        .map_err(|_| "failed to serialize response")?)
+    Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results }).map_err(|e| e.to_string())?)
 }
 
 #[derive(Deserialize)]
@@ -301,9 +290,7 @@ pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
         params,
         non_landlord_points,
         observed_points,
-    } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    } = req.into_serde().map_err(|e| e.to_string())?;
     Ok(scoring::next_threshold_reachable(
         &params,
         num_decks,
@@ -342,9 +329,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
         num_decks,
         params,
         smaller_landlord_team_size,
-    } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    } = req.into_serde().map_err(|e| e.to_string())?;
     let deltas = explain_level_deltas(
         &params,
         num_decks,
@@ -365,7 +350,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
             .step_size(num_decks, 100)
             .map_err(|e| format!("Failed to compute step size: {:?}", e))?,
     })
-    .map_err(|_| "failed to serialize response")?)
+    .map_err(|e| e.to_string())?)
 }
 
 #[derive(Deserialize)]
@@ -392,9 +377,7 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
         params,
         smaller_landlord_team_size,
         non_landlord_points,
-    } = req
-        .into_serde()
-        .map_err(|_| "Failed to deserialize request")?;
+    } = req.into_serde().map_err(|e| e.to_string())?;
     let score = compute_level_deltas(
         &params,
         num_decks,
@@ -413,7 +396,7 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
         score,
         next_threshold,
     })
-    .map_err(|_| "failed to serialize response")?)
+    .map_err(|e| e.to_string())?)
 }
 
 #[wasm_bindgen]

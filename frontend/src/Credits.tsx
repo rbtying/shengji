@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>2/2/2021:</p>
+        <ul>
+          <li>
+            Fix bug where unselecting cards would temporarily remove them from
+            the game.
+          </li>
+        </ul>
         <p>1/31/2021:</p>
         <ul>
           <li>
