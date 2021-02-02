@@ -82,7 +82,7 @@ const Play = (props: IProps): JSX.Element => {
     // In that case, let's fix the selected cards.
     const hand =
       currentPlayer.id in playPhase.hands.hands
-        ? playPhase.hands.hands[currentPlayer.id]
+        ? { ...playPhase.hands.hands[currentPlayer.id] }
         : {};
     selected.forEach((card) => {
       if (card in hand) {
@@ -314,9 +314,9 @@ const Play = (props: IProps): JSX.Element => {
             playerId={currentPlayer.id}
             trump={playPhase.trump}
             selectedCards={selected}
-            onSelect={(selected) => {
-              setSelected(selected);
-              setGrouping(findViablePlays(playPhase.trump, selected));
+            onSelect={(newSelected) => {
+              setSelected(newSelected);
+              setGrouping(findViablePlays(playPhase.trump, newSelected));
             }}
             notifyEmpty={isCurrentPlayerTurn}
           />

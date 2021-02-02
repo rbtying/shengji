@@ -17,6 +17,13 @@ const bootstrap = (): void => {
     dsn:
       "https://dfdd871554eb4ab48de73a6575c1117a@o476591.ingest.sentry.io/5516535",
     release: (window as any)._VERSION,
+    ignoreErrors: [
+      /Promise.*is.*defined/,
+      /WebAssembly.*is.*defined/,
+      /fetch.*is.*defined/,
+      "Can't find variable: fetch",
+      /Loading chunk.*failed/,
+    ],
   });
 
   const root = document.getElementById("root");
