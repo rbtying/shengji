@@ -490,6 +490,16 @@ pub enum Number {
     Ace,
 }
 
+impl slog::Value for Number {
+    fn serialize(
+        &self,
+        _: &slog::Record,
+        key: slog::Key,
+        serializer: &mut dyn slog::Serializer,
+    ) -> slog::Result {
+        serializer.emit_str(key, self.as_str())
+    }
+}
 impl Serialize for Number {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(self.as_str())

@@ -6,11 +6,11 @@ use ruzstd::streaming_decoder::StreamingDecoder;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
+    deck::Deck,
     hands::Hands,
     player::Player,
     scoring::{
         self, compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
-        POINTS_PER_DECK,
     },
     trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
@@ -274,7 +274,7 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
 
 #[derive(Deserialize)]
 struct NextThresholdReachableRequest {
-    num_decks: usize,
+    decks: Vec<Deck>,
     params: GameScoringParameters,
     non_landlord_points: isize,
     observed_points: isize,
@@ -286,24 +286,20 @@ pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
     console_error_panic_hook::set_once();
 
     let NextThresholdReachableRequest {
-        num_decks,
+        decks,
         params,
         non_landlord_points,
         observed_points,
     } = req.into_serde().map_err(|e| e.to_string())?;
-    Ok(scoring::next_threshold_reachable(
-        &params,
-        num_decks,
-        POINTS_PER_DECK,
-        non_landlord_points,
-        observed_points,
+    Ok(
+        scoring::next_threshold_reachable(&params, &decks, non_landlord_points, observed_points)
+            .map_err(|_| "Failed to determine if next threshold is reachable")?,
     )
-    .map_err(|_| "Failed to determine if next threshold is reachable")?)
 }
 
 #[derive(Deserialize)]
 struct ExplainScoringRequest {
-    num_decks: usize,
+    decks: Vec<Deck>,
     params: GameScoringParameters,
     smaller_landlord_team_size: bool,
 }
@@ -326,17 +322,12 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
     console_error_panic_hook::set_once();
 
     let ExplainScoringRequest {
-        num_decks,
+        decks,
         params,
         smaller_landlord_team_size,
     } = req.into_serde().map_err(|e| e.to_string())?;
-    let deltas = explain_level_deltas(
-        &params,
-        num_decks,
-        POINTS_PER_DECK,
-        smaller_landlord_team_size,
-    )
-    .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
+    let deltas = explain_level_deltas(&params, &decks, smaller_landlord_team_size)
+        .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
 
     Ok(JsValue::from_serde(&ExplainScoringResponse {
         results: deltas
@@ -347,7 +338,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
             })
             .collect(),
         step_size: params
-            .step_size(num_decks, 100)
+            .step_size(&decks)
             .map_err(|e| format!("Failed to compute step size: {:?}", e))?,
     })
     .map_err(|e| e.to_string())?)
@@ -355,7 +346,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
 
 #[derive(Deserialize)]
 struct ComputeScoreRequest {
-    num_decks: usize,
+    decks: Vec<Deck>,
     params: GameScoringParameters,
     smaller_landlord_team_size: bool,
     non_landlord_points: isize,
@@ -373,21 +364,20 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
     console_error_panic_hook::set_once();
 
     let ComputeScoreRequest {
-        num_decks,
+        decks,
         params,
         smaller_landlord_team_size,
         non_landlord_points,
     } = req.into_serde().map_err(|e| e.to_string())?;
     let score = compute_level_deltas(
         &params,
-        num_decks,
-        POINTS_PER_DECK,
+        &decks,
         non_landlord_points,
         smaller_landlord_team_size,
     )
     .map_err(|_| "Failed to compute score")?;
     let next_threshold = params
-        .materialize(num_decks, 100)
+        .materialize(&decks)
         .and_then(|n| n.next_relevant_score(non_landlord_points))
         .map_err(|_| "Couldn't find next valid score")?
         .0;
