@@ -1353,10 +1353,7 @@ impl InitializePhase {
             None if self
                 .players
                 .iter()
-                .all(|p| decks.iter().any(|d| d.includes_number(p.level))) =>
-            {
-                ()
-            }
+                .all(|p| decks.iter().any(|d| d.includes_number(p.level))) => {}
             _ => bail!("deck configuration is missing cards needed to bid"),
         }
 

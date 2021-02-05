@@ -59,6 +59,10 @@ impl Deck {
         pts
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.exclude_big_joker && self.exclude_small_joker && self.min == Number::Ace
+    }
+
     pub fn len(&self) -> usize {
         let mut cards = 54;
         if self.exclude_big_joker {
