@@ -2,7 +2,7 @@ import * as React from "react";
 
 interface IProps {
   checkpoints: number[];
-  numDecks: number;
+  totalPoints: number;
   challengerPoints: number;
   landlordPoints: number;
   hideLandlordPoints: boolean;
@@ -58,8 +58,7 @@ const ProgressBar = (props: IProps): JSX.Element => {
   const challengerColor = "#5bc0de";
   const neutralColor = "lightgray";
 
-  const { numDecks, challengerPoints, landlordPoints } = props;
-  const totalPoints = numDecks * 100;
+  const { totalPoints, challengerPoints, landlordPoints } = props;
   const checkpointColors = props.checkpoints.map((checkpoint) => {
     if (challengerPoints >= checkpoint) {
       return challengerColor;

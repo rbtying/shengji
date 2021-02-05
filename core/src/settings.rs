@@ -6,11 +6,12 @@ use slog_derive::KV;
 use url::Url;
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::deck::Deck;
 use crate::message::MessageVariant;
 use crate::player::Player;
 use crate::scoring::GameScoringParameters;
 use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
-use crate::types::{Card, Number, PlayerID, FULL_DECK};
+use crate::types::{Card, Number, PlayerID};
 
 #[macro_export]
 macro_rules! impl_slog_value {
@@ -269,6 +270,10 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) multiple_join_policy: MultipleJoinPolicy,
     pub(crate) num_decks: Option<usize>,
+    // TODO: Find a way to log this properly.
+    #[slog(skip)]
+    #[serde(default)]
+    pub(crate) special_decks: Vec<Deck>,
     #[serde(default)]
     pub(crate) landlord_emoji: Option<String>,
     pub(crate) chat_link: Option<String>,
@@ -331,6 +336,19 @@ impl PropagatedState {
 
     pub fn num_decks(&self) -> usize {
         self.num_decks.unwrap_or(self.players.len() / 2)
+    }
+
+    pub fn decks(&self) -> Result<Vec<Deck>, Error> {
+        let mut decks = self.special_decks.clone();
+        let num_decks = self.num_decks();
+        if decks.len() > num_decks {
+            bail!("More special decks than regular decks?")
+        }
+
+        while decks.len() < num_decks {
+            decks.push(Deck::default());
+        }
+        Ok(decks)
     }
 
     pub fn set_game_mode(
@@ -442,6 +460,22 @@ impl PropagatedState {
         Ok(())
     }
 
+    pub fn set_special_decks(
+        &mut self,
+        special_decks: Vec<Deck>,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        let mut messages = vec![];
+        if special_decks.len() > self.num_decks() {
+            messages.extend(self.set_num_decks(Some(special_decks.len()))?);
+        }
+        self.special_decks = special_decks;
+
+        messages.push(MessageVariant::SpecialDecksSet {
+            special_decks: self.special_decks.clone(),
+        });
+        Ok(messages)
+    }
+
     pub fn set_num_decks(
         &mut self,
         num_decks: Option<usize>,
@@ -456,10 +490,18 @@ impl PropagatedState {
         if self.num_decks != num_decks {
             msgs.push(MessageVariant::NumDecksSet { num_decks });
             self.num_decks = num_decks;
+
+            if self.special_decks.len() > self.num_decks() {
+                self.special_decks.truncate(self.num_decks());
+                msgs.push(MessageVariant::SpecialDecksSet {
+                    special_decks: self.special_decks.clone(),
+                });
+            }
+
             msgs.extend(self.set_kitty_size(None)?);
             if self
                 .game_scoring_parameters
-                .materialize(self.num_decks(), 100)
+                .materialize(&self.decks()?)
                 .is_err()
             {
                 msgs.extend(self.set_game_scoring_parameters(GameScoringParameters::default())?);
@@ -479,16 +521,18 @@ impl PropagatedState {
             if self.players.is_empty() {
                 bail!("no players")
             }
-            let n_decks = self.num_decks.unwrap_or(self.players.len() / 2);
-            let deck_len = n_decks * FULL_DECK.len();
+            let decks = self.decks()?;
+            let deck_len = decks.iter().map(|d| d.len()).sum::<usize>();
             if size >= deck_len {
                 bail!("kitty size too large")
             }
+            let min = decks.iter().map(|d| d.min).min().unwrap_or(Number::Two);
+            let n_decks_with_min = decks.iter().filter(|d| d.includes_number(min)).count();
 
             // We only allow removing four cards per deck (i.e. one per suit per deck), so check to
             // make sure that things will work out.
             let num_cards_to_remove = (deck_len - size) % self.players.len();
-            if num_cards_to_remove > n_decks * 4 {
+            if num_cards_to_remove > n_decks_with_min * 4 {
                 bail!("kitty size requires removing too many cards");
             }
 
@@ -699,7 +743,7 @@ impl PropagatedState {
         parameters: GameScoringParameters,
     ) -> Result<Vec<MessageVariant>, Error> {
         if parameters != self.game_scoring_parameters {
-            let materialized = parameters.materialize(self.num_decks(), 100)?;
+            let materialized = parameters.materialize(&self.decks()?)?;
             // Explain exercises all the search paths, so make sure to try
             // explaining before accepting the new parameters!
             materialized.explain()?;

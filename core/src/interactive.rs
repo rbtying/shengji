@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::deck::Deck;
 use crate::game_state::{GameState, InitializePhase};
 use crate::message::MessageVariant;
 use crate::scoring::GameScoringParameters;
@@ -102,6 +103,10 @@ impl InteractiveGame {
             (Action::SetNumDecks(num_decks), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting number of decks"; "num_decks" => num_decks);
                 state.set_num_decks(num_decks)?
+            }
+            (Action::SetSpecialDecks(decks), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting special decks"; "decks" => format!("{:?}", decks));
+                state.set_special_decks(decks)?
             }
             (Action::SetRank(rank), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting rank"; "rank" => rank.as_str());
@@ -373,6 +378,7 @@ pub enum Action {
     MakePlayer(PlayerID),
     SetChatLink(Option<String>),
     SetNumDecks(Option<usize>),
+    SetSpecialDecks(Vec<Deck>),
     SetKittySize(Option<usize>),
     SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetMultipleJoinPolicy(MultipleJoinPolicy),
@@ -479,6 +485,8 @@ impl BroadcastMessage {
             ShouldRevealKittyAtEndOfGameSet { should_reveal: false } => format!("{} disabled the kitty from being revealed at the end of each game", n?),
             NumDecksSet { num_decks: Some(num_decks) } => format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),
+            SpecialDecksSet { ref special_decks } if special_decks.is_empty() => format!("{} set the decks to standard 54-card decks", n?),
+            SpecialDecksSet { .. } => format!("{} changed the special deck settings", n?),
             NumFriendsSet { num_friends: Some(num_friends) } => format!("{} set the number of friends to {}", n?, num_friends),
             NumFriendsSet { num_friends: None } => format!("{} set the number of friends to default", n?),
             GameModeSet { game_mode: GameModeSettings::Tractor } => format!("{} set the game mode to Tractor", n?),

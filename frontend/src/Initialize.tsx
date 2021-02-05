@@ -8,7 +8,7 @@ import KittySizeSelector from "./KittySizeSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
-import { IInitializePhase, IPlayer, IPropagatedState } from "./types";
+import { IInitializePhase, IPlayer, IPropagatedState, IDeck } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 
 import Header from "./Header";
@@ -197,9 +197,135 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
   );
 };
 
+interface IDeckSettings {
+  decks: IDeck[];
+  setSpecialDecks: (specialDecks: IDeck[]) => void;
+}
+
+const DeckSettings = (props: IDeckSettings): JSX.Element => {
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+  const isNotDefault = (d: IDeck): boolean =>
+    !(d.min === "2" && !d.exclude_big_joker && !d.exclude_small_joker);
+  const onChange = (decks: IDeck[]): void => {
+    // exclude the decks that are the same as default
+    const filtered = decks.filter((d) => isNotDefault(d));
+    props.setSpecialDecks(filtered);
+  };
+
+  const setDeckAtIndex = (deck: IDeck, index: number): void => {
+    const newDecks = [...props.decks];
+    newDecks[index] = deck;
+    onChange(newDecks);
+  };
+  const numbers = [
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+    "A",
+  ];
+
+  const s = (
+    <>
+      {props.decks.map((d, i) => (
+        <div
+          key={i}
+          style={{
+            display: "inline-block",
+            border: "1px solid #000",
+            padding: "5px",
+            margin: "5px",
+          }}
+        >
+          Deck {i + 1}
+          {isNotDefault(d) ? " (modified)" : " (standard)"}
+          <form>
+            <label style={{ display: "block" }}>
+              Include HJ (大王){" "}
+              <input
+                type="checkbox"
+                checked={!d.exclude_big_joker}
+                onChange={(evt) =>
+                  setDeckAtIndex(
+                    { ...d, exclude_big_joker: !evt.target.checked },
+                    i
+                  )
+                }
+              />
+            </label>
+            <label style={{ display: "block" }}>
+              Include LJ (小王){" "}
+              <input
+                type="checkbox"
+                checked={!d.exclude_small_joker}
+                onChange={(evt) =>
+                  setDeckAtIndex(
+                    { ...d, exclude_small_joker: !evt.target.checked },
+                    i
+                  )
+                }
+              />
+            </label>
+            <label>
+              Minimum card:{" "}
+              <select
+                value={d.min}
+                onChange={(evt) =>
+                  setDeckAtIndex({ ...d, min: evt.target.value }, i)
+                }
+              >
+                {numbers.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </form>
+        </div>
+      ))}
+      <pre>{JSON.stringify(props.decks, null, 2)}</pre>
+    </>
+  );
+
+  return (
+    <div>
+      <label>
+        More deck customization:{" "}
+        <button
+          className="normal"
+          onClick={(evt) => {
+            evt.preventDefault();
+            setModalOpen(true);
+          }}
+        >
+          Open
+        </button>
+        <ReactModal
+          isOpen={modalOpen}
+          onRequestClose={() => setModalOpen(false)}
+          shouldCloseOnOverlayClick
+          shouldCloseOnEsc
+          style={{ content: contentStyle }}
+        >
+          {s}
+        </ReactModal>
+      </label>
+    </div>
+  );
+};
+
 interface IScoringSettings {
   state: IInitializePhase;
-  numDecks: number;
+  decks: IDeck[];
 }
 const ScoringSettings = (props: IScoringSettings): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -225,7 +351,7 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
         >
           <GameScoringSettings
             params={props.state.propagated.game_scoring_parameters}
-            numDecks={props.numDecks}
+            decks={props.decks}
           />
         </ReactModal>
       </label>
@@ -611,6 +737,15 @@ const Initialize = (props: IProps): JSX.Element => {
     props.state.propagated.num_decks > 0
       ? props.state.propagated.num_decks
       : Math.max(Math.floor(props.state.propagated.players.length / 2), 1);
+  const decks = [...props.state.propagated.special_decks];
+  while (decks.length < decksEffective) {
+    decks.push({
+      exclude_big_joker: false,
+      exclude_small_joker: false,
+      min: "2",
+    });
+  }
+  decks.length = decksEffective;
 
   let currentPlayer = props.state.propagated.players.find(
     (p: IPlayer) => p.name === props.name
@@ -659,6 +794,13 @@ const Initialize = (props: IProps): JSX.Element => {
                 },
               });
             }
+            break;
+          case "special_decks":
+            send({
+              Action: {
+                SetSpecialDecks: value,
+              },
+            });
             break;
           case "kitty_size":
             send({
@@ -956,9 +1098,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({ Action: { SetNumDecks: newNumDecks } })
           }
         />
+        <DeckSettings
+          decks={decks}
+          setSpecialDecks={(d) => send({ Action: { SetSpecialDecks: d } })}
+        />
         <KittySizeSelector
           numPlayers={props.state.propagated.players.length}
-          numDecks={decksEffective}
+          decks={decks}
           kittySize={props.state.propagated.kitty_size}
           onChange={(newKittySize: number | null) =>
             send({ Action: { SetKittySize: newKittySize } })
@@ -1012,7 +1158,7 @@ const Initialize = (props: IProps): JSX.Element => {
             </select>
           </label>
         </div>
-        <ScoringSettings state={props.state} numDecks={decksEffective} />
+        <ScoringSettings state={props.state} decks={decks} />
         <UncommonSettings
           state={props.state}
           setBidPolicy={setBidPolicy}

@@ -9,6 +9,7 @@ import {
   ITrickFormat,
   BidPolicy,
   BidReinforcementPolicy,
+  IDeck,
   ITrick,
   TrickDrawPolicy,
   IGameScoringParameters,
@@ -28,6 +29,7 @@ interface Context {
   explainScoring: (req: IExplainScoringRequest) => IExplainScoringResponse;
   nextThresholdReachable: (req: INextThresholdReachableRequest) => boolean;
   computeScore: (req: IComputeScoreRequest) => IComputeScoreResponse;
+  computeDeckLen: (req: IDeck[]) => number;
   decodeWireFormat: (req: any) => any;
 }
 
@@ -81,13 +83,13 @@ interface ICanPlayCardsRequest {
 }
 
 interface IExplainScoringRequest {
-  num_decks: number;
+  decks: IDeck[];
   params: IGameScoringParameters;
   smaller_landlord_team_size: boolean;
 }
 
 interface INextThresholdReachableRequest {
-  num_decks: number;
+  decks: IDeck[];
   params: IGameScoringParameters;
   non_landlord_points: number;
   observed_points: number;
@@ -106,7 +108,7 @@ interface IGameScoreResult {
 }
 
 interface IComputeScoreRequest {
-  num_decks: number;
+  decks: IDeck[];
   params: IGameScoringParameters;
   smaller_landlord_team_size: boolean;
   non_landlord_points: number;
@@ -120,6 +122,7 @@ interface IComputeScoreResponse {
 interface IExplainScoringResponse {
   results: IScoreSegment[];
   step_size: number;
+  total_points: number;
 }
 
 export const WasmContext = React.createContext<Context>({
@@ -128,7 +131,7 @@ export const WasmContext = React.createContext<Context>({
   sortAndGroupCards: (_) => [],
   decomposeTrickFormat: (_) => [],
   canPlayCards: (_) => false,
-  explainScoring: (_) => ({ results: [], step_size: 0 }),
+  explainScoring: (_) => ({ results: [], step_size: 0, total_points: 0 }),
   nextThresholdReachable: (_) => true,
   computeScore: (_) => ({
     score: {
@@ -139,6 +142,7 @@ export const WasmContext = React.createContext<Context>({
     },
     next_threshold: 0,
   }),
+  computeDeckLen: (_) => 0,
   decodeWireFormat: (_) => {},
 });
 

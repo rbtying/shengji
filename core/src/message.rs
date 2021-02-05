@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
+use crate::deck::Deck;
 use crate::game_state::PlayerGameFinishedResult;
 use crate::scoring::GameScoringParameters;
 use crate::settings::{
@@ -80,6 +81,9 @@ pub enum MessageVariant {
     },
     ShouldRevealKittyAtEndOfGameSet {
         should_reveal: bool,
+    },
+    SpecialDecksSet {
+        special_decks: Vec<Deck>,
     },
     NumDecksSet {
         num_decks: Option<usize>,

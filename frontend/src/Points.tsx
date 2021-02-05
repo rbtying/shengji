@@ -1,6 +1,6 @@
 import * as React from "react";
 import ProgressBar from "./ProgressBar";
-import { IPlayer, IGameScoringParameters } from "./types";
+import { IPlayer, IGameScoringParameters, IDeck } from "./types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
@@ -10,7 +10,7 @@ import WasmContext from "./WasmContext";
 
 interface IProps {
   players: IPlayer[];
-  numDecks: number;
+  decks: IDeck[];
   points: { [playerId: number]: string[] };
   penalties: { [playerId: number]: number };
   landlordTeam: number[];
@@ -78,7 +78,7 @@ const Points = (props: IProps): JSX.Element => {
 
   const { score, next_threshold: nextThreshold } = computeScore({
     params: props.gameScoringParameters,
-    num_decks: props.numDecks,
+    decks: props.decks,
     smaller_landlord_team_size: props.smallerTeamSize,
     non_landlord_points: nonLandlordPointsWithPenalties,
   });
@@ -125,10 +125,13 @@ const Points = (props: IProps): JSX.Element => {
 
   thresholdStr += ` (next threshold: ${nextThreshold}分)`;
 
-  const { results: scoreTransitions } = explainScoring({
+  const {
+    results: scoreTransitions,
+    total_points: totalPoints,
+  } = explainScoring({
     params: props.gameScoringParameters,
     smaller_landlord_team_size: props.smallerTeamSize,
-    num_decks: props.numDecks,
+    decks: props.decks,
   });
 
   return (
@@ -137,10 +140,8 @@ const Points = (props: IProps): JSX.Element => {
       <ProgressBar
         checkpoints={scoreTransitions
           .map((transition) => transition.point_threshold)
-          .filter(
-            (threshold) => threshold >= 10 && threshold < props.numDecks * 100
-          )}
-        numDecks={props.numDecks}
+          .filter((threshold) => threshold >= 10 && threshold < totalPoints)}
+        totalPoints={totalPoints}
         landlordPoints={totalPointsPlayed - nonLandlordPoints}
         challengerPoints={nonLandlordPointsWithPenalties}
         hideLandlordPoints={props.hideLandlordPoints}

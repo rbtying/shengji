@@ -5,7 +5,9 @@
 
 #[macro_use]
 pub mod settings;
+
 pub mod bidding;
+pub mod deck;
 pub mod game_state;
 pub mod hands;
 pub mod interactive;

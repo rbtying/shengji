@@ -6,6 +6,7 @@ use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
 
 use crate::bidding::Bid;
+use crate::deck::Deck;
 use crate::hands::Hands;
 use crate::message::MessageVariant;
 use crate::player::Player;
@@ -17,7 +18,7 @@ use crate::settings::{
     ThrowPenalty,
 };
 use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
-use crate::types::{Card, Number, PlayerID, Trump, ALL_SUITS, FULL_DECK};
+use crate::types::{Card, Number, PlayerID, Trump, ALL_SUITS};
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -259,6 +260,8 @@ pub struct PlayPhase {
     game_ended_early: bool,
     #[serde(default)]
     removed_cards: Vec<Card>,
+    #[serde(default)]
+    decks: Vec<Deck>,
 }
 
 impl PlayPhase {
@@ -607,8 +610,7 @@ impl PlayPhase {
         let (non_landlords_points, observed_points) = self.calculate_points();
         let can_end_early = !next_threshold_reachable(
             &self.propagated.game_scoring_parameters,
-            self.num_decks,
-            crate::scoring::POINTS_PER_DECK,
+            &self.decks,
             non_landlords_points,
             observed_points,
         )?;
@@ -652,8 +654,7 @@ impl PlayPhase {
             landlord_bonus: bonus_level_earned,
         } = compute_level_deltas(
             &propagated.game_scoring_parameters,
-            self.num_decks,
-            crate::scoring::POINTS_PER_DECK,
+            &self.decks,
             non_landlords_points,
             smaller_landlord_team,
         )?;
@@ -732,6 +733,8 @@ pub struct ExchangePhase {
     autobid: Option<Bid>,
     #[serde(default)]
     removed_cards: Vec<Card>,
+    #[serde(default)]
+    decks: Vec<Deck>,
 }
 
 impl ExchangePhase {
@@ -1042,6 +1045,7 @@ impl ExchangePhase {
             landlords_team,
             game_ended_early: false,
             removed_cards: self.removed_cards.clone(),
+            decks: self.decks.clone(),
         })
     }
 
@@ -1072,6 +1076,8 @@ pub struct DrawPhase {
     level: Option<Number>,
     #[serde(default)]
     removed_cards: Vec<Card>,
+    #[serde(default)]
+    decks: Vec<Deck>,
 }
 
 impl DrawPhase {
@@ -1255,6 +1261,7 @@ impl DrawPhase {
                 bids: self.bids.clone(),
                 autobid: self.autobid,
                 removed_cards: self.removed_cards.clone(),
+                decks: self.decks.clone(),
             })
         }
     }
@@ -1312,13 +1319,7 @@ impl InitializePhase {
             }
         };
 
-        let num_decks = self.propagated.num_decks();
-        let mut deck = Vec::with_capacity(num_decks * FULL_DECK.len());
-        for _ in 0..num_decks {
-            deck.extend(FULL_DECK.iter());
-        }
         let mut rng = rand::thread_rng();
-        deck.shuffle(&mut rng);
 
         let position = self
             .propagated
@@ -1337,6 +1338,27 @@ impl InitializePhase {
             None
         };
 
+        let num_decks = self.propagated.num_decks();
+        if num_decks == 0 {
+            bail!("need at least one deck to start the game");
+        }
+        let decks = self.propagated.decks()?;
+        let mut deck = Vec::with_capacity(decks.iter().map(|d| d.len()).sum::<usize>());
+        for deck_ in &decks {
+            deck.extend(deck_.cards());
+        }
+        // Ensure that it is possible to bid for the landlord, if set, or all players, if not.
+        match level {
+            Some(level) if decks.iter().any(|d| d.includes_number(level)) => (),
+            None if self
+                .players
+                .iter()
+                .all(|p| decks.iter().any(|d| d.includes_number(p.level))) => {}
+            _ => bail!("deck configuration is missing cards needed to bid"),
+        }
+
+        deck.shuffle(&mut rng);
+
         let mut removed_cards = vec![];
 
         let kitty_size = match self.propagated.kitty_size {
@@ -1351,11 +1373,21 @@ impl InitializePhase {
                 // appropriate number of cards.
                 let num_players = self.propagated.players.len();
 
+                let min_number: Number = decks
+                    .iter()
+                    .map(|d| d.min)
+                    .min()
+                    .ok_or_else(|| anyhow!("no minimum value in deck?"))?;
+
                 // Choose a card to remove that doesn't unfairly disadvantage a particular player,
                 // and ideally isn't points either.
                 let removed_card_number = match level {
-                    Some(Number::Two) => Number::Three,
-                    Some(_) => Number::Two,
+                    Some(level) if level == min_number => {
+                        // If the minimum value isn't an A, this will be reasonable, otherwise
+                        // it'll remove a trump card from the deck...
+                        min_number.successor().unwrap_or(min_number)
+                    }
+                    Some(_) => min_number,
                     None => {
                         let mut bad_levels = self
                             .propagated
@@ -1366,7 +1398,7 @@ impl InitializePhase {
                         bad_levels.insert(Number::Five);
                         bad_levels.insert(Number::Ten);
                         bad_levels.insert(Number::King);
-                        let mut n = Number::Two;
+                        let mut n = min_number;
                         loop {
                             if !bad_levels.contains(&n) {
                                 break n;
@@ -1376,7 +1408,7 @@ impl InitializePhase {
                                 // If we somehow have enough players that we can't remove cards
                                 // without disadvantaging _someone_, or choosing points,
                                 // arbitrarily choose to remove twos.
-                                None => break Number::Two,
+                                None => break min_number,
                             };
                         }
                     }
@@ -1435,6 +1467,7 @@ impl InitializePhase {
             propagated,
             position,
             num_decks,
+            decks,
             game_mode,
             level,
             removed_cards,
