@@ -151,7 +151,7 @@ const Play = (props: IProps): JSX.Element => {
   const canEndGameEarly =
     !canFinish &&
     !nextThresholdReachable({
-      num_decks: playPhase.num_decks,
+      decks: playPhase.decks,
       params: playPhase.propagated.game_scoring_parameters,
       non_landlord_points: nonLandlordPointsWithPenalties,
       observed_points: totalPointsPlayed,
@@ -341,7 +341,7 @@ const Play = (props: IProps): JSX.Element => {
       <Points
         points={playPhase.points}
         penalties={playPhase.penalties}
-        numDecks={playPhase.num_decks}
+        decks={playPhase.decks}
         players={playPhase.propagated.players}
         landlordTeam={playPhase.landlords_team}
         landlord={playPhase.landlord}

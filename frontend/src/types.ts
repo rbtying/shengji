@@ -102,6 +102,7 @@ export interface IDrawPhase {
   revealed_cards: number;
   level: number;
   removed_cards: string[];
+  decks: IDeck[];
 }
 
 export interface IExchangePhase {
@@ -119,6 +120,7 @@ export interface IExchangePhase {
   finalized: boolean;
   exchanger: number | null;
   removed_cards: string[];
+  decks: IDeck[];
 }
 
 export interface IPlayPhase {
@@ -136,6 +138,7 @@ export interface IPlayPhase {
   last_trick: ITrick | null;
   game_ended_early: boolean;
   removed_cards: string[];
+  decks: IDeck[];
 }
 
 export type BidPolicy = "JokerOrGreaterLength" | "GreaterLength";
@@ -166,6 +169,7 @@ export interface IPropagatedState {
   bid_reinforcement_policy: BidReinforcementPolicy;
   joker_bid_policy: JokerBidPolicy;
   num_decks: number | null;
+  special_decks: IDeck[];
   max_player_id: number;
   players: IPlayer[];
   observers: IPlayer[];
@@ -288,3 +292,9 @@ export type ITrump =
       Standard?: null;
       NoTrump: { number: string };
     };
+
+export interface IDeck {
+  exclude_small_joker: boolean;
+  exclude_big_joker: boolean;
+  min: string;
+}

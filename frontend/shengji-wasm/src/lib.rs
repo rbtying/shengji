@@ -307,6 +307,7 @@ struct ExplainScoringRequest {
 #[derive(Serialize)]
 struct ExplainScoringResponse {
     results: Vec<ScoreSegment>,
+    total_points: isize,
     step_size: usize,
 }
 
@@ -340,8 +341,16 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
         step_size: params
             .step_size(&decks)
             .map_err(|e| format!("Failed to compute step size: {:?}", e))?,
+        total_points: decks.iter().map(|d| d.points() as isize).sum::<isize>(),
     })
     .map_err(|e| e.to_string())?)
+}
+
+#[wasm_bindgen]
+pub fn compute_deck_len(req: JsValue) -> Result<usize, JsValue> {
+    let decks: Vec<Deck> = req.into_serde().map_err(|e| e.to_string())?;
+
+    Ok(decks.iter().map(|d| d.len() as usize).sum::<usize>())
 }
 
 #[derive(Deserialize)]

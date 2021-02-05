@@ -1,11 +1,11 @@
 import * as React from "react";
-import { IGameScoringParameters } from "./types";
+import { IGameScoringParameters, IDeck } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 import { WasmContext, IScoreSegment } from "./WasmContext";
 
 interface IProps {
   params: IGameScoringParameters;
-  numDecks: number;
+  decks: IDeck[];
 }
 
 export const GameScoringSettings = (props: IProps): JSX.Element => {
@@ -24,17 +24,21 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   const bonusEnabled =
     props.params.bonus_level_policy === "BonusLevelForSmallerLandlordTeam";
 
-  const { results: scoreTransitions, step_size: stepSize } = explainScoring({
+  const {
+    results: scoreTransitions,
+    step_size: stepSize,
+    total_points: totalPoints,
+  } = explainScoring({
     params: props.params,
     smaller_landlord_team_size: false,
-    num_decks: props.numDecks,
+    decks: props.decks,
   });
 
   const bonusScoreTransitions = bonusEnabled
     ? explainScoring({
         params: props.params,
         smaller_landlord_team_size: true,
-        num_decks: props.numDecks,
+        decks: props.decks,
       }).results
     : scoreTransitions;
 
@@ -72,13 +76,13 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   }
   const last = scoreTransitions.length - 1;
   scoreSegments.push({
-    span: 5 * props.numDecks,
+    span: 5 * props.decks.length,
     segment: scoreTransitions[last],
     bonusSegment: bonusScoreTransitions[last].results.landlord_bonus
       ? bonusScoreTransitions[last]
       : null,
   });
-  maxPts += 5 * props.numDecks;
+  maxPts += 5 * props.decks.length;
   maxNonLandlordDelta = Math.max(
     scoreTransitions[last].results.non_landlord_delta,
     maxNonLandlordDelta
@@ -110,12 +114,11 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
     return <>{txt}</>;
   };
 
-  const totalPoints = props.numDecks * 100;
   const validStepSizes = [];
   for (
     let curStepSize = 0;
     curStepSize <= totalPoints / 3;
-    curStepSize += 5 * props.numDecks
+    curStepSize += 5 * props.decks.length
   ) {
     if (curStepSize === 0) {
       continue;
@@ -176,10 +179,11 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
         <div>
           <label>Base step size: </label>
           <select
-            value={`${props.params.step_size_per_deck * props.numDecks}`}
+            value={`${props.params.step_size_per_deck * props.decks.length}`}
             onChange={(evt) => {
               evt.preventDefault();
-              const perDeck = parseInt(evt.target.value, 10) / props.numDecks;
+              const perDeck =
+                parseInt(evt.target.value, 10) / props.decks.length;
 
               updateSettings({
                 step_size_per_deck: perDeck,
@@ -190,35 +194,37 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
               <option key={idx}>{ss}</option>
             ))}
           </select>{" "}
-          (default: {20 * props.numDecks})
+          (default: {20 * props.decks.length})
         </div>
         <div>
-          <label>Adjustment to step size for {props.numDecks} decks: </label>
+          <label>
+            Adjustment to step size for {props.decks.length} decks:{" "}
+          </label>
           <select
             value={
-              props.params.step_adjustments[props.numDecks] !== undefined
-                ? props.params.step_adjustments[props.numDecks]
+              props.params.step_adjustments[props.decks.length] !== undefined
+                ? props.params.step_adjustments[props.decks.length]
                 : "none"
             }
             onChange={(evt) => {
               evt.preventDefault();
               if (evt.target.value === "none") {
                 const {
-                  [props.numDecks]: _,
+                  [props.decks.length]: _,
                   ...adjustments
                 } = props.params.step_adjustments;
                 updateSettings({ step_adjustments: adjustments });
               } else {
                 const adjustments = {
                   ...props.params.step_adjustments,
-                  [props.numDecks]: parseInt(evt.target.value, 10),
+                  [props.decks.length]: parseInt(evt.target.value, 10),
                 };
                 updateSettings({ step_adjustments: adjustments });
               }
             }}
           >
             <option key="none">none</option>
-            {Array((props.params.step_size_per_deck * props.numDecks) / 5)
+            {Array((props.params.step_size_per_deck * props.decks.length) / 5)
               .fill(undefined)
               .map((_, idx) => (
                 <option key={idx}>{(idx + 1) * 5}</option>

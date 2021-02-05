@@ -35,6 +35,9 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         computeScore: (req) => {
           return Shengji.compute_score(req);
         },
+        computeDeckLen: (req) => {
+          return Shengji.compute_deck_len(req);
+        },
         decodeWireFormat: (req) => {
           return JSON.parse(Shengji.zstd_decompress(req));
         },

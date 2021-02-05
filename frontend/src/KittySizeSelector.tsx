@@ -1,20 +1,23 @@
 import * as React from "react";
+import { IDeck } from "./types";
 import ArrayUtils from "./util/array";
+import WasmContext from "./WasmContext";
 
 interface IProps {
   numPlayers: number;
-  numDecks: number;
+  decks: IDeck[];
   kittySize: number | null;
   onChange: (newKittySize: number | null) => void;
 }
 
 const KittySizeSelector = (props: IProps): JSX.Element => {
+  const { computeDeckLen } = React.useContext(WasmContext);
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const newKittySize =
       e.target.value === "" ? null : parseInt(e.target.value, 10);
     props.onChange(newKittySize);
   };
-  const deckLen = props.numDecks * 54;
+  const deckLen = computeDeckLen(props.decks);
   const kittyOffset = deckLen % props.numPlayers;
   const defaultOptions = [
     kittyOffset,
@@ -31,7 +34,9 @@ const KittySizeSelector = (props: IProps): JSX.Element => {
   const options = potentialOptions.filter(
     (v) =>
       !defaultOptions.includes(v) &&
-      (deckLen - v) % props.numPlayers <= props.numDecks * 4
+      v < deckLen - props.numPlayers &&
+      // Note: this isn't quite right, but it seems fine for the common case of no short decks.
+      (deckLen - v) % props.numPlayers <= props.decks.length * 4
   );
 
   return (
@@ -48,11 +53,13 @@ const KittySizeSelector = (props: IProps): JSX.Element => {
         >
           <optgroup label="Standard">
             <option value="">default</option>
-            {defaultOptions.map((v) => (
-              <option value={v} key={v}>
-                {v} card{v === 1 ? "" : "s"}
-              </option>
-            ))}
+            {defaultOptions
+              .filter((v) => v < deckLen - props.numPlayers)
+              .map((v) => (
+                <option value={v} key={v}>
+                  {v} card{v === 1 ? "" : "s"}
+                </option>
+              ))}
           </optgroup>
           <optgroup label="Requires removing cards from the deck">
             {options.map((v) => (

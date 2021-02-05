@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 11;
+const changeLogVersion: number = 12;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>2/4/2021:</p>
+        <ul>
+          <li>
+            Support configuring custom deck properties, like short decks or
+            removing jokers.
+          </li>
+        </ul>
         <p>2/2/2021:</p>
         <ul>
           <li>
