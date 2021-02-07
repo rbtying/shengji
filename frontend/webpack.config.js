@@ -43,7 +43,10 @@ module.exports = {
         },
       },
     },
-    minimizer: [new TerserJsPlugin({}), new OptimizeCssAssetsPlugin({})],
+    minimizer: [
+      new TerserJsPlugin({ sourceMap: true }),
+      new OptimizeCssAssetsPlugin({}),
+    ],
   },
   output: {
     filename: "[name].[contenthash].js",

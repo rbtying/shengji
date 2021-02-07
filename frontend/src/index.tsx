@@ -23,6 +23,7 @@ const bootstrap = (): void => {
       /fetch.*is.*defined/,
       "Can't find variable: fetch",
       /Loading chunk.*failed/,
+      /ChunkLoadError/,
     ],
   });
 
