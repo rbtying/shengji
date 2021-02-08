@@ -22,8 +22,10 @@ const bootstrap = (): void => {
       /WebAssembly.*is.*defined/,
       /fetch.*is.*defined/,
       "Can't find variable: fetch",
+      "Can't find variable: WebAssembly",
       /Loading chunk.*failed/,
       /ChunkLoadError/,
+      /Const declarations are not supported in strict mode/,
     ],
   });
 

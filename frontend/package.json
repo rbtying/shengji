@@ -5,7 +5,7 @@
   "repository": "https://github.com/rbtying/shengji.git",
   "license": "MIT",
   "dependencies": {
-    "@sentry/react": "^5.27.4",
+    "@sentry/react": "^6.1.0",
     "@sentry/tracing": "^5.27.4",
     "@types/canvas-confetti": "^1.0.0",
     "@types/classnames": "^2.2.10",
