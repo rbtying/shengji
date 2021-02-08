@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use anyhow::{anyhow, bail, Error};
 use serde::{Deserialize, Serialize};
 use slog_derive::KV;
-use smallvec::SmallVec;
 
 use crate::deck::Deck;
 
@@ -186,8 +185,8 @@ impl GameScoringParameters {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MaterializedScoringParameters {
-    landlord_wins: SmallVec<[LandlordWinningScoreSegment; 3]>,
-    landlord_loses: SmallVec<[LandlordLosingScoreSegment; 1]>,
+    landlord_wins: Vec<LandlordWinningScoreSegment>,
+    landlord_loses: Vec<LandlordLosingScoreSegment>,
     total_points: isize,
 }
 

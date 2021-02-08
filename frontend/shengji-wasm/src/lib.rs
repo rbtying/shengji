@@ -16,7 +16,6 @@ use shengji_core::{
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
 use shengji_types::ZSTD_ZSTD_DICT;
-use smallvec::SmallVec;
 use wasm_bindgen::prelude::*;
 // use web_sys::console;
 
@@ -51,7 +50,7 @@ struct FindViablePlaysResult {
 
 #[derive(Serialize)]
 struct FoundViablePlay {
-    grouping: SmallVec<[TrickUnit; 4]>,
+    grouping: Vec<TrickUnit>,
     description: String,
 }
 
@@ -89,7 +88,7 @@ struct DecomposeTrickFormatResponse {
 
 #[derive(Serialize)]
 struct DecomposedTrickFormat {
-    format: SmallVec<[UnitLike; 4]>,
+    format: Vec<UnitLike>,
     description: String,
     playable: Vec<Card>,
 }

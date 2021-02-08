@@ -3,13 +3,12 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use smallvec::{smallvec, SmallVec};
 
 use crate::types::{Card, Trump};
 
-pub type MatchingCards = SmallVec<[(OrderedCard, usize); 4]>;
-pub type AdjacentTupleSizes = SmallVec<[usize; 4]>;
-pub type PlayRequirements = SmallVec<[AdjacentTupleSizes; 4]>;
+pub type MatchingCards = Vec<(OrderedCard, usize)>;
+pub type AdjacentTupleSizes = Vec<usize>;
+pub type PlayRequirements = Vec<AdjacentTupleSizes>;
 
 /// A wrapper around a card with a given trump, which provides ordering characteristics.
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,7 +24,7 @@ impl std::fmt::Debug for OrderedCard {
 }
 
 impl OrderedCard {
-    pub fn successor(self) -> SmallVec<[OrderedCard; 4]> {
+    pub fn successor(self) -> Vec<OrderedCard> {
         self.trump
             .successor(self.card)
             .into_iter()
@@ -91,7 +90,7 @@ pub fn attempt_format_match(
     depth: usize,
     mut units: impl Iterator<Item = AdjacentTupleSizes> + Clone,
     allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCards) -> bool + Copy,
-) -> (bool, SmallVec<[MatchingCards; 4]>) {
+) -> (bool, Vec<MatchingCards>) {
     match units.next() {
         Some(adj_req) => {
             for matching in attempt_match_permutations(counts, adj_req) {
@@ -106,9 +105,9 @@ pub fn attempt_format_match(
                     return (true, path);
                 }
             }
-            (false, smallvec![])
+            (false, vec![])
         }
-        None => (true, smallvec![]),
+        None => (true, vec![]),
     }
 }
 
@@ -116,13 +115,13 @@ pub fn attempt_format_match(
 fn attempt_match_permutations(
     counts: &BTreeMap<OrderedCard, usize>,
     mut adj_req: AdjacentTupleSizes,
-) -> SmallVec<[MatchingCards; 4]> {
+) -> Vec<MatchingCards> {
     if adj_req.iter().all(|v| *v == adj_req[0]) {
         return attempt_match(counts, adj_req.iter().copied());
     }
 
     // Handle permutations.
-    let mut output: SmallVec<[_; 4]> = smallvec![];
+    let mut output: Vec<_> = vec![];
     let mut processed = HashSet::new();
     permutohedron::heap_recursive(&mut adj_req, |permutation| {
         if !processed.contains(permutation) {
@@ -138,12 +137,12 @@ fn attempt_match_permutations(
 pub fn attempt_match(
     counts: &BTreeMap<OrderedCard, usize>,
     adj_req: impl Iterator<Item = usize> + Clone,
-) -> SmallVec<[MatchingCards; 4]> {
-    let mut output: SmallVec<[_; 4]> = smallvec![];
+) -> Vec<MatchingCards> {
+    let mut output: Vec<_> = vec![];
     for c in counts.keys() {
         // Check the next subsequence
-        let mut card = smallvec![*c];
-        let mut selected = smallvec![];
+        let mut card = vec![*c];
+        let mut selected = vec![];
         let mut complete = true;
 
         for req in adj_req.clone() {
@@ -169,11 +168,11 @@ pub fn attempt_match(
     output
 }
 
-type Usizes = SmallVec<[usize; 4]>;
+type Usizes = Vec<usize>;
 
 lazy_static::lazy_static! {
     static ref GROUP_CACHE: Mutex<HashMap<usize, Vec<AdjacentTupleSizes>>> = Mutex::new(HashMap::new());
-    static ref PARTITION_CACHE: Mutex<HashMap<usize, Vec<SmallVec<[Usizes; 4]>>>> = Mutex::new(HashMap::new());
+    static ref PARTITION_CACHE: Mutex<HashMap<usize, Vec<Vec<Usizes>>>> = Mutex::new(HashMap::new());
     static ref FULL_DECOMPOSITION_CACHE: Mutex<HashMap<usize, Vec<PlayRequirements>>> = Mutex::new(HashMap::new());
 }
 
@@ -202,7 +201,7 @@ pub fn subsequent_decomposition_ordering(mut adj_reqs: PlayRequirements) -> Vec<
     let mut subsequent_decomps = vec![];
     let mut current_decomps: HashMap<usize, PlayRequirements> = HashMap::new();
     for i in 0..adj_reqs.len() {
-        current_decomps.insert(i, smallvec![adj_reqs[i].clone()]);
+        current_decomps.insert(i, vec![adj_reqs[i].clone()]);
     }
 
     // Keep the indices of decompositions as a range to assist in the later loop.
@@ -269,11 +268,11 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
         let eq_1 = &group[one_idx..];
 
         if gt_1.is_empty() {
-            full_decomp.push(eq_1.iter().map(|v| smallvec![*v]).collect());
+            full_decomp.push(eq_1.iter().map(|v| vec![*v]).collect());
         } else {
             let partitions = partition(gt_1);
             for mut partition in partitions {
-                partition.extend(eq_1.iter().map(|v| smallvec![*v]));
+                partition.extend(eq_1.iter().map(|v| vec![*v]));
                 partition.sort_by(|a, b| b.cmp(a));
                 full_decomp.push(partition);
             }
@@ -297,7 +296,7 @@ fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
     }
     let mut groupings = Vec::new();
     if num == 1 {
-        groupings.push(smallvec![1]);
+        groupings.push(vec![1]);
     } else {
         let smaller_groupings = find_all_groupings(num - 1);
         // try incrementing each smaller grouping
@@ -308,7 +307,7 @@ fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
                 if !incremented.contains(v) {
                     incremented.insert(*v);
                     let mut found = false;
-                    let mut g_ = smallvec![];
+                    let mut g_ = vec![];
                     for vv in &g {
                         if *vv == *v && !found {
                             found = true;
@@ -341,10 +340,10 @@ fn partition(values: &[usize]) -> Vec<PlayRequirements> {
     partitions
         .into_iter()
         .map(|partition| {
-            let mut out = smallvec![];
+            let mut out = vec![];
 
             for idxes in partition {
-                let mut p = smallvec![];
+                let mut p = vec![];
                 for idx in idxes {
                     p.push(values[idx]);
                 }
@@ -356,10 +355,10 @@ fn partition(values: &[usize]) -> Vec<PlayRequirements> {
         .collect()
 }
 
-fn usize_partitions(n: usize) -> Vec<SmallVec<[Usizes; 4]>> {
+fn usize_partitions(n: usize) -> Vec<Vec<Usizes>> {
     assert!(n >= 1);
     if n == 1 {
-        return vec![smallvec![smallvec![0]]];
+        return vec![vec![vec![0]]];
     }
 
     {
@@ -371,7 +370,7 @@ fn usize_partitions(n: usize) -> Vec<SmallVec<[Usizes; 4]>> {
 
     let elem = n - 1;
     let shorter = usize_partitions(n - 1);
-    let mut partitions: Vec<SmallVec<[Usizes; 4]>> = vec![];
+    let mut partitions: Vec<Vec<Usizes>> = vec![];
 
     for mut part in shorter {
         for i in 0..part.len() {
@@ -381,7 +380,7 @@ fn usize_partitions(n: usize) -> Vec<SmallVec<[Usizes; 4]>> {
             let list = part.get_mut(i).unwrap();
             list.pop();
         }
-        part.push(smallvec![elem]);
+        part.push(vec![elem]);
         partitions.push(part.iter().cloned().collect());
         part.pop();
     }
@@ -401,8 +400,6 @@ fn usize_partitions(n: usize) -> Vec<SmallVec<[Usizes; 4]>> {
 
 #[cfg(test)]
 mod tests {
-    use smallvec::smallvec;
-
     use crate::types::{
         cards::{S_2, S_3, S_5},
         Card, Number, Suit, Trump,
@@ -437,7 +434,7 @@ mod tests {
         .into_iter()
         .collect();
         assert_eq!(
-            attempt_match_permutations(&counts, smallvec![1])
+            attempt_match_permutations(&counts, vec![1])
                 .into_iter()
                 .map(|x| x.to_vec())
                 .collect::<Vec<_>>(),
@@ -449,7 +446,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            attempt_match_permutations(&counts, smallvec![2, 2])
+            attempt_match_permutations(&counts, vec![2, 2])
                 .into_iter()
                 .map(|x| x.to_vec())
                 .collect::<Vec<_>>(),
@@ -459,7 +456,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            attempt_match_permutations(&counts, smallvec![2, 3])
+            attempt_match_permutations(&counts, vec![2, 3])
                 .into_iter()
                 .map(|x| x.to_vec())
                 .collect::<Vec<_>>(),
@@ -470,7 +467,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            attempt_match_permutations(&counts, smallvec![2, 2, 3])
+            attempt_match_permutations(&counts, vec![2, 2, 3])
                 .into_iter()
                 .map(|x| x.to_vec())
                 .collect::<Vec<_>>(),
@@ -479,7 +476,7 @@ mod tests {
                 vec![(oc!(S_2), 2), (oc!(S_3), 3), (oc!(S_5), 2)],
             ]
         );
-        assert!(attempt_match_permutations(&counts, smallvec![3, 3, 3])
+        assert!(attempt_match_permutations(&counts, vec![3, 3, 3])
             .into_iter()
             .map(|x| x.to_vec())
             .next()
@@ -495,14 +492,14 @@ mod tests {
                 .collect::<Vec<_>>()
         };
 
-        assert!(f(smallvec![smallvec![1]]).is_empty());
-        assert_eq!(f(smallvec![smallvec![2]]), vec![vec![vec![1], vec![1]]]);
+        assert!(f(vec![vec![1]]).is_empty());
+        assert_eq!(f(vec![vec![2]]), vec![vec![vec![1], vec![1]]]);
         assert_eq!(
-            f(smallvec![smallvec![3]]),
+            f(vec![vec![3]]),
             vec![vec![vec![2], vec![1]], vec![vec![1], vec![1], vec![1]]]
         );
         assert_eq!(
-            f(smallvec![smallvec![4]]),
+            f(vec![vec![4]]),
             vec![
                 vec![vec![3], vec![1]],
                 vec![vec![2, 2]],
@@ -512,7 +509,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            f(smallvec![smallvec![2, 2]]),
+            f(vec![vec![2, 2]]),
             vec![
                 vec![vec![2], vec![2]],
                 vec![vec![2], vec![1], vec![1]],
@@ -520,7 +517,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            f(smallvec![smallvec![2], smallvec![2]]),
+            f(vec![vec![2], vec![2]]),
             vec![
                 vec![vec![2], vec![1], vec![1]],
                 vec![vec![1], vec![1], vec![1], vec![1]]
@@ -528,7 +525,7 @@ mod tests {
         );
 
         assert_eq!(
-            f(smallvec![smallvec![2, 2], smallvec![3], smallvec![2]]),
+            f(vec![vec![2, 2], vec![3], vec![2]]),
             vec![
                 vec![vec![3], vec![2], vec![2], vec![2]],
                 vec![vec![3], vec![2], vec![2], vec![1], vec![1]],
@@ -568,16 +565,16 @@ mod tests {
 
         for i in 1..25 {
             // Construct all-ones
-            let mut x = smallvec![];
+            let mut x = vec![];
             for _ in 0..i {
-                x.push(smallvec![1]);
+                x.push(vec![1]);
             }
             assert!(f(x.clone()).is_empty());
 
             // Construct all-3s
-            let mut x = smallvec![];
+            let mut x = vec![];
             for _ in 0..i {
-                x.push(smallvec![3]);
+                x.push(vec![3]);
             }
             // Start with all 3s, a 2, and a 1
             let mut expected = vec![];
