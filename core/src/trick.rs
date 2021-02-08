@@ -351,7 +351,7 @@ impl TrickFormat {
 
         match proposed {
             Some(proposed) => {
-                let proposed = sort(proposed.iter().cloned().collect());
+                let proposed = sort(proposed.to_vec());
                 for possibility in possibilities {
                     if sort(possibility) == proposed {
                         return Ok(TrickFormat {
@@ -708,7 +708,7 @@ impl Trick {
     ) -> Option<PlayerID> {
         match trick_format {
             Some(tf) => {
-                let mut winner = (0, tf.units.iter().cloned().collect::<Units>());
+                let mut winner = (0, tf.units.to_vec());
 
                 for (idx, pc) in played_cards.iter().enumerate().skip(1) {
                     if let Ok(m) = tf.matches(&pc.cards) {

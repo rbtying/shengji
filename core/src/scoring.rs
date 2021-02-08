@@ -441,10 +441,9 @@ mod tests {
     fn test_level_deltas() {
         let decks = [Deck::default(), Deck::default()];
 
-        let gsp_nobonus = {
-            let mut gsp = GameScoringParameters::default();
-            gsp.bonus_level_policy = BonusLevelPolicy::NoBonusLevel;
-            gsp
+        let gsp_nobonus = GameScoringParameters {
+            bonus_level_policy: BonusLevelPolicy::NoBonusLevel,
+            ..Default::default()
         };
         assert_eq!(
             compute_level_deltas(&gsp_nobonus, &decks, -80, false,).unwrap(),

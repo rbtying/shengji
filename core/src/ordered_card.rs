@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::types::{Card, Trump};
 
 pub type MatchingCards = Vec<(OrderedCard, usize)>;
+pub type MatchingCardsRef = [(OrderedCard, usize)];
 pub type AdjacentTupleSizes = Vec<usize>;
 pub type PlayRequirements = Vec<AdjacentTupleSizes>;
 
@@ -64,7 +65,7 @@ impl PartialOrd for OrderedCard {
 
 fn without_matching_cards<T>(
     counts: &mut BTreeMap<OrderedCard, usize>,
-    cards: &MatchingCards,
+    cards: &MatchingCardsRef,
     mut f: impl FnMut(&mut BTreeMap<OrderedCard, usize>) -> T,
 ) -> T {
     for (card, count) in cards {
@@ -89,7 +90,7 @@ pub fn attempt_format_match(
     counts: &mut BTreeMap<OrderedCard, usize>,
     depth: usize,
     mut units: impl Iterator<Item = AdjacentTupleSizes> + Clone,
-    allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCards) -> bool + Copy,
+    allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCardsRef) -> bool + Copy,
 ) -> (bool, Vec<MatchingCards>) {
     match units.next() {
         Some(adj_req) => {
@@ -200,8 +201,8 @@ pub fn subsequent_decomposition_ordering(mut adj_reqs: PlayRequirements) -> Vec<
     }
     let mut subsequent_decomps = vec![];
     let mut current_decomps: HashMap<usize, PlayRequirements> = HashMap::new();
-    for i in 0..adj_reqs.len() {
-        current_decomps.insert(i, vec![adj_reqs[i].clone()]);
+    for (i, adj_req) in adj_reqs.iter().enumerate() {
+        current_decomps.insert(i, vec![adj_req.clone()]);
     }
 
     // Keep the indices of decompositions as a range to assist in the later loop.
@@ -376,12 +377,12 @@ fn usize_partitions(n: usize) -> Vec<Vec<Usizes>> {
         for i in 0..part.len() {
             let list = part.get_mut(i).unwrap();
             list.push(elem);
-            partitions.push(part.iter().cloned().collect());
+            partitions.push(part.to_vec());
             let list = part.get_mut(i).unwrap();
             list.pop();
         }
         part.push(vec![elem]);
-        partitions.push(part.iter().cloned().collect());
+        partitions.push(part.to_vec());
         part.pop();
     }
 
