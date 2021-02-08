@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use anyhow::{anyhow, bail, Error};
 use serde::{Deserialize, Serialize};
 use slog_derive::KV;
-use smallvec::SmallVec;
 
 use crate::deck::Deck;
 
@@ -186,8 +185,8 @@ impl GameScoringParameters {
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MaterializedScoringParameters {
-    landlord_wins: SmallVec<[LandlordWinningScoreSegment; 3]>,
-    landlord_loses: SmallVec<[LandlordLosingScoreSegment; 1]>,
+    landlord_wins: Vec<LandlordWinningScoreSegment>,
+    landlord_loses: Vec<LandlordLosingScoreSegment>,
     total_points: isize,
 }
 
@@ -442,10 +441,9 @@ mod tests {
     fn test_level_deltas() {
         let decks = [Deck::default(), Deck::default()];
 
-        let gsp_nobonus = {
-            let mut gsp = GameScoringParameters::default();
-            gsp.bonus_level_policy = BonusLevelPolicy::NoBonusLevel;
-            gsp
+        let gsp_nobonus = GameScoringParameters {
+            bonus_level_policy: BonusLevelPolicy::NoBonusLevel,
+            ..Default::default()
         };
         assert_eq!(
             compute_level_deltas(&gsp_nobonus, &decks, -80, false,).unwrap(),

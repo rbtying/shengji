@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 use serde::{Deserialize, Serialize};
-use smallvec::{smallvec, SmallVec};
 use thiserror::Error;
 
 use crate::hands::{HandError, Hands};
@@ -64,7 +63,7 @@ impl Default for ThrowEvaluationPolicy {
     }
 }
 
-type Members = SmallVec<[OrderedCard; 3]>;
+type Members = Vec<OrderedCard>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TrickUnit {
@@ -127,7 +126,7 @@ impl TrickUnit {
         find_plays_inner(&mut counts, original_num_cards, None, 0)
     }
 
-    pub fn cards(&self) -> SmallVec<[Card; 4]> {
+    pub fn cards(&self) -> Vec<Card> {
         match self {
             TrickUnit::Tractor {
                 count, ref members, ..
@@ -166,7 +165,7 @@ impl TrickFormat {
         self.suit
     }
 
-    pub fn decomposition(&self) -> impl Iterator<Item = SmallVec<[UnitLike; 4]>> {
+    pub fn decomposition(&self) -> impl Iterator<Item = Vec<UnitLike>> {
         let units = self.units.iter().map(UnitLike::from).collect();
         let adj_tuples = self
             .units
@@ -352,7 +351,7 @@ impl TrickFormat {
 
         match proposed {
             Some(proposed) => {
-                let proposed = sort(proposed.iter().cloned().collect());
+                let proposed = sort(proposed.to_vec());
                 for possibility in possibilities {
                     if sort(possibility) == proposed {
                         return Ok(TrickFormat {
@@ -574,7 +573,7 @@ impl Trick {
                             .collect(),
                     };
 
-                    tf.units = smallvec![forced_unit];
+                    tf.units = vec![forced_unit];
 
                     msgs.push(MessageVariant::ThrowFailed {
                         original_cards: cards.clone(),
@@ -709,7 +708,7 @@ impl Trick {
     ) -> Option<PlayerID> {
         match trick_format {
             Some(tf) => {
-                let mut winner = (0, tf.units.iter().cloned().collect::<Units>());
+                let mut winner = (0, tf.units.to_vec());
 
                 for (idx, pc) in played_cards.iter().enumerate().skip(1) {
                     if let Ok(m) = tf.matches(&pc.cards) {
@@ -888,7 +887,7 @@ impl UnitLike {
         iter: impl IntoIterator<Item = Card>,
         units: impl Iterator<Item = UnitLike> + Clone,
         trick_draw_policy: TrickDrawPolicy,
-    ) -> (bool, SmallVec<[MatchingCards; 4]>) {
+    ) -> (bool, Vec<MatchingCards>) {
         let mut counts = BTreeMap::new();
         for card in iter.into_iter() {
             let card = OrderedCard { card, trump };
@@ -917,7 +916,7 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
                     .collect(),
             },
             TrickUnit::Repeated { count, .. } => UnitLike {
-                adjacent_tuples: smallvec![*count],
+                adjacent_tuples: vec![*count],
             },
         }
     }
@@ -939,7 +938,7 @@ impl<'a> From<&'a MatchingCards> for UnitLike {
     }
 }
 
-type Units = SmallVec<[TrickUnit; 4]>;
+type Units = Vec<TrickUnit>;
 
 fn without_trick_unit<T>(
     counts: &mut BTreeMap<OrderedCard, usize>,
@@ -1000,15 +999,15 @@ fn find_tractors_from_start(
         return potential_starts;
     }
 
-    let mut next_cards: SmallVec<[(OrderedCard, Members); 1]> = card
+    let mut next_cards: Vec<(OrderedCard, Members)> = card
         .successor()
         .into_iter()
-        .map(|c| (c, smallvec![card]))
+        .map(|c| (c, vec![card]))
         .collect();
     let mut min_count = count;
 
     loop {
-        let mut next_next_cards = smallvec![];
+        let mut next_next_cards = vec![];
         for (next_card, mut path) in next_cards {
             let next_count = counts.get(&next_card).copied().unwrap_or(0);
             if next_count >= 2 {
@@ -1037,9 +1036,9 @@ fn find_plays_inner(
     num_cards: usize,
     min_start: Option<OrderedCard>,
     depth: usize,
-) -> SmallVec<[Units; 4]> {
+) -> Vec<Units> {
     if num_cards == 0 {
-        return smallvec![];
+        return vec![];
     }
 
     let mut iter = match min_start {
@@ -1073,9 +1072,9 @@ fn find_plays_inner(
     }
 
     if let Some(start) = potential_starts.iter().find(|u| u.size() == num_cards) {
-        smallvec![smallvec![start.clone()]]
+        vec![vec![start.clone()]]
     } else {
-        let mut plays = smallvec![];
+        let mut plays = vec![];
         for start in potential_starts {
             without_trick_unit(counts, &start, |subcounts| {
                 let sub_plays = find_plays_inner(
@@ -1098,8 +1097,6 @@ fn find_plays_inner(
 mod tests {
     use std::collections::HashSet;
     use std::iter::FromIterator;
-
-    use smallvec::smallvec;
 
     use crate::hands::Hands;
     use crate::types::{
@@ -1458,7 +1455,7 @@ mod tests {
         let expected_tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Repeated {
+            units: vec![TrickUnit::Repeated {
                 count: 3,
                 card: oc!(S_2),
             }],
@@ -1478,9 +1475,9 @@ mod tests {
         let expected_tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Tractor {
+            units: vec![TrickUnit::Tractor {
                 count: 3,
-                members: smallvec![oc!(S_2), oc!(S_3), oc!(S_5)],
+                members: vec![oc!(S_2), oc!(S_3), oc!(S_5)],
             }],
         };
 
@@ -1505,10 +1502,10 @@ mod tests {
         let expected_tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![
+            units: vec![
                 TrickUnit::Tractor {
                     count: 2,
-                    members: smallvec![oc!(S_3), oc!(S_5)],
+                    members: vec![oc!(S_3), oc!(S_5)],
                 },
                 TrickUnit::Repeated {
                     count: 7,
@@ -1548,7 +1545,7 @@ mod tests {
         let expected_tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![
+            units: vec![
                 TrickUnit::Repeated {
                     count: 1,
                     card: oc!(S_3),
@@ -1579,7 +1576,7 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Repeated {
+            units: vec![TrickUnit::Repeated {
                 count: 2,
                 card: oc!(S_3),
             }],
@@ -1602,7 +1599,7 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Repeated {
+            units: vec![TrickUnit::Repeated {
                 count: 3,
                 card: oc!(S_3),
             }],
@@ -1618,7 +1615,7 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Repeated {
+            units: vec![TrickUnit::Repeated {
                 count: 5,
                 card: oc!(S_3),
             }],
@@ -1659,9 +1656,9 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Tractor {
+            units: vec![TrickUnit::Tractor {
                 count: 2,
-                members: smallvec![oc!(S_2), oc!(S_3)],
+                members: vec![oc!(S_2), oc!(S_3)],
             }],
         };
         assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
@@ -1739,7 +1736,7 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![
+            units: vec![
                 TrickUnit::Repeated {
                     count: 2,
                     card: oc!(S_2),
@@ -1772,10 +1769,10 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Repeated {
+            units: vec![TrickUnit::Repeated {
                 card: oc!(S_3),
                 count: 3,
-            },],
+            }],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
@@ -1805,10 +1802,10 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
             trump: TRUMP,
-            units: smallvec![TrickUnit::Tractor {
-                members: smallvec![oc!(S_6), oc!(S_7)],
+            units: vec![TrickUnit::Tractor {
+                members: vec![oc!(S_6), oc!(S_7)],
                 count: 2,
-            },],
+            }],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
@@ -1833,15 +1830,15 @@ mod tests {
         let tf = TrickFormat {
             suit: EffectiveSuit::Spades,
             trump: HEART_TRUMP,
-            units: smallvec![
+            units: vec![
                 TrickUnit::Tractor {
-                    members: smallvec![oc!(S_9, HEART_TRUMP), oc!(S_9, HEART_TRUMP)],
+                    members: vec![oc!(S_9, HEART_TRUMP), oc!(S_9, HEART_TRUMP)],
                     count: 2,
                 },
                 TrickUnit::Repeated {
                     card: oc!(S_K, HEART_TRUMP),
                     count: 1,
-                }
+                },
             ],
         };
         let hand = Card::count(vec![S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8]);

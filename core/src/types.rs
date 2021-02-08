@@ -4,7 +4,6 @@ use std::fmt;
 
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
-use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 #[serde(transparent)]
@@ -127,30 +126,30 @@ impl Trump {
         }
     }
 
-    pub fn successor(self, card: Card) -> SmallVec<[Card; 4]> {
+    pub fn successor(self, card: Card) -> Vec<Card> {
         match card {
-            Card::Unknown => smallvec![],
-            Card::BigJoker => smallvec![],
-            Card::SmallJoker => smallvec![Card::BigJoker],
+            Card::Unknown => vec![],
+            Card::BigJoker => vec![],
+            Card::SmallJoker => vec![Card::BigJoker],
             Card::Suited { suit, number } if number == self.number() => match self {
                 Trump::Standard {
                     suit: trump_suit,
                     number: trump_number,
                 } => {
                     if suit == trump_suit {
-                        smallvec![Card::SmallJoker]
+                        vec![Card::SmallJoker]
                     } else {
-                        smallvec![Card::Suited {
+                        vec![Card::Suited {
                             suit: trump_suit,
                             number: trump_number,
                         }]
                     }
                 }
-                Trump::NoTrump { .. } => smallvec![Card::SmallJoker],
+                Trump::NoTrump { .. } => vec![Card::SmallJoker],
             },
             Card::Suited { suit, number } if number.successor() == Some(self.number()) => {
                 match number.successor().and_then(|n| n.successor()) {
-                    Some(n) => smallvec![Card::Suited { suit, number: n }],
+                    Some(n) => vec![Card::Suited { suit, number: n }],
                     None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
                         .iter()
                         .flat_map(|s| {
@@ -164,11 +163,11 @@ impl Trump {
                             }
                         })
                         .collect(),
-                    None => smallvec![],
+                    None => vec![],
                 }
             }
             Card::Suited { suit, number } => match number.successor() {
-                Some(n) => smallvec![Card::Suited { suit, number: n }],
+                Some(n) => vec![Card::Suited { suit, number: n }],
                 None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
                     .iter()
                     .flat_map(|s| {
@@ -182,7 +181,7 @@ impl Trump {
                         }
                     })
                     .collect(),
-                None => smallvec![],
+                None => vec![],
             },
         }
     }
