@@ -517,6 +517,7 @@ impl BroadcastMessage {
             TrickDrawPolicySet { policy: TrickDrawPolicy::NoProtections } => format!("{} removed all protections (pair can draw triple)", n?),
             TrickDrawPolicySet { policy: TrickDrawPolicy::NoFormatBasedDraw } => format!("{} removed format-based forced-plays (pairs do not draw pairs)", n?),
             TrickDrawPolicySet { policy: TrickDrawPolicy::LongerTuplesProtected } => format!("{} protected longer tuples from being drawn out by shorter ones (pair does not draw triple)", n?),
+            TrickDrawPolicySet { policy: TrickDrawPolicy::OnlyDrawTractorOnTractor } => format!("{} protected tractors from being drawn out by non-tractors", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::All } => format!("{} set throws to be evaluated based on all of the cards", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::Highest } => format!("{} set throws to be evaluated based on the highest card", n?),
             ThrowEvaluationPolicySet { policy: ThrowEvaluationPolicy::TrickUnitLength } => format!("{} set throws to be evaluated based on the longest component", n?),

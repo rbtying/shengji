@@ -188,7 +188,7 @@ fn main() {
                         .collect::<Vec<_>>();
 
                         let matching_play = trick_format
-                            .decomposition()
+                            .decomposition(Default::default())
                             .filter_map(|format| {
                                 let (playable, units) = UnitLike::check_play(
                                     trick_format.trump(),

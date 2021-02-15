@@ -177,7 +177,10 @@ lazy_static::lazy_static! {
     static ref FULL_DECOMPOSITION_CACHE: Mutex<HashMap<usize, Vec<PlayRequirements>>> = Mutex::new(HashMap::new());
 }
 
-pub fn subsequent_decomposition_ordering(mut adj_reqs: PlayRequirements) -> Vec<PlayRequirements> {
+pub fn subsequent_decomposition_ordering(
+    mut adj_reqs: PlayRequirements,
+    include_new_adjacency: bool,
+) -> Vec<PlayRequirements> {
     if !adj_reqs.iter().all(|adj_req| !adj_req.is_empty()) {
         return vec![];
     }
@@ -204,6 +207,10 @@ pub fn subsequent_decomposition_ordering(mut adj_reqs: PlayRequirements) -> Vec<
     for (i, adj_req) in adj_reqs.iter().enumerate() {
         current_decomps.insert(i, vec![adj_req.clone()]);
     }
+    let can_include_new_adjacency = adj_reqs
+        .iter()
+        .map(|a| include_new_adjacency || a.len() > 1)
+        .collect::<Vec<_>>();
 
     // Keep the indices of decompositions as a range to assist in the later loop.
     let mut h = (0..adj_reqs.len()).collect::<Vec<usize>>();
@@ -229,12 +236,21 @@ pub fn subsequent_decomposition_ordering(mut adj_reqs: PlayRequirements) -> Vec<
         } else {
             break;
         }
-        let mut full_decomp = h
-            .iter()
-            .flat_map(|i| current_decomps[i].iter().cloned())
-            .collect::<PlayRequirements>();
-        full_decomp.sort_by(|a, b| b.cmp(&a));
-        subsequent_decomps.push(full_decomp);
+        // If we decomposed something which didn't include an adjacency requirement into
+        // something which does, ensure that that's allowed by the caller.
+        let include = h.iter().all(|i| {
+            current_decomps[i]
+                .iter()
+                .all(|a| a.len() == 1 || can_include_new_adjacency[*i])
+        });
+        if include {
+            let mut full_decomp = h
+                .iter()
+                .flat_map(|i| current_decomps[i].iter().cloned())
+                .collect::<PlayRequirements>();
+            full_decomp.sort_by(|a, b| b.cmp(&a));
+            subsequent_decomps.push(full_decomp);
+        }
     }
     subsequent_decomps
 }
@@ -487,16 +503,28 @@ mod tests {
     #[test]
     fn test_subsequent_decomposition_ordering() {
         let f = |r: PlayRequirements| -> Vec<Vec<Vec<usize>>> {
-            subsequent_decomposition_ordering(r)
+            subsequent_decomposition_ordering(r, true)
+                .into_iter()
+                .map(|x| x.iter().map(|y| y.to_vec()).collect::<Vec<_>>())
+                .collect::<Vec<_>>()
+        };
+        let g = |r: PlayRequirements| -> Vec<Vec<Vec<usize>>> {
+            subsequent_decomposition_ordering(r, false)
                 .into_iter()
                 .map(|x| x.iter().map(|y| y.to_vec()).collect::<Vec<_>>())
                 .collect::<Vec<_>>()
         };
 
         assert!(f(vec![vec![1]]).is_empty());
+        assert!(g(vec![vec![1]]).is_empty());
         assert_eq!(f(vec![vec![2]]), vec![vec![vec![1], vec![1]]]);
+        assert_eq!(g(vec![vec![2]]), vec![vec![vec![1], vec![1]]]);
         assert_eq!(
             f(vec![vec![3]]),
+            vec![vec![vec![2], vec![1]], vec![vec![1], vec![1], vec![1]]]
+        );
+        assert_eq!(
+            g(vec![vec![3]]),
             vec![vec![vec![2], vec![1]], vec![vec![1], vec![1], vec![1]]]
         );
         assert_eq!(
@@ -504,6 +532,15 @@ mod tests {
             vec![
                 vec![vec![3], vec![1]],
                 vec![vec![2, 2]],
+                vec![vec![2], vec![2]],
+                vec![vec![2], vec![1], vec![1]],
+                vec![vec![1], vec![1], vec![1], vec![1]]
+            ]
+        );
+        assert_eq!(
+            g(vec![vec![4]]),
+            vec![
+                vec![vec![3], vec![1]],
                 vec![vec![2], vec![2]],
                 vec![vec![2], vec![1], vec![1]],
                 vec![vec![1], vec![1], vec![1], vec![1]]
@@ -518,10 +555,158 @@ mod tests {
             ]
         );
         assert_eq!(
+            g(vec![vec![2, 2]]),
+            vec![
+                vec![vec![2], vec![2]],
+                vec![vec![2], vec![1], vec![1]],
+                vec![vec![1], vec![1], vec![1], vec![1]]
+            ]
+        );
+        assert_eq!(
             f(vec![vec![2], vec![2]]),
             vec![
                 vec![vec![2], vec![1], vec![1]],
                 vec![vec![1], vec![1], vec![1], vec![1]]
+            ]
+        );
+        assert_eq!(
+            g(vec![vec![2], vec![2]]),
+            vec![
+                vec![vec![2], vec![1], vec![1]],
+                vec![vec![1], vec![1], vec![1], vec![1]]
+            ]
+        );
+        assert_eq!(
+            f(vec![vec![4]]),
+            vec![
+                vec![vec![3], vec![1]],
+                vec![vec![2, 2]],
+                vec![vec![2], vec![2]],
+                vec![vec![2], vec![1], vec![1]],
+                vec![vec![1], vec![1], vec![1], vec![1]],
+            ]
+        );
+        assert_eq!(
+            g(vec![vec![4]]),
+            vec![
+                vec![vec![3], vec![1]],
+                vec![vec![2], vec![2]],
+                vec![vec![2], vec![1], vec![1]],
+                vec![vec![1], vec![1], vec![1], vec![1]],
+            ]
+        );
+        assert_eq!(
+            f(vec![vec![4, 4]]),
+            vec![
+                vec![vec![4], vec![4]],
+                vec![vec![4, 3], vec![1]],
+                vec![vec![4], vec![3], vec![1]],
+                vec![vec![4, 2, 2]],
+                vec![vec![4, 2], vec![2]],
+                vec![vec![4], vec![2, 2]],
+                vec![vec![4], vec![2], vec![2]],
+                vec![vec![4, 2], vec![1], vec![1]],
+                vec![vec![4], vec![2], vec![1], vec![1]],
+                vec![vec![4], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![3, 3, 2]],
+                vec![vec![3, 3], vec![2]],
+                vec![vec![3, 2], vec![3]],
+                vec![vec![3], vec![3], vec![2]],
+                vec![vec![3, 3], vec![1], vec![1]],
+                vec![vec![3], vec![3], vec![1], vec![1]],
+                vec![vec![3, 2, 2], vec![1]],
+                vec![vec![3, 2], vec![2], vec![1]],
+                vec![vec![3], vec![2, 2], vec![1]],
+                vec![vec![3], vec![2], vec![2], vec![1]],
+                vec![vec![3, 2], vec![1], vec![1], vec![1]],
+                vec![vec![3], vec![2], vec![1], vec![1], vec![1]],
+                vec![vec![3], vec![1], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![2, 2, 2, 2]],
+                vec![vec![2, 2, 2], vec![2]],
+                vec![vec![2, 2], vec![2, 2]],
+                vec![vec![2, 2], vec![2], vec![2]],
+                vec![vec![2], vec![2], vec![2], vec![2]],
+                vec![vec![2, 2, 2], vec![1], vec![1]],
+                vec![vec![2, 2], vec![2], vec![1], vec![1]],
+                vec![vec![2], vec![2], vec![2], vec![1], vec![1]],
+                vec![vec![2, 2], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![2], vec![2], vec![1], vec![1], vec![1], vec![1]],
+                vec![
+                    vec![2],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1]
+                ],
+                vec![
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1]
+                ]
+            ]
+        );
+        assert_eq!(
+            g(vec![vec![4, 4]]),
+            vec![
+                vec![vec![4], vec![4]],
+                vec![vec![4, 3], vec![1]],
+                vec![vec![4], vec![3], vec![1]],
+                vec![vec![4, 2, 2]],
+                vec![vec![4, 2], vec![2]],
+                vec![vec![4], vec![2, 2]],
+                vec![vec![4], vec![2], vec![2]],
+                vec![vec![4, 2], vec![1], vec![1]],
+                vec![vec![4], vec![2], vec![1], vec![1]],
+                vec![vec![4], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![3, 3, 2]],
+                vec![vec![3, 3], vec![2]],
+                vec![vec![3, 2], vec![3]],
+                vec![vec![3], vec![3], vec![2]],
+                vec![vec![3, 3], vec![1], vec![1]],
+                vec![vec![3], vec![3], vec![1], vec![1]],
+                vec![vec![3, 2, 2], vec![1]],
+                vec![vec![3, 2], vec![2], vec![1]],
+                vec![vec![3], vec![2, 2], vec![1]],
+                vec![vec![3], vec![2], vec![2], vec![1]],
+                vec![vec![3, 2], vec![1], vec![1], vec![1]],
+                vec![vec![3], vec![2], vec![1], vec![1], vec![1]],
+                vec![vec![3], vec![1], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![2, 2, 2, 2]],
+                vec![vec![2, 2, 2], vec![2]],
+                vec![vec![2, 2], vec![2, 2]],
+                vec![vec![2, 2], vec![2], vec![2]],
+                vec![vec![2], vec![2], vec![2], vec![2]],
+                vec![vec![2, 2, 2], vec![1], vec![1]],
+                vec![vec![2, 2], vec![2], vec![1], vec![1]],
+                vec![vec![2], vec![2], vec![2], vec![1], vec![1]],
+                vec![vec![2, 2], vec![1], vec![1], vec![1], vec![1]],
+                vec![vec![2], vec![2], vec![1], vec![1], vec![1], vec![1]],
+                vec![
+                    vec![2],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1]
+                ],
+                vec![
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1],
+                    vec![1]
+                ]
             ]
         );
 

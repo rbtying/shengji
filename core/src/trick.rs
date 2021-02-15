@@ -37,6 +37,8 @@ pub enum TrickError {
 pub enum TrickDrawPolicy {
     NoProtections,
     LongerTuplesProtected,
+    /// Only allow tractors to be drawn if the original format was also a tractor.
+    OnlyDrawTractorOnTractor,
     NoFormatBasedDraw,
 }
 
@@ -165,7 +167,10 @@ impl TrickFormat {
         self.suit
     }
 
-    pub fn decomposition(&self) -> impl Iterator<Item = Vec<UnitLike>> {
+    pub fn decomposition(
+        &self,
+        trick_draw_policy: TrickDrawPolicy,
+    ) -> impl Iterator<Item = Vec<UnitLike>> {
         let units = self.units.iter().map(UnitLike::from).collect();
         let adj_tuples = self
             .units
@@ -177,15 +182,18 @@ impl TrickFormat {
         // Include the current trick-format, and then the subsequent decomposition if we get that
         // far. Compute the latter lazily, since we usually won't.
         std::iter::once(units).chain(
-            std::iter::once_with(|| {
-                subsequent_decomposition_ordering(adj_tuples)
-                    .into_iter()
-                    .map(|requirements| {
-                        requirements
-                            .into_iter()
-                            .map(|adjacent_tuples| UnitLike { adjacent_tuples })
-                            .collect()
-                    })
+            std::iter::once_with(move || {
+                subsequent_decomposition_ordering(
+                    adj_tuples,
+                    trick_draw_policy != TrickDrawPolicy::OnlyDrawTractorOnTractor,
+                )
+                .into_iter()
+                .map(|requirements| {
+                    requirements
+                        .into_iter()
+                        .map(|adjacent_tuples| UnitLike { adjacent_tuples })
+                        .collect()
+                })
             })
             .flatten(),
         )
@@ -232,7 +240,7 @@ impl TrickFormat {
             .copied()
             .collect::<Vec<_>>();
 
-            for requirement in self.decomposition() {
+            for requirement in self.decomposition(trick_draw_policy) {
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
                     self.trump,
@@ -898,7 +906,9 @@ impl UnitLike {
             0,
             units.map(|u| u.adjacent_tuples),
             |counts, matching| match trick_draw_policy {
-                TrickDrawPolicy::NoFormatBasedDraw | TrickDrawPolicy::NoProtections => true,
+                TrickDrawPolicy::NoFormatBasedDraw
+                | TrickDrawPolicy::NoProtections
+                | TrickDrawPolicy::OnlyDrawTractorOnTractor => true,
                 TrickDrawPolicy::LongerTuplesProtected => !matching
                     .iter()
                     .any(|(card, count)| counts.get(card).copied().unwrap_or_default() > *count),
@@ -1952,7 +1962,9 @@ mod tests {
                         ))
                         .unwrap();
                 }
-                TrickDrawPolicy::LongerTuplesProtected | TrickDrawPolicy::NoProtections => {
+                TrickDrawPolicy::LongerTuplesProtected
+                | TrickDrawPolicy::NoProtections
+                | TrickDrawPolicy::OnlyDrawTractorOnTractor => {
                     // This play should not succeed, because P2 also has S_K, S_K which is a pair.
                     if let Err(TrickError::IllegalPlay) = trick.play_cards(pc!(
                         P2,

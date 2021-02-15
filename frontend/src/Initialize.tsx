@@ -1133,6 +1133,9 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="LongerTuplesProtected">
                 Longer tuple (triple) is protected from shorter (pair)
               </option>
+              <option value="OnlyDrawTractorOnTractor">
+                Only tractors can draw tractors
+              </option>
               <option value="NoFormatBasedDraw">
                 No format-based requirements (pairs do not draw pairs)
               </option>
