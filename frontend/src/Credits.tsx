@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>2/15/2021:</p>
+        <ul>
+          <li>Support protecting tractors from four-of-a-kind.</li>
+        </ul>
         <p>2/4/2021:</p>
         <ul>
           <li>

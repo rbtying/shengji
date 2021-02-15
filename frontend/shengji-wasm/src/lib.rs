@@ -114,7 +114,7 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
     .collect::<Vec<_>>();
 
     let results = trick_format
-        .decomposition()
+        .decomposition(trick_draw_policy)
         .map(|format| {
             let description = UnitLike::multi_description(format.iter().cloned());
             let (playable, units) = UnitLike::check_play(

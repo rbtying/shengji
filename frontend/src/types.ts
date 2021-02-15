@@ -153,7 +153,8 @@ export type JokerBidPolicy =
 export type TrickDrawPolicy =
   | "NoProtections"
   | "LongerTuplesProtected"
-  | "NoFormatBasedDraw";
+  | "NoFormatBasedDraw"
+  | "OnlyDrawTractorOnTractor";
 
 export interface IPropagatedState {
   game_mode: IGameModeSettings;
