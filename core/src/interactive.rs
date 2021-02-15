@@ -355,19 +355,20 @@ impl InteractiveGame {
         actor: PlayerID,
         msgs: impl IntoIterator<Item = MessageVariant>,
     ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
-        Ok(msgs
-            .into_iter()
-            .flat_map(|variant| {
-                let b = BroadcastMessage {
-                    actor,
-                    actor_name: self.state.player_name(actor).ok()?.to_owned(),
-                    variant,
-                };
+        let mut out = vec![];
+        for msg in msgs {
+            let b = BroadcastMessage {
+                actor,
+                actor_name: self.state.player_name(actor)?.to_owned(),
+                variant: msg,
+            };
+            out.extend(
                 b.to_string(|id| self.state.player_name(id))
                     .ok()
-                    .map(|s| (b, s))
-            })
-            .collect())
+                    .map(|s| (b, s)),
+            );
+        }
+        Ok(out)
     }
 }
 
