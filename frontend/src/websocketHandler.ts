@@ -9,7 +9,7 @@ const truncate = (length: number) => <T>(array: T[]): T[] => {
     return array;
   }
 };
-const truncateMessages = truncate(100);
+const truncateMessages = truncate(300);
 
 type WebsocketHandler = (
   state: AppState,
