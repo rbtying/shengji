@@ -804,7 +804,6 @@ impl ExchangePhase {
             friends.clear();
 
             for friend in friend_set.iter() {
-
                 if FriendSelectionPolicy::TrumpsIncluded != self.propagated.friend_selection_policy
                 {
                     if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
