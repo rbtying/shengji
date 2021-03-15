@@ -1789,6 +1789,11 @@ mod tests {
                 S_7,
                 vec![(C_K, true), (S_3, false), (C_3, true), (C_A, false)],
             ),
+            (
+                FriendSelectionPolicy::TrumpsIncluded,
+                S_7,
+                vec![(C_K, true), (S_3, true), (C_3, true), (C_A, true)],
+            ),
         ];
 
         for (friend_selection_policy, landlord_level, friends) in test_cases {
