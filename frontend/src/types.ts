@@ -162,6 +162,7 @@ export interface IPropagatedState {
   kitty_size: number | null;
   friend_selection_policy:
     | "Unrestricted"
+    | "TrumpsIncluded"
     | "HighestCardNotAllowed"
     | "PointCardNotAllowed";
   multiple_join_policy: "Unrestricted" | "NoDoubleJoin";

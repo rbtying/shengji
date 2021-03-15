@@ -804,14 +804,18 @@ impl ExchangePhase {
             friends.clear();
 
             for friend in friend_set.iter() {
-                if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
-                    bail!(
-                        "you can't pick a joker or a {} as your friend",
-                        self.trump.number().as_str()
-                    )
-                }
-                if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
-                    bail!("you can't pick a trump suit as your friend")
+
+                if FriendSelectionPolicy::TrumpsIncluded != self.propagated.friend_selection_policy
+                {
+                    if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
+                        bail!(
+                            "you can't pick a joker or a {} as your friend",
+                            self.trump.number().as_str()
+                        )
+                    }
+                    if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
+                        bail!("you can't pick a trump suit as your friend")
+                    }
                 }
                 if friend.initial_skip >= self.num_decks {
                     bail!("need to pick a card that exists!")
