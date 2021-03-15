@@ -49,6 +49,7 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
             onChange={props.setFriendSelectionPolicy}
           >
             <option value="Unrestricted">Non-trump cards</option>
+            <option value="TrumpsIncluded">All cards, including trumps</option>
             <option value="HighestCardNotAllowed">
               Non-trump cards, except the highest
             </option>

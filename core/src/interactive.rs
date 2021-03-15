@@ -468,6 +468,7 @@ impl BroadcastMessage {
             KittySizeSet { size: Some(size) } => format!("{} set the number of cards in the bottom to {}", n?, size),
             KittySizeSet { size: None } => format!("{} set the number of cards in the bottom to default", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::Unrestricted } => format!("{} allowed any non-trump card to be selected as a friend", n?),
+            FriendSelectionPolicySet { policy: FriendSelectionPolicy::TrumpsIncluded } => format!("{} allowed any card to be selected as a friend", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::HighestCardNotAllowed } => format!("{} disallowed the highest non-trump card, as well as trump cards, from being selected as a friend", n?),
             FriendSelectionPolicySet { policy: FriendSelectionPolicy::PointCardNotAllowed } => format!("{} disallowed point cards, as well as trump cards, from being selected as a friend", n?),
             MultipleJoinPolicySet { policy: MultipleJoinPolicy::Unrestricted } => format!("{} allowed players to join the team multiple times", n?),

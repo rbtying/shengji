@@ -137,6 +137,7 @@ impl_slog_value!(AdvancementPolicy);
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum FriendSelectionPolicy {
     Unrestricted,
+    TrumpsIncluded,
     HighestCardNotAllowed,
     PointCardNotAllowed,
 }

@@ -62,20 +62,26 @@ const FriendSelect = (props: IProps): JSX.Element => {
   };
   const policyFilters: { [s: string]: (c: ICardInfo) => boolean } = {
     PointCardNotAllowed: (c: ICardInfo) => {
-      return c.points === 0 || (rank === "A" && c.number === "K");
+      return (
+        notTrumpFilter(c) &&
+        (c.points === 0 || (rank === "A" && c.number === "K"))
+      );
     },
     HighestCardNotAllowed: (c: ICardInfo) => {
       return (
-        (rank !== "A" && c.number !== "A") || (rank === "A" && c.number !== "K")
+        notTrumpFilter(c) &&
+        ((rank !== "A" && c.number !== "A") ||
+          (rank === "A" && c.number !== "K"))
       );
     },
-    Unrestricted: (_c: ICardInfo) => true,
+    Unrestricted: (c: ICardInfo) => notTrumpFilter(c),
+    TrumpsIncluded: (c: ICardInfo) => true,
   };
   const policyFilter: (c: ICardInfo) => boolean =
     policyFilters[props.friend_selection_policy];
 
   preloadedCards
-    .filter((c: ICardInfo) => notTrumpFilter(c) && policyFilter(c))
+    .filter((c: ICardInfo) => policyFilter(c))
     .forEach((c: ICardInfo) =>
       cardOptions.push({
         label: `${c.number}${c.typ}`,
