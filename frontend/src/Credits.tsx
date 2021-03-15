@@ -43,7 +43,9 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>3/15/2021:</p>
         <ul>
-          <li>Added option in Finding Friends to select friends using trumps.</li>
+          <li>
+            Added option in Finding Friends to select friends using trumps.
+          </li>
         </ul>
         <p>2/15/2021:</p>
         <ul>
