@@ -6,6 +6,7 @@ import {
 
 export interface Settings {
   fourColor: boolean;
+  darkMode: boolean;
   showCardLabels: boolean;
   showLastTrick: boolean;
   beepOnTurn: boolean;
@@ -31,6 +32,7 @@ export interface ISuitOverrides {
 }
 
 const fourColor: State<boolean> = booleanLocalStorageState("four_color");
+const darkMode: State<boolean> = booleanLocalStorageState("dark_mode");
 const svgCards: State<boolean> = booleanLocalStorageState("svg_cards");
 const showCardLabels: State<boolean> = booleanLocalStorageState(
   "show_card_labels"
@@ -66,6 +68,7 @@ const showDebugInfo: State<boolean> = booleanLocalStorageState(
 );
 const settings: State<Settings> = combineState({
   fourColor,
+  darkMode,
   showCardLabels,
   showLastTrick,
   beepOnTurn,
