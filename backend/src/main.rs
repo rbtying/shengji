@@ -134,6 +134,8 @@ pub enum UserMessage {
     Action(interactive::Action),
     Kick(types::PlayerID),
     Beep,
+    ReadyCheck,
+    Ready,
 }
 
 const DUMP_PATH: &str = "/tmp/shengji_state.json";
@@ -566,6 +568,31 @@ async fn handle_user_action(
                 if user.player_id == next_player_id {
                     messages.push((user.clone(), GameMessage::Beep));
                 }
+            }
+        }
+        UserMessage::ReadyCheck => {
+            for user in game.users.values() {
+                messages.push((
+                    user.clone(),
+                    GameMessage::Message {
+                        from: name.to_owned(),
+                        message: "Is everyone ready?".to_owned(),
+                    },
+                ));
+                if user.player_id != caller.player_id {
+                    messages.push((user.clone(), GameMessage::ReadyCheck));
+                }
+            }
+        }
+        UserMessage::Ready => {
+            for user in game.users.values() {
+                messages.push((
+                    user.clone(),
+                    GameMessage::Message {
+                        from: name.to_owned(),
+                        message: "I'm ready!".to_owned(),
+                    },
+                ));
             }
         }
         UserMessage::Message(m) => {

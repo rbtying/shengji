@@ -16,6 +16,7 @@ pub enum GameMessage {
         message: String,
     },
     Beep,
+    ReadyCheck,
     Error(String),
     Header {
         messages: Vec<String>,

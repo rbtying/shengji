@@ -90,6 +90,25 @@ const beepHandler = (message: IGameMessage): void => {
   return null;
 };
 
+let lastReadyChecked = performance.now();
+const readyCheckHandler = (
+  message: IGameMessage,
+  send: (msg: any) => void
+): void => {
+  if (message === "ReadyCheck") {
+    const now = performance.now();
+    // Rate-limit beeps to prevent annoyance.
+    if (now - lastReadyChecked >= 1000) {
+      beep(3, 261.63, 200);
+      lastReadyChecked = now;
+      if (confirm("Are you ready to start the game?")) {
+        send("Ready");
+      }
+    }
+  }
+  return null;
+};
+
 const gameFinishedHandler: WebsocketHandler = (
   state: AppState,
   message: IGameMessageUnion
@@ -156,10 +175,11 @@ const allHandlers: WebsocketHandler[] = [
 
 const composedHandlers = (
   state: AppState,
-  message: IGameMessage
+  message: IGameMessage,
+  send: (msg: any) => void
 ): Partial<AppState> => {
   let partials = {};
-  if (message !== "Beep") {
+  if (message !== "Beep" && message !== "ReadyCheck") {
     allHandlers.forEach((h) => {
       const partial = h(state, message);
       partials = { ...partials, ...partial };
@@ -167,6 +187,7 @@ const composedHandlers = (
     });
   }
   beepHandler(message);
+  readyCheckHandler(message, send);
   return partials;
 };
 

@@ -135,7 +135,9 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
           updateStateRef.current({
             connected: true,
             everConnected: true,
-            ...websocketHandler(stateRef.current, message),
+            ...websocketHandler(stateRef.current, message, (msg) => {
+              ws.send(JSON.stringify(msg));
+            }),
           });
         }
       };
@@ -172,6 +174,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
     setTimerRef.current(localTimerRef);
     websocket?.send(JSON.stringify(value));
   };
+
   // TODO(read this from consumers instead of globals)
   (window as any).send = send;
 
