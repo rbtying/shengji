@@ -1,4 +1,4 @@
-export type IGameMessage = "Beep" | IGameMessageUnion;
+export type IGameMessage = "Beep" | "ReadyCheck" | IGameMessageUnion;
 export interface IGameMessageUnion {
   Broadcast?: IGameMessageBroadcast;
   Error?: string;

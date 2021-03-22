@@ -45,6 +45,7 @@ const ChangeLog = (): JSX.Element => {
         <ul>
           <li>Added option to view (most of) the UI in dark mode.</li>
           <li>Added button to randomize the player order.</li>
+          <li>Added button to check if everyone is ready.</li>
         </ul>
         <p>3/15/2021:</p>
         <ul>

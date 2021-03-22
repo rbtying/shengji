@@ -2,6 +2,7 @@ import * as React from "react";
 import ReactTooltip from "react-tooltip";
 import * as ReactModal from "react-modal";
 import { IEmojiData } from "emoji-picker-react";
+import ReadyCheck from "./ReadyCheck";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import KittySizeSelector from "./KittySizeSelector";
@@ -1044,16 +1045,20 @@ const Initialize = (props: IProps): JSX.Element => {
         </a>
       </p>
       {props.state.propagated.players.length >= 4 ? (
-        <button
-          disabled={
-            props.state.propagated.game_start_policy === "AllowLandlordOnly" &&
-            landlordIndex !== -1 &&
-            props.state.propagated.players[landlordIndex].name !== props.name
-          }
-          onClick={startGame}
-        >
-          Start game
-        </button>
+        <>
+          <button
+            disabled={
+              props.state.propagated.game_start_policy ===
+                "AllowLandlordOnly" &&
+              landlordIndex !== -1 &&
+              props.state.propagated.players[landlordIndex].name !== props.name
+            }
+            onClick={startGame}
+          >
+            Start game
+          </button>
+          <ReadyCheck />
+        </>
       ) : (
         <h2>Waiting for players...</h2>
       )}
