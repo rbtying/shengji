@@ -304,8 +304,12 @@ button.normal {
 }
 
 .next {
-  color: blue;
+  color: #1933f9;
   font-weight: bold;
+}
+
+.dark-mode .next {
+  color: #96a2fa;
 }
 
 .landlord {
@@ -314,6 +318,11 @@ button.normal {
 
 .landlord .card svg {
   background: #ddd;
+}
+
+.dark-mode .landlord,
+.dark-mode .landlord .card svg {
+  background: #333;
 }
 
 .observer {
