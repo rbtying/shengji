@@ -39,9 +39,16 @@ const range = <T>(count: number, fn: (idx: number) => T): T[] =>
     .fill(undefined)
     .map((_, idx) => fn(idx));
 
+const shuffled = <T>(array: T[]): T[] =>
+  array
+    .map((a) => ({ sort: Math.random(), value: a }))
+    .sort((a, b) => a.sort - b.sort)
+    .map((a) => a.value);
+
 export default {
   mapObject,
   minus,
   range,
   sum,
+  shuffled,
 };

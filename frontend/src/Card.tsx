@@ -26,7 +26,12 @@ const Card = (props: IProps): JSX.Element => {
         <CardCanvas
           card={props.card}
           height={props.smaller ? 95 : 120}
-          suit={classNames("unknown", settings.fourColor ? "four-color" : null)}
+          suit={classNames(
+            "unknown",
+            settings.fourColor ? "four-color" : null,
+            settings.darkMode ? "dark-mode" : null
+          )}
+          backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
       </span>
     );
@@ -65,11 +70,13 @@ const Card = (props: IProps): JSX.Element => {
           height={props.smaller ? 95 : 120}
           suit={classNames(
             cardInfo.typ,
-            settings.fourColor ? "four-color" : null
+            settings.fourColor ? "four-color" : null,
+            settings.darkMode ? "dark-mode" : null
           )}
           colorOverride={
             settings.suitColorOverrides[cardInfo.typ as keyof ISuitOverrides]
           }
+          backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
       </span>
     );
@@ -130,6 +137,7 @@ interface ICardCanvasProps {
   card: string;
   height: number;
   suit: string;
+  backgroundColor?: string;
   colorOverride?: string;
 }
 
@@ -163,7 +171,9 @@ const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
       width={effectiveWidth}
     >
       <rect
-        fill="#fff"
+        fill={
+          props.backgroundColor !== undefined ? props.backgroundColor : "#fff"
+        }
         x={textMetrics.actualBoundingBoxLeft}
         y={0}
         width={textMetrics.width - 2}

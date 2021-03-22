@@ -1,6 +1,15 @@
 body {
   font-family: sans-serif;
-  margin: 0 20px;
+  margin: 0;
+  padding: 0;
+}
+
+.dark-mode {
+  background: #000;
+}
+
+.dark-mode #root {
+  color: #fff;
 }
 
 button {
@@ -15,6 +24,10 @@ button.normal {
   cursor: pointer;
   margin: 2px;
   line-height: 1em;
+}
+
+.dark-mode .icon-button {
+  color: #fff;
 }
 
 .header-message {
@@ -41,6 +54,10 @@ button.normal {
   border: 1px #000 solid;
   padding: 10px;
   line-height: 1em;
+}
+
+.dark-mode .player {
+  border-color: #fff;
 }
 
 .errors {
@@ -77,6 +94,10 @@ button.normal {
   margin-left: 1px;
 }
 
+.dark-mode .card > svg {
+  background: #000;
+}
+
 .card:first-child > svg {
   padding: 0;
 }
@@ -96,6 +117,10 @@ button.normal {
   z-index: 1;
   background: #fff;
   width: 1.5em;
+}
+
+.dark-mode .card .card-label {
+  background: #000;
 }
 
 .more .card .card-label {
@@ -165,6 +190,24 @@ button.normal {
   }
 }
 
+@keyframes blinkingTextDark {
+  0% {
+    color: #fff;
+  }
+  50% {
+    color: #555;
+  }
+  100% {
+    color: #fff;
+  }
+}
+
+.dark-mode .notify .card,
+.dark-mode .card.notify {
+  animation: blinkingTextDark 1.5s 1;
+  color: #fff;
+}
+
 .card:last-child {
   margin-right: 0;
 }
@@ -227,6 +270,26 @@ button.normal {
   color: #bb0313;
 }
 
+.dark-mode .♧,
+.dark-mode.♧ {
+  color: #fff;
+}
+
+.dark-mode .♤,
+.dark-mode.♤,
+.dark-mode .four-color .♤,
+.dark-mode .four-color.♤ {
+  color: #fff;
+}
+
+.dark-mode .🃟,
+.dark-mode.🃟,
+.dark-mode .four-color .🃟,
+.dark-mode .four-color.🃟,
+.darkmode.four-color.🃟 {
+  color: #fff;
+}
+
 .hand p {
   margin: 0;
   text-align: center;
@@ -241,8 +304,12 @@ button.normal {
 }
 
 .next {
-  color: blue;
+  color: #1933f9;
   font-weight: bold;
+}
+
+.dark-mode .next {
+  color: #96a2fa;
 }
 
 .landlord {
@@ -251,6 +318,11 @@ button.normal {
 
 .landlord .card svg {
   background: #ddd;
+}
+
+.dark-mode .landlord,
+.dark-mode .landlord .card svg {
+  background: #333;
 }
 
 .observer {
@@ -266,9 +338,14 @@ button.normal {
   margin-top: 20px;
 }
 
+.dark-mode .chat {
+  border: #222;
+}
+
 .game {
   min-width: 690px;
   min-height: 660px;
+  padding: 0 20px;
   width: 70%;
   display: inline-block;
 }
@@ -298,6 +375,10 @@ button.normal {
   display: inline-block;
   padding: 10px;
   border: 1px solid #000;
+}
+
+.dark-mode .labeled-play {
+  border-color: #fff;
 }
 
 .labeled-play .label {
