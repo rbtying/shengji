@@ -8,6 +8,7 @@ import KittySizeSelector from "./KittySizeSelector";
 import RankSelector from "./RankSelector";
 import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
+import { RandomizePlayersButton } from "./RandomizePlayersButton";
 import { IInitializePhase, IPlayer, IPropagatedState, IDeck } from "./types";
 import { WebsocketContext } from "./WebsocketProvider";
 
@@ -1056,6 +1057,9 @@ const Initialize = (props: IProps): JSX.Element => {
       ) : (
         <h2>Waiting for players...</h2>
       )}
+      <RandomizePlayersButton players={props.state.propagated.players}>
+        Randomize player order
+      </RandomizePlayersButton>
       <Kicker
         players={props.state.propagated.players}
         onKick={(playerId: number) => send({ Kick: playerId })}
