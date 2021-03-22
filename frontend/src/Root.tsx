@@ -51,7 +51,9 @@ const Root = (): JSX.Element => {
   if (state.connected) {
     if (state.gameState === null || state.roomName.length !== 16) {
       return (
-        <div>
+        <div
+          className={classNames(state.settings.darkMode ? "dark-mode" : null)}
+        >
           {headerMessages}
           <Errors errors={state.errors} />
           <div className="game">
@@ -77,8 +79,9 @@ const Root = (): JSX.Element => {
       return (
         <div
           className={classNames(
-            state.settings.fourColor ? "four-color" : "",
-            state.settings.showCardLabels ? "always-show-labels" : ""
+            state.settings.fourColor ? "four-color" : null,
+            state.settings.showCardLabels ? "always-show-labels" : null,
+            state.settings.darkMode ? "dark-mode" : null
           )}
         >
           {headerMessages}
