@@ -38,6 +38,18 @@ const Root = (): JSX.Element => {
     setPreviousHeaderMessages(state.headerMessages);
   }, [state.headerMessages]);
 
+  React.useEffect(() => {
+    if (state.settings.darkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+
+    return () => {
+      document.body.classList.remove("dark-mode");
+    };
+  }, [state.settings.darkMode]);
+
   const headerMessages = showHeaderMessages ? (
     <div
       className="header-message"
@@ -51,9 +63,7 @@ const Root = (): JSX.Element => {
   if (state.connected) {
     if (state.gameState === null || state.roomName.length !== 16) {
       return (
-        <div
-          className={classNames(state.settings.darkMode ? "dark-mode" : null)}
-        >
+        <div>
           {headerMessages}
           <Errors errors={state.errors} />
           <div className="game">
@@ -80,8 +90,7 @@ const Root = (): JSX.Element => {
         <div
           className={classNames(
             state.settings.fourColor ? "four-color" : null,
-            state.settings.showCardLabels ? "always-show-labels" : null,
-            state.settings.darkMode ? "dark-mode" : null
+            state.settings.showCardLabels ? "always-show-labels" : null
           )}
         >
           {headerMessages}

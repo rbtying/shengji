@@ -6,6 +6,9 @@ body {
 
 .dark-mode {
   background: #000;
+}
+
+.dark-mode #root {
   color: #fff;
 }
 
