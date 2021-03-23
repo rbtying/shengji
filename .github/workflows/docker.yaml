@@ -16,7 +16,6 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            rbtying/shengji
             ghcr.io/rbtying/shengji
           # add git short SHA as Docker tag
           tag-sha: true
