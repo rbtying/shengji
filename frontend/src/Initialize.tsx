@@ -758,6 +758,14 @@ const Initialize = (props: IProps): JSX.Element => {
       (p) => p.name === props.name
     );
   }
+  if (currentPlayer === undefined) {
+    currentPlayer = {
+      id: -1,
+      name: props.name,
+      level: "",
+      metalevel: 0,
+    };
+  }
 
   const landlordIndex = props.state.propagated.players.findIndex(
     (p) => p.id === props.state.propagated.landlord

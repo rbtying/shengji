@@ -74,6 +74,14 @@ const Play = (props: IProps): JSX.Element => {
   } else {
     isSpectator = false;
   }
+  if (currentPlayer === undefined) {
+    currentPlayer = {
+      id: -1,
+      name: props.name,
+      level: "",
+      metalevel: 0,
+    };
+  }
 
   React.useEffect(() => {
     // When the hands change, our `selected` cards may become invalid, since we
