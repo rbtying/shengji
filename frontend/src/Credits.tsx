@@ -379,7 +379,7 @@ const ChangeLog = (): JSX.Element => {
 };
 
 const Credits = (): JSX.Element => (
-  <p>
+  <p style={{ padding: "0 20px" }}>
     Made by Robert Ying, Abra Shen, and other{" "}
     <a
       href="https://github.com/rbtying/shengji/graphs/contributors"
