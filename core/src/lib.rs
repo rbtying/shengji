@@ -2,6 +2,7 @@
 #![allow(clippy::implicit_hasher)]
 #![allow(clippy::should_implement_trait)]
 #![allow(clippy::new_without_default)]
+#![allow(clippy::upper_case_acronyms)]
 
 #[macro_use]
 pub mod settings;

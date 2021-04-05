@@ -175,11 +175,11 @@ impl GameScoringParameters {
             non_landlord_delta: 1,
         });
 
-        Ok(MaterializedScoringParameters::new(
+        MaterializedScoringParameters::new(
             landlord_wins.into_iter().rev(),
             landlord_loses,
             decks.iter().map(|d| d.points()).sum::<usize>() as isize,
-        )?)
+        )
     }
 }
 

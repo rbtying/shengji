@@ -39,7 +39,7 @@ impl InteractiveGame {
 
     pub fn kick(&mut self, id: PlayerID) -> Result<Vec<(BroadcastMessage, String)>, Error> {
         let msgs = self.state.kick(id)?;
-        Ok(self.hydrate_messages(id, msgs)?)
+        self.hydrate_messages(id, msgs)
     }
 
     pub fn dump_state(&self) -> Result<GameState, Error> {
@@ -55,7 +55,7 @@ impl InteractiveGame {
     }
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
-        Ok(self.state.next_player()?)
+        self.state.next_player()
     }
 
     #[allow(clippy::cognitive_complexity)]
@@ -347,7 +347,7 @@ impl InteractiveGame {
             _ => bail!("not supported in current phase"),
         };
 
-        Ok(self.hydrate_messages(id, msgs)?)
+        self.hydrate_messages(id, msgs)
     }
 
     fn hydrate_messages(
