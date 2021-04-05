@@ -202,13 +202,16 @@ async fn main() {
         }
     }
 
-    let games = warp::any().map(move || (games.clone(), stats.clone()));
+    let periodic_task = periodically_dump_state(games.clone(), stats.clone());
 
-    let api = warp::path("api").and(warp::ws()).and(games.clone()).map(
-        |ws: warp::ws::Ws, (games, stats)| {
+    let games_filter = warp::any().map(move || (games.clone(), stats.clone()));
+
+    let api = warp::path("api")
+        .and(warp::ws())
+        .and(games_filter.clone())
+        .map(|ws: warp::ws::Ws, (games, stats)| {
             ws.on_upgrade(move |socket| user_connected(socket, games, stats))
-        },
-    );
+        });
 
     let cards = warp::path("cards.json").map(|| warp::reply::json(&*CARDS_JSON));
 
@@ -229,10 +232,10 @@ async fn main() {
     });
 
     let dump_state = warp::path("full_state.json")
-        .and(games.clone())
+        .and(games_filter.clone())
         .and_then(|(game, stats)| dump_state(game, stats));
     let game_stats = warp::path("stats")
-        .and(games)
+        .and(games_filter)
         .and_then(|(game, stats)| get_stats(game, stats));
 
     #[cfg(feature = "dynamic")]
@@ -258,7 +261,14 @@ async fn main() {
         .or(static_routes)
         .or(rules);
 
-    warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+    let serve_task = warp::serve(routes).run(([0, 0, 0, 0], 3030));
+
+    tokio::select! {
+        () = periodic_task => unreachable!(),
+        () = serve_task => {
+            info!(init_logger, "Shutting down")
+        },
+    }
 }
 
 async fn try_read_file<M: serde::de::DeserializeOwned>(path: &'_ str) -> Result<M, io::Error> {
@@ -266,6 +276,14 @@ async fn try_read_file<M: serde::de::DeserializeOwned>(path: &'_ str) -> Result<
     let mut data = vec![];
     f.read_to_end(&mut data).await?;
     Ok(serde_json::from_slice(&data)?)
+}
+
+async fn periodically_dump_state(games: Games, stats: Arc<Mutex<InMemoryStats>>) {
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
+    loop {
+        interval.tick().await;
+        let _ = dump_state(games.clone(), stats.clone()).await;
+    }
 }
 
 async fn dump_state(
