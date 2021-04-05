@@ -24,7 +24,7 @@ slog-async = "2.5"
 slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 static_dir = "0.1.3"
-tokio = { version = "0.2", features = ["macros", "fs"] }
+tokio = { version = "0.2", features = ["macros", "fs", "time"] }
 warp = "0.2"
 zstd = "0.5"
 
