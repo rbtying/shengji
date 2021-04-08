@@ -50,6 +50,7 @@ const CheckpointCircle = (props: CheckpointCircleProps): JSX.Element => {
 };
 
 const convertToPercentage = (proportion: number): string => {
+  proportion = Math.max(0, Math.min(1, proportion));
   return (100 * proportion).toFixed(2) + "%";
 };
 
