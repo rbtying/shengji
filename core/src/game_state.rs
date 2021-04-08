@@ -107,6 +107,9 @@ impl GameState {
         }
     }
 
+    // Note: Clippy bug here which incorrectly triggers on .map(|()| vec![]):
+    // https://github.com/rust-lang/rust-clippy/issues/7224
+    #[allow(clippy::redundant_closure)]
     pub fn kick(&mut self, id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         match self {
             GameState::Initialize(ref mut p) => p.remove_player(id),
