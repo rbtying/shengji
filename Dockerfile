@@ -1,7 +1,5 @@
-FROM node:current-alpine as base
-RUN apk add --no-cache musl-dev
-RUN apk add --no-cache curl
-RUN apk add --no-cache build-base
+FROM node:current-slim as base
+RUN apt-get update && apt-get -y install curl build-essential
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -66,7 +64,7 @@ WORKDIR /app
 RUN cargo build --release --bin shengji
 
 # Executable
-FROM alpine
+FROM gcr.io/distroless/cc:debug
 WORKDIR /app
 COPY --from=builder /app/target/release/shengji .
 ENTRYPOINT ["/app/shengji"]
