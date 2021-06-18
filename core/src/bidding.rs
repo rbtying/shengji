@@ -7,6 +7,7 @@ use crate::types::{Card, PlayerID};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BidPolicy {
+    JokerOrHigherSuit,
     JokerOrGreaterLength,
     GreaterLength,
 }
@@ -136,18 +137,31 @@ impl Bid {
                         if new_bid.count > existing_bid.count {
                             valid_bids.push(new_bid);
                         } else if new_bid.count == existing_bid.count {
-                            match (new_bid.card, existing_bid.card) {
-                                (Card::BigJoker, Card::BigJoker) => (),
-                                (Card::BigJoker, _) => {
-                                    if bid_policy == BidPolicy::JokerOrGreaterLength {
-                                        valid_bids.push(new_bid)
-                                    }
-                                }
-                                (Card::SmallJoker, Card::BigJoker)
-                                | (Card::SmallJoker, Card::SmallJoker) => (),
-                                (Card::SmallJoker, _) => {
-                                    if bid_policy == BidPolicy::JokerOrGreaterLength {
-                                        valid_bids.push(new_bid)
+                            match bid_policy {
+                                BidPolicy::JokerOrHigherSuit
+                                | BidPolicy::JokerOrGreaterLength => {
+                                    match (new_bid.card, existing_bid.card) {
+                                        (Card::BigJoker, Card::BigJoker) => (),
+                                        (Card::BigJoker, _) =>
+                                        {
+                                            valid_bids.push(new_bid)
+                                        },
+                                        (Card::SmallJoker, Card::BigJoker)
+                                        | (Card::SmallJoker, Card::SmallJoker) => (),
+                                        (Card::SmallJoker, _) =>
+                                        {
+                                            valid_bids.push(new_bid)
+                                        },
+                                        _ => {
+                                            // The new bid count must have a size of at least 2 in
+                                            // order to be compared by suit ranking
+                                            if bid_policy == BidPolicy::JokerOrHigherSuit
+                                                && new_bid.card.suit() > existing_bid.card.suit()
+                                                && new_bid.count > 1
+                                            {
+                                                valid_bids.push(new_bid)
+                                            }
+                                        },
                                     }
                                 }
                                 _ => (),

@@ -637,12 +637,12 @@ impl fmt::Debug for Number {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Suit {
-    Clubs,
     Diamonds,
-    Spades,
+    Clubs,
     Hearts,
+    Spades,
 }
 pub const ALL_SUITS: [Suit; 4] = [Suit::Spades, Suit::Hearts, Suit::Diamonds, Suit::Clubs];
 
