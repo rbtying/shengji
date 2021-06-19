@@ -138,20 +138,13 @@ impl Bid {
                             valid_bids.push(new_bid);
                         } else if new_bid.count == existing_bid.count {
                             match bid_policy {
-                                BidPolicy::JokerOrHigherSuit
-                                | BidPolicy::JokerOrGreaterLength => {
+                                BidPolicy::JokerOrHigherSuit | BidPolicy::JokerOrGreaterLength => {
                                     match (new_bid.card, existing_bid.card) {
                                         (Card::BigJoker, Card::BigJoker) => (),
-                                        (Card::BigJoker, _) =>
-                                        {
-                                            valid_bids.push(new_bid)
-                                        },
+                                        (Card::BigJoker, _) => valid_bids.push(new_bid),
                                         (Card::SmallJoker, Card::BigJoker)
                                         | (Card::SmallJoker, Card::SmallJoker) => (),
-                                        (Card::SmallJoker, _) =>
-                                        {
-                                            valid_bids.push(new_bid)
-                                        },
+                                        (Card::SmallJoker, _) => valid_bids.push(new_bid),
                                         _ => {
                                             // The new bid count must have a size of at least 2 in
                                             // order to be compared by suit ranking
@@ -161,7 +154,7 @@ impl Bid {
                                             {
                                                 valid_bids.push(new_bid)
                                             }
-                                        },
+                                        }
                                     }
                                 }
                                 _ => (),
@@ -324,7 +317,7 @@ mod tests {
     use crate::hands::Hands;
     use crate::player::Player;
     use crate::types::{
-        cards::{D_2, C_2, H_2, S_2},
+        cards::{C_2, D_2, H_2, S_2},
         Card, PlayerID,
     };
 
@@ -516,9 +509,7 @@ mod tests {
             (
                 vec![b!(p, C_2, 1), b!(PlayerID(1), D_2, 3)],
                 BidReinforcementPolicy::ReinforceWhileWinning,
-                vec![
-                    b!(p, C_2, 3)
-                ],
+                vec![b!(p, C_2, 3)],
             ),
         ];
 
