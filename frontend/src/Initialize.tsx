@@ -452,6 +452,10 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             value={props.state.propagated.bid_policy}
             onChange={props.setBidPolicy}
           >
+            <option value="JokerOrHigherSuit">
+              Joker or higher suit bids to outbid non-joker bids with the same
+              number of cards
+            </option>
             <option value="JokerOrGreaterLength">
               Joker bids to outbid non-joker bids with the same number of cards
             </option>

@@ -475,6 +475,7 @@ impl BroadcastMessage {
             MultipleJoinPolicySet { policy: MultipleJoinPolicy::NoDoubleJoin } => format!("{} prevented players from joining the team multiple times", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByWinningBid } => format!("{} set winning bid to decide both landlord and trump", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid } => format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
+            BidPolicySet { policy: BidPolicy::JokerOrHigherSuit } => format!("{} allowed joker or higher suit bids to outbid non-joker bids with the same number of cards", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength } => format!("{} allowed joker bids to outbid non-joker bids with the same number of cards", n?),
             BidPolicySet { policy: BidPolicy::GreaterLength } => format!("{} required all bids to have more cards than the previous bids", n?),
             BidReinforcementPolicySet { policy: BidReinforcementPolicy::ReinforceWhileWinning } => format!("{} allowed reinforcing the winning bid", n?),

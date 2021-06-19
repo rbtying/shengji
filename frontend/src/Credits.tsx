@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>6/18/2021:</p>
+        <ul>
+          <li>
+            Added option for higher suit non-joker bids to outbid non-joker
+            bids.
+          </li>
+        </ul>
         <p>3/21/2021:</p>
         <ul>
           <li>Added option to view (most of) the UI in dark mode.</li>
