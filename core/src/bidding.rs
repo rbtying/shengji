@@ -324,7 +324,7 @@ mod tests {
     use crate::hands::Hands;
     use crate::player::Player;
     use crate::types::{
-        cards::{C_2, S_2},
+        cards::{D_2, C_2, H_2, S_2},
         Card, PlayerID,
     };
 
@@ -449,6 +449,89 @@ mod tests {
                     None,
                     0,
                     BidPolicy::JokerOrGreaterLength,
+                    rpol,
+                    JokerBidPolicy::BothTwoOrMore,
+                    3,
+                )
+                .unwrap()
+                .into_iter()
+                .collect::<HashSet<_>>(),
+                results.into_iter().collect::<HashSet<_>>()
+            );
+        }
+    }
+
+    #[test]
+    fn test_valid_bids_joker_or_higher_suit() {
+        let p = PlayerID(0);
+        let mut h = Hands::new(vec![p]);
+        h.add(
+            p,
+            vec![
+                C_2,
+                C_2,
+                C_2,
+                S_2,
+                S_2,
+                Card::SmallJoker,
+                Card::SmallJoker,
+                Card::BigJoker,
+                Card::BigJoker,
+            ],
+        )
+        .unwrap();
+        let players = vec![Player::new(p, "p0".into())];
+
+        let test_cases_higher_suit = vec![
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), S_2, 2)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, C_2, 3),
+                    b!(p, Card::BigJoker, 2),
+                    b!(p, Card::SmallJoker, 2),
+                ],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), H_2, 2)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, S_2, 2),
+                    b!(p, C_2, 3),
+                    b!(p, Card::BigJoker, 2),
+                    b!(p, Card::SmallJoker, 2),
+                ],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), D_2, 2)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, S_2, 2),
+                    b!(p, C_2, 2),
+                    b!(p, C_2, 3),
+                    b!(p, Card::BigJoker, 2),
+                    b!(p, Card::SmallJoker, 2),
+                ],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), D_2, 3)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, C_2, 3)
+                ],
+            ),
+        ];
+
+        for (bids, rpol, results) in test_cases_higher_suit {
+            assert_eq!(
+                Bid::valid_bids(
+                    p,
+                    &bids,
+                    &h,
+                    &players,
+                    None,
+                    0,
+                    BidPolicy::JokerOrHigherSuit,
                     rpol,
                     JokerBidPolicy::BothTwoOrMore,
                     3,
