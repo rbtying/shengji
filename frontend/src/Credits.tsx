@@ -44,7 +44,8 @@ const ChangeLog = (): JSX.Element => {
         <p>6/18/2021:</p>
         <ul>
           <li>
-            Added option for higher suit non-joker bids to outbid non-joker bids.
+            Added option for higher suit non-joker bids to outbid non-joker
+            bids.
           </li>
         </ul>
         <p>3/21/2021:</p>
