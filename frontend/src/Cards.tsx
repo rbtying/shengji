@@ -23,11 +23,8 @@ const Cards = (props: IProps): JSX.Element => {
 
   const { hands, selectedCards, notifyEmpty } = props;
   const { sortAndGroupCards } = React.useContext(WasmContext);
-  const {
-    separateCardsBySuit,
-    disableSuitHighlights,
-    reverseCardOrder,
-  } = React.useContext(SettingsContext);
+  const { separateCardsBySuit, disableSuitHighlights, reverseCardOrder } =
+    React.useContext(SettingsContext);
   const handleSelect = (card: string) => () => {
     if (props.onCardClick !== undefined) {
       props.onCardClick(card);

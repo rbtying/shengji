@@ -96,8 +96,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     }
     this.could_draw = canDraw;
 
-    let next = this.props.state.propagated.players[this.props.state.position]
-      .id;
+    let next =
+      this.props.state.propagated.players[this.props.state.position].id;
     if (
       this.props.state.deck.length === 0 &&
       this.props.state.bids.length > 0

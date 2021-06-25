@@ -2,13 +2,15 @@ import { AppState } from "./AppStateProvider";
 import beep from "./beep";
 import { IGameMessage, IGameMessageUnion } from "./types";
 
-const truncate = (length: number) => <T>(array: T[]): T[] => {
-  if (array.length > length) {
-    return array.slice(array.length - length);
-  } else {
-    return array;
-  }
-};
+const truncate =
+  (length: number) =>
+  <T>(array: T[]): T[] => {
+    if (array.length > length) {
+      return array.slice(array.length - length);
+    } else {
+      return array;
+    }
+  };
 const truncateMessages = truncate(300);
 
 type WebsocketHandler = (

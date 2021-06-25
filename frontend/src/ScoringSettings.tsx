@@ -209,10 +209,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
             onChange={(evt) => {
               evt.preventDefault();
               if (evt.target.value === "none") {
-                const {
-                  [props.decks.length]: _,
-                  ...adjustments
-                } = props.params.step_adjustments;
+                const { [props.decks.length]: _, ...adjustments } =
+                  props.params.step_adjustments;
                 updateSettings({ step_adjustments: adjustments });
               } else {
                 const adjustments = {
