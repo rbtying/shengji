@@ -5,6 +5,7 @@ on:
       - master
     tags:
       - 'v*'
+      - 'shengji-v*'
   pull_request:
     branches:
       - 'master'
@@ -20,6 +21,13 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3
         with:
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
           # list of Docker images to use as base name for tags
           images: |
             ghcr.io/rbtying/shengji
