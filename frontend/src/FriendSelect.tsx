@@ -23,15 +23,14 @@ interface Option {
 }
 
 const FriendSelect = (props: IProps): JSX.Element => {
-  const handleChange = (transform: (e: Option) => Partial<FriendSelection>) => (
-    value: Option
-  ) => {
-    props.onChange({
-      card: props.friend.card,
-      initial_skip: props.friend.initial_skip,
-      ...transform(value),
-    });
-  };
+  const handleChange =
+    (transform: (e: Option) => Partial<FriendSelection>) => (value: Option) => {
+      props.onChange({
+        card: props.friend.card,
+        initial_skip: props.friend.initial_skip,
+        ...transform(value),
+      });
+    };
 
   const handleCardChange = handleChange((select) => ({
     card: select.value,

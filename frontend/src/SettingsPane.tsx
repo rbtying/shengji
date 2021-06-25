@@ -173,7 +173,8 @@ const SettingsPane = (props: IProps): JSX.Element => {
               type="checkbox"
               checked={settings.unsetAutoPlayWhenWinnerChanges}
               onChange={handleChange({
-                unsetAutoPlayWhenWinnerChanges: !settings.unsetAutoPlayWhenWinnerChanges,
+                unsetAutoPlayWhenWinnerChanges:
+                  !settings.unsetAutoPlayWhenWinnerChanges,
               })}
             />
           </Cell>

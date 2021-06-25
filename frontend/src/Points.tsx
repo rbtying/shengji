@@ -125,14 +125,12 @@ const Points = (props: IProps): JSX.Element => {
 
   thresholdStr += ` (next threshold: ${nextThreshold}分)`;
 
-  const {
-    results: scoreTransitions,
-    total_points: totalPoints,
-  } = explainScoring({
-    params: props.gameScoringParameters,
-    smaller_landlord_team_size: props.smallerTeamSize,
-    decks: props.decks,
-  });
+  const { results: scoreTransitions, total_points: totalPoints } =
+    explainScoring({
+      params: props.gameScoringParameters,
+      smaller_landlord_team_size: props.smallerTeamSize,
+      decks: props.decks,
+    });
 
   return (
     <div className="points">

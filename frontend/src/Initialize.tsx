@@ -621,30 +621,28 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
 
-  const onSelectString = (
-    action: string
-  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({ Action: { [action]: evt.target.value } });
-    }
-  };
+  const onSelectString =
+    (action: string): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) =>
+    (evt: React.ChangeEvent<HTMLSelectElement>): void => {
+      evt.preventDefault();
+      if (evt.target.value !== "") {
+        send({ Action: { [action]: evt.target.value } });
+      }
+    };
 
-  const onSelectStringDefault = (
-    action: string,
-    defaultValue: null | string
-  ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) => (
-    evt: React.ChangeEvent<HTMLSelectElement>
-  ): void => {
-    evt.preventDefault();
-    if (evt.target.value !== "") {
-      send({ Action: { [action]: evt.target.value } });
-    } else {
-      send({ Action: { [action]: defaultValue } });
-    }
-  };
+  const onSelectStringDefault =
+    (
+      action: string,
+      defaultValue: null | string
+    ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) =>
+    (evt: React.ChangeEvent<HTMLSelectElement>): void => {
+      evt.preventDefault();
+      if (evt.target.value !== "") {
+        send({ Action: { [action]: evt.target.value } });
+      } else {
+        send({ Action: { [action]: defaultValue } });
+      }
+    };
 
   const setFriendSelectionPolicy = onSelectString("SetFriendSelectionPolicy");
   const setMultipleJoinPolicy = onSelectString("SetMultipleJoinPolicy");

@@ -14,8 +14,7 @@ const WasmProvider = React.lazy(async () => await import("./WasmProvider"));
 
 const bootstrap = (): void => {
   Sentry.init({
-    dsn:
-      "https://dfdd871554eb4ab48de73a6575c1117a@o476591.ingest.sentry.io/5516535",
+    dsn: "https://dfdd871554eb4ab48de73a6575c1117a@o476591.ingest.sentry.io/5516535",
     release: (window as any)._VERSION,
     ignoreErrors: [
       /Promise.*is.*defined/,

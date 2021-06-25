@@ -37,7 +37,10 @@ const Confetti = (props: IProps): JSX.Element => {
             particleCount: particleCount,
             origin: { x: randomInRange(0.2, 0.8), y: Math.random() - 0.2 },
             angle: randomInRange(65, 115),
-          });
+          }).then(
+            () => {},
+            () => {}
+          );
         }
       }, 500);
 

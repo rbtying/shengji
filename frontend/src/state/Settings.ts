@@ -34,16 +34,13 @@ export interface ISuitOverrides {
 const fourColor: State<boolean> = booleanLocalStorageState("four_color");
 const darkMode: State<boolean> = booleanLocalStorageState("dark_mode");
 const svgCards: State<boolean> = booleanLocalStorageState("svg_cards");
-const showCardLabels: State<boolean> = booleanLocalStorageState(
-  "show_card_labels"
-);
-const showLastTrick: State<boolean> = booleanLocalStorageState(
-  "show_last_trick"
-);
+const showCardLabels: State<boolean> =
+  booleanLocalStorageState("show_card_labels");
+const showLastTrick: State<boolean> =
+  booleanLocalStorageState("show_last_trick");
 const beepOnTurn: State<boolean> = booleanLocalStorageState("beep_on_turn");
-const reverseCardOrder: State<boolean> = booleanLocalStorageState(
-  "reverse_card_order"
-);
+const reverseCardOrder: State<boolean> =
+  booleanLocalStorageState("reverse_card_order");
 const unsetAutoPlayWhenWinnerChanges: State<boolean> = booleanLocalStorageState(
   "unset_autoplay_on_winner_change"
 );
@@ -63,9 +60,8 @@ const suitColorOverrides: State<ISuitOverrides> = JSONLocalStorageState(
 const playDrawCardSound: State<boolean> = booleanLocalStorageState(
   "play_draw_card_sound"
 );
-const showDebugInfo: State<boolean> = booleanLocalStorageState(
-  "show_debug_info"
-);
+const showDebugInfo: State<boolean> =
+  booleanLocalStorageState("show_debug_info");
 const settings: State<Settings> = combineState({
   fourColor,
   darkMode,

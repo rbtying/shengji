@@ -13,19 +13,22 @@ const InlineCardBase = styled.span`
   padding-right: 0.1em;
 `;
 
-// eslint-disable-next-line react/display-name
-const Suit = (className: string): React.FunctionComponent<{}> => (props) => {
-  const settings = React.useContext(SettingsContext);
-  return (
-    <InlineCardBase
-      className={className}
-      {...props}
-      style={{
-        color: settings.suitColorOverrides[className as keyof ISuitOverrides],
-      }}
-    />
-  );
-};
+function Suit(className: string): React.FunctionComponent<{}> {
+  const component = (props: {}): JSX.Element => {
+    const settings = React.useContext(SettingsContext);
+    return (
+      <InlineCardBase
+        className={className}
+        {...props}
+        style={{
+          color: settings.suitColorOverrides[className as keyof ISuitOverrides],
+        }}
+      />
+    );
+  };
+  component.displayName = "Suit";
+  return component;
+}
 const Diamonds = Suit("♢");
 const Hearts = Suit("♡");
 const Spades = Suit("♤");
