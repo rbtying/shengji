@@ -7,6 +7,7 @@ categories = ["wasm"]
 edition = "2018"
 repository = "https://github.com/rbtying/shengji"
 license = "MIT"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

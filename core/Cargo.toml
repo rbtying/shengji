@@ -3,6 +3,7 @@ name = "shengji-core"
 version = "0.1.0"
 authors = ["Robert Ying <rbtying@aeturnalus.com>"]
 edition = "2018"
+publish = false
 
 [dependencies]
 anyhow = "1.0"
