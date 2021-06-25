@@ -7,9 +7,11 @@ interface Props {
   player: IPlayer;
 }
 
-// eslint-disable-next-line react/display-name
-const MovePlayerButton =
-  (relative: number, children: string) => (props: Props) => {
+function MovePlayerButton(
+  relative: number,
+  children: string
+): React.FunctionComponent<{}> {
+  const component = (props: Props): JSX.Element => {
     const { players, player } = props;
     const { send } = React.useContext(WebsocketContext);
 
@@ -27,6 +29,9 @@ const MovePlayerButton =
 
     return <button onClick={movePlayer}>{children}</button>;
   };
+  component.displayName = "MovePlayerButton";
+  return component;
+}
 
 export const MovePlayerLeft = MovePlayerButton(-1, "<");
 export const MovePlayerRight = MovePlayerButton(1, ">");
