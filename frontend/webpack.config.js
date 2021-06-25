@@ -4,7 +4,7 @@ const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCssAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 module.exports = {
   mode: "production",
@@ -13,6 +13,9 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".svg"],
   },
   entry: "./src/index.tsx",
+  experiments: {
+    asyncWebAssembly: true,
+  },
   module: {
     rules: [
       {
@@ -31,7 +34,7 @@ module.exports = {
     ],
   },
   optimization: {
-    moduleIds: "hashed",
+    moduleIds: "deterministic",
     splitChunks: {
       chunks: "all",
       cacheGroups: {
@@ -44,8 +47,10 @@ module.exports = {
       },
     },
     minimizer: [
-      new TerserJsPlugin({ sourceMap: true }),
-      new OptimizeCssAssetsPlugin({}),
+      (compiler) => () => {
+        new TerserPlugin({ terserOptions: { sourceMap: true } }).apply(compiler);
+      },
+      new CssMinimizerPlugin({}),
     ],
   },
   output: {
