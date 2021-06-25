@@ -10,7 +10,7 @@ interface Props {
 function MovePlayerButton(
   relative: number,
   children: string
-): React.FunctionComponent<{}> {
+): React.FunctionComponent<Props> {
   const component = (props: Props): JSX.Element => {
     const { players, player } = props;
     const { send } = React.useContext(WebsocketContext);

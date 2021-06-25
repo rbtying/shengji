@@ -14,7 +14,7 @@ const InlineCardBase = styled.span`
 `;
 
 function Suit(className: string): React.FunctionComponent<{}> {
-  const component = (props): JSX.Element => {
+  const component = (props: {}): JSX.Element => {
     const settings = React.useContext(SettingsContext);
     return (
       <InlineCardBase
