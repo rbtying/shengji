@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
+use slog::{debug, info, Logger};
 use tokio::sync::{mpsc, Mutex};
 
 pub trait State: Serialize + DeserializeOwned + Clone + Send {
@@ -53,11 +54,30 @@ pub trait Storage<S: State, E>: Clone + Send {
         E2: From<E>,
         F: FnOnce(S) -> Result<(S, Vec<S::Message>), E2> + Send + 'static;
 
-    /// Subscribe to messages about a given key.
-    async fn subscribe(self, key: Vec<u8>) -> Result<mpsc::UnboundedReceiver<S::Message>, E>;
-    /// Subscribe to messages about a given key.
+    /// Subscribe to messages about a given key. The `subscriber_id` is expected
+    /// to be unique across all subscribers.
+    async fn subscribe(
+        self,
+        key: Vec<u8>,
+        subscriber_id: usize,
+    ) -> Result<mpsc::UnboundedReceiver<S::Message>, E>;
+    /// Publish to all subscribers for a given key.
     async fn publish(self, key: Vec<u8>, message: S::Message) -> Result<(), E>;
+    /// Publish a message to a single subscriber, identified by subscriber id.
+    async fn publish_to_single_subscriber(
+        self,
+        key: Vec<u8>,
+        subscriber_id: usize,
+        message: S::Message,
+    ) -> Result<(), E>;
+    /// Unsubscribe a given subscriber and remove it from tracking.
+    async fn unsubscribe(self, key: Vec<u8>, subscriber_id: usize);
 
+    /// This should be called on a regular basis to ensure that we don't leave
+    /// stale state in the storage layer.
+    async fn prune(self);
+    /// Count the number of active subscriptions and active states.
+    async fn stats(self) -> Result<(usize, usize), E>;
     /// Get all of the keys stored in this storage backend.
     async fn get_all_keys(self) -> Result<Vec<Vec<u8>>, E>;
     /// Get the number of states that have been newly created.
@@ -65,16 +85,17 @@ pub trait Storage<S: State, E>: Clone + Send {
 }
 
 pub struct HashMapStorage<S: State> {
+    logger: Logger,
     state_map: Arc<Mutex<HashMap<Vec<u8>, S>>>,
-    subscribers: Arc<Mutex<HashMap<Vec<u8>, Vec<mpsc::UnboundedSender<S::Message>>>>>,
+    subscribers: Arc<Mutex<HashMap<Vec<u8>, HashMap<usize, mpsc::UnboundedSender<S::Message>>>>>,
     num_games_created: Arc<Mutex<u64>>,
     _data: PhantomData<S>,
 }
 
 impl<S: State> HashMapStorage<S> {
-    #[allow(unused)]
-    pub fn new() -> Self {
+    pub fn new(logger: Logger) -> Self {
         Self {
+            logger,
             state_map: Arc::new(Mutex::new(HashMap::new())),
             subscribers: Arc::new(Mutex::new(HashMap::new())),
             num_games_created: Arc::new(Mutex::new(0)),
@@ -83,26 +104,23 @@ impl<S: State> HashMapStorage<S> {
     }
 
     fn publish(
-        s: &mut HashMap<Vec<u8>, Vec<mpsc::UnboundedSender<S::Message>>>,
+        s: &mut HashMap<Vec<u8>, HashMap<usize, mpsc::UnboundedSender<S::Message>>>,
         key: &[u8],
         message: S::Message,
     ) {
-        let to_remove = if let Some(subscribers) = s.get_mut(key) {
+        if let Some(subscribers) = s.get_mut(key) {
             let mut send_failed = false;
-            for subscriber in subscribers.iter_mut() {
+            for (_, subscriber) in subscribers.iter_mut() {
                 if subscriber.send(message.clone()).is_err() {
                     send_failed |= true;
                 }
             }
             if send_failed {
-                subscribers.retain(|subscriber| !subscriber.is_closed());
+                subscribers.retain(|_, subscriber| !subscriber.is_closed());
             }
-            subscribers.is_empty()
-        } else {
-            false
-        };
-        if to_remove {
-            s.remove(key);
+            if subscribers.is_empty() {
+                s.remove(key);
+            }
         }
     }
 }
@@ -110,6 +128,7 @@ impl<S: State> HashMapStorage<S> {
 impl<S: State> Clone for HashMapStorage<S> {
     fn clone(&self) -> Self {
         Self {
+            logger: self.logger.clone(),
             state_map: Arc::clone(&self.state_map),
             subscribers: Arc::clone(&self.subscribers),
             num_games_created: Arc::clone(&self.num_games_created),
@@ -122,12 +141,20 @@ impl<S: State> Clone for HashMapStorage<S> {
 impl<S: State> Storage<S, ()> for HashMapStorage<S> {
     async fn put(self, state: S) -> Result<(), ()> {
         let mut m = self.state_map.lock().await;
+        if !m.contains_key(state.key()) {
+            *self.num_games_created.lock().await += 1;
+            info!(self.logger, "Initializing state"; "key" => stringify(state.key()));
+        }
         m.insert(state.key().to_vec(), state);
         Ok(())
     }
 
     async fn put_cas(self, expected_version: u64, state: S) -> Result<(), ()> {
         let mut m = self.state_map.lock().await;
+        if !m.contains_key(state.key()) {
+            *self.num_games_created.lock().await += 1;
+            info!(self.logger, "Initializing state"; "key" => stringify(state.key()));
+        }
         if m.get(state.key()).map(|s| s.version()).unwrap_or(0) == expected_version {
             if state.version() != expected_version {
                 m.insert(state.key().to_vec(), state);
@@ -167,6 +194,10 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         let (new_state, messages) = operation(s)?;
         let new_v = new_state.version();
         if new_v != old_v {
+            if !m.contains_key(&key) {
+                *self.num_games_created.lock().await += 1;
+                info!(self.logger, "Initializing state"; "key" => stringify(&key));
+            }
             m.insert(key.clone(), new_state);
         }
         drop(m);
@@ -178,11 +209,16 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         Ok(new_v)
     }
 
-    async fn subscribe(self, key: Vec<u8>) -> Result<mpsc::UnboundedReceiver<S::Message>, ()> {
+    async fn subscribe(
+        self,
+        key: Vec<u8>,
+        subscriber_id: usize,
+    ) -> Result<mpsc::UnboundedReceiver<S::Message>, ()> {
+        info!(self.logger, "Subscribing listener"; "key" => stringify(&key), "subscriber_id" => subscriber_id);
         let mut s = self.subscribers.lock().await;
         let (tx, rx) = mpsc::unbounded_channel();
         let ss = s.entry(key).or_default();
-        ss.push(tx);
+        ss.insert(subscriber_id, tx);
         Ok(rx)
     }
 
@@ -192,13 +228,66 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         Ok(())
     }
 
+    async fn publish_to_single_subscriber(
+        self,
+        key: Vec<u8>,
+        subscriber_id: usize,
+        message: S::Message,
+    ) -> Result<(), ()> {
+        let s = self.subscribers.lock().await;
+        if let Some(sender) = s.get(&key).and_then(|ss| ss.get(&subscriber_id)) {
+            sender.send(message).map(|_| ()).map_err(|_| ())
+        } else {
+            Err(())
+        }
+    }
+
+    async fn unsubscribe(self, key: Vec<u8>, subscriber_id: usize) {
+        info!(self.logger, "Unsubscribing listener"; "key" => stringify(&key), "subscriber_id" => subscriber_id);
+        let mut m = self.state_map.lock().await;
+        let mut s = self.subscribers.lock().await;
+        let should_cleanup_key = if let Some(ss) = s.get_mut(&key) {
+            if ss.contains_key(&subscriber_id) {
+                ss.remove(&subscriber_id);
+            }
+            ss.is_empty()
+        } else {
+            false
+        };
+        if should_cleanup_key {
+            info!(self.logger, "Cleaning up state"; "key" => stringify(&key), "subscriber_id" => subscriber_id);
+            s.remove(&key);
+            m.remove(&key);
+        }
+    }
+
     async fn get_all_keys(self) -> Result<Vec<Vec<u8>>, ()> {
-        let s = self.state_map.lock().await;
-        Ok(s.keys().map(|k| k.to_vec()).collect())
+        let m = self.state_map.lock().await;
+        Ok(m.keys().map(|k| k.to_vec()).collect())
     }
 
     async fn get_states_created(self) -> Result<u64, ()> {
-        let s = self.num_games_created.lock().await;
-        Ok(*s)
+        let n = self.num_games_created.lock().await;
+        Ok(*n)
     }
+
+    async fn prune(self) {
+        debug!(self.logger, "Beginning prune");
+        // We walk through the key-space and remove any states which are:
+        // not updated in at least 1 hour.
+        //
+        // We also remove any subscribers which have disconnected, and
+        // subscribers for whom the game is no longer connected.
+        debug!(self.logger, "Ending prune");
+    }
+
+    async fn stats(self) -> Result<(usize, usize), ()> {
+        let m = self.state_map.lock().await;
+        let s = self.subscribers.lock().await;
+        Ok((m.len(), s.values().map(|v| v.len()).sum()))
+    }
+}
+
+fn stringify(str_like: &[u8]) -> &str {
+    std::str::from_utf8(str_like).unwrap_or("not utf-8")
 }

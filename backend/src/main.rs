@@ -78,7 +78,7 @@ struct InMemoryStats {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct GameStats<'a> {
-    num_games_created: usize,
+    num_games_created: u64,
     num_active_games: usize,
     num_players_online_now: usize,
     sha: &'a str,
@@ -133,18 +133,6 @@ impl State for VersionedGame {
 //     }
 // }
 
-#[derive(Clone)]
-struct UserState {
-    player_id: types::PlayerID,
-    tx: mpsc::UnboundedSender<Message>,
-}
-
-impl UserState {
-    pub async fn send(&self, msg: &GameMessage) -> bool {
-        send_to_user(&self.tx, msg).await
-    }
-}
-
 async fn send_to_user(tx: &'_ mpsc::UnboundedSender<Message>, msg: &GameMessage) -> bool {
     if let Ok(j) = serde_json::to_vec(&msg) {
         if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
@@ -172,7 +160,7 @@ pub enum UserMessage {
 
 #[tokio::main]
 async fn main() {
-    let backend_storage = HashMapStorage::new();
+    let backend_storage = HashMapStorage::new(ROOT_LOGGER.new(o!("component" => "storage")));
     let mut num_games_loaded = 0usize;
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => &*DUMP_PATH));
@@ -259,7 +247,7 @@ async fn main() {
         .and_then(|(backend_storage, stats)| dump_state(backend_storage, stats));
     let game_stats = warp::path("stats")
         .and(games_filter)
-        .and_then(|(backend_storage, stats)| get_stats(backend_storage, stats));
+        .and_then(|(backend_storage, _)| get_stats(backend_storage));
 
     #[cfg(feature = "dynamic")]
     let static_routes = warp::fs::dir("../frontend/dist").or(warp::fs::dir("../favicon"));
@@ -313,78 +301,86 @@ async fn periodically_dump_state<S: Storage<VersionedGame, E>, E>(
 }
 
 async fn dump_state<S: Storage<VersionedGame, E>, E>(
-    _backend_storage: S,
-    _stats: Arc<Mutex<InMemoryStats>>,
+    backend_storage: S,
+    stats: Arc<Mutex<InMemoryStats>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let state_dump: HashMap<String, game_state::GameState> = HashMap::new();
+    let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
 
-    // let header_messages = try_read_file::<Vec<String>>(&*MESSAGE_PATH)
-    //     .await
-    //     .unwrap_or_default();
-    // let send_header_messages = {
-    //     let mut stats = stats.lock().await;
-    //     if stats.header_messages != header_messages {
-    //         stats.header_messages = header_messages.clone();
-    //         true
-    //     } else {
-    //         false
-    //     }
-    // };
+    let header_messages = try_read_file::<Vec<String>>(&*MESSAGE_PATH)
+        .await
+        .unwrap_or_default();
+    let send_header_messages = {
+        let mut stats = stats.lock().await;
+        if stats.header_messages != header_messages {
+            stats.header_messages = header_messages.clone();
+            true
+        } else {
+            false
+        }
+    };
 
-    // let mut games = games.lock().await;
-    // games.retain(|_, game| {
-    //     // Drop all games where we haven't seen an update for over an hour.
-    //     game.last_updated.elapsed() <= Duration::from_secs(3600)
-    // });
+    let _ = backend_storage.clone().prune().await;
 
-    // let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
+    let (num_games, num_players_online_now) = backend_storage
+        .clone()
+        .stats()
+        .await
+        .map_err(|_| warp::reject())?;
+    let keys = backend_storage
+        .clone()
+        .get_all_keys()
+        .await
+        .map_err(|_| warp::reject())?;
 
-    // let mut num_players = 0;
-    // let mut num_observers = 0;
-    // let mut num_zombies = 0;
+    let mut num_players = 0;
+    let mut num_observers = 0;
+    let mut num_skipped_games = 0usize;
+    let mut num_processed_games = 0usize;
 
-    // for (room_name, game_state) in games.iter() {
-    //     if let Ok(snapshot) = game_state.game.dump_state() {
-    //         if !game_state.users.is_empty() {
-    //             num_players += snapshot.players().len();
-    //             num_observers = snapshot.observers().len();
-    //         } else {
-    //             num_zombies += 1;
-    //         }
-    //         state_dump.insert(room_name.clone(), snapshot);
-    //     }
-    // }
-    // if send_header_messages {
-    //     let msg = GameMessage::Header {
-    //         messages: header_messages,
-    //     };
-    //     for (_, game) in games.iter() {
-    //         for user in game.users.values() {
-    //             let _ = user.send(&msg).await;
-    //         }
-    //     }
-    // }
+    for room_name in keys {
+        if let Ok(versioned_game) = backend_storage.clone().get(room_name.clone()).await {
+            num_players += versioned_game.game.players().len();
+            num_observers += versioned_game.game.observers().len();
+            if let Ok(name) = String::from_utf8(room_name.clone()) {
+                state_dump.insert(name, versioned_game.game);
+            }
+            num_processed_games += 1;
+        } else {
+            num_skipped_games += 1;
+        }
 
-    // drop(games);
+        if send_header_messages {
+            let _ = backend_storage
+                .clone()
+                .publish(
+                    room_name.clone(),
+                    GameMessage::Header {
+                        messages: header_messages.clone(),
+                    },
+                )
+                .await;
+        }
+    }
 
-    // let logger = ROOT_LOGGER.new(o!(
-    //     "dump_path" => &*DUMP_PATH,
-    //     "num_games" => state_dump.len(),
-    //     "num_players" => num_players,
-    //     "num_observers" => num_observers,
-    //     "num_online_players" => num_players_online_now,
-    //     "num_zombies" => num_zombies,
-    // ));
+    let logger = ROOT_LOGGER.new(o!(
+        "dump_path" => &*DUMP_PATH,
+        "num_games" => num_games,
+        "num_processed_games" => num_processed_games,
+        "num_skipped_games" => num_skipped_games,
+        "num_players" => num_players,
+        "num_observers" => num_observers,
+        "num_online_players" => num_players_online_now,
+    ));
 
     // Best-effort attempt to write the full state to disk, for fun.
-    // match write_state_to_disk(&state_dump).await {
-    //     Ok(()) => {
-    //         info!(logger, "Dumped state to disk");
-    //     }
-    //     Err(e) => {
-    //         error!(logger, "Failed to dump state to disk"; "error" => format!("{:?}", e));
-    //     }
-    // }
+    match write_state_to_disk(&state_dump).await {
+        Ok(()) => {
+            info!(logger, "Dumped state to disk");
+        }
+        Err(e) => {
+            error!(logger, "Failed to dump state to disk"; "error" => format!("{:?}", e));
+        }
+    }
 
     Ok(warp::reply::json(&state_dump))
 }
@@ -402,23 +398,24 @@ async fn write_state_to_disk(
 }
 
 async fn get_stats<S: Storage<VersionedGame, E>, E>(
-    _backend_storage: S,
-    _stats: Arc<Mutex<InMemoryStats>>,
+    backend_storage: S,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    // let games = games.lock().await;
-    // let stats = stats.lock().await;
-    // let InMemoryStats {
-    //     num_games_created,
-    //     header_messages: _,
-    // } = *stats;
-    // let num_players_online_now = games.values().map(|g| g.users.len()).sum::<usize>();
-    // Ok(warp::reply::json(&GameStats {
-    //     num_games_created,
-    //     num_players_online_now,
-    //     num_active_games: games.len(),
-    //     sha: &*VERSION,
-    // }))
-    Ok(warp::reply::json(&GameStats::default()))
+    let num_games_created = backend_storage
+        .clone()
+        .get_states_created()
+        .await
+        .map_err(|_| warp::reject())?;
+    let (num_active_games, num_players_online_now) = backend_storage
+        .clone()
+        .stats()
+        .await
+        .map_err(|_| warp::reject())?;
+    Ok(warp::reply::json(&GameStats {
+        num_games_created,
+        num_players_online_now,
+        num_active_games,
+        sha: &*VERSION,
+    }))
 }
 
 async fn default_propagated() -> Result<impl warp::Reply, warp::Rejection> {
@@ -482,7 +479,7 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
 
         let mut subscription = match backend_storage
             .clone()
-            .subscribe(room.as_bytes().to_vec())
+            .subscribe(room.as_bytes().to_vec(), ws_id)
             .await
         {
             Ok(sub) => sub,
@@ -496,8 +493,8 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
             }
         };
 
-        // Subscribe to messages for the room
-        let tx_ = tx.clone();
+        // Subscribe to messages for the room. After this point, we should
+        // no longer use tx! It's owned by the backend storage.
         let logger_ = logger.clone();
         let name_ = name.clone();
         tokio::task::spawn(async move {
@@ -515,19 +512,19 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                     GameMessage::ReadyCheck { from } => *from != name_,
                 };
                 if should_send {
-                    slog::debug!(logger_, "Sending message to user"; "msg" => format!("{:?}", v));
-                    if !send_to_user(&tx_, &v).await {
+                    if !send_to_user(&tx, &v).await {
                         break;
                     }
                 }
             }
+            debug!(logger_, "Subscription task completed");
         });
 
         let logger_ = logger.clone();
         let (player_id_tx, player_id_rx) = oneshot::channel();
         let name_ = name.clone();
         execute_operation(
-            tx.clone(),
+            ws_id,
             &room,
             backend_storage.clone(),
             move |g, version| {
@@ -545,32 +542,26 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
         )
         .await;
 
-        // let mut g = games.lock().await;
-        // let game = g.entry(room.clone()).or_insert_with(|| GameState {
-        //     game: interactive::InteractiveGame::new(),
-        //     users: HashMap::new(),
-        //     last_updated: Instant::now(),
-        //     monotonic_id: 0,
-        // });
-
         let header_messages = {
             let stats = stats.lock().await;
             stats.header_messages.clone()
         };
-        let _ = send_to_user(
-            &tx,
-            &GameMessage::Header {
-                messages: header_messages,
-            },
-        )
-        .await;
+        let _ = backend_storage
+            .clone()
+            .publish_to_single_subscriber(
+                room.as_bytes().to_vec(),
+                ws_id,
+                GameMessage::Header {
+                    messages: header_messages,
+                },
+            )
+            .await;
 
         if let Ok((player_id, join_span)) = player_id_rx.await {
             let logger = logger.new(o!("player_id" => player_id.0));
             info!(logger, "Successfully registered user");
-            // Handle the main game loop
-            let caller = UserState { player_id, tx };
 
+            // Handle the main game loop
             while let Some(result) = user_ws_rx.next().await {
                 let result = match result {
                     Ok(r) => r,
@@ -581,9 +572,10 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                 };
                 match serde_json::from_slice::<UserMessage>(result.as_bytes()) {
                     Ok(msg) => {
-                        if let Err(e) = handle_user_action_2(
+                        if let Err(e) = handle_user_action(
                             logger.clone(),
-                            caller.clone(),
+                            ws_id,
+                            player_id,
                             &room,
                             name.clone(),
                             backend_storage.clone(),
@@ -591,18 +583,25 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                         )
                         .await
                         {
-                            let _ = caller
-                                .send(&GameMessage::Error(format!("Unexpected error {:?}", e)))
+                            let _ = backend_storage
+                                .clone()
+                                .publish_to_single_subscriber(
+                                    room.as_bytes().to_vec(),
+                                    ws_id,
+                                    GameMessage::Error(format!("Unexpected error {:?}", e)),
+                                )
                                 .await;
                         }
                     }
                     Err(e) => {
                         error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
-                        let _ = caller
-                            .send(&GameMessage::Error(format!(
-                                "couldn't deserialize message {:?}",
-                                e
-                            )))
+                        let _ = backend_storage
+                            .clone()
+                            .publish_to_single_subscriber(
+                                room.as_bytes().to_vec(),
+                                ws_id,
+                                GameMessage::Error(format!("couldn't deserialize message {:?}", e)),
+                            )
                             .await;
                     }
                 }
@@ -611,10 +610,7 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
             // user_ws_rx stream will keep processing as long as the user stays
             // connected. Once they disconnect, then...
             user_disconnected(room, ws_id, backend_storage, logger, join_span).await;
-        } else {
-            return;
         }
-
         // if game.users.is_empty() {
         //     info!(game.tracer(&logger, &room, None), "Creating new room");
         //     let mut stats = stats.lock().await;
@@ -674,7 +670,7 @@ impl<E> From<E> for EitherError<E> {
 }
 
 async fn execute_operation<S, E, F>(
-    user_tx: mpsc::UnboundedSender<Message>,
+    ws_id: usize,
     room_name: &str,
     backend_storage: S,
     operation: F,
@@ -689,41 +685,49 @@ where
     let room_name_ = room_name.as_bytes().to_vec();
 
     let res = backend_storage
-        .execute_operation_with_messages::<EitherError<E>, _>(room_name_, move |versioned_game| {
-            let mut g = interactive::InteractiveGame::new_from_state(versioned_game.game);
-            let mut msgs =
-                operation(&mut g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
-            let state = g.into_state();
-            msgs.push(GameMessage::State {
-                state: state.clone(),
-            });
-            Ok((
-                VersionedGame {
-                    room_name: versioned_game.room_name,
-                    game: state,
-                    monotonic_id: versioned_game.monotonic_id + 1,
-                },
-                msgs,
-            ))
-        })
+        .clone()
+        .execute_operation_with_messages::<EitherError<E>, _>(
+            room_name_.clone(),
+            move |versioned_game| {
+                let mut g = interactive::InteractiveGame::new_from_state(versioned_game.game);
+                let mut msgs =
+                    operation(&mut g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
+                let state = g.into_state();
+                msgs.push(GameMessage::State {
+                    state: state.clone(),
+                });
+                Ok((
+                    VersionedGame {
+                        room_name: versioned_game.room_name,
+                        game: state,
+                        monotonic_id: versioned_game.monotonic_id + 1,
+                    },
+                    msgs,
+                ))
+            },
+        )
         .await;
     match res {
         Ok(_) => true,
         Err(EitherError::E(_)) => {
             let err = GameMessage::Error(format!("Failed to {}", action_description));
-            let _ = send_to_user(&user_tx, &err).await;
+            let _ = backend_storage
+                .publish_to_single_subscriber(room_name_, ws_id, err)
+                .await;
             false
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {}: {}", action_description, msg));
-            let _ = send_to_user(&user_tx, &err).await;
+            let _ = backend_storage
+                .publish_to_single_subscriber(room_name_, ws_id, err)
+                .await;
             false
         }
     }
 }
 
 async fn execute_immutable_operation<S, E, F>(
-    user_tx: mpsc::UnboundedSender<Message>,
+    ws_id: usize,
     room_name: &str,
     backend_storage: S,
     operation: F,
@@ -738,37 +742,46 @@ where
     let room_name_ = room_name.as_bytes().to_vec();
 
     let res = backend_storage
-        .execute_operation_with_messages::<EitherError<E>, _>(room_name_, move |versioned_game| {
-            let g = interactive::InteractiveGame::new_from_state(versioned_game.game);
-            let msgs = operation(&g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
-            Ok((
-                VersionedGame {
-                    room_name: versioned_game.room_name,
-                    game: g.into_state(),
-                    monotonic_id: versioned_game.monotonic_id,
-                },
-                msgs,
-            ))
-        })
+        .clone()
+        .execute_operation_with_messages::<EitherError<E>, _>(
+            room_name_.clone(),
+            move |versioned_game| {
+                let g = interactive::InteractiveGame::new_from_state(versioned_game.game);
+                let msgs = operation(&g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
+                Ok((
+                    VersionedGame {
+                        room_name: versioned_game.room_name,
+                        game: g.into_state(),
+                        monotonic_id: versioned_game.monotonic_id,
+                    },
+                    msgs,
+                ))
+            },
+        )
         .await;
     match res {
         Ok(_) => true,
         Err(EitherError::E(_)) => {
             let err = GameMessage::Error(format!("Failed to {}", action_description));
-            let _ = send_to_user(&user_tx, &err).await;
+            let _ = backend_storage
+                .publish_to_single_subscriber(room_name_, ws_id, err)
+                .await;
             false
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {}: {}", action_description, msg));
-            let _ = send_to_user(&user_tx, &err).await;
+            let _ = backend_storage
+                .publish_to_single_subscriber(room_name_, ws_id, err)
+                .await;
             false
         }
     }
 }
 
-async fn handle_user_action_2<S: Storage<VersionedGame, E>, E>(
+async fn handle_user_action<S: Storage<VersionedGame, E>, E>(
     logger: Logger,
-    caller: UserState,
+    ws_id: usize,
+    caller: types::PlayerID,
     room_name: &str,
     name: String,
     backend_storage: S,
@@ -777,7 +790,7 @@ async fn handle_user_action_2<S: Storage<VersionedGame, E>, E>(
     match msg {
         UserMessage::Beep => {
             execute_immutable_operation(
-                caller.tx.clone(),
+                ws_id,
                 room_name,
                 backend_storage,
                 move |game, _| {
@@ -840,12 +853,12 @@ async fn handle_user_action_2<S: Storage<VersionedGame, E>, E>(
         UserMessage::Kick(id) => {
             info!(logger, "Kicking user"; "other" => id.0);
             execute_operation(
-                caller.tx.clone(),
+                ws_id,
                 room_name,
                 backend_storage,
                 move |game, _| {
                     let kicked_player_name = game.player_name(id)?.to_owned();
-                    game.kick(caller.player_id, id)?;
+                    game.kick(caller, id)?;
                     Ok(vec![GameMessage::Kicked {
                         target: kicked_player_name,
                     }])
@@ -856,12 +869,12 @@ async fn handle_user_action_2<S: Storage<VersionedGame, E>, E>(
         }
         UserMessage::Action(action) => {
             execute_operation(
-                caller.tx.clone(),
+                ws_id,
                 room_name,
                 backend_storage,
                 move |game, _| {
                     Ok(game
-                        .interact(action, caller.player_id, &logger)?
+                        .interact(action, caller, &logger)?
                         .into_iter()
                         .map(|(data, message)| GameMessage::Broadcast { data, message })
                         .collect())
@@ -874,141 +887,10 @@ async fn handle_user_action_2<S: Storage<VersionedGame, E>, E>(
     Ok(())
 }
 
-// async fn handle_user_action(
-//     logger: &Logger,
-//     caller: &UserState,
-//     room: &str,
-//     parent: u64,
-//     games: &Games,
-//     name: &str,
-//     result: &[u8],
-// ) -> Result<Vec<(UserState, GameMessage)>, GameMessage> {
-//     let msg = serde_json::from_slice::<UserMessage>(result).map_err(|e| {
-//         error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
-//         GameMessage::Error(format!("couldn't deserialize message {:?}", e))
-//     })?;
-//     let mut g = games.lock().await;
-//     let game = if let Some(game) = g.get_mut(room) {
-//         game
-//     } else {
-//         error!(logger, "Game not found");
-//         return Err(GameMessage::Error(format!(
-//             "Couldn't find game for room {}",
-//             room
-//         )));
-//     };
-//     let logger = game.tracer(&logger, &room, Some(parent as usize));
-
-//     let mut messages = vec![];
-//     let mut broadcast_messages = vec![];
-//     match msg {
-//         UserMessage::Beep => {
-//             let next_player_id = game
-//                 .game
-//                 .next_player()
-//                 .map_err(|e| GameMessage::Error(e.to_string()))?;
-//             for user in game.users.values() {
-//                 messages.push((
-//                     user.clone(),
-//                     GameMessage::Message {
-//                         from: name.to_owned(),
-//                         message: "BEEP".to_owned(),
-//                     },
-//                 ));
-//                 if user.player_id == next_player_id {
-//                     messages.push((user.clone(), GameMessage::Beep));
-//                 }
-//             }
-//         }
-//         UserMessage::ReadyCheck => {
-//             for user in game.users.values() {
-//                 messages.push((
-//                     user.clone(),
-//                     GameMessage::Message {
-//                         from: name.to_owned(),
-//                         message: "Is everyone ready?".to_owned(),
-//                     },
-//                 ));
-//                 if user.player_id != caller.player_id {
-//                     messages.push((user.clone(), GameMessage::ReadyCheck));
-//                 }
-//             }
-//         }
-//         UserMessage::Ready => {
-//             for user in game.users.values() {
-//                 messages.push((
-//                     user.clone(),
-//                     GameMessage::Message {
-//                         from: name.to_owned(),
-//                         message: "I'm ready!".to_owned(),
-//                     },
-//                 ));
-//             }
-//         }
-//         UserMessage::Message(m) => {
-//             // Broadcast this msg to everyone
-//             for user in game.users.values() {
-//                 messages.push((
-//                     user.clone(),
-//                     GameMessage::Message {
-//                         from: name.to_owned(),
-//                         message: m.clone(),
-//                     },
-//                 ));
-//             }
-//         }
-//         UserMessage::Kick(id) => {
-//             info!(logger, "Kicking user"; "other" => id.0);
-//             let msgs = game
-//                 .game
-//                 .kick(id)
-//                 .map_err(|e| GameMessage::Error(e.to_string()))?;
-
-//             for user in game.users.values() {
-//                 if user.player_id == id {
-//                     messages.push((user.clone(), GameMessage::Kicked));
-//                 } else if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-//                     messages.push((user.clone(), GameMessage::State { state }));
-//                 }
-//             }
-//             game.users.retain(|_, u| u.player_id != id);
-//             broadcast_messages.extend(msgs);
-//         }
-//         UserMessage::Action(m) => {
-//             let msgs = game
-//                 .game
-//                 .interact(m, caller.player_id, &logger)
-//                 .map_err(|e| GameMessage::Error(e.to_string()))?;
-
-//             // send the updated game state to everyone!
-//             for user in game.users.values() {
-//                 if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-//                     user.send(&GameMessage::State { state }).await;
-//                 }
-//             }
-//             broadcast_messages.extend(msgs);
-//         }
-//     }
-
-//     for user in game.users.values() {
-//         messages.extend(broadcast_messages.iter().map(|(d, m)| {
-//             (
-//                 user.clone(),
-//                 GameMessage::Broadcast {
-//                     data: d.clone(),
-//                     message: m.clone(),
-//                 },
-//             )
-//         }));
-//     }
-
-//     Ok(messages)
-// }
-
 async fn user_disconnected<S: Storage<VersionedGame, E>, E>(
     room: String,
     ws_id: usize,
-    _backend_storage: S,
+    backend_storage: S,
     logger: slog::Logger,
     parent: u64,
 ) {
@@ -1023,6 +905,9 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E>(
     //     }
     // }
     // drop(g);
+    let _ = backend_storage
+        .unsubscribe(room.as_bytes().to_vec(), ws_id)
+        .await;
     info!(logger, "Websocket disconnected";
         "room" => room,
         "parent_span" => format!("{}:{}", room, parent),
