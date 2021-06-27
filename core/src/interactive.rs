@@ -273,7 +273,7 @@ impl InteractiveGame {
                 }
             }
             (Action::TakeBackBid, GameState::Draw(ref mut state)) => {
-                debug!(logger, "Taking back bid");
+                info!(logger, "Taking back bid");
                 state.take_back_bid(id)?;
                 vec![MessageVariant::TookBackBid]
             }
@@ -291,7 +291,7 @@ impl InteractiveGame {
                 }
             }
             (Action::TakeBackBid, GameState::Exchange(ref mut state)) => {
-                debug!(logger, "Taking back bid");
+                info!(logger, "Taking back bid");
                 state.take_back_bid(id)?;
                 vec![MessageVariant::TookBackBid]
             }
@@ -306,12 +306,12 @@ impl InteractiveGame {
                 vec![MessageVariant::PutDownCards]
             }
             (Action::MoveCardToKitty(card), GameState::Exchange(ref mut state)) => {
-                debug!(logger, "Moving card to kitty");
+                info!(logger, "Moving card to kitty");
                 state.move_card_to_kitty(id, card)?;
                 vec![]
             }
             (Action::MoveCardToHand(card), GameState::Exchange(ref mut state)) => {
-                debug!(logger, "Moving card to hand");
+                info!(logger, "Moving card to hand");
                 state.move_card_to_hand(id, card)?;
                 vec![]
             }
@@ -326,14 +326,14 @@ impl InteractiveGame {
                 vec![]
             }
             (Action::PlayCards(ref cards), GameState::Play(ref mut state)) => {
-                debug!(logger, "Playing cards");
+                info!(logger, "Playing cards");
                 state.play_cards(id, cards)?
             }
             (
                 Action::PlayCardsWithHint(ref cards, ref format_hint),
                 GameState::Play(ref mut state),
             ) => {
-                debug!(logger, "Playing cards with formatting hint");
+                info!(logger, "Playing cards with formatting hint");
                 state.play_cards_with_hint(id, cards, Some(format_hint))?
             }
             (Action::EndTrick, GameState::Play(ref mut state)) => {
@@ -341,7 +341,7 @@ impl InteractiveGame {
                 state.finish_trick()?
             }
             (Action::TakeBackCards, GameState::Play(ref mut state)) => {
-                debug!(logger, "Taking back cards");
+                info!(logger, "Taking back cards");
                 state.take_back_cards(id)?;
                 vec![MessageVariant::TookBackPlay]
             }

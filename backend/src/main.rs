@@ -88,6 +88,7 @@ struct GameStats<'a> {
 struct VersionedGame {
     room_name: Vec<u8>,
     game: shengji_core::game_state::GameState,
+    associated_websockets: HashMap<types::PlayerID, Vec<usize>>,
     monotonic_id: u64,
 }
 
@@ -108,6 +109,7 @@ impl State for VersionedGame {
             game: shengji_core::game_state::GameState::Initialize(
                 shengji_core::game_state::InitializePhase::new(),
             ),
+            associated_websockets: HashMap::new(),
             monotonic_id: 0,
         }
     }
@@ -155,6 +157,7 @@ async fn main() {
                             .put(VersionedGame {
                                 room_name: room_name.as_bytes().to_vec(),
                                 game: game_dump,
+                                associated_websockets: HashMap::new(),
                                 monotonic_id: 1,
                             })
                             .await;
@@ -454,8 +457,7 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
     }
 
     if let Some((room, name)) = val {
-        let logger =
-            logger.new(o!("room" => room.clone(), "name" => name.clone(), "ws_id" => ws_id));
+        let logger = logger.new(o!("room" => room.clone(), "name" => name.clone()));
 
         let mut subscription = match backend_storage
             .clone()
@@ -505,11 +507,23 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
             ws_id,
             &room,
             backend_storage.clone(),
-            move |g, version| {
+            move |g, version, associated_websockets| {
                 let (assigned_player_id, register_msgs) = g.register(name_)?;
                 info!(logger_, "Joining room"; "player_id" => assigned_player_id.0);
+                let mut clients_to_disconnect = vec![];
+                let clients = associated_websockets
+                    .entry(assigned_player_id)
+                    .or_insert_with(Vec::new);
+                // If the same user joined before, remove the previous entries
+                // from the state-store.
+                if !g.allows_multiple_sessions_per_user() {
+                    std::mem::swap(&mut clients_to_disconnect, clients);
+                }
+                clients.push(ws_id);
+                drop(clients);
+
                 player_id_tx
-                    .send((assigned_player_id, version))
+                    .send((assigned_player_id, version, clients_to_disconnect))
                     .map_err(|_| anyhow::anyhow!("Couldn't send player ID back".to_owned()))?;
                 Ok(register_msgs
                     .into_iter()
@@ -535,9 +549,23 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
             )
             .await;
 
-        if let Ok((player_id, join_span)) = player_id_rx.await {
+        if let Ok((player_id, join_span, websockets_to_disconnect)) = player_id_rx.await {
             let logger = logger.new(o!("player_id" => player_id.0));
             info!(logger, "Successfully registered user");
+
+            for id in websockets_to_disconnect {
+                info!(logger, "Disconnnecting existing client"; "kicked_ws_id" => ws_id);
+                let _ = backend_storage
+                    .clone()
+                    .publish_to_single_subscriber(
+                        room.as_bytes().to_vec(),
+                        id,
+                        GameMessage::Kicked {
+                            target: name.clone(),
+                        },
+                    )
+                    .await;
+            }
 
             // Handle the main game loop
             while let Some(result) = user_ws_rx.next().await {
@@ -548,6 +576,9 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                         break;
                     }
                 };
+                if result.is_close() {
+                    break;
+                }
                 match serde_json::from_slice::<UserMessage>(result.as_bytes()) {
                     Ok(msg) => {
                         if let Err(e) = handle_user_action(
@@ -611,7 +642,11 @@ async fn execute_operation<S, E, F>(
 ) -> bool
 where
     S: Storage<VersionedGame, E>,
-    F: FnOnce(&mut interactive::InteractiveGame, u64) -> Result<Vec<GameMessage>, anyhow::Error>
+    F: FnOnce(
+            &mut interactive::InteractiveGame,
+            u64,
+            &mut HashMap<types::PlayerID, Vec<usize>>,
+        ) -> Result<Vec<GameMessage>, anyhow::Error>
         + Send
         + 'static,
 {
@@ -623,16 +658,22 @@ where
             room_name_.clone(),
             move |versioned_game| {
                 let mut g = interactive::InteractiveGame::new_from_state(versioned_game.game);
-                let mut msgs =
-                    operation(&mut g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
-                let state = g.into_state();
+                let mut associated_websockets = versioned_game.associated_websockets;
+                let mut msgs = operation(
+                    &mut g,
+                    versioned_game.monotonic_id,
+                    &mut associated_websockets,
+                )
+                .map_err(EitherError::E2)?;
+                let game = g.into_state();
                 msgs.push(GameMessage::State {
-                    state: state.clone(),
+                    state: game.clone(),
                 });
                 Ok((
                     VersionedGame {
                         room_name: versioned_game.room_name,
-                        game: state,
+                        game,
+                        associated_websockets,
                         monotonic_id: versioned_game.monotonic_id + 1,
                     },
                     msgs,
@@ -683,9 +724,10 @@ where
                 let msgs = operation(&g, versioned_game.monotonic_id).map_err(EitherError::E2)?;
                 Ok((
                     VersionedGame {
-                        room_name: versioned_game.room_name,
                         game: g.into_state(),
+                        room_name: versioned_game.room_name,
                         monotonic_id: versioned_game.monotonic_id,
+                        associated_websockets: versioned_game.associated_websockets,
                     },
                     msgs,
                 ))
@@ -789,7 +831,7 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E>(
                 ws_id,
                 room_name,
                 backend_storage,
-                move |game, _| {
+                move |game, _, _| {
                     let kicked_player_name = game.player_name(id)?.to_owned();
                     game.kick(caller, id)?;
                     Ok(vec![GameMessage::Kicked {
@@ -805,7 +847,7 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E>(
                 ws_id,
                 room_name,
                 backend_storage,
-                move |game, _| {
+                move |game, _, _| {
                     Ok(game
                         .interact(action, caller, &logger)?
                         .into_iter()
@@ -827,6 +869,19 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E>(
     logger: slog::Logger,
     parent: u64,
 ) {
+    execute_operation(
+        ws_id,
+        &room,
+        backend_storage.clone(),
+        move |_, _, associated_websockets| {
+            for ws in associated_websockets.values_mut() {
+                ws.retain(|w| *w != ws_id);
+            }
+            Ok(vec![])
+        },
+        "disconnect player",
+    )
+    .await;
     let _ = backend_storage
         .unsubscribe(room.as_bytes().to_vec(), ws_id)
         .await;
