@@ -2,23 +2,26 @@
 
 use std::collections::HashMap;
 use std::env;
-use std::io::ErrorKind;
+use std::io::{self, ErrorKind};
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
 };
 use std::time::{Duration, Instant};
 
-use futures::{FutureExt, StreamExt};
+use futures::SinkExt;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use slog::{error, info, o, Drain, Logger};
-use tokio::prelude::*;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Mutex};
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
 
 use shengji_core::{game_state, interactive, settings, types};
 use shengji_types::{GameMessage, ZSTD_ZSTD_DICT};
+
+mod storage;
 
 /// Our global unique user id counter.
 static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(1);
@@ -112,7 +115,7 @@ impl GameState {
 #[derive(Clone)]
 struct UserState {
     player_id: types::PlayerID,
-    tx: mpsc::UnboundedSender<Result<Message, warp::Error>>,
+    tx: mpsc::UnboundedSender<Message>,
 }
 
 impl UserState {
@@ -121,13 +124,10 @@ impl UserState {
     }
 }
 
-async fn send_to_user(
-    tx: &'_ mpsc::UnboundedSender<Result<Message, warp::Error>>,
-    msg: &GameMessage,
-) -> bool {
+async fn send_to_user(tx: &'_ mpsc::UnboundedSender<Message>, msg: &GameMessage) -> bool {
     if let Ok(j) = serde_json::to_vec(&msg) {
         if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
-            return tx.send(Ok(Message::binary(s))).is_ok();
+            return tx.send(Message::binary(s)).is_ok();
         }
     }
     false
@@ -405,14 +405,16 @@ async fn user_connected(ws: WebSocket, games: Games, stats: Arc<Mutex<InMemorySt
     info!(logger, "Websocket connection initialized");
 
     // Split the socket into a sender and receive of messages.
-    let (user_ws_tx, mut user_ws_rx) = ws.split();
+    let (mut user_ws_tx, mut user_ws_rx) = ws.split();
 
     // Use an unbounded channel to handle buffering and flushing of messages
     // to the websocket...
-    let (tx, rx) = mpsc::unbounded_channel();
-    tokio::task::spawn(rx.forward(user_ws_tx).map(|result| {
-        let _ = result;
-    }));
+    let (tx, mut rx) = mpsc::unbounded_channel();
+    tokio::task::spawn(async move {
+        while let Some(v) = rx.recv().await {
+            let _ = user_ws_tx.send(v).await;
+        }
+    });
 
     let mut val = None;
 

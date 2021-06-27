@@ -26,4 +26,3 @@ serde = { version = "1.0", features = ["derive"]}
 shengji-core = { path = "../../core" }
 shengji-types = { path = "../../backend/backend-types" }
 wasm-bindgen = { version = "0.2.74", features = ["serde-serialize"] }
-web-sys = { version = "0.3.22", features = ["console"]}
