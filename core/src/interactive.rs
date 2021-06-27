@@ -28,6 +28,10 @@ impl InteractiveGame {
         Self { state }
     }
 
+    pub fn into_state(self) -> GameState {
+        self.state
+    }
+
     pub fn register(
         &mut self,
         name: String,
@@ -37,9 +41,13 @@ impl InteractiveGame {
         Ok((actor, self.hydrate_messages(actor, msgs)?))
     }
 
-    pub fn kick(&mut self, id: PlayerID) -> Result<Vec<(BroadcastMessage, String)>, Error> {
-        let msgs = self.state.kick(id)?;
-        self.hydrate_messages(id, msgs)
+    pub fn kick(
+        &mut self,
+        actor: PlayerID,
+        target: PlayerID,
+    ) -> Result<Vec<(BroadcastMessage, String)>, Error> {
+        let msgs = self.state.kick(target)?;
+        self.hydrate_messages(actor, msgs)
     }
 
     pub fn dump_state(&self) -> Result<GameState, Error> {
@@ -56,6 +64,10 @@ impl InteractiveGame {
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         self.state.next_player()
+    }
+
+    pub fn player_name(&self, player_id: PlayerID) -> Result<&'_ str, Error> {
+        self.state.player_name(player_id)
     }
 
     #[allow(clippy::cognitive_complexity)]

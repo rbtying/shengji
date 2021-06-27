@@ -15,13 +15,19 @@ pub enum GameMessage {
         data: interactive::BroadcastMessage,
         message: String,
     },
-    Beep,
-    ReadyCheck,
+    Beep {
+        target: String,
+    },
+    ReadyCheck {
+        from: String,
+    },
     Error(String),
     Header {
         messages: Vec<String>,
     },
-    Kicked,
+    Kicked {
+        target: String,
+    },
 }
 
 /// zstd dictionary, compressed with zstd.

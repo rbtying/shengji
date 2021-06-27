@@ -129,7 +129,7 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
 
       const f = (buf: ArrayBuffer): void => {
         const message = decodeWireFormat(new Uint8Array(buf));
-        if (message === "Kicked") {
+        if (message.Kicked !== undefined) {
           ws.close();
         } else {
           updateStateRef.current({
