@@ -46,6 +46,7 @@ COPY backend/backend-types ./backend/backend-types/
 COPY frontend ./frontend
 COPY backend/Cargo.toml ./backend/Cargo.toml
 COPY backend/src/main.rs ./backend/src/
+COPY storage ./storage
 WORKDIR /app/frontend
 RUN yarn build
 
@@ -58,6 +59,7 @@ COPY Cargo.lock .
 COPY core ./core
 COPY frontend ./frontend
 COPY backend/ ./backend
+COPY storage ./storage
 COPY favicon ./favicon
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist/
 WORKDIR /app
