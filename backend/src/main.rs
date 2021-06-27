@@ -511,10 +511,8 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                     }
                     GameMessage::ReadyCheck { from } => *from != name_,
                 };
-                if should_send {
-                    if !send_to_user(&tx, &v).await {
-                        break;
-                    }
+                if should_send && !send_to_user(&tx, &v).await {
+                    break;
                 }
             }
             debug!(logger_, "Subscription task completed");

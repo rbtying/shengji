@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
@@ -84,9 +85,10 @@ pub trait Storage<S: State, E>: Clone + Send {
     async fn get_states_created(self) -> Result<u64, E>;
 }
 
+#[allow(clippy::type_complexity)]
 pub struct HashMapStorage<S: State> {
     logger: Logger,
-    state_map: Arc<Mutex<HashMap<Vec<u8>, S>>>,
+    state_map: Arc<Mutex<HashMap<Vec<u8>, (S, Instant)>>>,
     subscribers: Arc<Mutex<HashMap<Vec<u8>, HashMap<usize, mpsc::UnboundedSender<S::Message>>>>>,
     num_games_created: Arc<Mutex<u64>>,
     _data: PhantomData<S>,
@@ -145,7 +147,7 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
             *self.num_games_created.lock().await += 1;
             info!(self.logger, "Initializing state"; "key" => stringify(state.key()));
         }
-        m.insert(state.key().to_vec(), state);
+        m.insert(state.key().to_vec(), (state, Instant::now()));
         Ok(())
     }
 
@@ -155,9 +157,9 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
             *self.num_games_created.lock().await += 1;
             info!(self.logger, "Initializing state"; "key" => stringify(state.key()));
         }
-        if m.get(state.key()).map(|s| s.version()).unwrap_or(0) == expected_version {
+        if m.get(state.key()).map(|s| s.0.version()).unwrap_or(0) == expected_version {
             if state.version() != expected_version {
-                m.insert(state.key().to_vec(), state);
+                m.insert(state.key().to_vec(), (state, Instant::now()));
                 if expected_version == 0 {
                     let mut n = self.num_games_created.lock().await;
                     *n += 1;
@@ -171,7 +173,10 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
 
     async fn get(self, key: Vec<u8>) -> Result<S, ()> {
         let m = self.state_map.lock().await;
-        Ok(m.get(&key).cloned().unwrap_or_else(|| S::new_from_key(key)))
+        Ok(m.get(&key)
+            .cloned()
+            .unwrap_or_else(|| (S::new_from_key(key), Instant::now()))
+            .0)
     }
 
     async fn execute_operation_with_messages<E2, F>(
@@ -187,18 +192,18 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         let s = m
             .get(&key)
             .cloned()
-            .unwrap_or_else(|| S::new_from_key(key.clone()));
+            .unwrap_or_else(|| (S::new_from_key(key.clone()), Instant::now()));
         // We're holding the lock, so nobody can actually contend with us. So,
         // we don't need to compare-and-set the relevant version.
-        let old_v = s.version();
-        let (new_state, messages) = operation(s)?;
+        let old_v = s.0.version();
+        let (new_state, messages) = operation(s.0)?;
         let new_v = new_state.version();
         if new_v != old_v {
             if !m.contains_key(&key) {
                 *self.num_games_created.lock().await += 1;
                 info!(self.logger, "Initializing state"; "key" => stringify(&key));
             }
-            m.insert(key.clone(), new_state);
+            m.insert(key.clone(), (new_state, Instant::now()));
         }
         drop(m);
 
@@ -271,14 +276,29 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         Ok(*n)
     }
 
+    #[allow(clippy::if_same_then_else)]
     async fn prune(self) {
-        debug!(self.logger, "Beginning prune");
-        // We walk through the key-space and remove any states which are:
-        // not updated in at least 1 hour.
-        //
+        // We walk through the key-space and remove any states which are
+        // not updated in at least 2 hours.
         // We also remove any subscribers which have disconnected, and
         // subscribers for whom the game is no longer connected.
-        debug!(self.logger, "Ending prune");
+        let mut m = self.state_map.lock().await;
+        let mut s = self.subscribers.lock().await;
+        let mut to_prune = vec![];
+        for (k, (_, t)) in m.iter() {
+            if t.elapsed() > Duration::from_secs(2 * 3600) {
+                to_prune.push(k.to_vec());
+            } else if s.get(k).map(|ss| ss.is_empty()).unwrap_or(true)
+                && t.elapsed() > Duration::from_secs(3600)
+            {
+                to_prune.push(k.to_vec());
+            }
+        }
+        for k in &to_prune {
+            m.remove(k);
+            s.remove(k);
+        }
+        debug!(self.logger, "Ending prune"; "num_states_pruned" => to_prune.len());
     }
 
     async fn stats(self) -> Result<(usize, usize), ()> {
