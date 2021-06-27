@@ -1023,7 +1023,6 @@ name = "shengji"
 version = "0.1.1-alpha.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "futures",
  "lazy_static",
  "serde",
@@ -1035,6 +1034,7 @@ dependencies = [
  "slog-bunyan",
  "slog-term",
  "static_dir",
+ "storage",
  "tokio",
  "vergen",
  "warp",
@@ -1185,6 +1185,16 @@ dependencies = [
  "once_cell",
  "urlencoding",
  "warp",
+]
+
+[[package]]
+name = "storage"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "slog",
+ "tokio",
 ]
 
 [[package]]

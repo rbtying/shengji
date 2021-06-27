@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "core",
+  "storage",
   "backend",
   "backend/backend-types",
   "frontend/shengji-wasm"

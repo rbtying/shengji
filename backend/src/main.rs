@@ -20,7 +20,6 @@ use warp::Filter;
 use shengji_core::{game_state, interactive, settings, types};
 use shengji_types::{GameMessage, ZSTD_ZSTD_DICT};
 
-mod storage;
 use storage::{HashMapStorage, State, Storage};
 
 /// Our global unique user id counter.

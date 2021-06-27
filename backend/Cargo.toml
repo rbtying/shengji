@@ -13,7 +13,6 @@ dynamic = ["slog-term"]
 
 [dependencies]
 anyhow = "1.0"
-async-trait = "0.1"
 shengji-types = { path = "./backend-types" }
 futures = { version = "0.3" }
 lazy_static = "1.4.0"
@@ -25,6 +24,7 @@ slog-async = "2.5"
 slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 static_dir = "0.2"
+storage = { path = "../storage" }
 tokio = { version = "1.7", features = ["macros", "rt-multi-thread", "fs", "time", "sync", "io-util"] }
 warp = "0.3"
 zstd = "0.5"
