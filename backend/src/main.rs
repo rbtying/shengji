@@ -519,7 +519,6 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
                     std::mem::swap(&mut clients_to_disconnect, clients);
                 }
                 clients.push(ws_id);
-                drop(clients);
 
                 player_id_tx
                     .send((assigned_player_id, version, clients_to_disconnect))
