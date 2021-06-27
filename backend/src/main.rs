@@ -113,26 +113,6 @@ impl State for VersionedGame {
     }
 }
 
-// impl GameState {
-//     pub fn tracer(&mut self, logger: &Logger, room: &str, parent: Option<usize>) -> Logger {
-//         let elapsed = self.last_updated.elapsed();
-//         self.last_updated = Instant::now();
-//         self.monotonic_id += 1;
-//         if let Some(parent) = parent {
-//             logger.new(o!(
-//                 "elapsed_ms" => elapsed.as_millis(),
-//                 "span" => format!("{}:{}", room, self.monotonic_id),
-//                 "parent_span" => format!("{}:{}", room, parent)
-//             ))
-//         } else {
-//             logger.new(o!(
-//                 "elapsed_ms" => elapsed.as_millis(),
-//                 "span" => format!("{}:{}", room, self.monotonic_id),
-//             ))
-//         }
-//     }
-// }
-
 async fn send_to_user(tx: &'_ mpsc::UnboundedSender<Message>, msg: &GameMessage) -> bool {
     if let Ok(j) = serde_json::to_vec(&msg) {
         if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
@@ -609,51 +589,6 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
             // connected. Once they disconnect, then...
             user_disconnected(room, ws_id, backend_storage, logger, join_span).await;
         }
-        // if game.users.is_empty() {
-        //     info!(game.tracer(&logger, &room, None), "Creating new room");
-        //     let mut stats = stats.lock().await;
-        //     stats.num_games_created += 1;
-        // }
-
-        // let (player_id, msgs) = match game.game.register(name.clone()) {
-        //     Ok(player_id) => player_id,
-        //     Err(err) => {
-        //         error!(logger, "Failed to join room"; "error" => format!("{:?}", err));
-        //         let err = GameMessage::Error(format!("couldn't register for game {:?}", err));
-        //         let _ = send_to_user(&tx, &err).await;
-        //         return;
-        //     }
-        // };
-
-        // info!(game.tracer(&logger, &room, Some(1)), "Joining room"; "player_id" => player_id.0);
-        // game.users.insert(
-        //     ws_id,
-        //     UserState {
-        //         player_id,
-        //         tx: tx.clone(),
-        //     },
-        // );
-
-        // if the same user joined before, remove its previous entry from the user list
-        // if !game.game.allows_multiple_sessions_per_user() {
-        //     game.users
-        //         .retain(|id, user| user.player_id != player_id || *id == ws_id);
-        // }
-
-        // send the updated game state to everyone!
-        // for user in game.users.values() {
-        //     if let Ok(state) = game.game.dump_state_for_player(user.player_id) {
-        //         user.send(&GameMessage::State { state }).await;
-        //     }
-
-        //     for (data, message) in &msgs {
-        //         user.send(&GameMessage::Broadcast {
-        //             data: data.clone(),
-        //             message: message.clone(),
-        //         })
-        //         .await;
-        //     }
-        // }
     }
 }
 
@@ -892,17 +827,6 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E>(
     logger: slog::Logger,
     parent: u64,
 ) {
-    // Stream closed up, so remove from the user list
-    // let mut g = games.lock().await;
-    // if let Some(game) = g.get_mut(&room) {
-    //     game.users.remove(&ws_id);
-    //     // If there is nobody connected anymore, drop the game entirely.
-    //     if game.users.is_empty() {
-    //         info!(game.tracer(&logger, &room, Some(parent)), "Removing empty room"; "room" => room.clone());
-    //         g.remove(&room);
-    //     }
-    // }
-    // drop(g);
     let _ = backend_storage
         .unsubscribe(room.as_bytes().to_vec(), ws_id)
         .await;
