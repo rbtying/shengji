@@ -478,22 +478,43 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
         // no longer use tx! It's owned by the backend storage.
         let logger_ = logger.clone();
         let name_ = name.clone();
+        let (subscribe_player_id_tx, subscribe_player_id_rx) =
+            oneshot::channel::<types::PlayerID>();
         tokio::task::spawn(async move {
             debug!(logger_, "Subscribed to messages");
-            while let Some(v) = subscription.recv().await {
-                let should_send = match &v {
-                    GameMessage::State { .. }
-                    | GameMessage::Broadcast { .. }
-                    | GameMessage::Message { .. }
-                    | GameMessage::Error(_)
-                    | GameMessage::Header { .. } => true,
-                    GameMessage::Beep { target } | GameMessage::Kicked { target } => {
-                        *target == name_
+            if let Ok(player_id) = subscribe_player_id_rx.await {
+                let logger_ = logger_.new(o!("player_id" => player_id.0));
+                debug!(logger_, "Received player ID");
+                while let Some(v) = subscription.recv().await {
+                    let should_send = match &v {
+                        GameMessage::State { .. }
+                        | GameMessage::Broadcast { .. }
+                        | GameMessage::Message { .. }
+                        | GameMessage::Error(_)
+                        | GameMessage::Header { .. } => true,
+                        GameMessage::Beep { target } | GameMessage::Kicked { target } => {
+                            *target == name_
+                        }
+                        GameMessage::ReadyCheck { from } => *from != name_,
+                    };
+                    let v = if should_send {
+                        if let GameMessage::State { state } = v {
+                            let g = interactive::InteractiveGame::new_from_state(state);
+                            g.dump_state_for_player(player_id)
+                                .ok()
+                                .map(|state| GameMessage::State { state })
+                        } else {
+                            Some(v)
+                        }
+                    } else {
+                        None
+                    };
+
+                    if let Some(v) = v {
+                        if !send_to_user(&tx, &v).await {
+                            break;
+                        }
                     }
-                    GameMessage::ReadyCheck { from } => *from != name_,
-                };
-                if should_send && !send_to_user(&tx, &v).await {
-                    break;
                 }
             }
             debug!(logger_, "Subscription task completed");
@@ -550,6 +571,7 @@ async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
         if let Ok((player_id, join_span, websockets_to_disconnect)) = player_id_rx.await {
             let logger = logger.new(o!("player_id" => player_id.0));
             info!(logger, "Successfully registered user");
+            let _ = subscribe_player_id_tx.send(player_id);
 
             for id in websockets_to_disconnect {
                 info!(logger, "Disconnnecting existing client"; "kicked_ws_id" => ws_id);
