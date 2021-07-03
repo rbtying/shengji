@@ -109,7 +109,7 @@ impl<S: State> Storage<S, ()> for HashMapStorage<S> {
         operation: F,
     ) -> Result<u64, E2>
     where
-        E2: From<()>,
+        E2: From<()> + Send,
         F: FnOnce(S) -> Result<(S, Vec<S::Message>), E2> + Send + 'static,
     {
         let mut m = self.state_map.lock().await;
