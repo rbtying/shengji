@@ -20,7 +20,7 @@ import {
 interface Context {
   findViablePlays: (
     trump: ITrump,
-    tractor_requirements: ITractorRequirements,
+    tractorRequirements: ITractorRequirements,
     cards: string[]
   ) => IFoundViablePlay[];
   findValidBids: (req: IFindValidBidsRequest) => IBid[];

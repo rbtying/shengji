@@ -338,7 +338,7 @@ interface ITractorRequirementsProps {
   onChange: (requirements: ITractorRequirements) => void;
 }
 
-const TractorRequirements = (props: ITractorRequirementsProps) => {
+const TractorRequirements = (props: ITractorRequirementsProps): JSX.Element => {
   return (
     <div>
       <label>Tractor requirements: </label>

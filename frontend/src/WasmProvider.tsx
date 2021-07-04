@@ -13,13 +13,13 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
       value={{
         findViablePlays: (
           trump: ITrump,
-          tractor_requirements: ITractorRequirements,
+          tractorRequirements: ITractorRequirements,
           cards: string[]
         ) => {
           return Shengji.find_viable_plays({
             trump,
-            tractor_requirements,
             cards,
+            tractor_requirements: tractorRequirements,
           }).results;
         },
         findValidBids: (req) => {

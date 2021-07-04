@@ -44,8 +44,8 @@ const ChangeLog = (): JSX.Element => {
         <p>7/04/2021:</p>
         <ul>
           <li>
-            Added option to customize the minimum tractor size under "more game
-            settings"
+            Added option to customize the minimum tractor size under &ldquo;more
+            game settings&rdquo;
           </li>
         </ul>
         <p>6/18/2021:</p>
