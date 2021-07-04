@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 13;
+const changeLogVersion: number = 14;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>7/04/2021:</p>
+        <ul>
+          <li>
+            Added option to customize the minimum tractor size under "more game
+            settings"
+          </li>
+        </ul>
         <p>6/18/2021:</p>
         <ul>
           <li>

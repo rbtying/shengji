@@ -327,6 +327,7 @@ impl PlayPhase {
             throw_eval_policy: self.propagated.throw_evaluation_policy,
             format_hint,
             hide_throw_halting_player: self.propagated.hide_throw_halting_player,
+            tractor_requirements: self.propagated.tractor_requirements,
         })?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {

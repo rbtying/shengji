@@ -107,7 +107,13 @@ const Play = (props: IProps): JSX.Element => {
     const newSelected = ArrayUtils.minus(selected, toRemove);
 
     setSelected(newSelected);
-    setGrouping(findViablePlays(playPhase.trump, newSelected));
+    setGrouping(
+      findViablePlays(
+        playPhase.trump,
+        playPhase.propagated.tractor_requirements,
+        newSelected
+      )
+    );
   }, [playPhase.hands.hands, currentPlayer.id]);
 
   const nextPlayer = playPhase.trick.player_queue[0];
@@ -324,7 +330,13 @@ const Play = (props: IProps): JSX.Element => {
             selectedCards={selected}
             onSelect={(newSelected) => {
               setSelected(newSelected);
-              setGrouping(findViablePlays(playPhase.trump, newSelected));
+              setGrouping(
+                findViablePlays(
+                  playPhase.trump,
+                  playPhase.propagated.tractor_requirements,
+                  newSelected
+                )
+              );
             }}
             notifyEmpty={isCurrentPlayerTurn}
           />

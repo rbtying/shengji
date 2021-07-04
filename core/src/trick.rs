@@ -65,6 +65,25 @@ impl Default for ThrowEvaluationPolicy {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct TractorRequirements {
+    /// The minimum number of cards in each unit of the tractor
+    pub min_count: usize,
+    /// The minimum length of the tractor
+    pub min_length: usize,
+}
+
+impl Default for TractorRequirements {
+    fn default() -> Self {
+        Self {
+            min_count: 2,
+            min_length: 2,
+        }
+    }
+}
+
+impl_slog_value!(TractorRequirements);
+
 type Members = Vec<OrderedCard>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -115,6 +134,7 @@ impl TrickUnit {
 
     pub fn find_plays(
         trump: Trump,
+        tractor_requirements: TractorRequirements,
         iter: impl IntoIterator<Item = Card>,
     ) -> impl IntoIterator<Item = Units> {
         let mut counts = BTreeMap::new();
@@ -125,7 +145,13 @@ impl TrickUnit {
             original_num_cards += 1;
         }
 
-        find_plays_inner(&mut counts, original_num_cards, None, 0)
+        find_plays_inner(
+            &mut counts,
+            original_num_cards,
+            tractor_requirements,
+            None,
+            0,
+        )
     }
 
     pub fn cards(&self) -> Vec<Card> {
@@ -332,6 +358,7 @@ impl TrickFormat {
 
     pub fn from_cards(
         trump: Trump,
+        tractor_requirements: TractorRequirements,
         cards: &'_ [Card],
         proposed: Option<&'_ [TrickUnit]>,
     ) -> Result<TrickFormat, TrickError> {
@@ -344,9 +371,10 @@ impl TrickFormat {
                 return Err(TrickError::WrongNumberOfSuits);
             }
         }
-        let mut possibilities = TrickUnit::find_plays(trump, cards.iter().copied())
-            .into_iter()
-            .collect::<Vec<Units>>();
+        let mut possibilities =
+            TrickUnit::find_plays(trump, tractor_requirements, cards.iter().copied())
+                .into_iter()
+                .collect::<Vec<Units>>();
 
         let sort = |mut u: Units| {
             u.sort_by(|a, b| {
@@ -401,6 +429,7 @@ pub struct PlayCards<'a, 'b, 'c> {
     pub throw_eval_policy: ThrowEvaluationPolicy,
     pub format_hint: Option<&'c [TrickUnit]>,
     pub hide_throw_halting_player: bool,
+    pub tractor_requirements: TractorRequirements,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -505,6 +534,7 @@ impl Trick {
             throw_eval_policy,
             format_hint,
             hide_throw_halting_player,
+            tractor_requirements,
         } = args;
 
         if self.player_queue.front().cloned() != Some(id) {
@@ -516,7 +546,8 @@ impl Trick {
         cards.sort_by(|a, b| self.trump.compare(*a, *b));
 
         let (cards, bad_throw_cards, better_player) = if self.trick_format.is_none() {
-            let mut tf = TrickFormat::from_cards(self.trump, &cards, format_hint)?;
+            let mut tf =
+                TrickFormat::from_cards(self.trump, tractor_requirements, &cards, format_hint)?;
             let mut invalid = None;
             if tf.units.len() > 1 {
                 // This is a throw, let's see if any of the units can be strictly defeated by any
@@ -555,8 +586,16 @@ impl Trick {
                                         *c,
                                         *ct,
                                         &in_suit,
-                                        *count,
-                                        members.len(),
+                                        // Note: We base the
+                                        // tractor-requirements off of the
+                                        // tractor we found, rather than off of
+                                        // the requirements that are passed in,
+                                        // that way we only find "bigger"
+                                        // tractors.
+                                        TractorRequirements {
+                                            min_count: *count,
+                                            min_length: members.len(),
+                                        },
                                     );
                                     if !higher_tractors.is_empty() {
                                         invalid = Some((player, unit.clone()));
@@ -1000,12 +1039,11 @@ fn find_tractors_from_start(
     card: OrderedCard,
     count: usize,
     counts: &BTreeMap<OrderedCard, usize>,
-    external_min_count: usize,
-    min_length: usize,
+    tractor_requirements: TractorRequirements,
 ) -> Units {
     let mut potential_starts = Units::new();
 
-    if count < external_min_count {
+    if count < tractor_requirements.min_count {
         return potential_starts;
     }
 
@@ -1023,7 +1061,9 @@ fn find_tractors_from_start(
             if next_count >= 2 {
                 min_count = min_count.min(next_count);
                 path.push(next_card);
-                if min_count >= external_min_count && path.len() >= min_length {
+                if min_count >= tractor_requirements.min_count
+                    && path.len() >= tractor_requirements.min_length
+                {
                     potential_starts.push(TrickUnit::Tractor {
                         members: path.clone(),
                         count: min_count,
@@ -1044,6 +1084,7 @@ fn find_tractors_from_start(
 fn find_plays_inner(
     counts: &mut BTreeMap<OrderedCard, usize>,
     num_cards: usize,
+    tractor_requirements: TractorRequirements,
     min_start: Option<OrderedCard>,
     depth: usize,
 ) -> Vec<Units> {
@@ -1059,7 +1100,7 @@ fn find_plays_inner(
     // The return values are therefore always sorted in reverse `first_card` order.
     let mut potential_starts = Units::new();
     if let Some((card, count)) = iter.next() {
-        let new_tractors = find_tractors_from_start(*card, *count, counts, 2, 2);
+        let new_tractors = find_tractors_from_start(*card, *count, counts, tractor_requirements);
 
         let all_consumed = !new_tractors.is_empty()
             && new_tractors.iter().all(|t| match t {
@@ -1090,6 +1131,7 @@ fn find_plays_inner(
                 let sub_plays = find_plays_inner(
                     subcounts,
                     num_cards - start.size(),
+                    tractor_requirements,
                     Some(start.first_card()),
                     depth + 1,
                 );
@@ -1118,8 +1160,8 @@ mod tests {
     };
 
     use super::{
-        OrderedCard, PlayCards, ThrowEvaluationPolicy, Trick, TrickDrawPolicy, TrickEnded,
-        TrickError, TrickFormat, TrickUnit, UnitLike,
+        OrderedCard, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
+        TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike,
     };
 
     const TRUMP: Trump = Trump::Standard {
@@ -1156,6 +1198,7 @@ mod tests {
                 throw_eval_policy: $tep,
                 format_hint: $fmt,
                 hide_throw_halting_player: $h,
+                tractor_requirements: TractorRequirements::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tdp:expr, $tep:expr) => {
@@ -1167,6 +1210,7 @@ mod tests {
                 throw_eval_policy: $tep,
                 format_hint: None,
                 hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tep:expr) => {
@@ -1178,6 +1222,7 @@ mod tests {
                 throw_eval_policy: $tep,
                 format_hint: None,
                 hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr) => {
@@ -1189,6 +1234,7 @@ mod tests {
                 throw_eval_policy: ThrowEvaluationPolicy::All,
                 format_hint: None,
                 hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
             }
         };
     }
@@ -1197,9 +1243,9 @@ mod tests {
     #[test]
     fn test_play_formats() {
         macro_rules! test_eq {
-            ($($x:expr),+; $([$([$($y:expr),+]),+]),+) => {
+            ($($x:expr),+; $([$([$($y:expr),+]),+]),+; $tr:expr) => {
                 let cards = vec![$($x),+];
-                let units = TrickUnit::find_plays(TRUMP, cards.iter().copied()).into_iter().collect::<Vec<_>>();
+                let units = TrickUnit::find_plays(TRUMP, $tr, cards.iter().copied()).into_iter().collect::<Vec<_>>();
                 assert_eq!(
                     units.clone().into_iter().map(|units| {
                         units.into_iter().map(|u| u.cards().into_iter().collect::<Vec<_>>()).collect::<Vec<_>>()
@@ -1217,20 +1263,37 @@ mod tests {
             }
         }
 
-        test_eq!(H_2, H_3, H_7; [[H_7], [H_3], [H_2]]);
-        test_eq!(H_2, H_2, H_2; [[H_2, H_2, H_2]]);
-        test_eq!(H_2, H_2, H_3, H_3; [[H_2, H_2, H_3, H_3]]);
-        test_eq!(H_2, H_2, H_2, H_3, H_3; [[H_2], [H_2, H_2, H_3, H_3]], [[H_3, H_3], [H_2, H_2, H_2]]);
-        test_eq!(H_2, H_2, H_3, H_3, H_3; [[H_3], [H_2, H_2, H_3, H_3]], [[H_3, H_3, H_3], [H_2, H_2]]);
-        test_eq!(H_4, H_4, S_4, S_4; [[H_4, H_4, S_4, S_4]]);
-        test_eq!(H_4, H_4, S_A, S_A; [[S_A, S_A, H_4, H_4]]);
-        test_eq!(S_Q, S_Q, S_K, S_K, S_A; [[S_A], [S_Q, S_Q, S_K, S_K]]);
+        test_eq!(H_2, H_3, H_7; [[H_7], [H_3], [H_2]]; TractorRequirements::default());
+        test_eq!(H_2, H_2, H_2; [[H_2, H_2, H_2]]; TractorRequirements::default());
+        test_eq!(H_2, H_2, H_3, H_3; [[H_2, H_2, H_3, H_3]]; TractorRequirements::default());
+        test_eq!(H_2, H_2, H_3, H_3; [[H_3, H_3], [H_2, H_2]]; TractorRequirements {
+            min_length: 3,
+            min_count: 2,
+        });
+        test_eq!(H_2, H_2, H_3, H_3, H_5, H_5; [[H_2, H_2, H_3, H_3, H_5, H_5]]; TractorRequirements {
+            min_length: 3,
+            min_count: 2,
+        });
+        test_eq!(H_2, H_2, H_3, H_3; [[H_3, H_3], [H_2, H_2]]; TractorRequirements {
+            min_length: 3,
+            min_count: 3,
+        });
+        test_eq!(H_2, H_2, H_2, H_3, H_3, H_3; [[H_2, H_2, H_2, H_3, H_3, H_3]]; TractorRequirements {
+            min_length: 2,
+            min_count: 3,
+        });
+        test_eq!(H_2, H_2, H_2, H_3, H_3; [[H_2], [H_2, H_2, H_3, H_3]], [[H_3, H_3], [H_2, H_2, H_2]]; TractorRequirements::default());
+        test_eq!(H_2, H_2, H_3, H_3, H_3; [[H_3], [H_2, H_2, H_3, H_3]], [[H_3, H_3, H_3], [H_2, H_2]]; TractorRequirements::default());
+        test_eq!(H_4, H_4, S_4, S_4; [[H_4, H_4, S_4, S_4]]; TractorRequirements::default());
+        test_eq!(H_4, H_4, S_A, S_A; [[S_A, S_A, H_4, H_4]]; TractorRequirements::default());
+        test_eq!(S_Q, S_Q, S_K, S_K, S_A; [[S_A], [S_Q, S_Q, S_K, S_K]]; TractorRequirements::default());
 
-        test_eq!(H_3, H_3, H_3, H_5, H_5, H_5; [[H_3, H_3, H_3, H_5, H_5, H_5]]);
+        test_eq!(H_3, H_3, H_3, H_5, H_5, H_5; [[H_3, H_3, H_3, H_5, H_5, H_5]]; TractorRequirements::default());
         test_eq!(H_2, H_2, H_3, H_3, H_3, H_5, H_5, H_5;
             [[H_5, H_5, H_5], [H_3], [H_2, H_2, H_3, H_3]],
             [[H_3, H_3, H_3, H_5, H_5, H_5], [H_2, H_2]],
-            [[H_5], [H_3], [H_2, H_2, H_3, H_3, H_5, H_5]]
+            [[H_5], [H_3], [H_2, H_2, H_3, H_3, H_5, H_5]];
+            TractorRequirements::default()
         );
     }
 
@@ -1472,7 +1535,13 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2], None).unwrap(),
+            TrickFormat::from_cards(
+                TRUMP,
+                TractorRequirements::default(),
+                &[S_2, S_2, S_2],
+                None
+            )
+            .unwrap(),
             expected_tf
         );
 
@@ -1492,8 +1561,13 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5], None)
-                .unwrap(),
+            TrickFormat::from_cards(
+                TRUMP,
+                TractorRequirements::default(),
+                &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5],
+                None
+            )
+            .unwrap(),
             expected_tf,
         );
         assert!(expected_tf
@@ -1527,6 +1601,7 @@ mod tests {
         assert_eq!(
             TrickFormat::from_cards(
                 TRUMP,
+                TractorRequirements::default(),
                 &[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5],
                 None
             )
@@ -1542,6 +1617,7 @@ mod tests {
 
         assert!(TrickFormat::from_cards(
             TRUMP,
+            TractorRequirements::default(),
             &[S_2, S_2, S_3, S_3, S_5, S_5, S_8, S_8, S_8],
             None
         )
@@ -1572,7 +1648,13 @@ mod tests {
         };
 
         assert_eq!(
-            TrickFormat::from_cards(TRUMP, &[S_2, S_2, S_2, S_3, S_5, S_5, S_5], None).unwrap(),
+            TrickFormat::from_cards(
+                TRUMP,
+                TractorRequirements::default(),
+                &[S_2, S_2, S_2, S_3, S_5, S_5, S_5],
+                None
+            )
+            .unwrap(),
             expected_tf
         );
 

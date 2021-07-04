@@ -7,7 +7,7 @@ use rand_distr::WeightedIndex;
 use shengji_core::{
     game_state::{GameState, InitializePhase},
     settings::{FriendSelection, GameModeSettings},
-    trick::{TrickUnit, UnitLike},
+    trick::{TractorRequirements, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, Number, Suit},
 };
 use std::collections::HashMap;
@@ -153,7 +153,11 @@ fn main() {
 
                         let mut best_play = None;
                         for (_, cards) in cards_by_suit.into_iter() {
-                            let results = TrickUnit::find_plays(s.trick().trump(), cards.clone());
+                            let results = TrickUnit::find_plays(
+                                s.trick().trump(),
+                                TractorRequirements::default(),
+                                cards.clone(),
+                            );
                             let play = results
                                 .into_iter()
                                 // Never throw, so only pick one unit
