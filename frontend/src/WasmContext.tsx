@@ -14,10 +14,15 @@ import {
   TrickDrawPolicy,
   IGameScoringParameters,
   JokerBidPolicy,
+  ITractorRequirements,
 } from "./types";
 
 interface Context {
-  findViablePlays: (trump: ITrump, cards: string[]) => IFoundViablePlay[];
+  findViablePlays: (
+    trump: ITrump,
+    tractorRequirements: ITractorRequirements,
+    cards: string[]
+  ) => IFoundViablePlay[];
   findValidBids: (req: IFindValidBidsRequest) => IBid[];
   sortAndGroupCards: (
     req: ISortAndGroupCardsRequest

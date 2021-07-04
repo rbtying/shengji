@@ -10,7 +10,7 @@ use crate::deck::Deck;
 use crate::message::MessageVariant;
 use crate::player::Player;
 use crate::scoring::GameScoringParameters;
-use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
+use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
 
 #[macro_export]
@@ -316,6 +316,8 @@ pub struct PropagatedState {
     pub(crate) game_scoring_parameters: GameScoringParameters,
     #[serde(default)]
     pub(crate) hide_throw_halting_player: bool,
+    #[serde(default)]
+    pub(crate) tractor_requirements: TractorRequirements,
 }
 
 impl PropagatedState {
@@ -854,5 +856,19 @@ impl PropagatedState {
             None => bail!("player not found"),
         }
         Ok(())
+    }
+
+    pub fn set_tractor_requirements(
+        &mut self,
+        tractor_requirements: TractorRequirements,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if self.tractor_requirements != tractor_requirements {
+            self.tractor_requirements = tractor_requirements;
+            Ok(vec![MessageVariant::TractorRequirementsChanged {
+                tractor_requirements,
+            }])
+        } else {
+            Ok(vec![])
+        }
     }
 }

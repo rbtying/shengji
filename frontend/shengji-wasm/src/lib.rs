@@ -12,7 +12,7 @@ use shengji_core::{
     scoring::{
         self, compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
     },
-    trick::{Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
+    trick::{TractorRequirements, Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, PlayerID, Trump},
 };
 use shengji_types::ZSTD_ZSTD_DICT;
@@ -40,6 +40,7 @@ lazy_static::lazy_static! {
 #[derive(Deserialize)]
 struct FindViablePlaysRequest {
     trump: Trump,
+    tractor_requirements: TractorRequirements,
     cards: Vec<Card>,
 }
 
@@ -59,8 +60,12 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
-    let FindViablePlaysRequest { trump, cards } = req.into_serde().map_err(|e| e.to_string())?;
-    let results = TrickUnit::find_plays(trump, cards)
+    let FindViablePlaysRequest {
+        trump,
+        cards,
+        tractor_requirements,
+    } = req.into_serde().map_err(|e| e.to_string())?;
+    let results = TrickUnit::find_plays(trump, tractor_requirements, cards)
         .into_iter()
         .map(|p| {
             let description = UnitLike::multi_description(p.iter().map(UnitLike::from));

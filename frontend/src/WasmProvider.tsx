@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Shengji from "../shengji-wasm/pkg/shengji-core.js";
 import WasmContext from "./WasmContext";
-import { ITrump } from "./types";
+import { ITrump, ITractorRequirements } from "./types";
 
 interface IProps {
   children: React.ReactNode;
@@ -11,8 +11,16 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
   return (
     <WasmContext.Provider
       value={{
-        findViablePlays: (trump: ITrump, cards: string[]) => {
-          return Shengji.find_viable_plays({ trump, cards }).results;
+        findViablePlays: (
+          trump: ITrump,
+          tractorRequirements: ITractorRequirements,
+          cards: string[]
+        ) => {
+          return Shengji.find_viable_plays({
+            trump,
+            cards,
+            tractor_requirements: tractorRequirements,
+          }).results;
         },
         findValidBids: (req) => {
           return Shengji.find_valid_bids(req).results;

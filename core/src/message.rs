@@ -11,7 +11,7 @@ use crate::settings::{
     GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
     MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
-use crate::trick::{ThrowEvaluationPolicy, TrickDrawPolicy};
+use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
 use crate::types::{Card, Number, PlayerID};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -170,5 +170,8 @@ pub enum MessageVariant {
     },
     HideThrowHaltingPlayer {
         set: bool,
+    },
+    TractorRequirementsChanged {
+        tractor_requirements: TractorRequirements,
     },
 }
