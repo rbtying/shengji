@@ -1,6 +1,6 @@
 [package]
 name = "shengji"
-version = "0.1.2-alpha.0"
+version = "0.1.2"
 authors = ["Robert Ying <rbtying@aeturnalus.com>"]
 edition = "2018"
 build = "build.rs"
