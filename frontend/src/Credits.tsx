@@ -394,7 +394,9 @@ const ChangeLog = (): JSX.Element => {
 
 const Credits = (): JSX.Element => (
   <p style={{ padding: "0 20px" }}>
-    Made by Robert Ying, Abra Shen, and other{" "}
+    Made by Robert Ying (
+    <a href="mailto:me@robertying.com">me@robertying.com</a>), Abra Shen, and
+    other{" "}
     <a
       href="https://github.com/rbtying/shengji/graphs/contributors"
       target="_blank"
