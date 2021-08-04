@@ -69,9 +69,9 @@ fn without_matching_cards<T>(
     mut f: impl FnMut(&mut BTreeMap<OrderedCard, usize>) -> T,
 ) -> T {
     for (card, count) in cards {
-        let c = counts.get_mut(&card).unwrap();
+        let c = counts.get_mut(card).unwrap();
         if *c == *count {
-            counts.remove(&card);
+            counts.remove(card);
         } else {
             *c -= count;
         }
@@ -149,7 +149,7 @@ pub fn attempt_match(
         for req in adj_req.clone() {
             let mut found = false;
             for cc in &card {
-                if counts.get(&cc).copied().unwrap_or_default() >= req {
+                if counts.get(cc).copied().unwrap_or_default() >= req {
                     selected.push((*cc, req));
                     found = true;
                     card = cc.successor();
@@ -186,7 +186,7 @@ pub fn subsequent_decomposition_ordering(
     }
 
     for adj_req in &mut adj_reqs {
-        adj_req.sort_by(|a, b| b.cmp(&a));
+        adj_req.sort_by(|a, b| b.cmp(a));
     }
 
     let mut decompositions = Vec::with_capacity(adj_reqs.len());
@@ -248,7 +248,7 @@ pub fn subsequent_decomposition_ordering(
                 .iter()
                 .flat_map(|i| current_decomps[i].iter().cloned())
                 .collect::<PlayRequirements>();
-            full_decomp.sort_by(|a, b| b.cmp(&a));
+            full_decomp.sort_by(|a, b| b.cmp(a));
             subsequent_decomps.push(full_decomp);
         }
     }
@@ -343,7 +343,7 @@ fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
             });
         }
     }
-    groupings.sort_by(|a, b| b.cmp(&a));
+    groupings.sort_by(|a, b| b.cmp(a));
     groupings.dedup();
 
     let mut m = GROUP_CACHE.lock().unwrap();

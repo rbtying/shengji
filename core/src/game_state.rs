@@ -206,7 +206,7 @@ impl GameState {
             }) => {
                 if propagated.hide_landlord_points {
                     for (k, v) in points.iter_mut() {
-                        if landlords_team.contains(&k) {
+                        if landlords_team.contains(k) {
                             v.clear();
                         }
                     }
@@ -593,7 +593,7 @@ impl PlayPhase {
 
         for (id, penalty) in &self.penalties {
             if *penalty > 0 {
-                if self.landlords_team.contains(&id) {
+                if self.landlords_team.contains(id) {
                     non_landlords_points += *penalty as isize;
                 } else {
                     non_landlords_points -= *penalty as isize;

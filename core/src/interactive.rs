@@ -101,7 +101,7 @@ impl InteractiveGame {
             }
             (Action::ReorderPlayers(ref players), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Reordering players");
-                state.reorder_players(&players)?;
+                state.reorder_players(players)?;
                 vec![]
             }
             (Action::MakeObserver(id), GameState::Initialize(ref mut state)) => {

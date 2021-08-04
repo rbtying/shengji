@@ -996,9 +996,9 @@ fn without_trick_unit<T>(
 ) -> T {
     match unit {
         TrickUnit::Repeated { card, count } => {
-            let c = counts.get_mut(&card).unwrap();
+            let c = counts.get_mut(card).unwrap();
             if *c == *count {
-                counts.remove(&card);
+                counts.remove(card);
             } else {
                 *c -= count;
             }
@@ -1007,9 +1007,9 @@ fn without_trick_unit<T>(
             ref members, count, ..
         } => {
             for card in members {
-                let c = counts.get_mut(&card).unwrap();
+                let c = counts.get_mut(card).unwrap();
                 if *c == *count {
-                    counts.remove(&card);
+                    counts.remove(card);
                 } else {
                     *c -= count;
                 }

@@ -451,7 +451,7 @@ impl PropagatedState {
             bail!("link too long");
         }
         if let Some(ref chat_link) = chat_link {
-            if let Ok(u) = Url::parse(&chat_link) {
+            if let Ok(u) = Url::parse(chat_link) {
                 if u.scheme() != "https" {
                     bail!("must be https URL")
                 }
