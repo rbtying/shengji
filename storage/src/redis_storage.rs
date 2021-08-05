@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use redis::{aio::ConnectionManager, AsyncCommands, RedisError};
-use slog::{debug, info, Logger};
+use slog::{info, Logger};
 use thiserror::Error;
 use tokio::sync::{mpsc, Mutex};
 
