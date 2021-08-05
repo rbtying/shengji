@@ -405,7 +405,7 @@ async fn default_propagated() -> Result<impl warp::Reply, warp::Rejection> {
 }
 
 #[allow(clippy::cognitive_complexity)]
-async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug>(
+async fn user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>(
     ws: WebSocket,
     backend_storage: S,
     stats: Arc<Mutex<InMemoryStats>>,
@@ -662,6 +662,7 @@ async fn execute_operation<S, E, F>(
 ) -> bool
 where
     S: Storage<VersionedGame, E>,
+    E: Send,
     F: FnOnce(
             &mut interactive::InteractiveGame,
             u64,
@@ -729,6 +730,7 @@ async fn execute_immutable_operation<S, E, F>(
 ) -> bool
 where
     S: Storage<VersionedGame, E>,
+    E: Send,
     F: FnOnce(&interactive::InteractiveGame, u64) -> Result<Vec<GameMessage>, anyhow::Error>
         + Send
         + 'static,
@@ -773,7 +775,7 @@ where
     }
 }
 
-async fn handle_user_action<S: Storage<VersionedGame, E>, E>(
+async fn handle_user_action<S: Storage<VersionedGame, E>, E: Send>(
     logger: Logger,
     ws_id: usize,
     caller: types::PlayerID,
@@ -882,7 +884,7 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E>(
     Ok(())
 }
 
-async fn user_disconnected<S: Storage<VersionedGame, E>, E>(
+async fn user_disconnected<S: Storage<VersionedGame, E>, E: Send>(
     room: String,
     ws_id: usize,
     backend_storage: S,

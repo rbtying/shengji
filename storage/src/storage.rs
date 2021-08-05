@@ -46,7 +46,7 @@ pub trait Storage<S: State, E>: Clone + Send {
         operation: F,
     ) -> Result<u64, E2>
     where
-        E2: From<E>,
+        E2: From<E> + Send,
         F: FnOnce(S) -> Result<(S, Vec<S::Message>), E2> + Send + 'static;
 
     /// Subscribe to messages about a given key. The `subscriber_id` is expected
