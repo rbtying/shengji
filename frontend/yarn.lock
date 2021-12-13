@@ -7192,13 +7192,6 @@ warning@^4.0.3:
   dependencies:
     loose-envify "^1.0.0"
 
-wasm-pack@^0.9.1:
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/wasm-pack/-/wasm-pack-0.9.1.tgz#f1e80814c7197a469e700ff15b6c16cad5dbb2ae"
-  integrity sha512-866+5UIdASabHMVU+M1azbn8tN1g6kLDoL5qvzVYep2hCYicKCgD/Y1LD0yOB3xMDdi+OD51WYNNBGH1NNF23g==
-  dependencies:
-    binary-install "0.0.1"
-
 watchpack-chokidar2@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/watchpack-chokidar2/-/watchpack-chokidar2-2.0.1.tgz#38500072ee6ece66f3769936950ea1771be1c957"

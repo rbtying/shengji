@@ -31,8 +31,7 @@
     "styled-components": "^5.1.0",
     "ts-jest": "^26.4.1",
     "ts-loader": "^6.2.2",
-    "typescript": "^3.8.3",
-    "wasm-pack": "^0.9.1"
+    "typescript": "^3.8.3"
   },
   "prettier": {},
   "scripts": {
