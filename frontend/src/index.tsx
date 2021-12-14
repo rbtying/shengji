@@ -33,7 +33,11 @@ const bootstrap = (): void => {
   ReactDOM.render(
     <Sentry.ErrorBoundary
       fallback={
-        "An error has occured, please try refreshing! If that doesn't resolve the issue, consider using the latest version of Mozilla Firefox or Google Chrome browsers."
+        <>
+          An error has occured, please try refreshing! If that doesn't resolve
+          the issue, consider using the latest version of Mozilla Firefox or
+          Google Chrome browsers.
+        </>
       }
     >
       <React.Suspense fallback={"loading..."}>
