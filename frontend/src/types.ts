@@ -298,7 +298,7 @@ export type ITrump =
     }
   | {
       Standard?: null;
-      NoTrump: { number: string };
+      NoTrump: { number: string | null };
     };
 
 export interface IDeck {

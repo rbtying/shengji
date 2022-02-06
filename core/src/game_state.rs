@@ -18,7 +18,7 @@ use crate::settings::{
     ThrowPenalty,
 };
 use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
-use crate::types::{Card, Number, PlayerID, Trump, ALL_SUITS};
+use crate::types::{Card, Number, PlayerID, Rank, Trump, ALL_SUITS};
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -178,7 +178,7 @@ impl GameState {
                 ..
             }) => {
                 hands.redact_except(id);
-                if id != exchanger.unwrap_or(landlord) || finalized {
+                if id != exchanger || finalized {
                     for card in kitty {
                         *card = Card::Unknown;
                     }
@@ -199,7 +199,6 @@ impl GameState {
                 ref trick,
                 ref landlords_team,
                 ref propagated,
-                landlord,
                 exchanger,
                 game_ended_early,
                 ..
@@ -217,7 +216,7 @@ impl GameState {
                 if game_ongoing {
                     hands.redact_except(id);
                 }
-                if game_ongoing && id != exchanger.unwrap_or(landlord) {
+                if game_ongoing && id != exchanger {
                     for card in kitty {
                         *card = Card::Unknown;
                     }
@@ -256,10 +255,10 @@ pub struct PlayPhase {
     kitty: Vec<Card>,
     landlord: PlayerID,
     landlords_team: Vec<PlayerID>,
+    exchanger: PlayerID,
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
-    exchanger: Option<PlayerID>,
     game_ended_early: bool,
     #[serde(default)]
     removed_cards: Vec<Card>,
@@ -493,7 +492,7 @@ impl PlayPhase {
         landlord_level_bump: usize,
         landlords_team: &'a [PlayerID],
         landlord_won: bool,
-        landlord: (PlayerID, Number),
+        landlord: (PlayerID, Rank),
         advancement_policy: AdvancementPolicy,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
@@ -510,14 +509,15 @@ impl PlayPhase {
                 let mut was_blocked = false;
                 let initial_rank = player.rank();
                 let landlord_successfully_defended_a: bool =
-                    landlord.1 == Number::Ace && landlord_won;
+                    landlord.1 == Rank::NoTrump && landlord_won;
 
                 for bump_idx in 0..bump {
                     match advancement_policy {
                         AdvancementPolicy::FullyUnrestricted => (),
 
-                        // Player *must* defend on Ace and win to advance.
-                        _ if player.rank() == Number::Ace
+                        // Player *must* defend on Ace and NoTrump and win to advance.
+                        _ if (player.rank() == Rank::Number(Number::Ace)
+                            || player.rank() == Rank::NoTrump)
                             && !(is_defending
                                 && bump_idx == 0
                                 && landlord_successfully_defended_a) =>
@@ -526,10 +526,14 @@ impl PlayPhase {
                             break;
                         }
                         AdvancementPolicy::Unrestricted => (),
-                        AdvancementPolicy::DefendPoints => match player.rank().points() {
-                            None => (),
-                            Some(_) if is_defending && bump_idx == 0 => (),
-                            Some(_) => {
+                        AdvancementPolicy::DefendPoints => match player.rank() {
+                            Rank::NoTrump if is_defending && bump_idx == 0 => (),
+                            Rank::Number(n)
+                                if n.points().is_none() || (is_defending && bump_idx == 0) =>
+                            {
+                                ()
+                            }
+                            Rank::NoTrump | Rank::Number(_) => {
                                 was_blocked = true;
                                 break;
                             }
@@ -562,7 +566,7 @@ impl PlayPhase {
                         confetti: num_advances > 0
                             && landlord_won
                             && is_defending
-                            && initial_rank == Number::Ace,
+                            && initial_rank == Rank::NoTrump,
                     },
                 )
             })
@@ -725,8 +729,7 @@ pub struct ExchangePhase {
     kitty_size: usize,
     landlord: PlayerID,
     trump: Trump,
-    #[serde(default)]
-    exchanger: Option<PlayerID>,
+    exchanger: PlayerID,
     #[serde(default)]
     finalized: bool,
     #[serde(default)]
@@ -751,20 +754,19 @@ impl ExchangePhase {
     }
 
     pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
-        if self.exchanger.unwrap_or(self.landlord) != id {
+        if self.exchanger != id {
             bail!("not the exchanger")
         }
         if self.finalized {
             bail!("cards already finalized")
         }
-        self.hands
-            .remove(self.exchanger.unwrap_or(self.landlord), Some(card))?;
+        self.hands.remove(self.exchanger, Some(card))?;
         self.kitty.push(card);
         Ok(())
     }
 
     pub fn move_card_to_hand(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
-        if self.exchanger.unwrap_or(self.landlord) != id {
+        if self.exchanger != id {
             bail!("not the exchanger")
         }
         if self.finalized {
@@ -772,8 +774,7 @@ impl ExchangePhase {
         }
         if let Some(index) = self.kitty.iter().position(|c| *c == card) {
             self.kitty.swap_remove(index);
-            self.hands
-                .add(self.exchanger.unwrap_or(self.landlord), Some(card))?;
+            self.hands.add(self.exchanger, Some(card))?;
             Ok(())
         } else {
             bail!("card not in the kitty")
@@ -849,7 +850,7 @@ impl ExchangePhase {
                         .rank();
 
                     match (landlord_level, friend.card.points(), friend.card.number()) {
-                        (Number::Ace, _, Some(Number::King)) => (),
+                        (Rank::Number(Number::Ace), _, Some(Number::King)) => (),
                         (_, Some(_), _) => {
                             bail!("you can't pick a point card as your friend");
                         }
@@ -872,7 +873,7 @@ impl ExchangePhase {
     }
 
     pub fn finalize(&mut self, id: PlayerID) -> Result<(), Error> {
-        if id != self.exchanger.unwrap_or(self.landlord) {
+        if id != self.exchanger {
             bail!("only the exchanger can finalize their cards")
         }
         if self.finalized {
@@ -914,7 +915,7 @@ impl ExchangePhase {
         };
         self.finalized = false;
         self.epoch += 1;
-        self.exchanger = Some(winning_bid.id);
+        self.exchanger = winning_bid.id;
 
         Ok(())
     }
@@ -972,7 +973,7 @@ impl ExchangePhase {
             && self.autobid.is_none()
             && !self.finalized
         {
-            Ok(self.exchanger.unwrap_or(self.landlord))
+            Ok(self.exchanger)
         } else {
             Ok(self.landlord)
         }
@@ -1050,10 +1051,10 @@ impl ExchangePhase {
                 .collect(),
             penalties: self.propagated.players.iter().map(|p| (p.id, 0)).collect(),
             landlord: self.landlord,
-            trump: self.trump,
-            propagated: self.propagated.clone(),
             exchanger: self.exchanger,
             landlords_team,
+            trump: self.trump,
+            propagated: self.propagated.clone(),
             game_ended_early: false,
             removed_cards: self.removed_cards.clone(),
             decks: self.decks.clone(),
@@ -1084,7 +1085,7 @@ pub struct DrawPhase {
     kitty: Vec<Card>,
     #[serde(default)]
     revealed_cards: usize,
-    level: Option<Number>,
+    level: Option<Rank>,
     #[serde(default)]
     removed_cards: Vec<Card>,
     #[serde(default)]
@@ -1164,7 +1165,7 @@ impl DrawPhase {
                 });
             }
             KittyBidPolicy::FirstCardOfLevelOrHighest
-                if card.is_joker() || card.number() == Some(level) =>
+                if card.is_joker() || card.number().map(Rank::Number) == Some(level) =>
             {
                 self.autobid = Some(Bid {
                     count: 1,
@@ -1179,7 +1180,10 @@ impl DrawPhase {
                 let mut sorted_kitty = self.kitty.clone();
                 sorted_kitty.sort_by(|a, b| {
                     Trump::NoTrump {
-                        number: Some(level),
+                        number: match level {
+                            Rank::Number(n) => Some(n),
+                            Rank::NoTrump => None,
+                        },
                     }
                     .compare(*a, *b)
                 });
@@ -1231,14 +1235,19 @@ impl DrawPhase {
     pub fn advance(&self, id: PlayerID) -> Result<ExchangePhase, Error> {
         if !self.deck.is_empty() {
             bail!("deck has cards remaining")
-        } else {
-            let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
-            let landlord = self.propagated.landlord.unwrap_or_else(|| {
-                match self.propagated.first_landlord_selection_policy {
-                    FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
-                    FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
+        }
+
+        let (landlord, landlord_level) = {
+            let landlord = match self.propagated.landlord {
+                Some(landlord) => landlord,
+                None => {
+                    let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
+                    match self.propagated.first_landlord_selection_policy {
+                        FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
+                        FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
+                    }
                 }
-            });
+            };
 
             if id != landlord {
                 bail!("only the leader can advance the game");
@@ -1250,36 +1259,46 @@ impl DrawPhase {
                 .find(|p| p.id == landlord)
                 .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
                 .rank();
-            let trump = match winning_bid.card {
-                Card::Unknown => bail!("can't bid with unknown cards!"),
-                Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
-                    number: Some(landlord_level),
-                },
-                Card::Suited { suit, .. } => Trump::Standard {
-                    suit,
-                    number: landlord_level,
-                },
-            };
-            let mut hands = self.hands.clone();
-            hands.set_trump(trump);
-            Ok(ExchangePhase {
-                num_decks: self.num_decks,
-                game_mode: self.game_mode.clone(),
-                kitty_size: self.kitty.len(),
-                kitty: self.kitty.clone(),
-                propagated: self.propagated.clone(),
-                landlord,
-                hands,
-                trump,
-                exchanger: None,
-                finalized: false,
-                epoch: 1,
-                bids: self.bids.clone(),
-                autobid: self.autobid,
-                removed_cards: self.removed_cards.clone(),
-                decks: self.decks.clone(),
-            })
-        }
+            (landlord, landlord_level)
+        };
+        let trump = match landlord_level {
+            Rank::NoTrump => Trump::NoTrump { number: None },
+            Rank::Number(landlord_level) => {
+                // Note: this is not repeated in all cases above, but it is
+                // repeated in some. It's OK because the bid calculation is
+                // fast.
+                let (_, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
+                match winning_bid.card {
+                    Card::Unknown => bail!("can't bid with unknown cards!"),
+                    Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
+                        number: Some(landlord_level),
+                    },
+                    Card::Suited { suit, .. } => Trump::Standard {
+                        suit,
+                        number: landlord_level,
+                    },
+                }
+            }
+        };
+        let mut hands = self.hands.clone();
+        hands.set_trump(trump);
+        Ok(ExchangePhase {
+            num_decks: self.num_decks,
+            game_mode: self.game_mode.clone(),
+            kitty_size: self.kitty.len(),
+            kitty: self.kitty.clone(),
+            propagated: self.propagated.clone(),
+            landlord,
+            hands,
+            trump,
+            exchanger: landlord,
+            finalized: false,
+            epoch: 1,
+            bids: self.bids.clone(),
+            autobid: self.autobid,
+            removed_cards: self.removed_cards.clone(),
+            decks: self.decks.clone(),
+        })
     }
 
     pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
@@ -1365,11 +1384,14 @@ impl InitializePhase {
         }
         // Ensure that it is possible to bid for the landlord, if set, or all players, if not.
         match level {
-            Some(level) if decks.iter().any(|d| d.includes_number(level)) => (),
-            None if self
-                .players
-                .iter()
-                .all(|p| decks.iter().any(|d| d.includes_number(p.level))) => {}
+            Some(Rank::Number(level)) if decks.iter().any(|d| d.includes_number(level)) => (),
+            Some(Rank::NoTrump) => (),
+            None if self.players.iter().all(|p| {
+                decks.iter().any(|d| match p.level {
+                    Rank::Number(level) => d.includes_number(level),
+                    Rank::NoTrump => true,
+                })
+            }) => {}
             _ => bail!("deck configuration is missing cards needed to bid"),
         }
 
@@ -1398,7 +1420,7 @@ impl InitializePhase {
                 // Choose a card to remove that doesn't unfairly disadvantage a particular player,
                 // and ideally isn't points either.
                 let removed_card_number = match level {
-                    Some(level) if level == min_number => {
+                    Some(Rank::Number(level)) if level == min_number => {
                         // If the minimum value isn't an A, this will be reasonable, otherwise
                         // it'll remove a trump card from the deck...
                         min_number.successor().unwrap_or(min_number)
@@ -1409,7 +1431,10 @@ impl InitializePhase {
                             .propagated
                             .players
                             .iter()
-                            .map(|p| p.level)
+                            .flat_map(|p| match p.level {
+                                Rank::Number(n) => Some(n),
+                                Rank::NoTrump => None,
+                            })
                             .collect::<HashSet<Number>>();
                         bad_levels.insert(Number::Five);
                         bad_levels.insert(Number::Ten);
@@ -1513,7 +1538,7 @@ mod tests {
     };
 
     use crate::settings::FriendSelectionPolicy;
-    use crate::types::{cards, Card, Number, PlayerID, FULL_DECK};
+    use crate::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
 
     #[test]
     fn test_player_level_deltas() {
@@ -1521,25 +1546,25 @@ mod tests {
             Player {
                 id: PlayerID(0),
                 name: "p1".into(),
-                level: Number::Four,
+                level: Rank::Number(Number::Four),
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(1),
                 name: "p2".into(),
-                level: Number::Four,
+                level: Rank::Number(Number::Four),
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(2),
                 name: "p3".into(),
-                level: Number::Four,
+                level: Rank::Number(Number::Four),
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(3),
                 name: "p4".into(),
-                level: Number::Four,
+                level: Rank::Number(Number::Four),
                 metalevel: 0,
             },
         ];
@@ -1552,11 +1577,11 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            (PlayerID(0), Number::Ace),
+            (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::Unrestricted,
         );
         for p in &players {
-            assert_eq!(p.rank(), Number::Six);
+            assert_eq!(p.rank(), Rank::Number(Number::Six));
         }
 
         let _ = PlayPhase::compute_player_level_deltas(
@@ -1566,11 +1591,11 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            (PlayerID(0), Number::Ace),
+            (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
         );
         for p in &players_ {
-            assert_eq!(p.rank(), Number::Five);
+            assert_eq!(p.rank(), Rank::Number(Number::Five));
         }
 
         // Advance again!
@@ -1581,14 +1606,14 @@ mod tests {
             2,
             &[PlayerID(0), PlayerID(2)],
             true,
-            (PlayerID(0), Number::Ace),
+            (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
         );
         for p in &players_ {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
-                assert_eq!(p.rank(), Number::Seven);
+                assert_eq!(p.rank(), Rank::Number(Number::Seven));
             } else {
-                assert_eq!(p.rank(), Number::Five);
+                assert_eq!(p.rank(), Rank::Number(Number::Five));
             }
         }
     }
@@ -1766,7 +1791,8 @@ mod tests {
             let p3 = init.add_player("p3".into()).unwrap().0;
             let p4 = init.add_player("p4".into()).unwrap().0;
             init.set_landlord(Some(p2)).unwrap();
-            init.set_rank(p2, bid.number().unwrap()).unwrap();
+            init.set_rank(p2, Rank::Number(bid.number().unwrap()))
+                .unwrap();
 
             let mut draw = init.start(PlayerID(1)).unwrap();
             draw.deck = vec![bid, bid, bid, bid];
@@ -1848,7 +1874,7 @@ mod tests {
         let p6 = init.add_player("p6".into()).unwrap().0;
 
         init.set_landlord(Some(p2)).unwrap();
-        init.set_rank(p2, Number::Seven).unwrap();
+        init.set_rank(p2, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(1)).unwrap();
 
@@ -2364,7 +2390,7 @@ mod tests {
         let p8 = init.add_player("p8".into()).unwrap().0;
 
         init.set_landlord(Some(p1)).unwrap();
-        init.set_rank(p1, Number::Seven).unwrap();
+        init.set_rank(p1, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(0)).unwrap();
         let mut deck = vec![];
@@ -2499,11 +2525,11 @@ mod tests {
                 .filter(|m| match m {
                     MessageVariant::BonusLevelEarned => true,
                     MessageVariant::RankAdvanced { player, new_rank } if *player == p1 => {
-                        assert_eq!(*new_rank, Number::Jack);
+                        assert_eq!(*new_rank, Rank::Number(Number::Jack));
                         false
                     }
                     MessageVariant::RankAdvanced { player, new_rank } if *player == p2 => {
-                        assert_eq!(*new_rank, Number::Six);
+                        assert_eq!(*new_rank, Rank::Number(Number::Six));
                         false
                     }
                     _ => false,
@@ -2518,16 +2544,16 @@ mod tests {
                 .players
                 .into_iter()
                 .map(|p| p.level)
-                .collect::<Vec<Number>>(),
+                .collect::<Vec<Rank>>(),
             vec![
-                Number::Jack,
-                Number::Six,
-                Number::Two,
-                Number::Two,
-                Number::Two,
-                Number::Two,
-                Number::Two,
-                Number::Two
+                Rank::Number(Number::Jack),
+                Rank::Number(Number::Six),
+                Rank::Number(Number::Two),
+                Rank::Number(Number::Two),
+                Rank::Number(Number::Two),
+                Rank::Number(Number::Two),
+                Rank::Number(Number::Two),
+                Rank::Number(Number::Two)
             ],
             "Check that propagated players have the right new levels"
         );

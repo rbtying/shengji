@@ -162,7 +162,7 @@ mod tests {
     use super::Hands;
     use crate::types::{
         cards::{S_2, S_3, S_4, S_5},
-        Number, PlayerID,
+        PlayerID,
     };
 
     const P1: PlayerID = PlayerID(1);

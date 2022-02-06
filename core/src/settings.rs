@@ -11,7 +11,7 @@ use crate::message::MessageVariant;
 use crate::player::Player;
 use crate::scoring::GameScoringParameters;
 use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
-use crate::types::{Card, Number, PlayerID};
+use crate::types::{Card, Number, PlayerID, Rank};
 
 #[macro_export]
 macro_rules! impl_slog_value {
@@ -848,7 +848,7 @@ impl PropagatedState {
         Ok(msgs)
     }
 
-    pub fn set_rank(&mut self, player_id: PlayerID, level: Number) -> Result<(), Error> {
+    pub fn set_rank(&mut self, player_id: PlayerID, level: Rank) -> Result<(), Error> {
         match self.players.iter_mut().find(|p| p.id == player_id) {
             Some(ref mut player) => {
                 player.set_rank(level);

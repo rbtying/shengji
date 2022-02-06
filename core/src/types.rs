@@ -321,7 +321,7 @@ impl Serialize for Card {
 impl<'d> Deserialize<'d> for Card {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let c = char::deserialize(deserializer)?;
-        Card::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected char '{:?}'", c)))
+        Card::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected card '{:?}'", c)))
     }
 }
 
@@ -547,7 +547,7 @@ impl Serialize for Number {
 impl<'d> Deserialize<'d> for Number {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Number::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected string '{}'", s)))
+        Number::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected number '{}'", s)))
     }
 }
 
@@ -695,7 +695,7 @@ impl Serialize for Suit {
 impl<'d> Deserialize<'d> for Suit {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let c = char::deserialize(deserializer)?;
-        Suit::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected char '{:?}'", c)))
+        Suit::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected suit '{:?}'", c)))
     }
 }
 
@@ -1004,9 +1004,60 @@ pub mod cards {
     };
 }
 
+#[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq)]
+pub enum Rank {
+    Number(Number),
+    NoTrump,
+}
+
+impl slog::Value for Rank {
+    fn serialize(
+        &self,
+        _: &slog::Record,
+        key: slog::Key,
+        serializer: &mut dyn slog::Serializer,
+    ) -> slog::Result {
+        serializer.emit_str(key, self.as_str())
+    }
+}
+impl Serialize for Rank {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+impl<'d> Deserialize<'d> for Rank {
+    fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Rank::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected rank '{}'", s)))
+    }
+}
+
+impl Rank {
+    pub fn successor(self) -> Option<Rank> {
+        match self {
+            Rank::Number(n) => Some(n.successor().map(Rank::Number).unwrap_or(Rank::NoTrump)),
+            Rank::NoTrump => None,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Rank::Number(n) => n.as_str(),
+            Rank::NoTrump => "NT",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "NT" => Some(Rank::NoTrump),
+            s => Number::from_str(s).map(Rank::Number),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{cards, Card, Number, Suit, Trump, FULL_DECK};
+    use super::{cards, Card, Number, Rank, Suit, Trump, FULL_DECK};
 
     #[test]
     fn test_char_roundtrip() {
@@ -1066,12 +1117,18 @@ mod tests {
         assert!(s(cards::H_A).is_empty());
 
         let no_trump = Trump::NoTrump {
-            number: Number::Four,
+            number: Some(Number::Four),
         };
         let s = |c| no_trump.successor(c).into_iter().collect::<Vec<_>>();
         assert_eq!(s(cards::S_3), vec![cards::S_5]);
         assert_eq!(s(cards::S_4), vec![Card::SmallJoker]);
         assert_eq!(s(cards::H_4), vec![Card::SmallJoker]);
+        assert!(s(cards::S_A).is_empty());
+        assert!(s(cards::H_A).is_empty());
+
+        let no_trump_2 = Trump::NoTrump { number: None };
+        let s = |c| no_trump_2.successor(c).into_iter().collect::<Vec<_>>();
+        assert_eq!(s(cards::S_3), vec![cards::S_4]);
         assert!(s(cards::S_A).is_empty());
         assert!(s(cards::H_A).is_empty());
 
@@ -1087,7 +1144,7 @@ mod tests {
         assert!(s(cards::H_K).is_empty());
 
         let no_trump_ace = Trump::NoTrump {
-            number: Number::Ace,
+            number: Some(Number::Ace),
         };
         let s = |c| no_trump_ace.successor(c).into_iter().collect::<Vec<_>>();
         assert_eq!(s(cards::S_3), vec![cards::S_4]);
@@ -1095,5 +1152,18 @@ mod tests {
         assert_eq!(s(cards::H_A), vec![Card::SmallJoker]);
         assert!(s(cards::S_K).is_empty());
         assert!(s(cards::H_K).is_empty());
+    }
+
+    #[test]
+    fn test_serde() {
+        let mut r = Rank::Number(Number::Two);
+        loop {
+            assert_eq!(Rank::from_str(r.as_str()), Some(r));
+            if let Some(s) = r.successor() {
+                r = s;
+            } else {
+                break;
+            }
+        }
     }
 }

@@ -39,7 +39,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
     initial_skip: parseInt(select.value, 10),
   }));
 
-  const rank =
+  const rank: string | null =
     props.trump.Standard !== undefined
       ? props.trump.Standard.number
       : props.trump.NoTrump.number;

@@ -29,23 +29,24 @@ const bootstrap = (): void => {
   });
 
   const root = document.getElementById("root");
+  const fallback = (
+    <>
+      An error has occured, please try refreshing! If that doesn&apos;t resolve
+      the issue, consider using the latest version of Mozilla Firefox or Google
+      Chrome browsers.
+    </>
+  );
   ReactModal.setAppElement(root);
   ReactDOM.render(
-    <Sentry.ErrorBoundary
-      fallback={
-        <>
-          An error has occured, please try refreshing! If that doesn&apos;t
-          resolve the issue, consider using the latest version of Mozilla
-          Firefox or Google Chrome browsers.
-        </>
-      }
-    >
+    <Sentry.ErrorBoundary fallback={fallback}>
       <React.Suspense fallback={"loading..."}>
         <WasmProvider>
           <TimerProvider>
             <AppStateProvider>
               <WebsocketProvider>
-                <Root />
+                <Sentry.ErrorBoundary fallback={fallback}>
+                  <Root />
+                </Sentry.ErrorBoundary>
               </WebsocketProvider>
             </AppStateProvider>
           </TimerProvider>

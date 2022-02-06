@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::{Number, PlayerID};
+use crate::types::{Number, PlayerID, Rank};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub(crate) id: PlayerID,
     pub(crate) name: String,
-    pub(crate) level: Number,
+    pub(crate) level: Rank,
     pub(crate) metalevel: usize,
 }
 
@@ -15,16 +15,16 @@ impl Player {
         Player {
             id,
             name,
-            level: Number::Two,
+            level: Rank::Number(Number::Two),
             metalevel: 1,
         }
     }
 
-    pub fn rank(&self) -> Number {
+    pub fn rank(&self) -> Rank {
         self.level
     }
 
-    pub fn set_rank(&mut self, level: Number) {
+    pub fn set_rank(&mut self, level: Rank) {
         self.level = level;
     }
 
@@ -33,7 +33,7 @@ impl Player {
             self.level = next_level;
         } else {
             self.metalevel += 1;
-            self.level = Number::Two;
+            self.level = Rank::Number(Number::Two);
         }
     }
 }
