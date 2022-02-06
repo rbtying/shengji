@@ -12,13 +12,13 @@ pub struct PlayerID(pub usize);
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub enum Trump {
     Standard { suit: Suit, number: Number },
-    NoTrump { number: Number },
+    NoTrump { number: Option<Number> },
 }
 
 impl Trump {
-    pub fn number(self) -> Number {
+    pub fn number(self) -> Option<Number> {
         match self {
-            Trump::Standard { number, .. } => number,
+            Trump::Standard { number, .. } => Some(number),
             Trump::NoTrump { number } => number,
         }
     }
@@ -43,7 +43,9 @@ impl Trump {
                 },
             )
             | (
-                Trump::NoTrump { number },
+                Trump::NoTrump {
+                    number: Some(number),
+                },
                 Card::Suited {
                     number: card_number,
                     ..
@@ -131,56 +133,94 @@ impl Trump {
             Card::Unknown => vec![],
             Card::BigJoker => vec![],
             Card::SmallJoker => vec![Card::BigJoker],
-            Card::Suited { suit, number } if number == self.number() => match self {
-                Trump::Standard {
-                    suit: trump_suit,
-                    number: trump_number,
-                } => {
-                    if suit == trump_suit {
-                        vec![Card::SmallJoker]
-                    } else {
-                        vec![Card::Suited {
-                            suit: trump_suit,
-                            number: trump_number,
-                        }]
+            // If this is the trump number, it's part of trump and we need to
+            // handle it specially.
+            Card::Suited { suit, number }
+                if self.number().map(|n| number == n).unwrap_or(false) =>
+            {
+                match self {
+                    Trump::Standard {
+                        suit: trump_suit,
+                        number: trump_number,
+                    } => {
+                        if suit == trump_suit {
+                            vec![Card::SmallJoker]
+                        } else {
+                            vec![Card::Suited {
+                                suit: trump_suit,
+                                number: trump_number,
+                            }]
+                        }
                     }
+                    Trump::NoTrump { .. } => vec![Card::SmallJoker],
                 }
-                Trump::NoTrump { .. } => vec![Card::SmallJoker],
-            },
-            Card::Suited { suit, number } if number.successor() == Some(self.number()) => {
+            }
+            // If the _next_ number is the trump number, we need to skip it.
+            Card::Suited { suit, number }
+                if number.successor().is_some() && number.successor() == self.number() =>
+            {
                 match number.successor().and_then(|n| n.successor()) {
+                    // If there's a valid suited card afterwards, try that.
                     Some(n) => vec![Card::Suited { suit, number: n }],
-                    None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
+                    // Otherwise, if we're in trump *and* there's a trump
+                    // number, the next higher cards are the non-trump trump
+                    // numbers.
+                    None if self.effective_suit(card) == EffectiveSuit::Trump
+                        && self.number().is_some() =>
+                    {
+                        ALL_SUITS
+                            .iter()
+                            .flat_map(|s| {
+                                if Some(*s) != self.suit() {
+                                    Some(Card::Suited {
+                                        suit: *s,
+                                        number: self
+                                            .number()
+                                            .expect("already checked in match branch"),
+                                    })
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    }
+                    // Otherwise, if we're in trump and there _isn't_ a trump
+                    // number, the next highest card is the small joker.
+                    None if self.effective_suit(card) == EffectiveSuit::Trump => {
+                        vec![Card::SmallJoker]
+                    }
+                    // Otherwise, there's no successor.
+                    None => vec![],
+                }
+            }
+            Card::Suited { suit, number } => match number.successor() {
+                // If there's a valid suited card afterwards, try that.
+                Some(n) => vec![Card::Suited { suit, number: n }],
+                // Otherwise, if we're in trump *and* there's a trump number,
+                // the next higher cards are the non-trump trump numbers.
+                None if self.effective_suit(card) == EffectiveSuit::Trump
+                    && self.number().is_some() =>
+                {
+                    ALL_SUITS
                         .iter()
                         .flat_map(|s| {
                             if Some(*s) != self.suit() {
                                 Some(Card::Suited {
                                     suit: *s,
-                                    number: self.number(),
+                                    number: self.number().expect("already checked in match branch"),
                                 })
                             } else {
                                 None
                             }
                         })
-                        .collect(),
-                    None => vec![],
+                        .collect()
                 }
-            }
-            Card::Suited { suit, number } => match number.successor() {
-                Some(n) => vec![Card::Suited { suit, number: n }],
-                None if self.effective_suit(card) == EffectiveSuit::Trump => ALL_SUITS
-                    .iter()
-                    .flat_map(|s| {
-                        if Some(*s) != self.suit() {
-                            Some(Card::Suited {
-                                suit: *s,
-                                number: self.number(),
-                            })
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
+                // Otherwise, if we're in trump and there _isn't_ a trump
+                // number, the next highest card is the small joker.
+                None if self.effective_suit(card) == EffectiveSuit::Trump => {
+                    vec![Card::SmallJoker]
+                }
+                // Otherwise, there's no successor.
                 None => vec![],
             },
         }
@@ -216,7 +256,7 @@ impl Trump {
                     },
                 ) => {
                     let trump_number = self.number();
-                    if number_1 == trump_number && number_2 == trump_number {
+                    if Some(number_1) == trump_number && Some(number_2) == trump_number {
                         if let Trump::Standard {
                             suit: trump_suit, ..
                         } = self
@@ -233,9 +273,9 @@ impl Trump {
                         } else {
                             Ordering::Equal
                         }
-                    } else if number_1 == trump_number {
+                    } else if Some(number_1) == trump_number {
                         Ordering::Greater
-                    } else if number_2 == trump_number {
+                    } else if Some(number_2) == trump_number {
                         Ordering::Less
                     } else {
                         number_1.cmp(&number_2)

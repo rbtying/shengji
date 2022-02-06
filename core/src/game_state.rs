@@ -810,11 +810,12 @@ impl ExchangePhase {
             for friend in friend_set.iter() {
                 if FriendSelectionPolicy::TrumpsIncluded != self.propagated.friend_selection_policy
                 {
-                    if friend.card.is_joker() || friend.card.number() == Some(self.trump.number()) {
-                        bail!(
-                            "you can't pick a joker or a {} as your friend",
-                            self.trump.number().as_str()
-                        )
+                    if friend.card.is_joker() || friend.card.number() == self.trump.number() {
+                        if let Some(n) = self.trump.number() {
+                            bail!("you can't pick a joker or a {} as your friend", n.as_str())
+                        } else {
+                            bail!("you can't pick a joker as your friend",)
+                        }
                     }
                     if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
                         bail!("you can't pick a trump suit as your friend")
@@ -828,7 +829,7 @@ impl ExchangePhase {
                     self.propagated.friend_selection_policy
                 {
                     match (self.trump.number(), friend.card.number()) {
-                        (Number::Ace, Some(Number::King)) | (_, Some(Number::Ace)) => {
+                        (Some(Number::Ace), Some(Number::King)) | (_, Some(Number::Ace)) => {
                             bail!("you can't pick the highest card as your friend")
                         }
                         _ => (),
@@ -905,7 +906,10 @@ impl ExchangePhase {
             },
             Card::Suited { suit, .. } => Trump::Standard {
                 suit,
-                number: self.trump.number(),
+                number: self
+                    .trump
+                    .number()
+                    .expect("Shouldn't have trump number if there are bids"),
             },
         };
         self.finalized = false;
@@ -1173,7 +1177,12 @@ impl DrawPhase {
                 if self.revealed_cards >= self.kitty.len() - 1 =>
             {
                 let mut sorted_kitty = self.kitty.clone();
-                sorted_kitty.sort_by(|a, b| Trump::NoTrump { number: level }.compare(*a, *b));
+                sorted_kitty.sort_by(|a, b| {
+                    Trump::NoTrump {
+                        number: Some(level),
+                    }
+                    .compare(*a, *b)
+                });
                 if let Some(highest_card) = sorted_kitty.last() {
                     self.autobid = Some(Bid {
                         count: 1,
@@ -1244,7 +1253,7 @@ impl DrawPhase {
             let trump = match winning_bid.card {
                 Card::Unknown => bail!("can't bid with unknown cards!"),
                 Card::SmallJoker | Card::BigJoker => Trump::NoTrump {
-                    number: landlord_level,
+                    number: Some(landlord_level),
                 },
                 Card::Suited { suit, .. } => Trump::Standard {
                     suit,
