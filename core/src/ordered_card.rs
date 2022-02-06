@@ -47,6 +47,7 @@ impl OrderedCard {
     }
 
     pub fn cmp_effective(self, o: OrderedCard) -> Ordering {
+        debug_assert_eq!(self.trump, o.trump);
         self.trump.compare_effective(self.card, o.card)
     }
 }
