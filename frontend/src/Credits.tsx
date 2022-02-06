@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 14;
+const changeLogVersion: number = 15;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>2/05/2022:</p>
+        <ul>
+          <li>Added long-missing support for no-trump rank after A.</li>
+        </ul>
         <p>7/04/2021:</p>
         <ul>
           <li>

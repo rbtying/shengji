@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from "react";
-import { IDrawPhase, IPlayer } from "./types";
+import { IDrawPhase, IPlayer, ITrump } from "./types";
 import Header from "./Header";
 import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
@@ -115,6 +115,23 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     });
 
     const landlord = this.props.state.propagated.landlord;
+    let trump: ITrump | undefined;
+    if (
+      landlord !== null &&
+      landlord !== undefined &&
+      players[landlord] !== undefined
+    ) {
+      trump = {
+        NoTrump: {
+          number:
+            players[landlord].level !== "NT" &&
+            players[landlord].level !== undefined &&
+            players[landlord].level !== null
+              ? players[landlord].level
+              : null,
+        },
+      };
+    }
     return (
       <div>
         <Header
@@ -134,6 +151,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           hands={this.props.state.hands}
           epoch={0}
           name={this.props.name}
+          trump={trump}
           landlord={this.props.state.propagated.landlord}
           players={this.props.state.propagated.players}
           bidPolicy={this.props.state.propagated.bid_policy}
@@ -188,7 +206,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                 disabled={
                   this.props.state.deck.length > 0 ||
                   (this.props.state.bids.length === 0 &&
-                    this.props.state.autobid === null) ||
+                    this.props.state.autobid === null &&
+                    !(landlord !== null && players[landlord].level === "NT")) ||
                   (landlord !== null && landlord !== playerId) ||
                   (landlord === null &&
                     ((this.props.state.propagated

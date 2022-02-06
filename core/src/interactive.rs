@@ -13,7 +13,7 @@ use crate::settings::{
     KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit};
-use crate::types::{Card, Number, PlayerID};
+use crate::types::{Card, PlayerID, Rank};
 
 pub struct InteractiveGame {
     state: GameState,
@@ -409,7 +409,7 @@ pub enum Action {
     SetHideLandlordsPoints(bool),
     SetHidePlayedCards(bool),
     ReorderPlayers(Vec<PlayerID>),
-    SetRank(Number),
+    SetRank(Rank),
     SetLandlord(Option<PlayerID>),
     SetLandlordEmoji(Option<String>),
     SetGameMode(GameModeSettings),

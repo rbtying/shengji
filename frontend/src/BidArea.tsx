@@ -99,7 +99,8 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
         ? props.trump
         : {
             NoTrump: {
-              number: players[levelId].level,
+              number:
+                players[levelId].level !== "NT" ? players[levelId].level : null,
             },
           };
 
@@ -137,7 +138,10 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
               />
             );
           })}
-          {props.bids.length === 0 && props.autobid === null ? (
+          {props.trump?.NoTrump !== undefined &&
+          props.trump?.NoTrump?.number === null ? (
+            <>No bidding in no trump!</>
+          ) : props.bids.length === 0 && props.autobid === null ? (
             <LabeledPlay label={"No bids yet..."} cards={["🂠"]} />
           ) : null}
         </div>

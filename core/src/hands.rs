@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::types::{Card, EffectiveSuit, Number, PlayerID, Trump};
+use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
 #[derive(Error, Clone, Debug, Serialize, Deserialize)]
 pub enum HandError {
@@ -106,7 +106,7 @@ impl Hands {
         !self.hands.values().any(|h| h.values().any(|c| *c > 0))
     }
 
-    pub fn cards(&self, id: PlayerID, level: Number) -> Result<Vec<Card>, HandError> {
+    pub fn _get_cards(&self, id: PlayerID) -> Result<Vec<Card>, HandError> {
         self.exists(id)?;
         let mut cards = Card::cards(self.hands[&id].iter())
             .copied()
@@ -114,7 +114,7 @@ impl Hands {
         if let Some(trump) = self.trump {
             cards.sort_by(|a, b| trump.compare(*a, *b));
         } else {
-            cards.sort_by(|a, b| Trump::NoTrump { number: level }.compare(*a, *b));
+            cards.sort_by(|a, b| Trump::NoTrump { number: None }.compare(*a, *b));
         }
         Ok(cards)
     }
@@ -162,7 +162,7 @@ mod tests {
     use super::Hands;
     use crate::types::{
         cards::{S_2, S_3, S_4, S_5},
-        Number, PlayerID,
+        PlayerID,
     };
 
     const P1: PlayerID = PlayerID(1);
@@ -182,15 +182,12 @@ mod tests {
         hands.remove(P1, Some(S_3)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap();
         hands.remove(P1, Some(S_5)).unwrap_err();
-        assert!(hands.cards(P1, Number::Two).unwrap().is_empty());
+        assert!(hands._get_cards(P1).unwrap().is_empty());
 
         hands.remove(P2, vec![S_2, S_3, S_5]).unwrap();
-        assert!(hands.cards(P2, Number::Two).unwrap().is_empty());
+        assert!(hands._get_cards(P2).unwrap().is_empty());
 
         hands.remove(P3, vec![S_2, S_3, S_4, S_5]).unwrap_err();
-        assert_eq!(
-            hands.cards(P3, Number::Two).unwrap(),
-            hands.cards(P4, Number::Two).unwrap()
-        );
+        assert_eq!(hands._get_cards(P3).unwrap(), hands._get_cards(P4).unwrap());
     }
 }

@@ -12,7 +12,7 @@ use crate::settings::{
     MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
-use crate::types::{Card, Number, PlayerID};
+use crate::types::{Card, PlayerID, Rank};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
@@ -25,11 +25,11 @@ pub enum MessageVariant {
     },
     RankAdvanced {
         player: PlayerID,
-        new_rank: Number,
+        new_rank: Rank,
     },
     AdvancementBlocked {
         player: PlayerID,
-        rank: Number,
+        rank: Rank,
     },
     NewLandlordForNextGame {
         landlord: PlayerID,
@@ -119,7 +119,7 @@ pub enum MessageVariant {
         emoji: String,
     },
     SetRank {
-        rank: Number,
+        rank: Rank,
     },
     MadeBid {
         card: Card,

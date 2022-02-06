@@ -8,7 +8,7 @@ interface IProps {
 // prettier-ignore
 const allRanks = [
   '2', '3', '4', '5', '6', '7', '8',
-  '9', '10', 'J', 'Q', 'K', 'A'
+  '9', '10', 'J', 'Q', 'K', 'A', 'NT'
 ]
 const RankSelector = (props: IProps): JSX.Element => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {

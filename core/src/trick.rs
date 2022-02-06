@@ -680,7 +680,6 @@ impl Trick {
         self.current_winner = Self::winner(
             self.trick_format.as_ref(),
             &self.played_cards,
-            self.trump,
             throw_eval_policy,
         );
 
@@ -708,7 +707,6 @@ impl Trick {
             self.current_winner = Self::winner(
                 self.trick_format.as_ref(),
                 &self.played_cards,
-                self.trump,
                 throw_eval_policy,
             );
             Ok(())
@@ -750,7 +748,6 @@ impl Trick {
     fn winner(
         trick_format: Option<&'_ TrickFormat>,
         played_cards: &'_ [PlayedCards],
-        trump: Trump,
         throw_eval_policy: ThrowEvaluationPolicy,
     ) -> Option<PlayerID> {
         match trick_format {
@@ -762,8 +759,7 @@ impl Trick {
                         let greater = match throw_eval_policy {
                             ThrowEvaluationPolicy::All => {
                                 m.iter().zip(winner.1.iter()).all(|(n, w)| {
-                                    trump
-                                        .compare_effective(n.first_card().card, w.first_card().card)
+                                    n.first_card().cmp_effective(w.first_card())
                                         == Ordering::Greater
                                 })
                             }
@@ -779,7 +775,7 @@ impl Trick {
                                     .map(|u| u.last_card())
                                     .max()
                                     .expect("trick format cannot be empty");
-                                trump.compare_effective(n_max.card, w_max.card) == Ordering::Greater
+                                n_max.cmp_effective(w_max) == Ordering::Greater
                             }
                             ThrowEvaluationPolicy::TrickUnitLength => {
                                 // Don't worry about single cards if this is a throw with at
@@ -793,13 +789,7 @@ impl Trick {
                                     .zip(winner.1.iter())
                                     .filter(|(n, _)| !skip_single_cards || n.size() > 1)
                                     .map(|(n, w)| {
-                                        (
-                                            n.size(),
-                                            trump.compare_effective(
-                                                n.first_card().card,
-                                                w.first_card().card,
-                                            ),
-                                        )
+                                        (n.size(), n.first_card().cmp_effective(w.first_card()))
                                     })
                                     .collect::<Vec<_>>();
                                 // Compare by size first, then try to skip equal-comparisons.
@@ -1153,8 +1143,9 @@ mod tests {
     use crate::hands::Hands;
     use crate::types::{
         cards::{
-            C_10, C_4, C_5, C_6, C_7, C_8, C_A, C_K, D_4, D_A, D_K, H_2, H_3, H_4, H_5, H_7, H_8,
-            H_9, H_A, H_K, S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K, S_Q,
+            C_10, C_4, C_5, C_6, C_7, C_8, C_A, C_K, C_Q, D_4, D_A, D_K, H_10, H_2, H_3, H_4, H_5,
+            H_7, H_8, H_9, H_A, H_K, S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K,
+            S_Q,
         },
         Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
     };
@@ -1458,6 +1449,48 @@ mod tests {
         assert_eq!(largest_trick_unit_size, 2);
         assert_eq!(winner_id, P3);
         assert_eq!(points, vec![]);
+    }
+
+    #[test]
+    fn test_play_throw_trick_double_overflip() {
+        let p1_cards = vec![C_A, C_A, C_Q, C_Q, C_10, C_10];
+        let p2_cards = vec![S_8, S_8, H_9, H_9, H_3, H_3];
+        let p3_cards = vec![H_8, H_8, H_K, H_K, H_10, H_10];
+        let p4_cards = vec![Card::SmallJoker, Card::SmallJoker, H_8, H_8, H_K, H_K];
+        for tep in [
+            ThrowEvaluationPolicy::All,
+            ThrowEvaluationPolicy::Highest,
+            ThrowEvaluationPolicy::TrickUnitLength,
+        ] {
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.add(P1, p1_cards.clone()).unwrap();
+            hands.add(P2, p2_cards.clone()).unwrap();
+            hands.add(P3, p3_cards.clone()).unwrap();
+            hands.add(P4, p4_cards.clone()).unwrap();
+            let mut trick = Trick::new(
+                Trump::Standard {
+                    suit: Suit::Hearts,
+                    number: Number::Eight,
+                },
+                vec![P1, P2, P3, P4],
+            );
+            trick
+                .play_cards(pc!(P1, &mut hands, &p1_cards, tep))
+                .unwrap();
+            trick
+                .play_cards(pc!(P2, &mut hands, &p2_cards, tep))
+                .unwrap();
+            trick
+                .play_cards(pc!(P3, &mut hands, &p3_cards, tep))
+                .unwrap();
+            trick
+                .play_cards(pc!(P4, &mut hands, &p4_cards, tep))
+                .unwrap();
+            let TrickEnded {
+                winner: winner_id, ..
+            } = trick.complete().unwrap();
+            assert_eq!(winner_id, P4, "{:?}", tep);
+        }
     }
 
     #[test]

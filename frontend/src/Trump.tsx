@@ -18,8 +18,13 @@ const Trump = (props: IProps): JSX.Element => {
         The trump suit is <InlineCard card={card} /> (rank {rank})
       </div>
     );
-  } else {
+  } else if (
+    trump.NoTrump.number !== undefined &&
+    trump.NoTrump.number !== null
+  ) {
     return <div className="trump">No trump, rank {trump.NoTrump.number}</div>;
+  } else {
+    return <div className="trump">No trump</div>;
   }
 };
 

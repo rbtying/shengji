@@ -17,7 +17,6 @@ use shengji_core::{
 };
 use shengji_types::ZSTD_ZSTD_DICT;
 use wasm_bindgen::prelude::*;
-// use web_sys::console;
 
 lazy_static::lazy_static! {
     static ref ZSTD_DICT: Vec<u8> = {
