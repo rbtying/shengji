@@ -138,9 +138,8 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
               />
             );
           })}
-          {props.trump !== undefined &&
-          props.trump.NoTrump !== undefined &&
-          props.trump.NoTrump.number === null ? (
+          {props.trump?.NoTrump !== undefined &&
+          props.trump?.NoTrump?.number === null ? (
             <>No bidding in no trump!</>
           ) : props.bids.length === 0 && props.autobid === null ? (
             <LabeledPlay label={"No bids yet..."} cards={["🂠"]} />

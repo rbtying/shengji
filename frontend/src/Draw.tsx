@@ -115,7 +115,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     });
 
     const landlord = this.props.state.propagated.landlord;
-    let trump: ITrump | undefined = undefined;
+    let trump: ITrump | undefined;
     if (
       landlord !== null &&
       landlord !== undefined &&
@@ -124,8 +124,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       trump = {
         NoTrump: {
           number:
-            players[landlord].level !== "NT"
-              ? players[landlord].level || null
+            players[landlord].level !== "NT" &&
+            players[landlord].level !== undefined &&
+            players[landlord].level !== null
+              ? players[landlord].level
               : null,
         },
       };
