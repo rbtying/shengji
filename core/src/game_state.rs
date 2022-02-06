@@ -531,7 +531,7 @@ impl PlayPhase {
                             Rank::Number(n)
                                 if n.points().is_none() || (is_defending && bump_idx == 0) =>
                             {
-                                ()
+                                
                             }
                             Rank::NoTrump | Rank::Number(_) => {
                                 was_blocked = true;

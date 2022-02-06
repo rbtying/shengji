@@ -101,7 +101,7 @@ async fn test_basic_pubsub() {
 
     let handle = task::spawn(async move {
         let mut count = 0usize;
-        while let Some(_) = subscription.recv().await {
+        while subscription.recv().await.is_some() {
             count += 1;
         }
         count
@@ -186,7 +186,7 @@ async fn test_execute_operation() {
 
     let handle = task::spawn(async move {
         let mut count = 0usize;
-        while let Some(_) = subscription.recv().await {
+        while subscription.recv().await.is_some() {
             count += 1;
         }
         count
