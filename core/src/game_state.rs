@@ -1138,6 +1138,19 @@ impl DrawPhase {
             .propagated
             .landlord
             .ok_or_else(|| anyhow!("can't reveal card if landlord hasn't been selected yet"))?;
+
+        let landlord_level = self
+            .propagated
+            .players
+            .iter()
+            .find(|p| p.id == id)
+            .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
+            .rank();
+
+        if landlord_level == Rank::NoTrump {
+            bail!("can't reveal card if the level is no trump!");
+        }
+
         if self.revealed_cards >= self.kitty.len() || self.autobid.is_some() {
             bail!("can't reveal any more cards")
         }
