@@ -236,6 +236,19 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>show player name in title bar</LabelCell>
+          <Cell>
+            <input
+              name="show-player-name"
+              type="checkbox"
+              checked={settings.showPlayerName}
+              onChange={handleChange({
+                showPlayerName: !settings.showPlayerName,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>

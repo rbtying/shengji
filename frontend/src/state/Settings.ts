@@ -19,6 +19,7 @@ export interface Settings {
   playDrawCardSound: boolean;
   suitColorOverrides: ISuitOverrides;
   showDebugInfo: boolean;
+  showPlayerName: boolean;
 }
 
 export interface ISuitOverrides {
@@ -62,6 +63,9 @@ const playDrawCardSound: State<boolean> = booleanLocalStorageState(
 );
 const showDebugInfo: State<boolean> =
   booleanLocalStorageState("show_debug_info");
+const showPlayerName: State<boolean> = booleanLocalStorageState(
+  "show_player_name_in_title"
+);
 const settings: State<Settings> = combineState({
   fourColor,
   darkMode,
@@ -77,6 +81,7 @@ const settings: State<Settings> = combineState({
   suitColorOverrides,
   playDrawCardSound,
   showDebugInfo,
+  showPlayerName,
 });
 
 export default settings;
