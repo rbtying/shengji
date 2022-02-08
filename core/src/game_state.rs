@@ -508,33 +508,33 @@ impl PlayPhase {
                 let mut num_advances = 0;
                 let mut was_blocked = false;
                 let initial_rank = player.rank();
-                let landlord_successfully_defended_a: bool =
-                    landlord.1 == Rank::NoTrump && landlord_won;
 
                 for bump_idx in 0..bump {
-                    match advancement_policy {
-                        AdvancementPolicy::FullyUnrestricted => (),
-
-                        // Player *must* defend on Ace and NoTrump and win to advance.
-                        _ if (player.rank() == Rank::Number(Number::Ace)
-                            || player.rank() == Rank::NoTrump)
-                            && !(is_defending
-                                && bump_idx == 0
-                                && landlord_successfully_defended_a) =>
+                    let must_defend = match (advancement_policy, player.rank()) {
+                        (AdvancementPolicy::Unrestricted, Rank::Number(Number::Ace))
+                        | (AdvancementPolicy::Unrestricted, Rank::NoTrump)
+                        | (AdvancementPolicy::DefendPoints, Rank::Number(Number::Ace))
+                        | (AdvancementPolicy::DefendPoints, Rank::NoTrump) => true,
+                        (AdvancementPolicy::DefendPoints, Rank::Number(n))
+                            if n.points().is_some() =>
                         {
-                            was_blocked = true;
-                            break;
+                            true
                         }
-                        AdvancementPolicy::Unrestricted => (),
-                        AdvancementPolicy::DefendPoints => match player.rank() {
-                            Rank::NoTrump if is_defending && bump_idx == 0 => (),
-                            Rank::Number(n)
-                                if n.points().is_none() || (is_defending && bump_idx == 0) => {}
-                            Rank::NoTrump | Rank::Number(_) => {
-                                was_blocked = true;
-                                break;
-                            }
-                        },
+                        (AdvancementPolicy::FullyUnrestricted, _)
+                        | (AdvancementPolicy::Unrestricted, _)
+                        | (AdvancementPolicy::DefendPoints, _) => false,
+                    };
+                    // In order to advance past NoTrump, the landlord must also be defending
+                    // NoTrump.
+                    let landlord_must_defend = must_defend && player.rank() == Rank::NoTrump;
+
+                    if must_defend
+                        && (!is_defending
+                            || bump_idx > 0
+                            || (landlord_must_defend && landlord.1 != Rank::NoTrump))
+                    {
+                        was_blocked = true;
+                        break;
                     }
 
                     player.advance();
@@ -1138,6 +1138,19 @@ impl DrawPhase {
             .propagated
             .landlord
             .ok_or_else(|| anyhow!("can't reveal card if landlord hasn't been selected yet"))?;
+
+        let landlord_level = self
+            .propagated
+            .players
+            .iter()
+            .find(|p| p.id == id)
+            .ok_or_else(|| anyhow!("Couldn't find landlord level?"))?
+            .rank();
+
+        if landlord_level == Rank::NoTrump {
+            bail!("can't reveal card if the level is no trump!");
+        }
+
         if self.revealed_cards >= self.kitty.len() || self.autobid.is_some() {
             bail!("can't reveal any more cards")
         }
@@ -1537,35 +1550,294 @@ mod tests {
     use crate::settings::FriendSelectionPolicy;
     use crate::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
 
-    #[test]
-    fn test_player_level_deltas() {
-        let mut players = vec![
+    const R2: Rank = Rank::Number(Number::Two);
+    const R3: Rank = Rank::Number(Number::Three);
+    const R4: Rank = Rank::Number(Number::Four);
+    const R5: Rank = Rank::Number(Number::Five);
+    const R6: Rank = Rank::Number(Number::Six);
+    const R7: Rank = Rank::Number(Number::Seven);
+    const R8: Rank = Rank::Number(Number::Eight);
+    const R9: Rank = Rank::Number(Number::Nine);
+    const R10: Rank = Rank::Number(Number::Ten);
+    const RJ: Rank = Rank::Number(Number::Jack);
+    const RQ: Rank = Rank::Number(Number::Queen);
+    const RK: Rank = Rank::Number(Number::King);
+    const RA: Rank = Rank::Number(Number::Ace);
+    const RNT: Rank = Rank::NoTrump;
+
+    fn init_players() -> Vec<Player> {
+        vec![
             Player {
                 id: PlayerID(0),
                 name: "p1".into(),
-                level: Rank::Number(Number::Four),
+                level: R2,
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(1),
                 name: "p2".into(),
-                level: Rank::Number(Number::Four),
+                level: R2,
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(2),
                 name: "p3".into(),
-                level: Rank::Number(Number::Four),
+                level: R2,
                 metalevel: 0,
             },
             Player {
                 id: PlayerID(3),
                 name: "p4".into(),
-                level: Rank::Number(Number::Four),
+                level: R2,
                 metalevel: 0,
             },
+        ]
+    }
+
+    #[test]
+    fn test_must_defend_sequence_landlord_advancing() {
+        let initial_players = init_players();
+
+        let base_sequence = vec![
+            vec![R3, R2, R3, R2],
+            vec![R4, R2, R4, R2],
+            vec![R5, R2, R5, R2],
+            vec![R6, R2, R6, R2],
+            vec![R7, R2, R7, R2],
+            vec![R8, R2, R8, R2],
+            vec![R9, R2, R9, R2],
+            vec![R10, R2, R10, R2],
+            vec![RJ, R2, RJ, R2],
+            vec![RQ, R2, RQ, R2],
+            vec![RK, R2, RK, R2],
+            vec![RA, R2, RA, R2],
+            vec![RNT, R2, RNT, R2],
+            vec![R2, R2, R2, R2],
         ];
-        let mut players_ = players.clone();
+
+        let tbl = [
+            (AdvancementPolicy::Unrestricted, &base_sequence),
+            (AdvancementPolicy::FullyUnrestricted, &base_sequence),
+            (AdvancementPolicy::DefendPoints, &base_sequence),
+        ];
+
+        for (advance_policy, expected_seq) in tbl {
+            let mut p = initial_players.clone();
+
+            for v in expected_seq {
+                let starting_rank = p[0].rank();
+                let _ = PlayPhase::compute_player_level_deltas(
+                    p.iter_mut(),
+                    // Level up one at a time, landlord is always winning
+                    0,
+                    1,
+                    &[PlayerID(0), PlayerID(2)],
+                    true,
+                    (PlayerID(0), starting_rank),
+                    advance_policy,
+                );
+                let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+                assert_eq!(
+                    &ranks, v,
+                    "Starting rank: {:?} / {:?}",
+                    advance_policy, starting_rank
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_must_defend_sequence_landlord_advancing_skip_by_2() {
+        let initial_players = init_players();
+
+        let tbl = [
+            (
+                AdvancementPolicy::Unrestricted,
+                vec![
+                    vec![R4, R2, R4, R2],
+                    vec![R6, R2, R6, R2],
+                    vec![R8, R2, R8, R2],
+                    vec![R10, R2, R10, R2],
+                    vec![RQ, R2, RQ, R2],
+                    vec![RA, R2, RA, R2],
+                    vec![RNT, R2, RNT, R2],
+                    vec![R3, R2, R3, R2],
+                ],
+            ),
+            (
+                AdvancementPolicy::FullyUnrestricted,
+                vec![
+                    vec![R4, R2, R4, R2],
+                    vec![R6, R2, R6, R2],
+                    vec![R8, R2, R8, R2],
+                    vec![R10, R2, R10, R2],
+                    vec![RQ, R2, RQ, R2],
+                    vec![RA, R2, RA, R2],
+                    vec![R2, R2, R2, R2],
+                ],
+            ),
+            (
+                AdvancementPolicy::DefendPoints,
+                vec![
+                    vec![R4, R2, R4, R2],
+                    vec![R5, R2, R5, R2],
+                    vec![R7, R2, R7, R2],
+                    vec![R9, R2, R9, R2],
+                    vec![R10, R2, R10, R2],
+                    vec![RQ, R2, RQ, R2],
+                    vec![RK, R2, RK, R2],
+                    vec![RA, R2, RA, R2],
+                    vec![RNT, R2, RNT, R2],
+                    vec![R3, R2, R3, R2],
+                ],
+            ),
+        ];
+
+        for (advance_policy, expected_seq) in tbl {
+            let mut p = initial_players.clone();
+
+            for v in expected_seq {
+                let starting_rank = p[0].rank();
+                let _ = PlayPhase::compute_player_level_deltas(
+                    p.iter_mut(),
+                    // Level up two at a time, landlord is always winning
+                    0,
+                    2,
+                    &[PlayerID(0), PlayerID(2)],
+                    true,
+                    (PlayerID(0), starting_rank),
+                    advance_policy,
+                );
+                let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+                assert_eq!(
+                    ranks, v,
+                    "Starting rank: {:?} / {:?}",
+                    advance_policy, starting_rank
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_must_defend_sequence_non_landlord_advancing() {
+        let initial_players = init_players();
+
+        let tbl = [
+            (
+                AdvancementPolicy::Unrestricted,
+                vec![
+                    vec![R2, R4, R2, R4],
+                    vec![R2, R6, R2, R6],
+                    vec![R2, R8, R2, R8],
+                    vec![R2, R10, R2, R10],
+                    vec![R2, RQ, R2, RQ],
+                    vec![R2, RA, R2, RA],
+                    // Get stuck at A b/c not landlord
+                    vec![R2, RA, R2, RA],
+                ],
+            ),
+            (
+                AdvancementPolicy::FullyUnrestricted,
+                vec![
+                    vec![R2, R4, R2, R4],
+                    vec![R2, R6, R2, R6],
+                    vec![R2, R8, R2, R8],
+                    vec![R2, R10, R2, R10],
+                    vec![R2, RQ, R2, RQ],
+                    vec![R2, RA, R2, RA],
+                    vec![R2, R2, R2, R2],
+                ],
+            ),
+            (
+                AdvancementPolicy::DefendPoints,
+                vec![
+                    vec![R2, R4, R2, R4],
+                    vec![R2, R5, R2, R5],
+                    // Get stuck at 5 because not landlord
+                    vec![R2, R5, R2, R5],
+                ],
+            ),
+        ];
+
+        for (advance_policy, expected_seq) in tbl {
+            let mut p = initial_players.clone();
+
+            for v in expected_seq {
+                let starting_rank = p[1].rank();
+                let p0_rank = p[0].rank();
+                let _ = PlayPhase::compute_player_level_deltas(
+                    p.iter_mut(),
+                    // Level up two at a time, landlord is always losing
+                    2,
+                    0,
+                    &[PlayerID(0), PlayerID(2)],
+                    true,
+                    (PlayerID(0), p0_rank),
+                    advance_policy,
+                );
+                let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+                assert_eq!(
+                    ranks, v,
+                    "Starting rank: {:?} / {:?}",
+                    advance_policy, starting_rank
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_must_defend_sequence_landlord_must_defend_to_win() {
+        let mut p = init_players();
+        p[2].level = RNT;
+
+        let p0_rank = p[0].rank();
+        let _ = PlayPhase::compute_player_level_deltas(
+            p.iter_mut(),
+            0,
+            // Level up 2, but the landlord is on a lower rank.
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            (PlayerID(0), p0_rank),
+            AdvancementPolicy::Unrestricted,
+        );
+        let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+        assert_eq!(ranks, vec![R4, R2, RNT, R2],);
+
+        p[0].level = RNT;
+
+        let p0_rank = p[0].rank();
+        let _ = PlayPhase::compute_player_level_deltas(
+            p.iter_mut(),
+            0,
+            // Level up 2, but this time the landlord is also NT.
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            (PlayerID(0), p0_rank),
+            AdvancementPolicy::Unrestricted,
+        );
+        let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+        assert_eq!(ranks, vec![R3, R2, R3, R2],);
+    }
+
+    #[test]
+    fn test_player_level_deltas() {
+        let mut players = init_players();
+
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
+            // Pretend both sides are leveling up somehow.
+            2,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            (PlayerID(0), R5),
+            AdvancementPolicy::Unrestricted,
+        );
+        for p in &players {
+            assert_eq!(p.rank(), Rank::Number(Number::Four));
+        }
 
         let _ = PlayPhase::compute_player_level_deltas(
             players.iter_mut(),
@@ -1575,29 +1847,34 @@ mod tests {
             &[PlayerID(0), PlayerID(2)],
             true,
             (PlayerID(0), Rank::Number(Number::Ace)),
-            AdvancementPolicy::Unrestricted,
-        );
-        for p in &players {
-            assert_eq!(p.rank(), Rank::Number(Number::Six));
-        }
-
-        let _ = PlayPhase::compute_player_level_deltas(
-            players_.iter_mut(),
-            // Pretend both sides are leveling up somehow.
-            2,
-            2,
-            &[PlayerID(0), PlayerID(2)],
-            true,
-            (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
         );
-        for p in &players_ {
-            assert_eq!(p.rank(), Rank::Number(Number::Five));
+        for p in &players {
+            assert_eq!(p.rank(), R5);
         }
 
         // Advance again!
         let _ = PlayPhase::compute_player_level_deltas(
-            players_.iter_mut(),
+            players.iter_mut(),
+            // Pretend both sides are leveling up somehow.
+            2,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true,
+            (PlayerID(0), RA),
+            AdvancementPolicy::DefendPoints,
+        );
+        for p in &players {
+            if p.id == PlayerID(0) || p.id == PlayerID(2) {
+                assert_eq!(p.rank(), R7);
+            } else {
+                assert_eq!(p.rank(), R5);
+            }
+        }
+
+        // Advance again!
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
             // Pretend both sides are leveling up somehow.
             2,
             2,
@@ -1606,11 +1883,12 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
         );
-        for p in &players_ {
+
+        for p in &players {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
-                assert_eq!(p.rank(), Rank::Number(Number::Seven));
+                assert_eq!(p.rank(), R9);
             } else {
-                assert_eq!(p.rank(), Rank::Number(Number::Five));
+                assert_eq!(p.rank(), R5);
             }
         }
     }

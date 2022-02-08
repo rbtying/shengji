@@ -141,7 +141,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         <Players
           players={this.props.state.propagated.players}
           observers={this.props.state.propagated.observers}
-          landlord={this.props.state.propagated.landlord}
+          landlord={landlord}
           next={next}
           name={this.props.name}
         />
@@ -152,7 +152,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
           epoch={0}
           name={this.props.name}
           trump={trump}
-          landlord={this.props.state.propagated.landlord}
+          landlord={landlord}
           players={this.props.state.propagated.players}
           bidPolicy={this.props.state.propagated.bid_policy}
           bidReinforcementPolicy={
@@ -224,12 +224,16 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
               <button
                 onClick={this.revealCard}
                 disabled={
-                  this.props.state.propagated.landlord == null ||
+                  landlord === null ||
+                  landlord === undefined ||
                   this.props.state.deck.length > 0 ||
                   this.props.state.bids.length > 0 ||
                   this.props.state.autobid !== null ||
                   this.props.state.revealed_cards >=
-                    this.props.state.kitty.length
+                    this.props.state.kitty.length ||
+                  (landlord !== null &&
+                    landlord !== undefined &&
+                    players[landlord].level === "NT")
                 }
               >
                 Reveal card from the bottom

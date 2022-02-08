@@ -1282,8 +1282,12 @@ const Initialize = (props: IProps): JSX.Element => {
         />
         <RankSelector
           rank={currentPlayer.level}
+          metaRank={currentPlayer.metalevel}
           onChangeRank={(newRank: string) =>
             send({ Action: { SetRank: newRank } })
+          }
+          onChangeMetaRank={(newMetaRank: number) =>
+            send({ Action: { SetMetaRank: newMetaRank } })
           }
         />
         <h3>Misc settings</h3>

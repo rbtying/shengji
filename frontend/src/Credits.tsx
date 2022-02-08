@@ -44,6 +44,8 @@ const ChangeLog = (): JSX.Element => {
         <p>2/05/2022:</p>
         <ul>
           <li>Added long-missing support for no-trump rank after A.</li>
+          <li>Added setting to show player name in title bar.</li>
+          <li>Added ability to set meta-rank (behind checkbox).</li>
         </ul>
         <p>7/04/2021:</p>
         <ul>

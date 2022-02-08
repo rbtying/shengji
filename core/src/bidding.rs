@@ -97,81 +97,103 @@ impl Bid {
             .find(|p| p.id == bid_player_id)
             .map(|p| p.rank());
 
-        let valid_bids = match bid_level {
-            Some(Rank::Number(bid_level)) => hands.counts(id).map(|counts| {
-                // Construct all the valid bids from the player's hand
-                let mut valid_bids = vec![];
-                for (card, count) in counts {
-                    if !card.is_joker() && card.number() != Some(bid_level) {
-                        continue;
-                    }
-                    for inner_count in 1..=*count {
-                        if card.is_joker() {
-                            match (card, joker_bid_policy) {
-                                (_, JokerBidPolicy::BothTwoOrMore) if inner_count <= 1 => continue,
-                                (Card::SmallJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
-                                | (Card::SmallJoker, JokerBidPolicy::BothNumDecks)
-                                    if inner_count < num_decks =>
-                                {
-                                    continue
-                                }
-                                (Card::BigJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
-                                    if inner_count < num_decks - 1 =>
-                                {
-                                    continue
-                                }
-                                (Card::BigJoker, JokerBidPolicy::BothNumDecks)
-                                    if inner_count < num_decks =>
-                                {
-                                    continue
-                                }
-                                (_, _) => (),
+        if landlord.is_some() && bid_level == Some(Rank::NoTrump) {
+            // Bail early if the landlord is playing NoTrump, since there's no bidding.
+            return Ok(vec![]);
+        }
+
+        let valid_bid_cards = hands.counts(id).and_then(|counts| {
+            let mut valid_bid_cards = vec![];
+            for (card, count) in counts {
+                let consider = match bid_level {
+                    _ if card.is_joker() => true,
+                    Some(Rank::Number(bid_level)) if card.number() == Some(bid_level) => true,
+                    _ => false,
+                };
+                if consider {
+                    valid_bid_cards.push((card, count));
+                }
+            }
+
+            if valid_bid_cards.is_empty() {
+                None
+            } else {
+                Some(valid_bid_cards)
+            }
+        });
+
+        let valid_bids = valid_bid_cards.map(|counts| {
+            // Construct all the valid bids from the player's hand
+            let mut valid_bids = vec![];
+            for (card, count) in counts {
+                for inner_count in 1..=*count {
+                    if card.is_joker() {
+                        let is_nt = bid_level == Some(Rank::NoTrump);
+                        match (card, joker_bid_policy) {
+                            // If we're bidding against the no-trump rank, allow bids of one card
+                            // in the default joker bid policy.
+                            (_, JokerBidPolicy::BothTwoOrMore) if inner_count <= 1 && !is_nt => {
+                                continue
                             }
+                            (Card::SmallJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
+                            | (Card::SmallJoker, JokerBidPolicy::BothNumDecks)
+                                if inner_count < num_decks =>
+                            {
+                                continue
+                            }
+                            (Card::BigJoker, JokerBidPolicy::LJNumDecksHJNumDecksLessOne)
+                                if inner_count < num_decks - 1 =>
+                            {
+                                continue
+                            }
+                            (Card::BigJoker, JokerBidPolicy::BothNumDecks)
+                                if inner_count < num_decks =>
+                            {
+                                continue
+                            }
+                            (_, _) => (),
                         }
-                        let new_bid = Bid {
-                            id,
-                            card: *card,
-                            count: inner_count,
-                            epoch,
-                        };
-                        if let Some(existing_bid) = bids.last() {
-                            if new_bid.count > existing_bid.count {
-                                valid_bids.push(new_bid);
-                            } else if new_bid.count == existing_bid.count {
-                                match bid_policy {
-                                    BidPolicy::JokerOrHigherSuit
-                                    | BidPolicy::JokerOrGreaterLength => {
-                                        match (new_bid.card, existing_bid.card) {
-                                            (Card::BigJoker, Card::BigJoker) => (),
-                                            (Card::BigJoker, _) => valid_bids.push(new_bid),
-                                            (Card::SmallJoker, Card::BigJoker)
-                                            | (Card::SmallJoker, Card::SmallJoker) => (),
-                                            (Card::SmallJoker, _) => valid_bids.push(new_bid),
-                                            _ => {
-                                                // The new bid count must have a size of at least 2 in
-                                                // order to be compared by suit ranking
-                                                if bid_policy == BidPolicy::JokerOrHigherSuit
-                                                    && new_bid.card.suit()
-                                                        > existing_bid.card.suit()
-                                                    && new_bid.count > 1
-                                                {
-                                                    valid_bids.push(new_bid)
-                                                }
+                    }
+                    let new_bid = Bid {
+                        id,
+                        card: *card,
+                        count: inner_count,
+                        epoch,
+                    };
+                    if let Some(existing_bid) = bids.last() {
+                        if new_bid.count > existing_bid.count {
+                            valid_bids.push(new_bid);
+                        } else if new_bid.count == existing_bid.count {
+                            match bid_policy {
+                                BidPolicy::JokerOrHigherSuit | BidPolicy::JokerOrGreaterLength => {
+                                    match (new_bid.card, existing_bid.card) {
+                                        (Card::BigJoker, Card::BigJoker) => (),
+                                        (Card::BigJoker, _) => valid_bids.push(new_bid),
+                                        (Card::SmallJoker, Card::BigJoker)
+                                        | (Card::SmallJoker, Card::SmallJoker) => (),
+                                        (Card::SmallJoker, _) => valid_bids.push(new_bid),
+                                        _ => {
+                                            // The new bid count must have a size of at least 2 in
+                                            // order to be compared by suit ranking
+                                            if bid_policy == BidPolicy::JokerOrHigherSuit
+                                                && new_bid.card.suit() > existing_bid.card.suit()
+                                                && new_bid.count > 1
+                                            {
+                                                valid_bids.push(new_bid)
                                             }
                                         }
                                     }
-                                    _ => (),
                                 }
+                                _ => (),
                             }
-                        } else {
-                            valid_bids.push(new_bid);
                         }
+                    } else {
+                        valid_bids.push(new_bid);
                     }
                 }
-                valid_bids
-            }),
-            Some(Rank::NoTrump) | None => None,
-        };
+            }
+            valid_bids
+        });
 
         match (most_recent_bid, bid_reinforcement_policy, valid_bids) {
             (Some(most_recent_bid), BidReinforcementPolicy::ReinforceWhileWinning, _)

@@ -121,6 +121,9 @@ pub enum MessageVariant {
     SetRank {
         rank: Rank,
     },
+    SetMetaRank {
+        metarank: usize,
+    },
     MadeBid {
         card: Card,
         count: usize,

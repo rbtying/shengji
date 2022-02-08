@@ -28,6 +28,10 @@ impl Player {
         self.level = level;
     }
 
+    pub fn set_meta_rank(&mut self, metalevel: usize) {
+        self.metalevel = metalevel;
+    }
+
     pub fn advance(&mut self) {
         if let Some(next_level) = self.level.successor() {
             self.level = next_level;

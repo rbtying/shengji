@@ -858,6 +858,16 @@ impl PropagatedState {
         Ok(())
     }
 
+    pub fn set_meta_rank(&mut self, player_id: PlayerID, metalevel: usize) -> Result<(), Error> {
+        match self.players.iter_mut().find(|p| p.id == player_id) {
+            Some(ref mut player) => {
+                player.set_meta_rank(metalevel);
+            }
+            None => bail!("player not found"),
+        }
+        Ok(())
+    }
+
     pub fn set_tractor_requirements(
         &mut self,
         tractor_requirements: TractorRequirements,

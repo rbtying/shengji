@@ -1166,4 +1166,31 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_rank_successor() {
+        let expected = [
+            Rank::Number(Number::Two),
+            Rank::Number(Number::Three),
+            Rank::Number(Number::Four),
+            Rank::Number(Number::Five),
+            Rank::Number(Number::Six),
+            Rank::Number(Number::Seven),
+            Rank::Number(Number::Eight),
+            Rank::Number(Number::Nine),
+            Rank::Number(Number::Ten),
+            Rank::Number(Number::Jack),
+            Rank::Number(Number::Queen),
+            Rank::Number(Number::King),
+            Rank::Number(Number::Ace),
+        ];
+        let mut n = Rank::Number(Number::Two);
+
+        for m in expected {
+            assert_eq!(n, m);
+            n = n.successor().unwrap();
+        }
+        assert_eq!(n, Rank::NoTrump);
+        assert!(n.successor().is_none());
+    }
 }
