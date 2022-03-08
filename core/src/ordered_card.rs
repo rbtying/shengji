@@ -278,10 +278,7 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
 
     for group in groupings {
         // Find the non-single cards
-        let one_idx = group
-            .iter()
-            .position(|v| *v == 1)
-            .unwrap_or_else(|| group.len());
+        let one_idx = group.iter().position(|v| *v == 1).unwrap_or(group.len());
         let gt_1 = &group[..one_idx];
         let eq_1 = &group[one_idx..];
 

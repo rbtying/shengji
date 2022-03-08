@@ -653,10 +653,9 @@ impl PlayPhase {
             friends: _,
         } = &self.game_mode
         {
-            let actual_team_size: usize;
             let setting_team_size = *num_friends + 1;
 
-            actual_team_size = self.landlords_team.len();
+            let actual_team_size = self.landlords_team.len();
             smaller_landlord_team = actual_team_size < setting_team_size;
         }
 
@@ -1112,12 +1111,12 @@ impl DrawPhase {
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         if self.deck.is_empty() {
             let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
-            let landlord = self.propagated.landlord.unwrap_or_else(|| {
+            let landlord = self.propagated.landlord.unwrap_or(
                 match self.propagated.first_landlord_selection_policy {
                     FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
                     FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
-                }
-            });
+                },
+            );
 
             Ok(landlord)
         } else {
