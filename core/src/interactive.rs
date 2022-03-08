@@ -130,6 +130,11 @@ impl InteractiveGame {
                 state.set_meta_rank(id, metarank)?;
                 vec![MessageVariant::SetMetaRank { metarank }]
             }
+            (Action::SetMaxRank(rank), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting max rank"; "max rank" => rank.as_str());
+                state.set_max_rank(rank)?;
+                vec![MessageVariant::SetMaxRank { rank }]
+            }
             (Action::SetKittySize(size), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty size"; "size" => size);
                 state.set_kitty_size(size)?.into_iter().collect()
@@ -416,6 +421,7 @@ pub enum Action {
     ReorderPlayers(Vec<PlayerID>),
     SetRank(Rank),
     SetMetaRank(usize),
+    SetMaxRank(Rank),
     SetLandlord(Option<PlayerID>),
     SetLandlordEmoji(Option<String>),
     SetGameMode(GameModeSettings),
@@ -537,6 +543,7 @@ impl BroadcastMessage {
             SetLandlordEmoji { ref emoji } => format!("{} set landlord emoji to {}", n?, *emoji),
             SetRank { rank } => format!("{} set their rank to {}", n?, rank.as_str()),
             SetMetaRank { metarank } => format!("{} set their meta-rank to {}", n?, metarank),
+            SetMaxRank { rank} => format!("{} set the max rank to {}", n?, rank.as_str()),
             MadeBid { card, count } => format!("{} bid {} {:?}", n?, count, card),
             KittyPenaltySet { kitty_penalty: KittyPenalty::Times } => format!("{} set the penalty for points in the bottom to twice the size of the last trick", n?),
             KittyPenaltySet { kitty_penalty: KittyPenalty::Power } => format!("{} set the penalty for points in the bottom to two to the power of the size of the last trick", n?),

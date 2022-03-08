@@ -30,6 +30,7 @@ interface IDifficultyProps {
   setFriendSelectionPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setMultipleJoinPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setAdvancementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setMaxRank: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHideLandlordsPoints: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHidePlayedCards: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyPenalty: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -95,6 +96,18 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
             <option value="DefendPoints">
               Points (5, 10, K) and A must be defended
             </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Max rank:{" "}
+          <select
+            value={props.state.propagated.max_rank}
+            onChange={props.setMaxRank}
+          >
+            <option value="NT">No trump</option>
+            <option value="A">A</option>
           </select>
         </label>
       </div>
@@ -746,6 +759,7 @@ const Initialize = (props: IProps): JSX.Element => {
     "SetAdvancementPolicy",
     "Unrestricted"
   );
+  const setMaxRank = onSelectStringDefault("SetMaxRank", "NT");
   const setThrowPenalty = onSelectStringDefault("SetThrowPenalty", null);
 
   const setHideLandlordsPoints = (
@@ -914,6 +928,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetAdvancementPolicy: value,
+              },
+            });
+            break;
+          case "max_rank":
+            send({
+              Action: {
+                SetMaxRank: value,
               },
             });
             break;
@@ -1265,6 +1286,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setFriendSelectionPolicy={setFriendSelectionPolicy}
           setMultipleJoinPolicy={setMultipleJoinPolicy}
           setAdvancementPolicy={setAdvancementPolicy}
+          setMaxRank={setMaxRank}
           setHideLandlordsPoints={setHideLandlordsPoints}
           setHidePlayedCards={setHidePlayedCards}
           setKittyPenalty={setKittyPenalty}

@@ -43,7 +43,7 @@ export type MessageVariant =
   | { type: "PlayedCards"; cards: string[] }
   | { type: "EndOfGameKittyReveal"; cards: string[] }
   | { type: "PointsInKitty"; points: number; multiplier: number }
-  | { type: "RankAdvanced"; player: number; new_rank: number }
+  | { type: "RankAdvanced"; player: number; new_rank: string }
   | { type: "ResettingGame" }
   | { type: "SetDefendingPointVisibility"; visible: boolean }
   | { type: "SetLandlord"; landlord: number | null }
@@ -199,6 +199,7 @@ export interface IPropagatedState {
   should_reveal_kitty_at_end_of_game: boolean;
   hide_throw_halting_player: boolean;
   tractor_requirements: ITractorRequirements;
+  max_rank: string;
 }
 
 export interface IGameScoringParameters {

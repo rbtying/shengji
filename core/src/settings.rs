@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::ops::Deref;
 
 use anyhow::{bail, Error};
 use serde::{Deserialize, Serialize};
@@ -248,6 +249,22 @@ impl Default for GameStartPolicy {
 
 impl_slog_value!(GameStartPolicy);
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct MaxRank(Rank);
+impl_slog_value!(MaxRank);
+impl Default for MaxRank {
+    fn default() -> Self {
+        MaxRank(Rank::NoTrump)
+    }
+}
+impl Deref for MaxRank {
+    type Target = Rank;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, KV)]
 pub struct PropagatedState {
     #[slog(skip)]
@@ -318,6 +335,8 @@ pub struct PropagatedState {
     pub(crate) hide_throw_halting_player: bool,
     #[serde(default)]
     pub(crate) tractor_requirements: TractorRequirements,
+    #[serde(default)]
+    pub(crate) max_rank: MaxRank,
 }
 
 impl PropagatedState {
@@ -865,6 +884,11 @@ impl PropagatedState {
             }
             None => bail!("player not found"),
         }
+        Ok(())
+    }
+
+    pub fn set_max_rank(&mut self, level: Rank) -> Result<(), Error> {
+        self.max_rank = MaxRank(level);
         Ok(())
     }
 

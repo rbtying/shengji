@@ -32,12 +32,15 @@ impl Player {
         self.metalevel = metalevel;
     }
 
-    pub fn advance(&mut self) {
-        if let Some(next_level) = self.level.successor() {
-            self.level = next_level;
-        } else {
-            self.metalevel += 1;
-            self.level = Rank::Number(Number::Two);
+    pub fn advance(&mut self, max_rank: Rank) {
+        match self.level.successor() {
+            Some(next_level) if self.level != max_rank => {
+                self.level = next_level;
+            }
+            None | Some(_) => {
+                self.metalevel += 1;
+                self.level = Rank::Number(Number::Two);
+            }
         }
     }
 }

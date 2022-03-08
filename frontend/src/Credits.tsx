@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 15;
+const changeLogVersion: number = 16;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>3/07/2022:</p>
+        <ul>
+          <li>
+            Add the ability to choose the final level (NT or A) in difficulty
+            settings.
+          </li>
+        </ul>
         <p>2/05/2022:</p>
         <ul>
           <li>Added long-missing support for no-trump rank after A.</li>
