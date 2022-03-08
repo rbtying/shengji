@@ -235,13 +235,14 @@ impl Deref for GameState {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct PlayerGameFinishedResult {
     pub won_game: bool,
     pub is_defending: bool,
     pub is_landlord: bool,
     pub ranks_up: usize,
     pub confetti: bool,
+    pub rank: Rank,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -486,6 +487,7 @@ impl PlayPhase {
         Ok(msgs)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn compute_player_level_deltas<'a, 'b: 'a>(
         players: impl Iterator<Item = &'b mut Player>,
         non_landlord_level_bump: usize,
@@ -494,6 +496,7 @@ impl PlayPhase {
         landlord_won: bool,
         landlord: (PlayerID, Rank),
         advancement_policy: AdvancementPolicy,
+        max_rank: Rank,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
 
@@ -511,10 +514,16 @@ impl PlayPhase {
 
                 for bump_idx in 0..bump {
                     let must_defend = match (advancement_policy, player.rank()) {
-                        (AdvancementPolicy::Unrestricted, Rank::Number(Number::Ace))
-                        | (AdvancementPolicy::Unrestricted, Rank::NoTrump)
-                        | (AdvancementPolicy::DefendPoints, Rank::Number(Number::Ace))
-                        | (AdvancementPolicy::DefendPoints, Rank::NoTrump) => true,
+                        (AdvancementPolicy::Unrestricted, r)
+                        | (AdvancementPolicy::Unrestricted, r)
+                        | (AdvancementPolicy::DefendPoints, r)
+                        | (AdvancementPolicy::DefendPoints, r)
+                            if r == max_rank
+                                || (r.successor() == Some(max_rank)
+                                    && max_rank == Rank::NoTrump) =>
+                        {
+                            true
+                        }
                         (AdvancementPolicy::DefendPoints, Rank::Number(n))
                             if n.points().is_some() =>
                         {
@@ -537,7 +546,7 @@ impl PlayPhase {
                         break;
                     }
 
-                    player.advance();
+                    player.advance(max_rank);
                     num_advances += 1;
                 }
                 if num_advances > 0 {
@@ -563,7 +572,8 @@ impl PlayPhase {
                         confetti: num_advances > 0
                             && landlord_won
                             && is_defending
-                            && initial_rank == Rank::NoTrump,
+                            && initial_rank == max_rank,
+                        rank: initial_rank,
                     },
                 )
             })
@@ -643,10 +653,9 @@ impl PlayPhase {
             friends: _,
         } = &self.game_mode
         {
-            let actual_team_size: usize;
             let setting_team_size = *num_friends + 1;
 
-            actual_team_size = self.landlords_team.len();
+            let actual_team_size = self.landlords_team.len();
             smaller_landlord_team = actual_team_size < setting_team_size;
         }
 
@@ -686,6 +695,7 @@ impl PlayPhase {
             landlord_won,
             (self.landlord, self.propagated.players[landlord_idx].level),
             propagated.advancement_policy,
+            *propagated.max_rank,
         ));
 
         let mut idx = (landlord_idx + 1) % propagated.players.len();
@@ -1101,12 +1111,12 @@ impl DrawPhase {
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         if self.deck.is_empty() {
             let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
-            let landlord = self.propagated.landlord.unwrap_or_else(|| {
+            let landlord = self.propagated.landlord.unwrap_or(
                 match self.propagated.first_landlord_selection_policy {
                     FirstLandlordSelectionPolicy::ByWinningBid => winning_bid.id,
                     FirstLandlordSelectionPolicy::ByFirstBid => first_bid.id,
-                }
-            });
+                },
+            );
 
             Ok(landlord)
         } else {
@@ -1635,6 +1645,59 @@ mod tests {
                     true,
                     (PlayerID(0), starting_rank),
                     advance_policy,
+                    RNT,
+                );
+                let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
+                assert_eq!(
+                    &ranks, v,
+                    "Starting rank: {:?} / {:?}",
+                    advance_policy, starting_rank
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_must_defend_sequence_landlord_advancing_no_nt() {
+        let initial_players = init_players();
+
+        let base_sequence = vec![
+            vec![R3, R2, R3, R2],
+            vec![R4, R2, R4, R2],
+            vec![R5, R2, R5, R2],
+            vec![R6, R2, R6, R2],
+            vec![R7, R2, R7, R2],
+            vec![R8, R2, R8, R2],
+            vec![R9, R2, R9, R2],
+            vec![R10, R2, R10, R2],
+            vec![RJ, R2, RJ, R2],
+            vec![RQ, R2, RQ, R2],
+            vec![RK, R2, RK, R2],
+            vec![RA, R2, RA, R2],
+            vec![R2, R2, R2, R2],
+        ];
+
+        let tbl = [
+            (AdvancementPolicy::Unrestricted, &base_sequence),
+            (AdvancementPolicy::FullyUnrestricted, &base_sequence),
+            (AdvancementPolicy::DefendPoints, &base_sequence),
+        ];
+
+        for (advance_policy, expected_seq) in tbl {
+            let mut p = initial_players.clone();
+
+            for v in expected_seq {
+                let starting_rank = p[0].rank();
+                let _ = PlayPhase::compute_player_level_deltas(
+                    p.iter_mut(),
+                    // Level up one at a time, landlord is always winning
+                    0,
+                    1,
+                    &[PlayerID(0), PlayerID(2)],
+                    true,
+                    (PlayerID(0), starting_rank),
+                    advance_policy,
+                    RA,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -1707,6 +1770,7 @@ mod tests {
                     true,
                     (PlayerID(0), starting_rank),
                     advance_policy,
+                    RNT,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -1774,6 +1838,7 @@ mod tests {
                     true,
                     (PlayerID(0), p0_rank),
                     advance_policy,
+                    RNT,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -1800,6 +1865,7 @@ mod tests {
             true,
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
+            RNT,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R4, R2, RNT, R2],);
@@ -1816,6 +1882,7 @@ mod tests {
             true,
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
+            RNT,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R3, R2, R3, R2],);
@@ -1834,6 +1901,7 @@ mod tests {
             true,
             (PlayerID(0), R5),
             AdvancementPolicy::Unrestricted,
+            RNT,
         );
         for p in &players {
             assert_eq!(p.rank(), Rank::Number(Number::Four));
@@ -1848,6 +1916,7 @@ mod tests {
             true,
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
+            RNT,
         );
         for p in &players {
             assert_eq!(p.rank(), R5);
@@ -1863,6 +1932,7 @@ mod tests {
             true,
             (PlayerID(0), RA),
             AdvancementPolicy::DefendPoints,
+            RNT,
         );
         for p in &players {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
@@ -1882,6 +1952,7 @@ mod tests {
             true,
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
+            RNT,
         );
 
         for p in &players {

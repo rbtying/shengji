@@ -151,7 +151,7 @@ const gameFinishedHandler: WebsocketHandler = (
       const group = gameWinners
         .join(", ")
         .replace(/, ((?:.(?!, ))+)$/, " and $1");
-      updates.confetti = `${group} successfully defended on no trump!`;
+      updates.confetti = `${group} successfully defended on the final level!`;
     }
     if (
       updates.gameStatistics !== undefined ||
