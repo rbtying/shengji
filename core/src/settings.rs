@@ -53,6 +53,15 @@ pub enum GameMode {
     },
 }
 
+impl GameMode {
+    pub fn num_friends(&self) -> Option<usize> {
+        match self {
+            GameMode::Tractor => None,
+            GameMode::FindingFriends { num_friends, .. } => Some(*num_friends),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum GameModeSettings {
     Tractor,

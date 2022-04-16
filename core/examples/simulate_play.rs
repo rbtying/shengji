@@ -5,7 +5,7 @@ use rand::distributions::Alphanumeric;
 use rand::prelude::*;
 use rand_distr::WeightedIndex;
 use shengji_core::{
-    game_state::{GameState, InitializePhase},
+    game_state::{initialize_phase::InitializePhase, GameState},
     settings::{FriendSelection, GameModeSettings},
     trick::{TractorRequirements, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, Number, Suit},

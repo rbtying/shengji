@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::deck::Deck;
-use crate::game_state::PlayerGameFinishedResult;
+use crate::game_state::play_phase::PlayerGameFinishedResult;
 use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
