@@ -5,7 +5,6 @@ use anyhow::{anyhow, bail, Error};
 use rand::{seq::SliceRandom, RngCore};
 use serde::{Deserialize, Serialize};
 
-use crate::hands::Hands;
 use crate::settings::{GameMode, GameModeSettings, GameStartPolicy, PropagatedState};
 use crate::types::{Card, Number, PlayerID, Rank, ALL_SUITS};
 
@@ -210,21 +209,17 @@ impl InitializePhase {
 
         let propagated = self.propagated.clone();
 
-        Ok(DrawPhase {
-            deck: (&deck[0..deck.len() - kitty_size]).to_vec(),
-            kitty: (&deck[deck.len() - kitty_size..]).to_vec(),
-            hands: Hands::new(self.propagated.players.iter().map(|p| p.id)),
-            bids: Vec::new(),
-            revealed_cards: 0,
-            autobid: None,
+        Ok(DrawPhase::new(
             propagated,
             position,
+            (&deck[0..deck.len() - kitty_size]).to_vec(),
+            (&deck[deck.len() - kitty_size..]).to_vec(),
             num_decks,
-            decks,
             game_mode,
             level,
+            decks,
             removed_cards,
-        })
+        ))
     }
 }
 
