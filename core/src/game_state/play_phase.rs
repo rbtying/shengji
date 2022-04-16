@@ -15,7 +15,7 @@ use crate::settings::{
 use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
 use crate::types::{Card, PlayerID, Rank, Trump};
 
-use crate::game_state::InitializePhase;
+use crate::game_state::initialize_phase::InitializePhase;
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -561,7 +561,11 @@ impl PlayPhase {
         propagated.num_games_finished += 1;
         msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((InitializePhase { propagated }, landlord_won, msgs))
+        Ok((
+            InitializePhase::from_propagated(propagated),
+            landlord_won,
+            msgs,
+        ))
     }
 
     pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
@@ -570,7 +574,7 @@ impl PlayPhase {
         let mut propagated = self.propagated.clone();
         msgs.extend(propagated.make_all_observers_into_players()?);
 
-        Ok((InitializePhase { propagated }, msgs))
+        Ok((InitializePhase::from_propagated(propagated), msgs))
     }
 
     pub fn destructively_redact_for_player(&mut self, player: PlayerID) {

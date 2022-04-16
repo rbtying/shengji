@@ -106,7 +106,7 @@ impl State for VersionedGame {
         VersionedGame {
             room_name: key,
             game: shengji_core::game_state::GameState::Initialize(
-                shengji_core::game_state::InitializePhase::new(),
+                shengji_core::game_state::initialize_phase::InitializePhase::new(),
             ),
             associated_websockets: HashMap::new(),
             monotonic_id: 0,

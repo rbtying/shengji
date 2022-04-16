@@ -4,7 +4,7 @@ use slog::{debug, info, o, Logger};
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
 use crate::deck::Deck;
-use crate::game_state::{GameState, InitializePhase};
+use crate::game_state::{initialize_phase::InitializePhase, GameState};
 use crate::message::MessageVariant;
 use crate::scoring::GameScoringParameters;
 use crate::settings::{
