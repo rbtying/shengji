@@ -145,13 +145,7 @@ impl TrickUnit {
             original_num_cards += 1;
         }
 
-        find_plays_inner(
-            &mut counts,
-            original_num_cards,
-            tractor_requirements,
-            None,
-            0,
-        )
+        find_plays_inner(&mut counts, original_num_cards, tractor_requirements, None)
     }
 
     pub fn cards(&self) -> Vec<Card> {
@@ -932,7 +926,6 @@ impl UnitLike {
         }
         attempt_format_match(
             &mut counts,
-            0,
             units.map(|u| u.adjacent_tuples),
             |counts, matching| match trick_draw_policy {
                 TrickDrawPolicy::NoFormatBasedDraw
@@ -1076,7 +1069,6 @@ fn find_plays_inner(
     num_cards: usize,
     tractor_requirements: TractorRequirements,
     min_start: Option<OrderedCard>,
-    depth: usize,
 ) -> Vec<Units> {
     if num_cards == 0 {
         return vec![];
@@ -1123,7 +1115,6 @@ fn find_plays_inner(
                     num_cards - start.size(),
                     tractor_requirements,
                     Some(start.first_card()),
-                    depth + 1,
                 );
                 plays.extend(sub_plays.into_iter().map(|mut play| {
                     play.push(start.clone());

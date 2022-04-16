@@ -89,7 +89,6 @@ fn without_matching_cards<T>(
 
 pub fn attempt_format_match(
     counts: &mut BTreeMap<OrderedCard, usize>,
-    depth: usize,
     mut units: impl Iterator<Item = AdjacentTupleSizes> + Clone,
     allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCardsRef) -> bool + Copy,
 ) -> (bool, Vec<MatchingCards>) {
@@ -100,7 +99,7 @@ pub fn attempt_format_match(
                     continue;
                 }
                 let (found, mut path) = without_matching_cards(counts, &matching, |subcounts| {
-                    attempt_format_match(subcounts, depth + 1, units.clone(), allowed)
+                    attempt_format_match(subcounts, units.clone(), allowed)
                 });
                 if found {
                     path.push(matching);

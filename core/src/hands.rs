@@ -34,7 +34,7 @@ impl Hands {
         }
     }
 
-    pub fn redact_except(&mut self, id: PlayerID) {
+    pub fn destructively_redact_except_for_player(&mut self, id: PlayerID) {
         for (pid, cards) in &mut self.hands {
             if *pid != id {
                 let count = cards.values().sum();

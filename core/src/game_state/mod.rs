@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 
 use anyhow::{anyhow, bail, Error};
@@ -9,16 +9,15 @@ use crate::bidding::Bid;
 use crate::deck::Deck;
 use crate::hands::Hands;
 use crate::message::MessageVariant;
-use crate::player::Player;
-use crate::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
 use crate::settings::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, Friend, FriendSelection,
-    FriendSelectionPolicy, GameMode, GameModeSettings, GameStartPolicy, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
-    ThrowPenalty,
+    FirstLandlordSelectionPolicy, Friend, FriendSelection, FriendSelectionPolicy, GameMode,
+    GameModeSettings, GameStartPolicy, KittyBidPolicy, KittyTheftPolicy, PropagatedState,
 };
-use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
 use crate::types::{Card, Number, PlayerID, Rank, Trump, ALL_SUITS};
+
+pub mod play_phase;
+
+use play_phase::PlayPhase;
 
 macro_rules! bail_unwrap {
     ($opt:expr) => {
@@ -50,10 +49,10 @@ impl GameState {
 
     pub fn propagated(&self) -> &'_ PropagatedState {
         match self {
-            GameState::Initialize(p) => &p.propagated,
-            GameState::Draw(p) => &p.propagated,
-            GameState::Exchange(p) => &p.propagated,
-            GameState::Play(p) => &p.propagated,
+            GameState::Initialize(p) => p.propagated(),
+            GameState::Draw(p) => p.propagated(),
+            GameState::Exchange(p) => p.propagated(),
+            GameState::Play(p) => p.propagated(),
         }
     }
 
@@ -121,10 +120,10 @@ impl GameState {
 
     pub fn set_chat_link(&mut self, chat_link: Option<String>) -> Result<(), Error> {
         match self {
-            GameState::Initialize(ref mut p) => p.propagated.set_chat_link(chat_link),
-            GameState::Draw(ref mut p) => p.propagated.set_chat_link(chat_link),
-            GameState::Exchange(ref mut p) => p.propagated.set_chat_link(chat_link),
-            GameState::Play(ref mut p) => p.propagated.set_chat_link(chat_link),
+            GameState::Initialize(ref mut p) => p.propagated_mut().set_chat_link(chat_link),
+            GameState::Draw(ref mut p) => p.propagated_mut().set_chat_link(chat_link),
+            GameState::Exchange(ref mut p) => p.propagated_mut().set_chat_link(chat_link),
+            GameState::Play(ref mut p) => p.propagated_mut().set_chat_link(chat_link),
         }
     }
 
@@ -160,7 +159,7 @@ impl GameState {
                 revealed_cards,
                 ..
             }) => {
-                hands.redact_except(id);
+                hands.destructively_redact_except_for_player(id);
                 for card in &mut kitty[revealed_cards..] {
                     *card = Card::Unknown;
                 }
@@ -177,7 +176,7 @@ impl GameState {
                 finalized,
                 ..
             }) => {
-                hands.redact_except(id);
+                hands.destructively_redact_except_for_player(id);
                 if id != exchanger || finalized {
                     for card in kitty {
                         *card = Card::Unknown;
@@ -192,35 +191,8 @@ impl GameState {
                     }
                 }
             }
-            GameState::Play(PlayPhase {
-                ref mut hands,
-                ref mut kitty,
-                ref mut points,
-                ref trick,
-                ref landlords_team,
-                ref propagated,
-                exchanger,
-                game_ended_early,
-                ..
-            }) => {
-                if propagated.hide_landlord_points {
-                    for (k, v) in points.iter_mut() {
-                        if landlords_team.contains(k) {
-                            v.clear();
-                        }
-                    }
-                }
-                // Don't redact at the end of the game.
-                let game_ongoing =
-                    !game_ended_early && (!hands.is_empty() || !trick.played_cards().is_empty());
-                if game_ongoing {
-                    hands.redact_except(id);
-                }
-                if game_ongoing && id != exchanger {
-                    for card in kitty {
-                        *card = Card::Unknown;
-                    }
-                }
+            GameState::Play(ref mut p) => {
+                p.destructively_redact_for_player(id);
             }
         }
         s
@@ -232,497 +204,6 @@ impl Deref for GameState {
 
     fn deref(&self) -> &PropagatedState {
         self.propagated()
-    }
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
-pub struct PlayerGameFinishedResult {
-    pub won_game: bool,
-    pub is_defending: bool,
-    pub is_landlord: bool,
-    pub ranks_up: usize,
-    pub confetti: bool,
-    pub rank: Rank,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlayPhase {
-    num_decks: usize,
-    game_mode: GameMode,
-    propagated: PropagatedState,
-    hands: Hands,
-    points: HashMap<PlayerID, Vec<Card>>,
-    penalties: HashMap<PlayerID, usize>,
-    kitty: Vec<Card>,
-    landlord: PlayerID,
-    landlords_team: Vec<PlayerID>,
-    exchanger: PlayerID,
-    trump: Trump,
-    trick: Trick,
-    last_trick: Option<Trick>,
-    game_ended_early: bool,
-    #[serde(default)]
-    removed_cards: Vec<Card>,
-    #[serde(default)]
-    decks: Vec<Deck>,
-}
-
-impl PlayPhase {
-    pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
-        self.propagated.add_observer(name)
-    }
-
-    pub fn remove_observer(&mut self, id: PlayerID) -> Result<(), Error> {
-        self.propagated.remove_observer(id)
-    }
-
-    pub fn next_player(&self) -> Result<PlayerID, Error> {
-        Ok(bail_unwrap!(self.trick.next_player()))
-    }
-
-    pub fn trick(&self) -> &Trick {
-        &self.trick
-    }
-
-    pub fn hands(&self) -> &Hands {
-        &self.hands
-    }
-
-    pub fn propagated(&self) -> &PropagatedState {
-        &self.propagated
-    }
-
-    pub fn can_play_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
-        if self.game_ended_early {
-            bail!("Game has already ended; cards can't be played");
-        }
-        Ok(self
-            .trick
-            .can_play_cards(id, &self.hands, cards, self.propagated.trick_draw_policy)?)
-    }
-
-    pub fn play_cards(
-        &mut self,
-        id: PlayerID,
-        cards: &[Card],
-    ) -> Result<Vec<MessageVariant>, Error> {
-        self.play_cards_with_hint(id, cards, None)
-    }
-
-    pub fn play_cards_with_hint(
-        &mut self,
-        id: PlayerID,
-        cards: &[Card],
-        format_hint: Option<&'_ [TrickUnit]>,
-    ) -> Result<Vec<MessageVariant>, Error> {
-        if self.game_ended_early {
-            bail!("Game has already ended; cards can't be played");
-        }
-
-        let mut msgs = self.trick.play_cards(PlayCards {
-            id,
-            hands: &mut self.hands,
-            cards,
-            trick_draw_policy: self.propagated.trick_draw_policy,
-            throw_eval_policy: self.propagated.throw_evaluation_policy,
-            format_hint,
-            hide_throw_halting_player: self.propagated.hide_throw_halting_player,
-            tractor_requirements: self.propagated.tractor_requirements,
-        })?;
-        if self.propagated.hide_played_cards {
-            for msg in &mut msgs {
-                match msg {
-                    MessageVariant::PlayedCards { ref mut cards, .. } => {
-                        for card in cards {
-                            *card = Card::Unknown;
-                        }
-                    }
-                    MessageVariant::ThrowFailed {
-                        ref mut original_cards,
-                        ..
-                    } => {
-                        for card in original_cards {
-                            *card = Card::Unknown;
-                        }
-                    }
-                    _ => (),
-                }
-            }
-        }
-        Ok(msgs)
-    }
-
-    pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {
-        if self.game_ended_early {
-            bail!("Game has already ended; cards can't be taken back");
-        }
-        if self.propagated.play_takeback_policy == PlayTakebackPolicy::NoPlayTakeback {
-            bail!("Taking back played cards is not allowed")
-        }
-        Ok(self
-            .trick
-            .take_back(id, &mut self.hands, self.propagated.throw_evaluation_policy)?)
-    }
-
-    pub fn finish_trick(&mut self) -> Result<Vec<MessageVariant>, Error> {
-        if self.game_ended_early {
-            bail!("Game has already ended; trick can't be finished");
-        }
-        let TrickEnded {
-            winner,
-            points: mut new_points,
-            largest_trick_unit_size,
-            failed_throw_size,
-        } = self.trick.complete()?;
-
-        let kitty_multipler = match self.propagated.kitty_penalty {
-            KittyPenalty::Times => 2 * largest_trick_unit_size,
-            KittyPenalty::Power => 2usize.pow(largest_trick_unit_size as u32),
-        };
-
-        if failed_throw_size > 0 {
-            match self.propagated.throw_penalty {
-                ThrowPenalty::None => (),
-                ThrowPenalty::TenPointsPerAttempt => {
-                    if let Some(id) = self.trick.played_cards().first().map(|pc| pc.id) {
-                        *self.penalties.entry(id).or_insert(0) += 10;
-                    }
-                }
-            }
-        }
-
-        let mut msgs = vec![];
-        if let GameMode::FindingFriends {
-            ref mut friends, ..
-        } = self.game_mode
-        {
-            for played in self.trick.played_cards() {
-                for card in played.cards.iter() {
-                    for friend in friends.iter_mut() {
-                        if friend.card == *card {
-                            if friend.skip == 0 {
-                                if friend.player_id.is_none() {
-                                    let already_on_the_team =
-                                        self.landlords_team.contains(&played.id);
-
-                                    match self.propagated.multiple_join_policy {
-                                        MultipleJoinPolicy::Unrestricted if already_on_the_team => {
-                                            // double-join!
-                                            friend.player_id = Some(played.id);
-                                            msgs.push(MessageVariant::JoinedTeam {
-                                                player: played.id,
-                                                already_joined: true,
-                                            });
-                                        }
-                                        MultipleJoinPolicy::NoDoubleJoin if already_on_the_team => {
-                                        }
-                                        MultipleJoinPolicy::Unrestricted
-                                        | MultipleJoinPolicy::NoDoubleJoin => {
-                                            friend.player_id = Some(played.id);
-                                            self.landlords_team.push(played.id);
-                                            msgs.push(MessageVariant::JoinedTeam {
-                                                player: played.id,
-                                                already_joined: false,
-                                            });
-                                        }
-                                    }
-                                }
-                            } else {
-                                friend.skip -= 1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        let points = bail_unwrap!(self.points.get_mut(&winner));
-        let kitty_points = self
-            .kitty
-            .iter()
-            .filter(|c| c.points().is_some())
-            .copied()
-            .collect::<Vec<_>>();
-
-        if self.hands.is_empty() {
-            if self.propagated.should_reveal_kitty_at_end_of_game {
-                msgs.push(MessageVariant::EndOfGameKittyReveal {
-                    cards: self.kitty.clone(),
-                });
-            }
-            for _ in 0..kitty_multipler {
-                new_points.extend(kitty_points.iter().copied());
-            }
-            if !kitty_points.is_empty() && kitty_multipler > 0 {
-                msgs.push(MessageVariant::PointsInKitty {
-                    points: kitty_points.iter().flat_map(|c| c.points()).sum::<usize>(),
-                    multiplier: kitty_multipler,
-                });
-            }
-        }
-        let winner_idx = bail_unwrap!(self.propagated.players.iter().position(|p| p.id == winner));
-        if !new_points.is_empty() {
-            let trump = self.trump;
-            let num_points = new_points.iter().flat_map(|c| c.points()).sum::<usize>();
-            points.extend(new_points);
-            points.sort_by(|a, b| trump.compare(*a, *b));
-            msgs.push(MessageVariant::TrickWon {
-                winner: self.propagated.players[winner_idx].id,
-                points: num_points,
-            });
-        } else {
-            msgs.push(MessageVariant::TrickWon {
-                winner: self.propagated.players[winner_idx].id,
-                points: 0,
-            });
-        }
-        let new_trick = Trick::new(
-            self.trump,
-            (0..self.propagated.players.len()).map(|offset| {
-                let idx = (winner_idx + offset) % self.propagated.players.len();
-                self.propagated.players[idx].id
-            }),
-        );
-        self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
-
-        Ok(msgs)
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn compute_player_level_deltas<'a, 'b: 'a>(
-        players: impl Iterator<Item = &'b mut Player>,
-        non_landlord_level_bump: usize,
-        landlord_level_bump: usize,
-        landlords_team: &'a [PlayerID],
-        landlord_won: bool,
-        landlord: (PlayerID, Rank),
-        advancement_policy: AdvancementPolicy,
-        max_rank: Rank,
-    ) -> Vec<MessageVariant> {
-        let mut msgs = vec![];
-
-        let result = players
-            .map(|player| {
-                let is_defending = landlords_team.contains(&player.id);
-                let bump = if is_defending {
-                    landlord_level_bump
-                } else {
-                    non_landlord_level_bump
-                };
-                let mut num_advances = 0;
-                let mut was_blocked = false;
-                let initial_rank = player.rank();
-
-                for bump_idx in 0..bump {
-                    let must_defend = match (advancement_policy, player.rank()) {
-                        (AdvancementPolicy::Unrestricted, r)
-                        | (AdvancementPolicy::Unrestricted, r)
-                        | (AdvancementPolicy::DefendPoints, r)
-                        | (AdvancementPolicy::DefendPoints, r)
-                            if r == max_rank
-                                || (r.successor() == Some(max_rank)
-                                    && max_rank == Rank::NoTrump) =>
-                        {
-                            true
-                        }
-                        (AdvancementPolicy::DefendPoints, Rank::Number(n))
-                            if n.points().is_some() =>
-                        {
-                            true
-                        }
-                        (AdvancementPolicy::FullyUnrestricted, _)
-                        | (AdvancementPolicy::Unrestricted, _)
-                        | (AdvancementPolicy::DefendPoints, _) => false,
-                    };
-                    // In order to advance past NoTrump, the landlord must also be defending
-                    // NoTrump.
-                    let landlord_must_defend = must_defend && player.rank() == Rank::NoTrump;
-
-                    if must_defend
-                        && (!is_defending
-                            || bump_idx > 0
-                            || (landlord_must_defend && landlord.1 != Rank::NoTrump))
-                    {
-                        was_blocked = true;
-                        break;
-                    }
-
-                    player.advance(max_rank);
-                    num_advances += 1;
-                }
-                if num_advances > 0 {
-                    msgs.push(MessageVariant::RankAdvanced {
-                        player: player.id,
-                        new_rank: player.rank(),
-                    });
-                }
-                if was_blocked {
-                    msgs.push(MessageVariant::AdvancementBlocked {
-                        player: player.id,
-                        rank: player.rank(),
-                    });
-                }
-
-                (
-                    player.name.to_string(),
-                    PlayerGameFinishedResult {
-                        won_game: landlord_won == is_defending,
-                        is_defending,
-                        is_landlord: landlord.0 == player.id,
-                        ranks_up: num_advances,
-                        confetti: num_advances > 0
-                            && landlord_won
-                            && is_defending
-                            && initial_rank == max_rank,
-                        rank: initial_rank,
-                    },
-                )
-            })
-            .collect();
-
-        msgs.push(MessageVariant::GameFinished { result });
-        msgs
-    }
-
-    pub fn calculate_points(&self) -> (isize, isize) {
-        let mut non_landlords_points: isize = self
-            .points
-            .iter()
-            .filter(|(id, _)| !self.landlords_team.contains(id))
-            .flat_map(|(_, cards)| cards)
-            .flat_map(|c| c.points())
-            .sum::<usize>() as isize;
-
-        let observed_points = self
-            .points
-            .iter()
-            .filter(|(id, _)| {
-                !self.propagated.hide_landlord_points || !self.landlords_team.contains(id)
-            })
-            .flat_map(|(_, cards)| cards)
-            .flat_map(|c| c.points())
-            .sum::<usize>() as isize;
-
-        for (id, penalty) in &self.penalties {
-            if *penalty > 0 {
-                if self.landlords_team.contains(id) {
-                    non_landlords_points += *penalty as isize;
-                } else {
-                    non_landlords_points -= *penalty as isize;
-                }
-            }
-        }
-        (non_landlords_points, observed_points)
-    }
-
-    pub fn game_finished(&self) -> bool {
-        self.game_ended_early || self.hands.is_empty() && self.trick.played_cards().is_empty()
-    }
-
-    pub fn finish_game_early(&mut self) -> Result<MessageVariant, Error> {
-        if self.game_finished() {
-            bail!("Game has already ended");
-        }
-        let (non_landlords_points, observed_points) = self.calculate_points();
-        let can_end_early = !next_threshold_reachable(
-            &self.propagated.game_scoring_parameters,
-            &self.decks,
-            non_landlords_points,
-            observed_points,
-        )?;
-
-        if can_end_early {
-            self.game_ended_early = true;
-            Ok(MessageVariant::GameEndedEarly)
-        } else {
-            bail!("Game can't be ended early; there are still points in play")
-        }
-    }
-
-    pub fn finish_game(&self) -> Result<(InitializePhase, bool, Vec<MessageVariant>), Error> {
-        let mut msgs = vec![];
-        if !self.game_finished() {
-            bail!("not done playing yet!")
-        }
-
-        let (non_landlords_points, _) = self.calculate_points();
-
-        let mut smaller_landlord_team = false;
-
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = &self.game_mode
-        {
-            let setting_team_size = *num_friends + 1;
-
-            let actual_team_size = self.landlords_team.len();
-            smaller_landlord_team = actual_team_size < setting_team_size;
-        }
-
-        let mut propagated = self.propagated.clone();
-
-        let GameScoreResult {
-            non_landlord_delta: non_landlord_level_bump,
-            landlord_delta: landlord_level_bump,
-            landlord_won,
-            landlord_bonus: bonus_level_earned,
-        } = compute_level_deltas(
-            &propagated.game_scoring_parameters,
-            &self.decks,
-            non_landlords_points,
-            smaller_landlord_team,
-        )?;
-
-        msgs.push(MessageVariant::EndOfGameSummary {
-            landlord_won,
-            non_landlords_points,
-        });
-
-        if bonus_level_earned {
-            msgs.push(MessageVariant::BonusLevelEarned);
-        };
-
-        let landlord_idx = bail_unwrap!(propagated
-            .players
-            .iter()
-            .position(|p| p.id == self.landlord));
-
-        msgs.extend(Self::compute_player_level_deltas(
-            propagated.players.iter_mut(),
-            non_landlord_level_bump,
-            landlord_level_bump,
-            &self.landlords_team[..],
-            landlord_won,
-            (self.landlord, self.propagated.players[landlord_idx].level),
-            propagated.advancement_policy,
-            *propagated.max_rank,
-        ));
-
-        let mut idx = (landlord_idx + 1) % propagated.players.len();
-        let (next_landlord, next_landlord_idx) = loop {
-            if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
-                break (propagated.players[idx].id, idx);
-            }
-            idx = (idx + 1) % propagated.players.len()
-        };
-
-        msgs.push(MessageVariant::NewLandlordForNextGame {
-            landlord: propagated.players[next_landlord_idx].id,
-        });
-        propagated.set_landlord(Some(next_landlord))?;
-        propagated.num_games_finished += 1;
-        msgs.extend(propagated.make_all_observers_into_players()?);
-
-        Ok((InitializePhase { propagated }, landlord_won, msgs))
-    }
-
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
-        let mut msgs = vec![MessageVariant::ResettingGame];
-
-        let mut propagated = self.propagated.clone();
-        msgs.extend(propagated.make_all_observers_into_players()?);
-
-        Ok((InitializePhase { propagated }, msgs))
     }
 }
 
@@ -975,6 +456,14 @@ impl ExchangePhase {
         self.trump
     }
 
+    pub fn propagated(&self) -> &PropagatedState {
+        &self.propagated
+    }
+
+    pub fn propagated_mut(&mut self) -> &mut PropagatedState {
+        &mut self.propagated
+    }
+
     pub fn next_player(&self) -> Result<PlayerID, Error> {
         if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
             && self.autobid.is_none()
@@ -1031,41 +520,20 @@ impl ExchangePhase {
                 .collect(),
             GameMode::FindingFriends { .. } => vec![self.landlord],
         };
-        let landlord_idx = bail_unwrap!(self
-            .propagated
-            .players
-            .iter()
-            .position(|p| p.id == self.landlord));
 
-        Ok(PlayPhase {
-            num_decks: self.num_decks,
-            game_mode: self.game_mode.clone(),
-            hands: self.hands.clone(),
-            kitty: self.kitty.clone(),
-            trick: Trick::new(
-                self.trump,
-                (0..self.propagated.players.len()).map(|offset| {
-                    let idx = (landlord_idx + offset) % self.propagated.players.len();
-                    self.propagated.players[idx].id
-                }),
-            ),
-            last_trick: None,
-            points: self
-                .propagated
-                .players
-                .iter()
-                .map(|p| (p.id, Vec::new()))
-                .collect(),
-            penalties: self.propagated.players.iter().map(|p| (p.id, 0)).collect(),
-            landlord: self.landlord,
-            exchanger: self.exchanger,
+        PlayPhase::new(
+            self.propagated.clone(),
+            self.num_decks,
+            self.game_mode.clone(),
+            self.hands.clone(),
+            self.kitty.clone(),
+            self.trump,
+            self.landlord,
+            self.exchanger,
             landlords_team,
-            trump: self.trump,
-            propagated: self.propagated.clone(),
-            game_ended_early: false,
-            removed_cards: self.removed_cards.clone(),
-            decks: self.decks.clone(),
-        })
+            self.removed_cards.clone(),
+            self.decks.clone(),
+        )
     }
 
     pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
@@ -1100,6 +568,14 @@ pub struct DrawPhase {
 }
 
 impl DrawPhase {
+    pub fn propagated(&self) -> &PropagatedState {
+        &self.propagated
+    }
+
+    pub fn propagated_mut(&mut self) -> &mut PropagatedState {
+        &mut self.propagated
+    }
+
     pub fn add_observer(&mut self, name: String) -> Result<PlayerID, Error> {
         self.propagated.add_observer(name)
     }
@@ -1343,6 +819,14 @@ impl InitializePhase {
         }
     }
 
+    pub fn propagated(&self) -> &PropagatedState {
+        &self.propagated
+    }
+
+    pub fn propagated_mut(&mut self) -> &mut PropagatedState {
+        &mut self.propagated
+    }
+
     pub fn start(&self, id: PlayerID) -> Result<DrawPhase, Error> {
         if self.propagated.players.len() < 4 {
             bail!("not enough players")
@@ -1552,12 +1036,14 @@ impl DerefMut for InitializePhase {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        AdvancementPolicy, FriendSelection, GameMode, GameModeSettings, InitializePhase,
-        KittyTheftPolicy, MessageVariant, PlayPhase, Player,
+    use crate::settings::{
+        AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameMode, GameModeSettings,
+        KittyTheftPolicy,
     };
 
-    use crate::settings::FriendSelectionPolicy;
+    use crate::game_state::{play_phase::PlayPhase, InitializePhase};
+    use crate::message::MessageVariant;
+    use crate::player::Player;
     use crate::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
 
     const R2: Rank = Rank::Number(Number::Two);
@@ -2416,15 +1902,8 @@ mod tests {
         exchange.set_friends(p2, friends).unwrap();
         let mut play = exchange.advance(p2).unwrap();
 
-        assert_eq!(play.landlords_team.len(), 1);
-
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+        assert_eq!(play.landlords_team().len(), 1);
+        assert_eq!(play.game_mode().num_friends(), Some(2));
 
         play.play_cards(p2, &[H_K, H_K]).unwrap();
         play.play_cards(p3, &[H_8, H_8]).unwrap();
@@ -2433,14 +1912,8 @@ mod tests {
         play.play_cards(p6, &[H_4, H_5]).unwrap();
         play.play_cards(p1, &[H_9, H_9]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 1);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+        assert_eq!(play.landlords_team().len(), 1);
+        assert_eq!(play.game_mode().num_friends(), Some(2));
 
         play.play_cards(p2, &[C_3]).unwrap();
         play.play_cards(p3, &[C_6]).unwrap();
@@ -2450,14 +1923,8 @@ mod tests {
         play.play_cards(p1, &[C_K]).unwrap();
         play.finish_trick().unwrap();
 
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+        assert_eq!(play.landlords_team().len(), 2);
+        assert_eq!(play.game_mode().num_friends(), Some(2));
 
         play.play_cards(p1, &[S_A]).unwrap();
         play.play_cards(p2, &[S_2]).unwrap();
@@ -2466,14 +1933,6 @@ mod tests {
         play.play_cards(p5, &[S_2]).unwrap();
         play.play_cards(p6, &[S_3]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p1, &[S_Q, S_Q]).unwrap();
         play.play_cards(p2, &[S_3, S_4]).unwrap();
@@ -2483,15 +1942,6 @@ mod tests {
         play.play_cards(p6, &[S_A, S_A]).unwrap();
         play.finish_trick().unwrap();
 
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
-
         play.play_cards(p6, &[Card::BigJoker]).unwrap();
         play.play_cards(p1, &[D_4]).unwrap();
         play.play_cards(p2, &[S_7]).unwrap();
@@ -2499,15 +1949,6 @@ mod tests {
         play.play_cards(p4, &[D_5]).unwrap();
         play.play_cards(p5, &[D_10]).unwrap();
         play.finish_trick().unwrap();
-
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p6, &[D_A, D_A]).unwrap();
         play.play_cards(p1, &[D_7, D_7]).unwrap();
@@ -2517,15 +1958,6 @@ mod tests {
         play.play_cards(p5, &[D_3, D_3]).unwrap();
         play.finish_trick().unwrap();
 
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
-
         play.play_cards(p1, &[S_9, S_9]).unwrap();
         play.play_cards(p2, &[S_J, S_K]).unwrap();
         play.play_cards(p3, &[S_10, H_2]).unwrap();
@@ -2534,15 +1966,6 @@ mod tests {
         play.play_cards(p6, &[S_4, S_8]).unwrap();
         play.finish_trick().unwrap();
 
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
-
         play.play_cards(p1, &[S_5]).unwrap();
         play.play_cards(p2, &[D_10]).unwrap();
         play.play_cards(p3, &[C_2]).unwrap();
@@ -2550,14 +1973,6 @@ mod tests {
         play.play_cards(p5, &[S_K]).unwrap();
         play.play_cards(p6, &[S_J]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p2, &[Card::BigJoker, Card::BigJoker])
             .unwrap();
@@ -2567,14 +1982,7 @@ mod tests {
         play.play_cards(p6, &[D_9, D_10]).unwrap();
         play.play_cards(p1, &[D_5, D_K]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         play.play_cards(p2, &[C_7, C_7]).unwrap();
         play.play_cards(p3, &[S_7, Card::SmallJoker]).unwrap();
         play.play_cards(p4, &[S_7, H_7]).unwrap();
@@ -2582,14 +1990,7 @@ mod tests {
         play.play_cards(p6, &[D_Q, D_K]).unwrap();
         play.play_cards(p1, &[D_6, D_8]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         play.play_cards(p2, &[D_4, D_4]).unwrap();
         play.play_cards(p3, &[C_10, C_J]).unwrap();
         play.play_cards(p4, &[C_8, C_9]).unwrap();
@@ -2597,14 +1998,7 @@ mod tests {
         play.play_cards(p6, &[C_8, H_7]).unwrap();
         play.play_cards(p1, &[H_7, Card::SmallJoker]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         play.play_cards(p2, &[H_3]).unwrap();
         play.play_cards(p3, &[H_A]).unwrap();
         play.play_cards(p4, &[H_8]).unwrap();
@@ -2612,14 +2006,6 @@ mod tests {
         play.play_cards(p6, &[H_6]).unwrap();
         play.play_cards(p1, &[H_3]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p3, &[H_10, H_10]).unwrap();
         play.play_cards(p4, &[H_Q, H_Q]).unwrap();
@@ -2628,14 +2014,6 @@ mod tests {
         play.play_cards(p1, &[H_4, H_K]).unwrap();
         play.play_cards(p2, &[H_4, H_6]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p4, &[C_2]).unwrap();
         play.play_cards(p5, &[C_3]).unwrap();
@@ -2644,14 +2022,6 @@ mod tests {
         play.play_cards(p2, &[C_K]).unwrap();
         play.play_cards(p3, &[C_5]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p1, &[S_8]).unwrap();
         play.play_cards(p2, &[C_4]).unwrap();
@@ -2660,14 +2030,7 @@ mod tests {
         play.play_cards(p5, &[C_3]).unwrap();
         play.play_cards(p6, &[S_Q]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         play.play_cards(p6, &[C_4]).unwrap();
         play.play_cards(p1, &[C_8]).unwrap();
         play.play_cards(p2, &[C_9]).unwrap();
@@ -2675,14 +2038,6 @@ mod tests {
         play.play_cards(p4, &[C_2]).unwrap();
         play.play_cards(p5, &[C_Q]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
 
         play.play_cards(p5, &[H_A]).unwrap();
         play.play_cards(p6, &[H_A]).unwrap();
@@ -2691,14 +2046,7 @@ mod tests {
         play.play_cards(p3, &[H_5]).unwrap();
         play.play_cards(p4, &[C_J]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         play.play_cards(p5, &[Card::SmallJoker]).unwrap();
         play.play_cards(p6, &[C_A]).unwrap();
         play.play_cards(p1, &[C_J]).unwrap();
@@ -2706,14 +2054,7 @@ mod tests {
         play.play_cards(p3, &[H_5]).unwrap();
         play.play_cards(p4, &[C_Q]).unwrap();
         play.finish_trick().unwrap();
-        assert_eq!(play.landlords_team.len(), 2);
-        if let GameMode::FindingFriends {
-            num_friends,
-            friends: _,
-        } = play.game_mode
-        {
-            assert_eq!(num_friends, 2);
-        }
+
         if let Ok((phase, _, _msgs)) = play.finish_game() {
             assert_eq!(phase.propagated.landlord, Some(p3));
         };
@@ -2799,13 +2140,13 @@ mod tests {
         ];
         exchange.set_friends(p1, friends).unwrap();
         let mut play = exchange.advance(p1).unwrap();
-        match play.game_mode {
+        match play.game_mode() {
             GameMode::FindingFriends { num_friends: 3, .. } => (),
             _ => panic!("Didn't have 3 friends once game was started"),
         }
 
         assert_eq!(
-            play.landlords_team,
+            play.landlords_team(),
             vec![p1],
             "Nobody should have joined the team yet"
         );
@@ -2829,7 +2170,7 @@ mod tests {
             1
         );
 
-        assert_eq!(play.landlords_team, vec![p1, p2]);
+        assert_eq!(play.landlords_team(), vec![p1, p2]);
 
         // Play the next trick, where the landlord will join the team, and then
         // p2 will join the team (again).
@@ -2852,9 +2193,9 @@ mod tests {
         );
 
         // Assert that the team didn't get any bigger
-        assert_eq!(play.landlords_team, vec![p1, p2]);
+        assert_eq!(play.landlords_team(), vec![p1, p2]);
         // But also that all of the friend cards have been played!
-        match play.game_mode {
+        match play.game_mode() {
             GameMode::FindingFriends { ref friends, .. } => assert!(
                 friends.iter().all(|f| f.player_id.is_some()),
                 "all friends lots taken"
