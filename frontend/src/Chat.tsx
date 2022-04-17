@@ -2,6 +2,7 @@ import * as React from "react";
 import ChatMessage, { IMessage } from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import { WebsocketContext } from "./WebsocketProvider";
+import { SettingsContext } from "./AppStateProvider";
 
 interface IProps {
   messages: IMessage[];
@@ -10,6 +11,7 @@ interface IProps {
 const Chat = (props: IProps): JSX.Element => {
   const anchor = React.useRef<HTMLDivElement | null>(null);
   const { send } = React.useContext(WebsocketContext);
+  const settings = React.useContext(SettingsContext);
 
   React.useEffect(() => {
     if (anchor.current !== null) {
@@ -31,15 +33,17 @@ const Chat = (props: IProps): JSX.Element => {
   const handleSubmit = (message: string): void => send({ Message: message });
 
   return (
-    <div className="chat">
-      <div className="messages">
-        {props.messages.map((m, idx) => (
-          <ChatMessage message={m} key={idx} />
-        ))}
-        <div className="chat-anchor" ref={anchor} />
+    !settings.hideChatBox && (
+      <div className="chat">
+        <div className="messages">
+          {props.messages.map((m, idx) => (
+            <ChatMessage message={m} key={idx} />
+          ))}
+          <div className="chat-anchor" ref={anchor} />
+        </div>
+        <ChatInput onSubmit={handleSubmit} />
       </div>
-      <ChatInput onSubmit={handleSubmit} />
-    </div>
+    )
   );
 };
 

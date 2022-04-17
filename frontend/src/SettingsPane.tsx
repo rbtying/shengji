@@ -249,6 +249,19 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>hide chat box</LabelCell>
+          <Cell>
+            <input
+              name="hide-chat-box"
+              type="checkbox"
+              checked={settings.hideChatBox}
+              onChange={handleChange({
+                hideChatBox: !settings.hideChatBox,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>
