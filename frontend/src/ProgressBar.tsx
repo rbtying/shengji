@@ -78,7 +78,7 @@ const ProgressBar = (props: IProps): JSX.Element => {
   );
 
   return (
-    <div style={{ color: "#000" }}>
+    <div style={{ color: "#000", padding: "0px 5px" }}>
       <div
         style={{
           width: "100%",

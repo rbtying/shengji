@@ -262,6 +262,21 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>
+            show points bar above the game (rather than below)
+          </LabelCell>
+          <Cell>
+            <input
+              name="show-points-above-game"
+              type="checkbox"
+              checked={settings.showPointsAboveGame}
+              onChange={handleChange({
+                showPointsAboveGame: !settings.showPointsAboveGame,
+              })}
+            />
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>

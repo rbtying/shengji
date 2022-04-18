@@ -7,6 +7,7 @@ import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
 import WasmContext from "./WasmContext";
+import { SettingsContext } from "./AppStateProvider";
 
 interface IProps {
   players: IPlayer[];
@@ -63,6 +64,7 @@ const Points = (props: IProps): JSX.Element => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
   );
+  const settings = React.useContext(SettingsContext);
   const { computeScore, explainScoring } = React.useContext(WasmContext);
   const {
     totalPointsPlayed,
@@ -135,15 +137,17 @@ const Points = (props: IProps): JSX.Element => {
   return (
     <div className="points">
       <h2>Points</h2>
-      <ProgressBar
-        checkpoints={scoreTransitions
-          .map((transition) => transition.point_threshold)
-          .filter((threshold) => threshold >= 10 && threshold < totalPoints)}
-        totalPoints={totalPoints}
-        landlordPoints={totalPointsPlayed - nonLandlordPoints}
-        challengerPoints={nonLandlordPointsWithPenalties}
-        hideLandlordPoints={props.hideLandlordPoints}
-      />
+      {!settings.showPointsAboveGame && (
+        <ProgressBar
+          checkpoints={scoreTransitions
+            .map((transition) => transition.point_threshold)
+            .filter((threshold) => threshold >= 10 && threshold < totalPoints)}
+          totalPoints={totalPoints}
+          landlordPoints={totalPointsPlayed - nonLandlordPoints}
+          challengerPoints={nonLandlordPointsWithPenalties}
+          hideLandlordPoints={props.hideLandlordPoints}
+        />
+      )}
       <p>
         {penaltyDelta === 0
           ? nonLandlordPoints
@@ -153,6 +157,38 @@ const Points = (props: IProps): JSX.Element => {
       </p>
       {playerPointElements}
     </div>
+  );
+};
+
+export const ProgressBarDisplay = (props: IProps): JSX.Element => {
+  const { explainScoring } = React.useContext(WasmContext);
+  const {
+    totalPointsPlayed,
+    nonLandlordPointsWithPenalties,
+    nonLandlordPoints,
+  } = calculatePoints(
+    props.players,
+    props.landlordTeam,
+    props.points,
+    props.penalties
+  );
+
+  const { results: scoreTransitions, total_points: totalPoints } =
+    explainScoring({
+      params: props.gameScoringParameters,
+      smaller_landlord_team_size: props.smallerTeamSize,
+      decks: props.decks,
+    });
+  return (
+    <ProgressBar
+      checkpoints={scoreTransitions
+        .map((transition) => transition.point_threshold)
+        .filter((threshold) => threshold >= 10 && threshold < totalPoints)}
+      totalPoints={totalPoints}
+      landlordPoints={totalPointsPlayed - nonLandlordPoints}
+      challengerPoints={nonLandlordPointsWithPenalties}
+      hideLandlordPoints={props.hideLandlordPoints}
+    />
   );
 };
 
