@@ -20,6 +20,8 @@ export interface Settings {
   suitColorOverrides: ISuitOverrides;
   showDebugInfo: boolean;
   showPlayerName: boolean;
+  hideChatBox: boolean;
+  showPointsAboveGame: boolean;
 }
 
 export interface ISuitOverrides {
@@ -66,6 +68,9 @@ const showDebugInfo: State<boolean> =
 const showPlayerName: State<boolean> = booleanLocalStorageState(
   "show_player_name_in_title"
 );
+const hideChatBox: State<boolean> = booleanLocalStorageState("hide_chat_box");
+const showPointsAboveGame: State<boolean> =
+  booleanLocalStorageState("points_above_game");
 const settings: State<Settings> = combineState({
   fourColor,
   darkMode,
@@ -82,6 +87,8 @@ const settings: State<Settings> = combineState({
   playDrawCardSound,
   showDebugInfo,
   showPlayerName,
+  hideChatBox,
+  showPointsAboveGame,
 });
 
 export default settings;

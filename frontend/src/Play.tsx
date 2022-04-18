@@ -7,13 +7,14 @@ import Trump from "./Trump";
 import Friends from "./Friends";
 import Trick from "./Trick";
 import Cards from "./Cards";
-import Points, { calculatePoints } from "./Points";
+import Points, { calculatePoints, ProgressBarDisplay } from "./Points";
 import LabeledPlay from "./LabeledPlay";
 import Players from "./Players";
 import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
+import { SettingsContext } from "./AppStateProvider";
 import WasmContext, {
   IFoundViablePlay,
   ISortedAndGroupedCards,
@@ -38,6 +39,7 @@ interface IProps {
 
 const Play = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
+  const settings = React.useContext(SettingsContext);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [grouping, setGrouping] = React.useState<IFoundViablePlay[]>([]);
   const {
@@ -228,6 +230,19 @@ const Play = (props: IProps): JSX.Element => {
           have been removed from the deck
         </p>
       ) : null}
+      {settings.showPointsAboveGame && (
+        <ProgressBarDisplay
+          points={playPhase.points}
+          penalties={playPhase.penalties}
+          decks={playPhase.decks}
+          players={playPhase.propagated.players}
+          landlordTeam={playPhase.landlords_team}
+          landlord={playPhase.landlord}
+          hideLandlordPoints={playPhase.propagated.hide_landlord_points}
+          gameScoringParameters={playPhase.propagated.game_scoring_parameters}
+          smallerTeamSize={smallerTeamSize}
+        />
+      )}
       <Trick
         trick={playPhase.trick}
         players={playPhase.propagated.players}

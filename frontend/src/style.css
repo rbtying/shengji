@@ -350,6 +350,10 @@ button.normal {
   display: inline-block;
 }
 
+.hide-chat-box .game {
+  width: 95%;
+}
+
 .messages {
   padding-top: 10px;
   padding-left: 10px;

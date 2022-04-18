@@ -92,7 +92,8 @@ const Root = (): JSX.Element => {
         <div
           className={classNames(
             state.settings.fourColor ? "four-color" : null,
-            state.settings.showCardLabels ? "always-show-labels" : null
+            state.settings.showCardLabels ? "always-show-labels" : null,
+            state.settings.hideChatBox ? "hide-chat-box" : null
           )}
         >
           {headerMessages}

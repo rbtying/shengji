@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 16;
+const changeLogVersion: number = 17;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,13 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>4/17/2022:</p>
+        <ul>
+          <li>
+            Add the ability to hide the chat box and move the points progress
+            bar in the settings pane.
+          </li>
+        </ul>
         <p>3/07/2022:</p>
         <ul>
           <li>
