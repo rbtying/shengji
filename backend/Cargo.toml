@@ -25,7 +25,7 @@ slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 static_dir = "0.2"
 storage = { path = "../storage" }
-tokio = { version = "1.7", features = ["macros", "rt-multi-thread", "fs", "time", "sync", "io-util"] }
+tokio = { version = "1.8", features = ["macros", "rt-multi-thread", "fs", "time", "sync", "io-util"] }
 warp = "0.3"
 zstd = "0.5"
 
