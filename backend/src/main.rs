@@ -301,7 +301,7 @@ async fn dump_state<S: Storage<VersionedGame, E>, E>(
         }
     };
 
-    let _ = backend_storage.clone().prune().await;
+    backend_storage.clone().prune().await;
 
     let (num_games, num_players_online_now) = backend_storage
         .clone()
@@ -904,7 +904,7 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E: Send>(
         "disconnect player",
     )
     .await;
-    let _ = backend_storage
+    backend_storage
         .unsubscribe(room.as_bytes().to_vec(), ws_id)
         .await;
     info!(logger, "Websocket disconnected";
