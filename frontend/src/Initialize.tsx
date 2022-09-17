@@ -3,6 +3,7 @@ import ReactTooltip from "react-tooltip";
 import * as ReactModal from "react-modal";
 import { IEmojiData } from "emoji-picker-react";
 import ReadyCheck from "./ReadyCheck";
+import AutodrawSpeedSelector from "./AutodrawSpeedSelector";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import KittySizeSelector from "./KittySizeSelector";
@@ -1313,6 +1314,16 @@ const Initialize = (props: IProps): JSX.Element => {
           }
         />
         <h3>Misc settings</h3>
+        <div>
+          <label>
+            <AutodrawSpeedSelector
+              autodrawSpeedMs={props.state.propagated.autodraw_speed_ms}
+              onChange={(newAutodrawSpeedMs: number) =>
+                send({ Action: { SetAutodrawSpeedMs: newAutodrawSpeedMs } })
+              }
+            />
+          </label>
+        </div>
         <div>
           <label>
             Landlord label:{" "}

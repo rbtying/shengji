@@ -38,6 +38,7 @@ export type MessageVariant =
   | { type: "LeftGame"; name: string }
   | { type: "MadeBid"; card: string; count: number }
   | { type: "NewLandlordForNextGame"; landlord: number }
+  | { type: "AutodrawSpeedMsSet"; autodraw_speed_ms: number }
   | { type: "NumDecksSet"; num_decks: number | null }
   | { type: "NumFriendsSet"; num_friends: number | null }
   | { type: "PlayedCards"; cards: string[] }
@@ -200,6 +201,7 @@ export interface IPropagatedState {
   hide_throw_halting_player: boolean;
   tractor_requirements: ITractorRequirements;
   max_rank: string;
+  autodraw_speed_ms: number;
 }
 
 export interface IGameScoringParameters {

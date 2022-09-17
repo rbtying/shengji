@@ -92,7 +92,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     ) {
       this.timeout = this.props.setTimeout(() => {
         this.drawCard();
-      }, 250);
+      }, this.props.state.propagated.autodraw_speed_ms);
     }
     this.could_draw = canDraw;
 

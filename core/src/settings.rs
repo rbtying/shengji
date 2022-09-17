@@ -346,6 +346,8 @@ pub struct PropagatedState {
     pub(crate) tractor_requirements: TractorRequirements,
     #[serde(default)]
     pub(crate) max_rank: MaxRank,
+    #[serde(default)]
+    pub(crate) autodraw_speed_ms: u32,
 }
 
 impl PropagatedState {
@@ -537,6 +539,18 @@ impl PropagatedState {
             {
                 msgs.extend(self.set_game_scoring_parameters(GameScoringParameters::default())?);
             };
+        }
+        Ok(msgs)
+    }
+
+    pub fn set_autodraw_speed_ms(
+        &mut self,
+        autodraw_speed_ms: u32,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        let mut msgs = vec![];
+        if self.autodraw_speed_ms != autodraw_speed_ms {
+            msgs.push(MessageVariant::AutodrawSpeedMsSet { autodraw_speed_ms });
+            self.autodraw_speed_ms = autodraw_speed_ms
         }
         Ok(msgs)
     }

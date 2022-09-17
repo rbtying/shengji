@@ -86,6 +86,9 @@ pub enum MessageVariant {
     SpecialDecksSet {
         special_decks: Vec<Deck>,
     },
+    AutodrawSpeedMsSet {
+        autodraw_speed_ms: u32,
+    },
     NumDecksSet {
         num_decks: Option<usize>,
     },
@@ -265,6 +268,8 @@ impl MessageVariant {
                 format!("{} enabled the kitty to be revealed at the end of each game", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: false } =>
                 format!("{} disabled the kitty from being revealed at the end of each game", n?),
+            AutodrawSpeedMsSet { autodraw_speed_ms } =>
+                format!("{} set the autodraw speed to {}ms", n?, autodraw_speed_ms),
             NumDecksSet { num_decks: Some(num_decks) } =>
                 format!("{} set the number of decks to {}", n?, num_decks),
             NumDecksSet { num_decks: None } => format!("{} set the number of decks to default", n?),

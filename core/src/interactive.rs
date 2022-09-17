@@ -116,6 +116,10 @@ impl InteractiveGame {
                 info!(logger, "Setting number of decks"; "num_decks" => num_decks);
                 state.set_num_decks(num_decks)?
             }
+            (Action::SetAutodrawSpeedMs(autodraw_speed_ms), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting autodraw speed"; "autodraw_speed" => autodraw_speed_ms);
+                state.set_autodraw_speed_ms(autodraw_speed_ms)?
+            }
             (Action::SetSpecialDecks(decks), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting special decks"; "decks" => format!("{:?}", decks));
                 state.set_special_decks(decks)?
@@ -408,6 +412,7 @@ pub enum Action {
     MakePlayer(PlayerID),
     SetChatLink(Option<String>),
     SetNumDecks(Option<usize>),
+    SetAutodrawSpeedMs(u32),
     SetSpecialDecks(Vec<Deck>),
     SetKittySize(Option<usize>),
     SetFriendSelectionPolicy(FriendSelectionPolicy),
