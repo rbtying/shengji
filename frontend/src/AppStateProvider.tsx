@@ -1,8 +1,8 @@
 import * as React from "react";
-import { IMessage } from "./ChatMessage";
 import gameStatistics, { GameStatistics } from "./state/GameStatistics";
 import settings, { Settings } from "./state/Settings";
-import { IGameState } from "./types";
+import { GameState } from "./gen-types";
+import { Message } from "./ChatMessage";
 import { State, combineState, noPersistence } from "./State";
 import {
   stringLocalStorageState,
@@ -16,10 +16,10 @@ export interface AppState {
   everConnected: boolean;
   roomName: string;
   name: string;
-  gameState: IGameState | null;
+  gameState: GameState | null;
   headerMessages: string[];
   errors: string[];
-  messages: IMessage[];
+  messages: Message[];
   confetti: string | null;
   changeLogLastViewed: number;
 }

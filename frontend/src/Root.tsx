@@ -107,7 +107,7 @@ const Root = (): JSX.Element => {
             </React.Suspense>
           ) : null}
           <div className="game">
-            {state.gameState.Initialize !== undefined ? null : (
+            {"Initialize" in state.gameState ? null : (
               <a
                 href={window.location.href}
                 className="reset-link"
@@ -121,13 +121,13 @@ const Root = (): JSX.Element => {
                 Reset game
               </a>
             )}
-            {state.gameState.Initialize !== undefined ? (
+            {"Initialize" in state.gameState ? (
               <Initialize
                 state={state.gameState.Initialize}
                 name={state.name}
               />
             ) : null}
-            {state.gameState.Draw !== undefined ? (
+            {"Draw" in state.gameState ? (
               <Draw
                 state={state.gameState.Draw}
                 playDrawCardSound={state.settings.playDrawCardSound}
@@ -136,10 +136,10 @@ const Root = (): JSX.Element => {
                 clearTimeout={timerContext.clearTimeout}
               />
             ) : null}
-            {state.gameState.Exchange !== undefined ? (
+            {"Exchange" in state.gameState ? (
               <Exchange state={state.gameState.Exchange} name={state.name} />
             ) : null}
-            {state.gameState.Play !== undefined ? (
+            {"Play" in state.gameState ? (
               <Play
                 playPhase={state.gameState.Play}
                 name={state.name}

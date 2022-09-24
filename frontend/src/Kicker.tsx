@@ -1,9 +1,9 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { Player } from "./gen-types";
 
 interface IProps {
   onKick: (playerId: number) => void;
-  players: IPlayer[];
+  players: Player[];
 }
 const Kicker = (props: IProps): JSX.Element => {
   const [selection, setSelection] = React.useState<number | null>(null);

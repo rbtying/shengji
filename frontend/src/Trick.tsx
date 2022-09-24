@@ -3,21 +3,21 @@ import * as React from "react";
 import classNames from "classnames";
 
 import LabeledPlay from "./LabeledPlay";
-import { IPlayedCards, IPlayer, ITrick } from "./types";
+import { PlayedCards, Player, Trick } from "./gen-types";
 import ArrayUtils from "./util/array";
 
 interface IProps {
-  players: IPlayer[];
+  players: Player[];
   landlord?: number | null;
   landlord_suffix: string;
   landlords_team?: number[];
-  trick: ITrick;
+  trick: Trick;
   next?: number | null;
   name: string;
   showTrickInPlayerOrder: boolean;
 }
-const Trick = (props: IProps): JSX.Element => {
-  const namesById = ArrayUtils.mapObject(props.players, (p: IPlayer) => [
+const TrickE = (props: IProps): JSX.Element => {
+  const namesById = ArrayUtils.mapObject(props.players, (p: Player) => [
     String(p.id),
     p.name,
   ]);
@@ -30,7 +30,7 @@ const Trick = (props: IProps): JSX.Element => {
       ? props.trick.played_cards[0].better_player
       : null;
 
-  const playedByID: { [id: number]: IPlayedCards } = {};
+  const playedByID: { [id: number]: PlayedCards } = {};
   const cardsFromMappingByID: { [id: number]: string[][] } = {};
   let playOrder: number[] = [];
 
@@ -45,13 +45,13 @@ const Trick = (props: IProps): JSX.Element => {
       const singles: string[] = [];
 
       m.forEach((mm) => {
-        if (mm.Repeated !== undefined && mm.Repeated.count === 1) {
+        if ("Repeated" in mm && mm.Repeated.count === 1) {
           singles.push(mm.Repeated.card.card);
-        } else if (mm.Repeated !== undefined) {
+        } else if ("Repeated" in mm) {
           mapping.push(
             ArrayUtils.range(mm.Repeated.count, (_) => mm.Repeated.card.card)
           );
-        } else if (mm.Tractor !== undefined) {
+        } else if ("Tractor" in mm) {
           mapping.push(
             mm.Tractor.members.flatMap((mmm) =>
               ArrayUtils.range(mm.Tractor.count, (_) => mmm.card)
@@ -112,4 +112,4 @@ const Trick = (props: IProps): JSX.Element => {
   );
 };
 
-export default Trick;
+export default TrickE;

@@ -11,12 +11,12 @@ import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
 import { RandomizePlayersButton } from "./RandomizePlayersButton";
 import {
-  IInitializePhase,
-  IPlayer,
-  IPropagatedState,
-  IDeck,
-  ITractorRequirements,
-} from "./types";
+  InitializePhase,
+  Player,
+  PropagatedState,
+  Deck,
+  TractorRequirements,
+} from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 
 import Header from "./Header";
@@ -26,7 +26,7 @@ import { GameScoringSettings } from "./ScoringSettings";
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
 interface IDifficultyProps {
-  state: IInitializePhase;
+  state: InitializePhase;
   setFriendSelectionPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setMultipleJoinPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setAdvancementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -220,21 +220,21 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
 };
 
 interface IDeckSettings {
-  decks: IDeck[];
-  setSpecialDecks: (specialDecks: IDeck[]) => void;
+  decks: Deck[];
+  setSpecialDecks: (specialDecks: Deck[]) => void;
 }
 
 const DeckSettings = (props: IDeckSettings): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
-  const isNotDefault = (d: IDeck): boolean =>
+  const isNotDefault = (d: Deck): boolean =>
     !(d.min === "2" && !d.exclude_big_joker && !d.exclude_small_joker);
-  const onChange = (decks: IDeck[]): void => {
+  const onChange = (decks: Deck[]): void => {
     // exclude the decks that are the same as default
     const filtered = decks.filter((d) => isNotDefault(d));
     props.setSpecialDecks(filtered);
   };
 
-  const setDeckAtIndex = (deck: IDeck, index: number): void => {
+  const setDeckAtIndex = (deck: Deck, index: number): void => {
     const newDecks = [...props.decks];
     newDecks[index] = deck;
     onChange(newDecks);
@@ -346,12 +346,14 @@ const DeckSettings = (props: IDeckSettings): JSX.Element => {
 };
 
 interface ITractorRequirementsProps {
-  tractorRequirements: ITractorRequirements;
+  tractorRequirements: TractorRequirements;
   numDecks: number;
-  onChange: (requirements: ITractorRequirements) => void;
+  onChange: (requirements: TractorRequirements) => void;
 }
 
-const TractorRequirements = (props: ITractorRequirementsProps): JSX.Element => {
+const TractorRequirementsE = (
+  props: ITractorRequirementsProps
+): JSX.Element => {
   return (
     <div>
       <label>Tractor requirements: </label>
@@ -388,8 +390,8 @@ const TractorRequirements = (props: ITractorRequirementsProps): JSX.Element => {
 };
 
 interface IScoringSettings {
-  state: IInitializePhase;
-  decks: IDeck[];
+  state: InitializePhase;
+  decks: Deck[];
 }
 const ScoringSettings = (props: IScoringSettings): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -424,7 +426,7 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
 };
 
 interface IUncommonSettings {
-  state: IInitializePhase;
+  state: InitializePhase;
   numDecksEffective: number;
   setBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setBidReinforcementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -439,7 +441,7 @@ interface IUncommonSettings {
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHideThrowHaltingPlayer: (v: React.ChangeEvent<HTMLSelectElement>) => void;
-  setTractorRequirements: (v: ITractorRequirements) => void;
+  setTractorRequirements: (v: TractorRequirements) => void;
 }
 
 const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
@@ -566,7 +568,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
           </select>
         </label>
       </div>
-      <TractorRequirements
+      <TractorRequirementsE
         tractorRequirements={props.state.propagated.tractor_requirements}
         numDecks={props.numDecksEffective}
         onChange={(req) => props.setTractorRequirements(req)}
@@ -639,7 +641,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
 };
 
 interface IProps {
-  state: IInitializePhase;
+  state: InitializePhase;
   name: string;
 }
 
@@ -822,7 +824,7 @@ const Initialize = (props: IProps): JSX.Element => {
   decks.length = decksEffective;
 
   let currentPlayer = props.state.propagated.players.find(
-    (p: IPlayer) => p.name === props.name
+    (p: Player) => p.name === props.name
   );
   if (currentPlayer === undefined) {
     currentPlayer = props.state.propagated.observers.find(
@@ -839,7 +841,7 @@ const Initialize = (props: IProps): JSX.Element => {
   }
 
   const landlordIndex = props.state.propagated.players.findIndex(
-    (p) => p.id === props.state.propagated.landlord
+    (p: Player) => p.id === props.state.propagated.landlord
   );
   const saveGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
@@ -849,7 +851,7 @@ const Initialize = (props: IProps): JSX.Element => {
     );
   };
 
-  const setGameSettings = (gameSettings: IPropagatedState): void => {
+  const setGameSettings = (gameSettings: PropagatedState): void => {
     if (gameSettings !== null) {
       let kittySizeSet = false;
       let kittySize = null;
@@ -1069,7 +1071,7 @@ const Initialize = (props: IProps): JSX.Element => {
     evt.preventDefault();
     const settings = localStorage.getItem("gameSettingsInLocalStorage");
     if (settings !== null) {
-      let gameSettings: IPropagatedState;
+      let gameSettings: PropagatedState;
       try {
         gameSettings = JSON.parse(settings);
 

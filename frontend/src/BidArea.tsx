@@ -1,26 +1,26 @@
 import * as React from "react";
 import Cards from "./Cards";
 import {
-  IBid,
-  IPlayer,
-  IHands,
-  ITrump,
+  Bid,
+  Player,
+  Hands,
+  Trump,
   BidPolicy,
   BidReinforcementPolicy,
   JokerBidPolicy,
-} from "./types";
+} from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
 import WasmContext from "./WasmContext";
 
 interface IBidAreaProps {
-  bids: IBid[];
-  autobid: IBid | null;
-  trump?: ITrump;
+  bids: Bid[];
+  autobid: Bid | null;
+  trump?: Trump;
   epoch: number;
   name: string;
   landlord: number | null;
-  players: IPlayer[];
+  players: Player[];
   header?: JSX.Element | JSX.Element[];
   prefixButtons?: JSX.Element | JSX.Element[];
   suffixButtons?: JSX.Element | JSX.Element[];
@@ -28,7 +28,7 @@ interface IBidAreaProps {
   bidPolicy: BidPolicy;
   bidReinforcementPolicy: BidReinforcementPolicy;
   jokerBidPolicy: JokerBidPolicy;
-  hands: IHands;
+  hands: Hands;
   numDecks: number;
 }
 
@@ -41,9 +41,9 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
     send({ Action: "TakeBackBid" });
   };
 
-  const players: { [playerId: number]: IPlayer } = {};
+  const players: { [playerId: number]: Player } = {};
   let playerId = -1;
-  props.players.forEach((p: IPlayer): void => {
+  props.players.forEach((p: Player): void => {
     players[p.id] = p;
     if (p.name === props.name) {
       playerId = p.id;
@@ -138,7 +138,8 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
               />
             );
           })}
-          {props.trump?.NoTrump !== undefined &&
+          {props.trump !== undefined &&
+          "NoTrump" in props.trump &&
           props.trump?.NoTrump?.number === null ? (
             <>No bidding in no trump!</>
           ) : props.bids.length === 0 && props.autobid === null ? (

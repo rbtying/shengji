@@ -1,10 +1,10 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 import ArrayUtils from "./util/array";
 
 interface Props {
-  players: IPlayer[];
+  players: Player[];
   children: string | JSX.Element | JSX.Element[];
 }
 

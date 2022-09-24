@@ -1,11 +1,11 @@
 import * as React from "react";
-import { IDeck } from "./types";
+import { Deck } from "./gen-types";
 import ArrayUtils from "./util/array";
 import WasmContext from "./WasmContext";
 
 interface IProps {
   numPlayers: number;
-  decks: IDeck[];
+  decks: Deck[];
   kittySize: number | null;
   onChange: (newKittySize: number | null) => void;
 }

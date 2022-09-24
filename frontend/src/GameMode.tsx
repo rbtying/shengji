@@ -1,10 +1,10 @@
 import * as React from "react";
-import { IGameModeSettings, IGameMode } from "./types";
+import { GameModeSettings, GameMode } from "./gen-types";
 
 interface IProps {
-  gameMode: IGameModeSettings | IGameMode;
+  gameMode: GameModeSettings | GameMode;
 }
-const GameMode = (props: IProps): JSX.Element => {
+const GameModeE = (props: IProps): JSX.Element => {
   const rules = (
     <a href="rules" target="_blank">
       rules
@@ -25,4 +25,4 @@ const GameMode = (props: IProps): JSX.Element => {
   }
 };
 
-export default GameMode;
+export default GameModeE;

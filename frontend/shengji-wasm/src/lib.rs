@@ -3,6 +3,7 @@ use std::sync::Mutex;
 
 use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use shengji_core::{
     bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
@@ -36,20 +37,20 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Deserialize)]
-struct FindViablePlaysRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct FindViablePlaysRequest {
     trump: Trump,
     tractor_requirements: TractorRequirements,
     cards: Vec<Card>,
 }
 
-#[derive(Serialize)]
-struct FindViablePlaysResult {
+#[derive(Serialize, JsonSchema)]
+pub struct FindViablePlaysResult {
     results: Vec<FoundViablePlay>,
 }
 
-#[derive(Serialize)]
-struct FoundViablePlay {
+#[derive(Serialize, JsonSchema)]
+pub struct FoundViablePlay {
     grouping: Vec<TrickUnit>,
     description: String,
 }
@@ -77,21 +78,21 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
     Ok(JsValue::from_serde(&FindViablePlaysResult { results }).map_err(|e| e.to_string())?)
 }
 
-#[derive(Deserialize)]
-struct DecomposeTrickFormatRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct DecomposeTrickFormatRequest {
     trick_format: TrickFormat,
     hands: Hands,
     player_id: PlayerID,
     trick_draw_policy: TrickDrawPolicy,
 }
 
-#[derive(Serialize)]
-struct DecomposeTrickFormatResponse {
+#[derive(Serialize, JsonSchema)]
+pub struct DecomposeTrickFormatResponse {
     results: Vec<DecomposedTrickFormat>,
 }
 
-#[derive(Serialize)]
-struct DecomposedTrickFormat {
+#[derive(Serialize, JsonSchema)]
+pub struct DecomposedTrickFormat {
     format: Vec<UnitLike>,
     description: String,
     playable: Vec<Card>,
@@ -151,8 +152,8 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
     )
 }
 
-#[derive(Deserialize)]
-struct CanPlayCardsRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct CanPlayCardsRequest {
     trick: Trick,
     id: PlayerID,
     hands: Hands,
@@ -160,8 +161,8 @@ struct CanPlayCardsRequest {
     trick_draw_policy: TrickDrawPolicy,
 }
 
-#[derive(Serialize)]
-struct CanPlayCardsResponse {
+#[derive(Serialize, JsonSchema)]
+pub struct CanPlayCardsResponse {
     playable: bool,
 }
 
@@ -185,8 +186,8 @@ pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
     .map_err(|e| e.to_string())?)
 }
 
-#[derive(Deserialize)]
-struct FindValidBidsRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct FindValidBidsRequest {
     id: PlayerID,
     bids: Vec<Bid>,
     hands: Hands,
@@ -199,8 +200,8 @@ struct FindValidBidsRequest {
     num_decks: usize,
 }
 
-#[derive(Serialize)]
-struct FindValidBidsResult {
+#[derive(Serialize, JsonSchema)]
+pub struct FindValidBidsResult {
     results: Vec<Bid>,
 }
 
@@ -230,19 +231,19 @@ pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
     .map_err(|e| e.to_string())?)
 }
 
-#[derive(Deserialize)]
-struct SortAndGroupCardsRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct SortAndGroupCardsRequest {
     trump: Trump,
     cards: Vec<Card>,
 }
 
-#[derive(Serialize)]
-struct SortAndGroupCardsResponse {
+#[derive(Serialize, JsonSchema)]
+pub struct SortAndGroupCardsResponse {
     results: Vec<SuitGroup>,
 }
 
-#[derive(Serialize)]
-struct SuitGroup {
+#[derive(Serialize, JsonSchema)]
+pub struct SuitGroup {
     suit: EffectiveSuit,
     cards: Vec<Card>,
 }
@@ -275,8 +276,8 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
     Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results }).map_err(|e| e.to_string())?)
 }
 
-#[derive(Deserialize)]
-struct NextThresholdReachableRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct NextThresholdReachableRequest {
     decks: Vec<Deck>,
     params: GameScoringParameters,
     non_landlord_points: isize,
@@ -300,22 +301,22 @@ pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
     )
 }
 
-#[derive(Deserialize)]
-struct ExplainScoringRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct ExplainScoringRequest {
     decks: Vec<Deck>,
     params: GameScoringParameters,
     smaller_landlord_team_size: bool,
 }
 
-#[derive(Serialize)]
-struct ExplainScoringResponse {
+#[derive(Serialize, JsonSchema)]
+pub struct ExplainScoringResponse {
     results: Vec<ScoreSegment>,
     total_points: isize,
     step_size: usize,
 }
 
-#[derive(Serialize)]
-struct ScoreSegment {
+#[derive(Serialize, JsonSchema)]
+pub struct ScoreSegment {
     point_threshold: isize,
     results: GameScoreResult,
 }
@@ -356,16 +357,16 @@ pub fn compute_deck_len(req: JsValue) -> Result<usize, JsValue> {
     Ok(decks.iter().map(|d| d.len() as usize).sum::<usize>())
 }
 
-#[derive(Deserialize)]
-struct ComputeScoreRequest {
+#[derive(Deserialize, JsonSchema)]
+pub struct ComputeScoreRequest {
     decks: Vec<Deck>,
     params: GameScoringParameters,
     smaller_landlord_team_size: bool,
     non_landlord_points: isize,
 }
 
-#[derive(Serialize)]
-struct ComputeScoreResponse {
+#[derive(Serialize, JsonSchema)]
+pub struct ComputeScoreResponse {
     score: GameScoreResult,
     next_threshold: isize,
 }

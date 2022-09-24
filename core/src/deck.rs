@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use slog_derive::KV;
 
 use crate::types::{Card, Number, FULL_DECK};
 
-#[derive(Clone, Debug, Serialize, Deserialize, KV)]
+#[derive(Clone, Debug, Serialize, Deserialize, KV, JsonSchema)]
 pub struct Deck {
     pub exclude_small_joker: bool,
     pub exclude_big_joker: bool,

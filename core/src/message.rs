@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Error;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
@@ -15,7 +16,7 @@ use crate::settings::{
 use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
 use crate::types::{Card, PlayerID, Rank};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum MessageVariant {
     ResettingGame,

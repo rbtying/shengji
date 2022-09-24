@@ -46,8 +46,8 @@ impl<S: State> RedisStorage<S> {
 
     pub fn game_key(key: &[u8]) -> Vec<u8> {
         let mut full_key = vec![0u8; key.len() + 5];
-        (&mut full_key[0..5]).copy_from_slice(b"game-");
-        (&mut full_key[5..]).copy_from_slice(key);
+        full_key[0..5].copy_from_slice(b"game-");
+        full_key[5..].copy_from_slice(key);
 
         full_key
     }
@@ -289,7 +289,7 @@ impl<S: State> Storage<S, RedisStorageError> for RedisStorage<S> {
             .keys::<_, Vec<Vec<u8>>>(b"game-*")
             .await?
             .iter()
-            .map(|v| Self::from_game_key(&*v))
+            .map(|v| Self::from_game_key(v))
             .collect())
     }
 

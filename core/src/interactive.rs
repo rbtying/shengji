@@ -1,4 +1,5 @@
 use anyhow::{bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
@@ -401,7 +402,7 @@ impl InteractiveGame {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum Action {
     ResetGame,
     MakeObserver(PlayerID),
@@ -460,7 +461,7 @@ pub enum Action {
     Beep,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct BroadcastMessage {
     actor: PlayerID,
     actor_name: String,

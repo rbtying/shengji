@@ -1,14 +1,14 @@
 import * as React from "react";
-import { ITrump } from "./types";
+import { Trump } from "./gen-types";
 import InlineCard from "./InlineCard";
 import preloadedCards from "./preloadedCards";
 
 interface IProps {
-  trump: ITrump;
+  trump: Trump;
 }
-const Trump = (props: IProps): JSX.Element => {
+const TrumpE = (props: IProps): JSX.Element => {
   const { trump } = props;
-  if (trump.Standard !== undefined) {
+  if ("Standard" in trump) {
     const { suit, number: rank } = trump.Standard;
     const card = preloadedCards.filter(
       (v) => v.typ === suit && v.number === rank
@@ -28,4 +28,4 @@ const Trump = (props: IProps): JSX.Element => {
   }
 };
 
-export default Trump;
+export default TrumpE;

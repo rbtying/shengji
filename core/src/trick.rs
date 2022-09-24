@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -12,7 +13,7 @@ use crate::ordered_card::{
 };
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
-#[derive(Error, Clone, Debug, Serialize, Deserialize)]
+#[derive(Error, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum TrickError {
     #[error("error in hand {}", source)]
     HandError {
@@ -33,7 +34,7 @@ pub enum TrickError {
     NonMatchingProposal,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum TrickDrawPolicy {
     NoProtections,
     LongerTuplesProtected,
@@ -50,7 +51,7 @@ impl Default for TrickDrawPolicy {
 
 impl_slog_value!(TrickDrawPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum ThrowEvaluationPolicy {
     All,
     Highest,
@@ -65,7 +66,7 @@ impl Default for ThrowEvaluationPolicy {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TractorRequirements {
     /// The minimum number of cards in each unit of the tractor
     pub min_count: usize,
@@ -86,7 +87,7 @@ impl_slog_value!(TractorRequirements);
 
 type Members = Vec<OrderedCard>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub enum TrickUnit {
     Tractor { count: usize, members: Members },
     Repeated { count: usize, card: OrderedCard },
@@ -167,7 +168,7 @@ impl std::fmt::Debug for TrickUnit {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct TrickFormat {
     suit: EffectiveSuit,
     trump: Trump,
@@ -407,7 +408,7 @@ impl TrickFormat {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct PlayedCards {
     pub id: PlayerID,
     pub cards: Vec<Card>,
@@ -426,7 +427,7 @@ pub struct PlayCards<'a, 'b, 'c> {
     pub tractor_requirements: TractorRequirements,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct Trick {
     player_queue: VecDeque<PlayerID>,
     played_cards: Vec<PlayedCards>,
@@ -818,7 +819,7 @@ pub struct TrickEnded {
     pub failed_throw_size: usize,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct UnitLike {
     adjacent_tuples: AdjacentTupleSizes,
 }

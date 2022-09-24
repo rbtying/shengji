@@ -1,17 +1,17 @@
 import * as React from "react";
-import { IBroadcastMessage } from "./types";
 import InlineCard from "./InlineCard";
 import classNames from "classnames";
 import ArrayUtil from "./util/array";
+import { BroadcastMessage } from "./gen-types";
 
-export interface IMessage {
+export interface Message {
   from: string;
   message: string;
+  data?: BroadcastMessage;
   from_game?: boolean;
-  data?: IBroadcastMessage;
 }
 
-const renderMessage = (message: IMessage): JSX.Element => {
+const renderMessage = (message: Message): JSX.Element => {
   const variant = message.data?.variant;
   switch (variant?.type) {
     case "MadeBid":
@@ -48,7 +48,7 @@ const renderMessage = (message: IMessage): JSX.Element => {
   }
 };
 
-const renderScoringMessage = (message: IMessage): JSX.Element => {
+const renderScoringMessage = (message: Message): JSX.Element => {
   const changes = [];
   const variant = message.data?.variant;
   if (variant?.type === "GameScoringParametersChanged") {
@@ -128,7 +128,7 @@ const renderScoringMessage = (message: IMessage): JSX.Element => {
 };
 
 interface IProps {
-  message: IMessage;
+  message: Message;
 }
 const ChatMessage = (props: IProps): JSX.Element => {
   const { message } = props;
@@ -146,7 +146,8 @@ const ChatMessage = (props: IProps): JSX.Element => {
       <p
         className={classNames("message", { "game-message": message.from_game })}
       >
-        <span>{message.from}: </span> {renderMessage(message)}
+        {"from" in message && <span>{message.from}: </span>}
+        {renderMessage(message)}
       </p>
     </>
   );

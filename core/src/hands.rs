@@ -1,12 +1,13 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
 
-#[derive(Error, Clone, Debug, Serialize, Deserialize)]
+#[derive(Error, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum HandError {
     #[error("unknown player ID {:?}", _0)]
     UnknownPlayerID(PlayerID),
@@ -20,7 +21,7 @@ pub enum HandError {
     TrumpNotSet,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct Hands {
     hands: HashMap<PlayerID, HashMap<Card, usize>>,
     trump: Option<Trump>,

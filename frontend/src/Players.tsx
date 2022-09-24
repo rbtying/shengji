@@ -2,12 +2,12 @@ import * as React from "react";
 
 import classNames from "classnames";
 import { MovePlayerLeft, MovePlayerRight } from "./MovePlayerButton";
-import { IPlayer } from "./types";
+import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 
 interface IProps {
-  players: IPlayer[];
-  observers: IPlayer[];
+  players: Player[];
+  observers: Player[];
   landlord?: number | null;
   landlords_team?: number[];
   movable?: boolean;
@@ -28,7 +28,7 @@ const Players = (props: IProps): JSX.Element => {
   } = props;
   const { send } = React.useContext(WebsocketContext);
 
-  const makeDescriptor = (p: IPlayer): Array<JSX.Element | string> => {
+  const makeDescriptor = (p: Player): Array<JSX.Element | string> => {
     if (p.metalevel <= 1) {
       return [`${p.name} (rank ${p.level})`];
     } else {

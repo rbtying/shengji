@@ -10,15 +10,15 @@ import Header from "./Header";
 import Friends from "./Friends";
 import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
-import { IExchangePhase, IFriend } from "./types";
+import { ExchangePhase, Friend } from "./gen-types";
 import Cards from "./Cards";
 
 interface IExchangeProps {
-  state: IExchangePhase;
+  state: ExchangePhase;
   name: string;
 }
 interface IExchangeState {
-  friends: IFriend[];
+  friends: Friend[];
 }
 class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   constructor(props: IExchangeProps) {
@@ -251,7 +251,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         <div>
           <Friends gameMode={this.props.state.game_mode} showPlayed={false} />
           {this.state.friends.map((friend, idx) => {
-            const onChange = (x: IFriend): void => {
+            const onChange = (x: Friend): void => {
               const newFriends = [...this.state.friends];
               newFriends[idx] = x;
               this.setState({ friends: newFriends });

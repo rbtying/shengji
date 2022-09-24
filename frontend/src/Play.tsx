@@ -1,6 +1,13 @@
 import * as React from "react";
 import * as ReactModal from "react-modal";
-import { IPlayPhase, ITrickFormat, IHands, TrickDrawPolicy } from "./types";
+import {
+  PlayPhase,
+  TrickFormat,
+  Hands,
+  TrickDrawPolicy,
+  FoundViablePlay,
+  SuitGroup,
+} from "./gen-types";
 import Header from "./Header";
 import Beeper from "./Beeper";
 import Trump from "./Trump";
@@ -15,10 +22,7 @@ import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
-import WasmContext, {
-  IFoundViablePlay,
-  ISortedAndGroupedCards,
-} from "./WasmContext";
+import WasmContext from "./WasmContext";
 import InlineCard from "./InlineCard";
 
 const contentStyle: React.CSSProperties = {
@@ -29,7 +33,7 @@ const contentStyle: React.CSSProperties = {
 };
 
 interface IProps {
-  playPhase: IPlayPhase;
+  playPhase: PlayPhase;
   name: string;
   beepOnTurn: boolean;
   showLastTrick: boolean;
@@ -41,7 +45,7 @@ const Play = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const settings = React.useContext(SettingsContext);
   const [selected, setSelected] = React.useState<string[]>([]);
-  const [grouping, setGrouping] = React.useState<IFoundViablePlay[]>([]);
+  const [grouping, setGrouping] = React.useState<FoundViablePlay[]>([]);
   const {
     findViablePlays,
     canPlayCards,
@@ -191,7 +195,7 @@ const Play = (props: IProps): JSX.Element => {
     smallerTeamSize = landlordTeamSize < configFriendTeamSize;
   }
 
-  const getCardsFromHand = (pid: number): ISortedAndGroupedCards[] => {
+  const getCardsFromHand = (pid: number): SuitGroup[] => {
     const cardsInHand =
       pid in playPhase.hands.hands
         ? Object.entries(playPhase.hands.hands[pid]).flatMap(([c, ct]) =>
@@ -390,8 +394,8 @@ const Play = (props: IProps): JSX.Element => {
 };
 
 const TrickFormatHelper = (props: {
-  format: ITrickFormat;
-  hands: IHands;
+  format: TrickFormat;
+  hands: Hands;
   playerId: number;
   trickDrawPolicy: TrickDrawPolicy;
 }): JSX.Element => {
