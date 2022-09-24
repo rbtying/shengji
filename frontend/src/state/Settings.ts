@@ -2,6 +2,7 @@ import { State, combineState } from "../State";
 import {
   booleanLocalStorageState,
   JSONLocalStorageState,
+  numberLocalStorageState,
 } from "../localStorageState";
 
 export interface Settings {
@@ -22,6 +23,7 @@ export interface Settings {
   showPlayerName: boolean;
   hideChatBox: boolean;
   showPointsAboveGame: boolean;
+  autodrawSpeedMs: number | null;
 }
 
 export interface ISuitOverrides {
@@ -71,6 +73,7 @@ const showPlayerName: State<boolean> = booleanLocalStorageState(
 const hideChatBox: State<boolean> = booleanLocalStorageState("hide_chat_box");
 const showPointsAboveGame: State<boolean> =
   booleanLocalStorageState("points_above_game");
+const autodrawSpeedMs: State<number | null> = numberLocalStorageState("autodrawSpeedMs", null);
 const settings: State<Settings> = combineState({
   fourColor,
   darkMode,
@@ -89,6 +92,7 @@ const settings: State<Settings> = combineState({
   showPlayerName,
   hideChatBox,
   showPointsAboveGame,
+  autodrawSpeedMs,
 });
 
 export default settings;

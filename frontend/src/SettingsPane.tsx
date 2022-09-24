@@ -277,6 +277,21 @@ const SettingsPane = (props: IProps): JSX.Element => {
             />
           </Cell>
         </Row>
+        <Row>
+          <LabelCell>
+            autodraw speed
+          </LabelCell>
+          <Cell>
+            <select
+              value={settings.autodrawSpeedMs || ""}
+              onChange={e => handleChange({autodrawSpeedMs: parseInt(e.target.value)})()}
+            >
+              <option value="250">default</option>
+              <option value="500">slow</option>
+              <option value="10">fast</option>
+            </select>
+          </Cell>
+        </Row>
       </div>
       <hr />
       <div style={{ display: "table" }}>

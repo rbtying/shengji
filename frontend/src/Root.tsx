@@ -131,6 +131,7 @@ const Root = (): JSX.Element => {
               <Draw
                 state={state.gameState.Draw}
                 playDrawCardSound={state.settings.playDrawCardSound}
+                autodrawSpeedMs={state.settings.autodrawSpeedMs}
                 name={state.name}
                 setTimeout={timerContext.setTimeout}
                 clearTimeout={timerContext.clearTimeout}
