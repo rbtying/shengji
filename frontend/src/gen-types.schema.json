@@ -1,0 +1,3128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "_Combined",
+  "type": "object",
+  "required": [
+    "action",
+    "can_play_cards_request",
+    "can_play_cards_response",
+    "compute_score_request",
+    "compute_score_response",
+    "decompose_trick_format_request",
+    "decompose_trick_format_response",
+    "decomposed_trick_format",
+    "explain_scoring_request",
+    "explain_scoring_response",
+    "find_valid_bids_request",
+    "find_valid_bids_response",
+    "find_viable_plays_request",
+    "find_viable_plays_response",
+    "found_viable_play",
+    "game_message",
+    "next_threshold_reachable_request",
+    "score_segment",
+    "sort_and_group_cards_request",
+    "sort_and_group_cards_response",
+    "suit_group"
+  ],
+  "properties": {
+    "action": {
+      "$ref": "#/definitions/Action"
+    },
+    "can_play_cards_request": {
+      "$ref": "#/definitions/CanPlayCardsRequest"
+    },
+    "can_play_cards_response": {
+      "$ref": "#/definitions/CanPlayCardsResponse"
+    },
+    "compute_score_request": {
+      "$ref": "#/definitions/ComputeScoreRequest"
+    },
+    "compute_score_response": {
+      "$ref": "#/definitions/ComputeScoreResponse"
+    },
+    "decompose_trick_format_request": {
+      "$ref": "#/definitions/DecomposeTrickFormatRequest"
+    },
+    "decompose_trick_format_response": {
+      "$ref": "#/definitions/DecomposeTrickFormatResponse"
+    },
+    "decomposed_trick_format": {
+      "$ref": "#/definitions/DecomposedTrickFormat"
+    },
+    "explain_scoring_request": {
+      "$ref": "#/definitions/ExplainScoringRequest"
+    },
+    "explain_scoring_response": {
+      "$ref": "#/definitions/ExplainScoringResponse"
+    },
+    "find_valid_bids_request": {
+      "$ref": "#/definitions/FindValidBidsRequest"
+    },
+    "find_valid_bids_response": {
+      "$ref": "#/definitions/FindValidBidsResult"
+    },
+    "find_viable_plays_request": {
+      "$ref": "#/definitions/FindViablePlaysRequest"
+    },
+    "find_viable_plays_response": {
+      "$ref": "#/definitions/FindViablePlaysResult"
+    },
+    "found_viable_play": {
+      "$ref": "#/definitions/FoundViablePlay"
+    },
+    "game_message": {
+      "$ref": "#/definitions/GameMessage"
+    },
+    "next_threshold_reachable_request": {
+      "$ref": "#/definitions/NextThresholdReachableRequest"
+    },
+    "score_segment": {
+      "$ref": "#/definitions/ScoreSegment"
+    },
+    "sort_and_group_cards_request": {
+      "$ref": "#/definitions/SortAndGroupCardsRequest"
+    },
+    "sort_and_group_cards_response": {
+      "$ref": "#/definitions/SortAndGroupCardsResponse"
+    },
+    "suit_group": {
+      "$ref": "#/definitions/SuitGroup"
+    }
+  },
+  "definitions": {
+    "Action": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ResetGame",
+            "StartGame",
+            "DrawCard",
+            "RevealCard",
+            "PickUpKitty",
+            "PutDownKitty",
+            "BeginPlay",
+            "EndTrick",
+            "TakeBackCards",
+            "TakeBackBid",
+            "EndGameEarly",
+            "StartNewGame",
+            "Beep"
+          ]
+        },
+        {
+          "type": "object",
+          "required": ["MakeObserver"],
+          "properties": {
+            "MakeObserver": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["MakePlayer"],
+          "properties": {
+            "MakePlayer": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetChatLink"],
+          "properties": {
+            "SetChatLink": {
+              "type": ["string", "null"]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetNumDecks"],
+          "properties": {
+            "SetNumDecks": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetSpecialDecks"],
+          "properties": {
+            "SetSpecialDecks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Deck"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetKittySize"],
+          "properties": {
+            "SetKittySize": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetFriendSelectionPolicy"],
+          "properties": {
+            "SetFriendSelectionPolicy": {
+              "$ref": "#/definitions/FriendSelectionPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetMultipleJoinPolicy"],
+          "properties": {
+            "SetMultipleJoinPolicy": {
+              "$ref": "#/definitions/MultipleJoinPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetFirstLandlordSelectionPolicy"],
+          "properties": {
+            "SetFirstLandlordSelectionPolicy": {
+              "$ref": "#/definitions/FirstLandlordSelectionPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetBidPolicy"],
+          "properties": {
+            "SetBidPolicy": {
+              "$ref": "#/definitions/BidPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetBidReinforcementPolicy"],
+          "properties": {
+            "SetBidReinforcementPolicy": {
+              "$ref": "#/definitions/BidReinforcementPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetJokerBidPolicy"],
+          "properties": {
+            "SetJokerBidPolicy": {
+              "$ref": "#/definitions/JokerBidPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetHideLandlordsPoints"],
+          "properties": {
+            "SetHideLandlordsPoints": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetHidePlayedCards"],
+          "properties": {
+            "SetHidePlayedCards": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["ReorderPlayers"],
+          "properties": {
+            "ReorderPlayers": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetRank"],
+          "properties": {
+            "SetRank": {
+              "$ref": "#/definitions/Rank"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetMetaRank"],
+          "properties": {
+            "SetMetaRank": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetMaxRank"],
+          "properties": {
+            "SetMaxRank": {
+              "$ref": "#/definitions/Rank"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetLandlord"],
+          "properties": {
+            "SetLandlord": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetLandlordEmoji"],
+          "properties": {
+            "SetLandlordEmoji": {
+              "type": ["string", "null"]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetGameMode"],
+          "properties": {
+            "SetGameMode": {
+              "$ref": "#/definitions/GameModeSettings"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetAdvancementPolicy"],
+          "properties": {
+            "SetAdvancementPolicy": {
+              "$ref": "#/definitions/AdvancementPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetGameScoringParameters"],
+          "properties": {
+            "SetGameScoringParameters": {
+              "$ref": "#/definitions/GameScoringParameters"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetKittyPenalty"],
+          "properties": {
+            "SetKittyPenalty": {
+              "$ref": "#/definitions/KittyPenalty"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetKittyBidPolicy"],
+          "properties": {
+            "SetKittyBidPolicy": {
+              "$ref": "#/definitions/KittyBidPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetTrickDrawPolicy"],
+          "properties": {
+            "SetTrickDrawPolicy": {
+              "$ref": "#/definitions/TrickDrawPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetThrowPenalty"],
+          "properties": {
+            "SetThrowPenalty": {
+              "$ref": "#/definitions/ThrowPenalty"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetThrowEvaluationPolicy"],
+          "properties": {
+            "SetThrowEvaluationPolicy": {
+              "$ref": "#/definitions/ThrowEvaluationPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetPlayTakebackPolicy"],
+          "properties": {
+            "SetPlayTakebackPolicy": {
+              "$ref": "#/definitions/PlayTakebackPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetBidTakebackPolicy"],
+          "properties": {
+            "SetBidTakebackPolicy": {
+              "$ref": "#/definitions/BidTakebackPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetKittyTheftPolicy"],
+          "properties": {
+            "SetKittyTheftPolicy": {
+              "$ref": "#/definitions/KittyTheftPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetGameShadowingPolicy"],
+          "properties": {
+            "SetGameShadowingPolicy": {
+              "$ref": "#/definitions/GameShadowingPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetGameStartPolicy"],
+          "properties": {
+            "SetGameStartPolicy": {
+              "$ref": "#/definitions/GameStartPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetShouldRevealKittyAtEndOfGame"],
+          "properties": {
+            "SetShouldRevealKittyAtEndOfGame": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetHideThrowHaltingPlayer"],
+          "properties": {
+            "SetHideThrowHaltingPlayer": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetTractorRequirements"],
+          "properties": {
+            "SetTractorRequirements": {
+              "$ref": "#/definitions/TractorRequirements"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Bid"],
+          "properties": {
+            "Bid": {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/Card"
+                },
+                {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0.0
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["MoveCardToKitty"],
+          "properties": {
+            "MoveCardToKitty": {
+              "$ref": "#/definitions/Card"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["MoveCardToHand"],
+          "properties": {
+            "MoveCardToHand": {
+              "$ref": "#/definitions/Card"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SetFriends"],
+          "properties": {
+            "SetFriends": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FriendSelection"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["PlayCards"],
+          "properties": {
+            "PlayCards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["PlayCardsWithHint"],
+          "properties": {
+            "PlayCardsWithHint": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Card"
+                  }
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TrickUnit"
+                  }
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AdvancementPolicy": {
+      "type": "string",
+      "enum": ["Unrestricted", "FullyUnrestricted", "DefendPoints"]
+    },
+    "Bid": {
+      "type": "object",
+      "required": ["card", "count", "id"],
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/Card"
+        },
+        "count": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "epoch": {
+          "default": 0,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "BidPolicy": {
+      "type": "string",
+      "enum": ["JokerOrHigherSuit", "JokerOrGreaterLength", "GreaterLength"]
+    },
+    "BidReinforcementPolicy": {
+      "type": "string",
+      "enum": [
+        "ReinforceWhileWinning",
+        "OverturnOrReinforceWhileWinning",
+        "ReinforceWhileEquivalent"
+      ]
+    },
+    "BidTakebackPolicy": {
+      "type": "string",
+      "enum": ["AllowBidTakeback", "NoBidTakeback"]
+    },
+    "BonusLevelPolicy": {
+      "type": "string",
+      "enum": ["NoBonusLevel", "BonusLevelForSmallerLandlordTeam"]
+    },
+    "BroadcastMessage": {
+      "type": "object",
+      "required": ["actor", "actor_name", "variant"],
+      "properties": {
+        "actor": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "variant": {
+          "$ref": "#/definitions/MessageVariant"
+        }
+      }
+    },
+    "CanPlayCardsRequest": {
+      "type": "object",
+      "required": ["cards", "hands", "id", "trick", "trick_draw_policy"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "trick": {
+          "$ref": "#/definitions/Trick"
+        },
+        "trick_draw_policy": {
+          "$ref": "#/definitions/TrickDrawPolicy"
+        }
+      }
+    },
+    "CanPlayCardsResponse": {
+      "type": "object",
+      "required": ["playable"],
+      "properties": {
+        "playable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Card": {
+      "type": "string"
+    },
+    "ComputeScoreRequest": {
+      "type": "object",
+      "required": [
+        "decks",
+        "non_landlord_points",
+        "params",
+        "smaller_landlord_team_size"
+      ],
+      "properties": {
+        "decks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "non_landlord_points": {
+          "type": "integer",
+          "format": "int"
+        },
+        "params": {
+          "$ref": "#/definitions/GameScoringParameters"
+        },
+        "smaller_landlord_team_size": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ComputeScoreResponse": {
+      "type": "object",
+      "required": ["next_threshold", "score"],
+      "properties": {
+        "next_threshold": {
+          "type": "integer",
+          "format": "int"
+        },
+        "score": {
+          "$ref": "#/definitions/GameScoreResult"
+        }
+      }
+    },
+    "Deck": {
+      "type": "object",
+      "required": ["exclude_big_joker", "exclude_small_joker", "min"],
+      "properties": {
+        "exclude_big_joker": {
+          "type": "boolean"
+        },
+        "exclude_small_joker": {
+          "type": "boolean"
+        },
+        "min": {
+          "$ref": "#/definitions/Number"
+        }
+      }
+    },
+    "DecomposeTrickFormatRequest": {
+      "type": "object",
+      "required": ["hands", "player_id", "trick_draw_policy", "trick_format"],
+      "properties": {
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "player_id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "trick_draw_policy": {
+          "$ref": "#/definitions/TrickDrawPolicy"
+        },
+        "trick_format": {
+          "$ref": "#/definitions/TrickFormat"
+        }
+      }
+    },
+    "DecomposeTrickFormatResponse": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecomposedTrickFormat"
+          }
+        }
+      }
+    },
+    "DecomposedTrickFormat": {
+      "type": "object",
+      "required": ["description", "format", "playable"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "format": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnitLike"
+          }
+        },
+        "playable": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        }
+      }
+    },
+    "DrawPhase": {
+      "type": "object",
+      "required": [
+        "bids",
+        "deck",
+        "game_mode",
+        "hands",
+        "kitty",
+        "num_decks",
+        "position",
+        "propagated"
+      ],
+      "properties": {
+        "autobid": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Bid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Bid"
+          }
+        },
+        "deck": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "decks": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "game_mode": {
+          "$ref": "#/definitions/GameMode"
+        },
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "kitty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "level": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Rank"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_decks": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "position": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "propagated": {
+          "$ref": "#/definitions/PropagatedState"
+        },
+        "removed_cards": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "revealed_cards": {
+          "default": 0,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "EffectiveSuit": {
+      "type": "string",
+      "enum": ["Unknown", "Clubs", "Diamonds", "Spades", "Hearts", "Trump"]
+    },
+    "ExchangePhase": {
+      "type": "object",
+      "required": [
+        "exchanger",
+        "game_mode",
+        "hands",
+        "kitty",
+        "kitty_size",
+        "landlord",
+        "num_decks",
+        "propagated",
+        "trump"
+      ],
+      "properties": {
+        "autobid": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Bid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bids": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Bid"
+          }
+        },
+        "decks": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "epoch": {
+          "default": 0,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "exchanger": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "finalized": {
+          "default": false,
+          "type": "boolean"
+        },
+        "game_mode": {
+          "$ref": "#/definitions/GameMode"
+        },
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "kitty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "kitty_size": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "landlord": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "num_decks": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "propagated": {
+          "$ref": "#/definitions/PropagatedState"
+        },
+        "removed_cards": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "ExplainScoringRequest": {
+      "type": "object",
+      "required": ["decks", "params", "smaller_landlord_team_size"],
+      "properties": {
+        "decks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "params": {
+          "$ref": "#/definitions/GameScoringParameters"
+        },
+        "smaller_landlord_team_size": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ExplainScoringResponse": {
+      "type": "object",
+      "required": ["results", "step_size", "total_points"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ScoreSegment"
+          }
+        },
+        "step_size": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "total_points": {
+          "type": "integer",
+          "format": "int"
+        }
+      }
+    },
+    "FindValidBidsRequest": {
+      "type": "object",
+      "required": [
+        "bid_policy",
+        "bid_reinforcement_policy",
+        "bids",
+        "epoch",
+        "hands",
+        "id",
+        "joker_bid_policy",
+        "num_decks",
+        "players"
+      ],
+      "properties": {
+        "bid_policy": {
+          "$ref": "#/definitions/BidPolicy"
+        },
+        "bid_reinforcement_policy": {
+          "$ref": "#/definitions/BidReinforcementPolicy"
+        },
+        "bids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Bid"
+          }
+        },
+        "epoch": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "joker_bid_policy": {
+          "$ref": "#/definitions/JokerBidPolicy"
+        },
+        "landlord": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "num_decks": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Player"
+          }
+        }
+      }
+    },
+    "FindValidBidsResult": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Bid"
+          }
+        }
+      }
+    },
+    "FindViablePlaysRequest": {
+      "type": "object",
+      "required": ["cards", "tractor_requirements", "trump"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "tractor_requirements": {
+          "$ref": "#/definitions/TractorRequirements"
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "FindViablePlaysResult": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FoundViablePlay"
+          }
+        }
+      }
+    },
+    "FirstLandlordSelectionPolicy": {
+      "type": "string",
+      "enum": ["ByWinningBid", "ByFirstBid"]
+    },
+    "FoundViablePlay": {
+      "type": "object",
+      "required": ["description", "grouping"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "grouping": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TrickUnit"
+          }
+        }
+      }
+    },
+    "Friend": {
+      "type": "object",
+      "required": ["card", "initial_skip", "skip"],
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/Card"
+        },
+        "initial_skip": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "player_id": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "skip": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "FriendSelection": {
+      "type": "object",
+      "required": ["card", "initial_skip"],
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/Card"
+        },
+        "initial_skip": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "FriendSelectionPolicy": {
+      "type": "string",
+      "enum": [
+        "Unrestricted",
+        "TrumpsIncluded",
+        "HighestCardNotAllowed",
+        "PointCardNotAllowed"
+      ]
+    },
+    "GameMessage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["State"],
+          "properties": {
+            "State": {
+              "type": "object",
+              "required": ["state"],
+              "properties": {
+                "state": {
+                  "$ref": "#/definitions/GameState"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Message"],
+          "properties": {
+            "Message": {
+              "type": "object",
+              "required": ["from", "message"],
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Broadcast"],
+          "properties": {
+            "Broadcast": {
+              "type": "object",
+              "required": ["data", "message"],
+              "properties": {
+                "data": {
+                  "$ref": "#/definitions/BroadcastMessage"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Beep"],
+          "properties": {
+            "Beep": {
+              "type": "object",
+              "required": ["target"],
+              "properties": {
+                "target": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["ReadyCheck"],
+          "properties": {
+            "ReadyCheck": {
+              "type": "object",
+              "required": ["from"],
+              "properties": {
+                "from": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Error"],
+          "properties": {
+            "Error": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Header"],
+          "properties": {
+            "Header": {
+              "type": "object",
+              "required": ["messages"],
+              "properties": {
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Kicked"],
+          "properties": {
+            "Kicked": {
+              "type": "object",
+              "required": ["target"],
+              "properties": {
+                "target": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GameMode": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["Tractor"]
+        },
+        {
+          "type": "object",
+          "required": ["FindingFriends"],
+          "properties": {
+            "FindingFriends": {
+              "type": "object",
+              "required": ["friends", "num_friends"],
+              "properties": {
+                "friends": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Friend"
+                  }
+                },
+                "num_friends": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0.0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GameModeSettings": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["Tractor"]
+        },
+        {
+          "type": "object",
+          "required": ["FindingFriends"],
+          "properties": {
+            "FindingFriends": {
+              "type": "object",
+              "properties": {
+                "num_friends": {
+                  "type": ["integer", "null"],
+                  "format": "uint",
+                  "minimum": 0.0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GameScoreResult": {
+      "type": "object",
+      "required": [
+        "landlord_bonus",
+        "landlord_delta",
+        "landlord_won",
+        "non_landlord_delta"
+      ],
+      "properties": {
+        "landlord_bonus": {
+          "type": "boolean"
+        },
+        "landlord_delta": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "landlord_won": {
+          "type": "boolean"
+        },
+        "non_landlord_delta": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "GameScoringParameters": {
+      "type": "object",
+      "required": [
+        "bonus_level_policy",
+        "deadzone_size",
+        "num_steps_to_non_landlord_turnover",
+        "step_adjustments",
+        "step_size_per_deck",
+        "truncate_zero_crossing_window"
+      ],
+      "properties": {
+        "bonus_level_policy": {
+          "$ref": "#/definitions/BonusLevelPolicy"
+        },
+        "deadzone_size": {
+          "description": "Number of steps (as a fraction of the overall number in the deck) that control is turned over, but neither side goes up a level.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "num_steps_to_non_landlord_turnover": {
+          "description": "Number of steps (as a fraction of the overall number in the deck) necessary to give the attacking team landlord.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "step_adjustments": {
+          "description": "Number-of-deck-based adjustments to the step size",
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int"
+          }
+        },
+        "step_size_per_deck": {
+          "description": "Number of points per \"step\" in the deck.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "truncate_zero_crossing_window": {
+          "type": "boolean"
+        }
+      }
+    },
+    "GameShadowingPolicy": {
+      "type": "string",
+      "enum": ["AllowMultipleSessions", "SingleSessionOnly"]
+    },
+    "GameStartPolicy": {
+      "type": "string",
+      "enum": ["AllowAnyPlayer", "AllowLandlordOnly"]
+    },
+    "GameState": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["Initialize"],
+          "properties": {
+            "Initialize": {
+              "$ref": "#/definitions/InitializePhase"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Draw"],
+          "properties": {
+            "Draw": {
+              "$ref": "#/definitions/DrawPhase"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Exchange"],
+          "properties": {
+            "Exchange": {
+              "$ref": "#/definitions/ExchangePhase"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Play"],
+          "properties": {
+            "Play": {
+              "$ref": "#/definitions/PlayPhase"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Hands": {
+      "type": "object",
+      "required": ["hands"],
+      "properties": {
+        "hands": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          }
+        },
+        "trump": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Trump"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "InitializePhase": {
+      "type": "object",
+      "required": ["propagated"],
+      "properties": {
+        "propagated": {
+          "$ref": "#/definitions/PropagatedState"
+        }
+      }
+    },
+    "JokerBidPolicy": {
+      "type": "string",
+      "enum": ["BothTwoOrMore", "BothNumDecks", "LJNumDecksHJNumDecksLessOne"]
+    },
+    "KittyBidPolicy": {
+      "type": "string",
+      "enum": ["FirstCard", "FirstCardOfLevelOrHighest"]
+    },
+    "KittyPenalty": {
+      "type": "string",
+      "enum": ["Times", "Power"]
+    },
+    "KittyTheftPolicy": {
+      "type": "string",
+      "enum": ["AllowKittyTheft", "NoKittyTheft"]
+    },
+    "MaxRank": {
+      "$ref": "#/definitions/Rank"
+    },
+    "MessageVariant": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ResettingGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["StartingGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["points", "type", "winner"],
+          "properties": {
+            "points": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["TrickWon"]
+            },
+            "winner": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["new_rank", "player", "type"],
+          "properties": {
+            "new_rank": {
+              "$ref": "#/definitions/Rank"
+            },
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["RankAdvanced"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["player", "rank", "type"],
+          "properties": {
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "rank": {
+              "$ref": "#/definitions/Rank"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["AdvancementBlocked"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["landlord", "type"],
+          "properties": {
+            "landlord": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["NewLandlordForNextGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["multiplier", "points", "type"],
+          "properties": {
+            "multiplier": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "points": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["PointsInKitty"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["cards", "type"],
+          "properties": {
+            "cards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": ["EndOfGameKittyReveal"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["player", "type"],
+          "properties": {
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["JoinedGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["game_shadowing_policy", "player", "type"],
+          "properties": {
+            "game_shadowing_policy": {
+              "$ref": "#/definitions/GameShadowingPolicy"
+            },
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["JoinedGameAgain"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["already_joined", "player", "type"],
+          "properties": {
+            "already_joined": {
+              "type": "boolean"
+            },
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["JoinedTeam"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["name", "type"],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["LeftGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/AdvancementPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["AdvancementPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "size": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["KittySizeSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/FriendSelectionPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["FriendSelectionPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/MultipleJoinPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["MultipleJoinPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/FirstLandlordSelectionPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["FirstLandlordSelectionPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/BidPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["BidPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/BidReinforcementPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["BidReinforcementPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/JokerBidPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["JokerBidPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["should_reveal", "type"],
+          "properties": {
+            "should_reveal": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["ShouldRevealKittyAtEndOfGameSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["special_decks", "type"],
+          "properties": {
+            "special_decks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Deck"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SpecialDecksSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "num_decks": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["NumDecksSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "num_friends": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["NumFriendsSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["game_mode", "type"],
+          "properties": {
+            "game_mode": {
+              "$ref": "#/definitions/GameModeSettings"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["GameModeSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/KittyTheftPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["KittyTheftPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["TookBackPlay"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["TookBackBid"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["cards", "type"],
+          "properties": {
+            "cards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": ["PlayedCards"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["original_cards", "type"],
+          "properties": {
+            "better_player": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "original_cards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": ["ThrowFailed"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "visible"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["SetDefendingPointVisibility"]
+            },
+            "visible": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "visible"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["SetCardVisibility"]
+            },
+            "visible": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "landlord": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SetLandlord"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["emoji", "type"],
+          "properties": {
+            "emoji": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SetLandlordEmoji"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["rank", "type"],
+          "properties": {
+            "rank": {
+              "$ref": "#/definitions/Rank"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SetRank"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["metarank", "type"],
+          "properties": {
+            "metarank": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SetMetaRank"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["rank", "type"],
+          "properties": {
+            "rank": {
+              "$ref": "#/definitions/Rank"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["SetMaxRank"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["card", "count", "type"],
+          "properties": {
+            "card": {
+              "$ref": "#/definitions/Card"
+            },
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["MadeBid"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kitty_penalty", "type"],
+          "properties": {
+            "kitty_penalty": {
+              "$ref": "#/definitions/KittyPenalty"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["KittyPenaltySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["throw_penalty", "type"],
+          "properties": {
+            "throw_penalty": {
+              "$ref": "#/definitions/ThrowPenalty"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["ThrowPenaltySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/KittyBidPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["KittyBidPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/TrickDrawPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["TrickDrawPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/ThrowEvaluationPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["ThrowEvaluationPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/PlayTakebackPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["PlayTakebackPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/BidTakebackPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["BidTakebackPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/GameShadowingPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["GameShadowingPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
+              "$ref": "#/definitions/GameStartPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["GameStartPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["old_parameters", "parameters", "type"],
+          "properties": {
+            "old_parameters": {
+              "$ref": "#/definitions/GameScoringParameters"
+            },
+            "parameters": {
+              "$ref": "#/definitions/GameScoringParameters"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["GameScoringParametersChanged"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["PickedUpCards"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["PutDownCards"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["RevealedCardFromKitty"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["GameEndedEarly"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["result", "type"],
+          "properties": {
+            "result": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/PlayerGameFinishedResult"
+              }
+            },
+            "type": {
+              "type": "string",
+              "enum": ["GameFinished"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["BonusLevelEarned"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["landlord_won", "non_landlords_points", "type"],
+          "properties": {
+            "landlord_won": {
+              "type": "boolean"
+            },
+            "non_landlords_points": {
+              "type": "integer",
+              "format": "int"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["EndOfGameSummary"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["set", "type"],
+          "properties": {
+            "set": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["HideThrowHaltingPlayer"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["tractor_requirements", "type"],
+          "properties": {
+            "tractor_requirements": {
+              "$ref": "#/definitions/TractorRequirements"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["TractorRequirementsChanged"]
+            }
+          }
+        }
+      ]
+    },
+    "MultipleJoinPolicy": {
+      "type": "string",
+      "enum": ["Unrestricted", "NoDoubleJoin"]
+    },
+    "NextThresholdReachableRequest": {
+      "type": "object",
+      "required": ["decks", "non_landlord_points", "observed_points", "params"],
+      "properties": {
+        "decks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "non_landlord_points": {
+          "type": "integer",
+          "format": "int"
+        },
+        "observed_points": {
+          "type": "integer",
+          "format": "int"
+        },
+        "params": {
+          "$ref": "#/definitions/GameScoringParameters"
+        }
+      }
+    },
+    "Number": {
+      "type": "string"
+    },
+    "OrderedCard": {
+      "description": "A wrapper around a card with a given trump, which provides ordering characteristics.",
+      "type": "object",
+      "required": ["card", "trump"],
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/Card"
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "PlayPhase": {
+      "type": "object",
+      "required": [
+        "exchanger",
+        "game_ended_early",
+        "game_mode",
+        "hands",
+        "kitty",
+        "landlord",
+        "landlords_team",
+        "num_decks",
+        "penalties",
+        "points",
+        "propagated",
+        "trick",
+        "trump"
+      ],
+      "properties": {
+        "decks": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "exchanger": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "game_ended_early": {
+          "type": "boolean"
+        },
+        "game_mode": {
+          "$ref": "#/definitions/GameMode"
+        },
+        "hands": {
+          "$ref": "#/definitions/Hands"
+        },
+        "kitty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "landlord": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "landlords_team": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          }
+        },
+        "last_trick": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Trick"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_decks": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "penalties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          }
+        },
+        "points": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/Card"
+            }
+          }
+        },
+        "propagated": {
+          "$ref": "#/definitions/PropagatedState"
+        },
+        "removed_cards": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "trick": {
+          "$ref": "#/definitions/Trick"
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "PlayTakebackPolicy": {
+      "type": "string",
+      "enum": ["AllowPlayTakeback", "NoPlayTakeback"]
+    },
+    "PlayedCards": {
+      "type": "object",
+      "required": ["bad_throw_cards", "cards", "id"],
+      "properties": {
+        "bad_throw_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "better_player": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "Player": {
+      "type": "object",
+      "required": ["id", "level", "metalevel", "name"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "level": {
+          "$ref": "#/definitions/Rank"
+        },
+        "metalevel": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "PlayerGameFinishedResult": {
+      "type": "object",
+      "required": [
+        "confetti",
+        "is_defending",
+        "is_landlord",
+        "rank",
+        "ranks_up",
+        "won_game"
+      ],
+      "properties": {
+        "confetti": {
+          "type": "boolean"
+        },
+        "is_defending": {
+          "type": "boolean"
+        },
+        "is_landlord": {
+          "type": "boolean"
+        },
+        "rank": {
+          "$ref": "#/definitions/Rank"
+        },
+        "ranks_up": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "won_game": {
+          "type": "boolean"
+        }
+      }
+    },
+    "PropagatedState": {
+      "type": "object",
+      "required": ["game_mode", "max_player_id", "observers", "players"],
+      "properties": {
+        "advancement_policy": {
+          "default": "Unrestricted",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AdvancementPolicy"
+            }
+          ]
+        },
+        "bid_policy": {
+          "default": "JokerOrGreaterLength",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BidPolicy"
+            }
+          ]
+        },
+        "bid_reinforcement_policy": {
+          "default": "ReinforceWhileWinning",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BidReinforcementPolicy"
+            }
+          ]
+        },
+        "bid_takeback_policy": {
+          "default": "AllowBidTakeback",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BidTakebackPolicy"
+            }
+          ]
+        },
+        "chat_link": {
+          "type": ["string", "null"]
+        },
+        "first_landlord_selection_policy": {
+          "default": "ByWinningBid",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FirstLandlordSelectionPolicy"
+            }
+          ]
+        },
+        "friend_selection_policy": {
+          "default": "Unrestricted",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FriendSelectionPolicy"
+            }
+          ]
+        },
+        "game_mode": {
+          "$ref": "#/definitions/GameModeSettings"
+        },
+        "game_scoring_parameters": {
+          "default": {
+            "bonus_level_policy": "BonusLevelForSmallerLandlordTeam",
+            "deadzone_size": 1,
+            "num_steps_to_non_landlord_turnover": 2,
+            "step_adjustments": {},
+            "step_size_per_deck": 20,
+            "truncate_zero_crossing_window": true
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/GameScoringParameters"
+            }
+          ]
+        },
+        "game_shadowing_policy": {
+          "default": "AllowMultipleSessions",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GameShadowingPolicy"
+            }
+          ]
+        },
+        "game_start_policy": {
+          "default": "AllowAnyPlayer",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GameStartPolicy"
+            }
+          ]
+        },
+        "hide_landlord_points": {
+          "default": false,
+          "type": "boolean"
+        },
+        "hide_played_cards": {
+          "default": false,
+          "type": "boolean"
+        },
+        "hide_throw_halting_player": {
+          "default": false,
+          "type": "boolean"
+        },
+        "joker_bid_policy": {
+          "default": "BothTwoOrMore",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JokerBidPolicy"
+            }
+          ]
+        },
+        "kitty_bid_policy": {
+          "default": "FirstCard",
+          "allOf": [
+            {
+              "$ref": "#/definitions/KittyBidPolicy"
+            }
+          ]
+        },
+        "kitty_penalty": {
+          "default": "Times",
+          "allOf": [
+            {
+              "$ref": "#/definitions/KittyPenalty"
+            }
+          ]
+        },
+        "kitty_size": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "kitty_theft_policy": {
+          "default": "NoKittyTheft",
+          "allOf": [
+            {
+              "$ref": "#/definitions/KittyTheftPolicy"
+            }
+          ]
+        },
+        "landlord": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "landlord_emoji": {
+          "default": null,
+          "type": ["string", "null"]
+        },
+        "max_player_id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "max_rank": {
+          "default": "NT",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MaxRank"
+            }
+          ]
+        },
+        "multiple_join_policy": {
+          "default": "Unrestricted",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MultipleJoinPolicy"
+            }
+          ]
+        },
+        "num_decks": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "num_games_finished": {
+          "default": 0,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "observers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Player"
+          }
+        },
+        "play_takeback_policy": {
+          "default": "AllowPlayTakeback",
+          "allOf": [
+            {
+              "$ref": "#/definitions/PlayTakebackPolicy"
+            }
+          ]
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Player"
+          }
+        },
+        "should_reveal_kitty_at_end_of_game": {
+          "default": false,
+          "type": "boolean"
+        },
+        "special_decks": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deck"
+          }
+        },
+        "throw_evaluation_policy": {
+          "default": "All",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ThrowEvaluationPolicy"
+            }
+          ]
+        },
+        "throw_penalty": {
+          "default": "None",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ThrowPenalty"
+            }
+          ]
+        },
+        "tractor_requirements": {
+          "default": {
+            "min_count": 2,
+            "min_length": 2
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/TractorRequirements"
+            }
+          ]
+        },
+        "trick_draw_policy": {
+          "default": "NoProtections",
+          "allOf": [
+            {
+              "$ref": "#/definitions/TrickDrawPolicy"
+            }
+          ]
+        }
+      }
+    },
+    "Rank": {
+      "type": "string"
+    },
+    "ScoreSegment": {
+      "type": "object",
+      "required": ["point_threshold", "results"],
+      "properties": {
+        "point_threshold": {
+          "type": "integer",
+          "format": "int"
+        },
+        "results": {
+          "$ref": "#/definitions/GameScoreResult"
+        }
+      }
+    },
+    "SortAndGroupCardsRequest": {
+      "type": "object",
+      "required": ["cards", "trump"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "SortAndGroupCardsResponse": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SuitGroup"
+          }
+        }
+      }
+    },
+    "Suit": {
+      "type": "string"
+    },
+    "SuitGroup": {
+      "type": "object",
+      "required": ["cards", "suit"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "suit": {
+          "$ref": "#/definitions/EffectiveSuit"
+        }
+      }
+    },
+    "ThrowEvaluationPolicy": {
+      "type": "string",
+      "enum": ["All", "Highest", "TrickUnitLength"]
+    },
+    "ThrowPenalty": {
+      "type": "string",
+      "enum": ["None", "TenPointsPerAttempt"]
+    },
+    "TractorRequirements": {
+      "type": "object",
+      "required": ["min_count", "min_length"],
+      "properties": {
+        "min_count": {
+          "description": "The minimum number of cards in each unit of the tractor",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "min_length": {
+          "description": "The minimum length of the tractor",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
+    },
+    "Trick": {
+      "type": "object",
+      "required": ["played_cards", "player_queue", "trump"],
+      "properties": {
+        "current_winner": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "played_card_mappings": {
+          "description": "A parallel array to `played_cards` which contains the units corresponding to played cards that match the `trick_format`, or `None` if they don't match.\n\nTODO: remove default deserialization attribute in a few days.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": ["array", "null"],
+            "items": {
+              "$ref": "#/definitions/TrickUnit"
+            }
+          }
+        },
+        "played_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PlayedCards"
+          }
+        },
+        "player_queue": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          }
+        },
+        "trick_format": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TrickFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "TrickDrawPolicy": {
+      "type": "string",
+      "enum": [
+        "NoProtections",
+        "LongerTuplesProtected",
+        "OnlyDrawTractorOnTractor",
+        "NoFormatBasedDraw"
+      ]
+    },
+    "TrickFormat": {
+      "type": "object",
+      "required": ["suit", "trump", "units"],
+      "properties": {
+        "suit": {
+          "$ref": "#/definitions/EffectiveSuit"
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TrickUnit"
+          }
+        }
+      }
+    },
+    "TrickUnit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["Tractor"],
+          "properties": {
+            "Tractor": {
+              "type": "object",
+              "required": ["count", "members"],
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0.0
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/OrderedCard"
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["Repeated"],
+          "properties": {
+            "Repeated": {
+              "type": "object",
+              "required": ["card", "count"],
+              "properties": {
+                "card": {
+                  "$ref": "#/definitions/OrderedCard"
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0.0
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Trump": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["Standard"],
+          "properties": {
+            "Standard": {
+              "type": "object",
+              "required": ["number", "suit"],
+              "properties": {
+                "number": {
+                  "$ref": "#/definitions/Number"
+                },
+                "suit": {
+                  "$ref": "#/definitions/Suit"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["NoTrump"],
+          "properties": {
+            "NoTrump": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/Number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "UnitLike": {
+      "type": "object",
+      "required": ["adjacent_tuples"],
+      "properties": {
+        "adjacent_tuples": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          }
+        }
+      }
+    }
+  }
+}

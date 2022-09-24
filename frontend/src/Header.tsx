@@ -2,10 +2,10 @@ import * as React from "react";
 import GameMode from "./GameMode";
 import GameStatisticsButton from "./GameStatisticsButton";
 import SettingsButton from "./SettingsButton";
-import { IGameModeSettings } from "./types";
+import { GameModeSettings } from "./gen-types";
 
 interface IProps {
-  gameMode: IGameModeSettings;
+  gameMode: GameModeSettings;
   chatLink?: string | null;
 }
 

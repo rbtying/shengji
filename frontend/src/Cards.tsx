@@ -1,14 +1,14 @@
 import * as React from "react";
 import classNames from "classnames";
 import Card from "./Card";
-import { ITrump, IHands } from "./types";
+import { Trump, Hands } from "./gen-types";
 import ArrayUtils from "./util/array";
 import WasmContext from "./WasmContext";
 import { SettingsContext } from "./AppStateProvider";
 
 interface IProps {
-  hands: IHands;
-  trump: ITrump;
+  hands: Hands;
+  trump: Trump;
   playerId: number;
   selectedCards?: string[];
   onSelect?: (selected: string[]) => void;

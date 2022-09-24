@@ -1,6 +1,7 @@
 import * as React from "react";
 import Select from "react-select";
-import { ICardInfo, ITrump } from "./types";
+import { ICardInfo } from "./types";
+import { Trump } from "./gen-types";
 import ArrayUtils from "./util/array";
 import preloadedCards from "./preloadedCards";
 import InlineCard from "./InlineCard";
@@ -12,7 +13,7 @@ interface FriendSelection {
 }
 interface IProps {
   friend: FriendSelection;
-  trump: ITrump;
+  trump: Trump;
   num_decks: number;
   friend_selection_policy: string;
   onChange: (input: FriendSelection) => void;
@@ -40,7 +41,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
   }));
 
   const rank: string | null =
-    props.trump.Standard !== undefined
+    "Standard" in props.trump
       ? props.trump.Standard.number
       : props.trump.NoTrump.number;
 
@@ -56,7 +57,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
     return (
       c.number !== null &&
       c.number !== rank &&
-      (props.trump.Standard == null || c.typ !== props.trump.Standard.suit)
+      (!("Standard" in props.trump) || c.typ !== props.trump.Standard?.suit)
     );
   };
   const policyFilters: { [s: string]: (c: ICardInfo) => boolean } = {

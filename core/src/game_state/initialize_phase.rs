@@ -3,6 +3,7 @@ use std::ops::{Deref, DerefMut};
 
 use anyhow::{anyhow, bail, Error};
 use rand::{seq::SliceRandom, RngCore};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::settings::{GameMode, GameModeSettings, GameStartPolicy, PropagatedState};
@@ -10,7 +11,7 @@ use crate::types::{Card, Number, PlayerID, Rank, ALL_SUITS};
 
 use crate::game_state::DrawPhase;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct InitializePhase {
     propagated: PropagatedState,
 }
@@ -212,8 +213,8 @@ impl InitializePhase {
         Ok(DrawPhase::new(
             propagated,
             position,
-            (&deck[0..deck.len() - kitty_size]).to_vec(),
-            (&deck[deck.len() - kitty_size..]).to_vec(),
+            deck[0..deck.len() - kitty_size].to_vec(),
+            deck[deck.len() - kitty_size..].to_vec(),
             num_decks,
             game_mode,
             level,

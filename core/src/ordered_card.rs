@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Mutex;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::types::{Card, Trump};
@@ -12,7 +13,7 @@ pub type AdjacentTupleSizes = Vec<usize>;
 pub type PlayRequirements = Vec<AdjacentTupleSizes>;
 
 /// A wrapper around a card with a given trump, which provides ordering characteristics.
-#[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct OrderedCard {
     pub card: Card,
     pub trump: Trump,

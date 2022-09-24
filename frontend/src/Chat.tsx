@@ -1,11 +1,11 @@
 import * as React from "react";
-import ChatMessage, { IMessage } from "./ChatMessage";
 import ChatInput from "./ChatInput";
+import ChatMessage, { Message } from "./ChatMessage";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
 
 interface IProps {
-  messages: IMessage[];
+  messages: Message[];
 }
 
 const Chat = (props: IProps): JSX.Element => {

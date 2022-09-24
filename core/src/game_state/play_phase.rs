@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::deck::Deck;
@@ -26,7 +27,7 @@ macro_rules! bail_unwrap {
     };
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Eq, PartialEq)]
 pub struct PlayerGameFinishedResult {
     pub won_game: bool,
     pub is_defending: bool,
@@ -36,7 +37,7 @@ pub struct PlayerGameFinishedResult {
     pub rank: Rank,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PlayPhase {
     num_decks: usize,
     game_mode: GameMode,

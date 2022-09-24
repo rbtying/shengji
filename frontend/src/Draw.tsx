@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from "react";
-import { IDrawPhase, IPlayer, ITrump } from "./types";
+import { DrawPhase, Player, Trump } from "./gen-types";
 import Header from "./Header";
 import Players from "./Players";
 import LabeledPlay from "./LabeledPlay";
@@ -9,7 +9,7 @@ import BidArea from "./BidArea";
 import InlineCard from "./InlineCard";
 
 interface IDrawProps {
-  state: IDrawPhase;
+  state: DrawPhase;
   playDrawCardSound: boolean;
   name: string;
   setTimeout: (fn: () => void, timeout: number) => number;
@@ -105,7 +105,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       next = this.props.state.bids[this.props.state.bids.length - 1].id;
     }
 
-    const players: { [playerId: number]: IPlayer } = {};
+    const players: { [playerId: number]: Player } = {};
     let playerId = -1;
     this.props.state.propagated.players.forEach((p) => {
       players[p.id] = p;
@@ -115,7 +115,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     });
 
     const landlord = this.props.state.propagated.landlord;
-    let trump: ITrump | undefined;
+    let trump: Trump | undefined;
     if (
       landlord !== null &&
       landlord !== undefined &&

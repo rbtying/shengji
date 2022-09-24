@@ -2,14 +2,19 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt;
 
+use schemars::{
+    gen::SchemaGenerator,
+    schema::{InstanceType, Schema, SchemaObject},
+    JsonSchema,
+};
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, Eq, PartialEq)]
 #[serde(transparent)]
 pub struct PlayerID(pub usize);
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, Eq, PartialEq)]
 pub enum Trump {
     Standard { suit: Suit, number: Number },
     NoTrump { number: Option<Number> },
@@ -285,7 +290,9 @@ impl Trump {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(
+    Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, Eq, PartialEq, PartialOrd, Ord,
+)]
 pub enum EffectiveSuit {
     Unknown,
     Clubs,
@@ -295,7 +302,7 @@ pub enum EffectiveSuit {
     Trump,
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Hash)]
 pub struct CardInfo {
     value: char,
     display_value: char,
@@ -310,6 +317,20 @@ pub enum Card {
     Suited { suit: Suit, number: Number },
     SmallJoker,
     BigJoker,
+}
+
+impl JsonSchema for Card {
+    fn schema_name() -> String {
+        "Card".into()
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            ..Default::default()
+        }
+        .into()
+    }
 }
 
 impl Serialize for Card {
@@ -529,6 +550,20 @@ pub enum Number {
     Ace,
 }
 
+impl JsonSchema for Number {
+    fn schema_name() -> String {
+        "Number".into()
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            ..Default::default()
+        }
+        .into()
+    }
+}
+
 impl slog::Value for Number {
     fn serialize(
         &self,
@@ -685,7 +720,19 @@ pub enum Suit {
     Spades,
 }
 pub const ALL_SUITS: [Suit; 4] = [Suit::Spades, Suit::Hearts, Suit::Diamonds, Suit::Clubs];
+impl JsonSchema for Suit {
+    fn schema_name() -> String {
+        "Suit".into()
+    }
 
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            ..Default::default()
+        }
+        .into()
+    }
+}
 impl Serialize for Suit {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_char(self.as_char())
@@ -1010,6 +1057,19 @@ pub enum Rank {
     NoTrump,
 }
 
+impl JsonSchema for Rank {
+    fn schema_name() -> String {
+        "Rank".into()
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            ..Default::default()
+        }
+        .into()
+    }
+}
 impl slog::Value for Rank {
     fn serialize(
         &self,

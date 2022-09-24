@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use slog_derive::KV;
 
 use crate::deck::Deck;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum BonusLevelPolicy {
     NoBonusLevel,
     BonusLevelForSmallerLandlordTeam,
@@ -19,13 +20,13 @@ impl Default for BonusLevelPolicy {
 }
 impl_slog_value!(BonusLevelPolicy);
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct PartialGameScoreResult {
     landlord_won: bool,
     landlord_delta: usize,
     non_landlord_delta: usize,
 }
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct GameScoreResult {
     pub landlord_won: bool,
     pub landlord_bonus: bool,
@@ -66,7 +67,7 @@ impl GameScoreResult {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, KV)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, KV)]
 pub struct GameScoringParameters {
     /// Number of points per "step" in the deck.
     step_size_per_deck: usize,
@@ -183,7 +184,7 @@ impl GameScoringParameters {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct MaterializedScoringParameters {
     landlord_wins: Vec<LandlordWinningScoreSegment>,
     landlord_loses: Vec<LandlordLosingScoreSegment>,
@@ -345,7 +346,7 @@ trait Propagatable {
     fn propagate(self) -> Self;
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct LandlordWinningScoreSegment {
     /// The beginning of the scoring segment, inclusive
     start: isize,
@@ -365,7 +366,7 @@ impl Propagatable for LandlordWinningScoreSegment {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct LandlordLosingScoreSegment {
     start: isize,
     end: isize,

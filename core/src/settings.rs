@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 
 use anyhow::{bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use slog_derive::KV;
 use url::Url;
@@ -30,7 +31,7 @@ macro_rules! impl_slog_value {
     };
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, PartialEq, Eq)]
 pub struct Friend {
     pub(crate) card: Card,
     pub(crate) skip: usize,
@@ -38,13 +39,13 @@ pub struct Friend {
     pub(crate) player_id: Option<PlayerID>,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, PartialEq, Eq)]
 pub struct FriendSelection {
     pub card: Card,
     pub initial_skip: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum GameMode {
     Tractor,
     FindingFriends {
@@ -62,7 +63,7 @@ impl GameMode {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum GameModeSettings {
     Tractor,
     FindingFriends { num_friends: Option<usize> },
@@ -101,7 +102,7 @@ impl Default for GameModeSettings {
 
 impl_slog_value!(GameModeSettings);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum ThrowPenalty {
     None,
     TenPointsPerAttempt,
@@ -115,7 +116,7 @@ impl Default for ThrowPenalty {
 
 impl_slog_value!(ThrowPenalty);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyPenalty {
     Times,
     Power,
@@ -129,7 +130,7 @@ impl Default for KittyPenalty {
 
 impl_slog_value!(KittyPenalty);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum AdvancementPolicy {
     Unrestricted,
     FullyUnrestricted,
@@ -144,7 +145,7 @@ impl Default for AdvancementPolicy {
 
 impl_slog_value!(AdvancementPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum FriendSelectionPolicy {
     Unrestricted,
     TrumpsIncluded,
@@ -160,7 +161,7 @@ impl Default for FriendSelectionPolicy {
 
 impl_slog_value!(FriendSelectionPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum MultipleJoinPolicy {
     Unrestricted,
     NoDoubleJoin,
@@ -174,7 +175,7 @@ impl Default for MultipleJoinPolicy {
 
 impl_slog_value!(MultipleJoinPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum FirstLandlordSelectionPolicy {
     ByWinningBid,
     ByFirstBid,
@@ -188,7 +189,7 @@ impl Default for FirstLandlordSelectionPolicy {
 
 impl_slog_value!(FirstLandlordSelectionPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyBidPolicy {
     FirstCard,
     FirstCardOfLevelOrHighest,
@@ -202,7 +203,7 @@ impl Default for KittyBidPolicy {
 
 impl_slog_value!(KittyBidPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum PlayTakebackPolicy {
     AllowPlayTakeback,
     NoPlayTakeback,
@@ -216,7 +217,7 @@ impl Default for PlayTakebackPolicy {
 
 impl_slog_value!(PlayTakebackPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyTheftPolicy {
     AllowKittyTheft,
     NoKittyTheft,
@@ -230,7 +231,7 @@ impl Default for KittyTheftPolicy {
 
 impl_slog_value!(KittyTheftPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum GameShadowingPolicy {
     AllowMultipleSessions,
     SingleSessionOnly,
@@ -244,7 +245,7 @@ impl Default for GameShadowingPolicy {
 
 impl_slog_value!(GameShadowingPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum GameStartPolicy {
     AllowAnyPlayer,
     AllowLandlordOnly,
@@ -258,7 +259,7 @@ impl Default for GameStartPolicy {
 
 impl_slog_value!(GameStartPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct MaxRank(Rank);
 impl_slog_value!(MaxRank);
 impl Default for MaxRank {
@@ -274,7 +275,7 @@ impl Deref for MaxRank {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, KV)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema, KV)]
 pub struct PropagatedState {
     #[slog(skip)]
     pub(crate) players: Vec<Player>,

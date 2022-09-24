@@ -1,10 +1,10 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 
 interface Props {
-  players: IPlayer[];
-  player: IPlayer;
+  players: Player[];
+  player: Player;
 }
 
 function MovePlayerButton(

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::{anyhow, bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::bidding::Bid;
@@ -23,7 +24,7 @@ macro_rules! bail_unwrap {
     };
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExchangePhase {
     propagated: PropagatedState,
     num_decks: usize,

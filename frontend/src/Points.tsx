@@ -1,6 +1,6 @@
 import * as React from "react";
 import ProgressBar from "./ProgressBar";
-import { IPlayer, IGameScoringParameters, IDeck } from "./types";
+import { Player, GameScoringParameters, Deck } from "./gen-types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
@@ -10,19 +10,19 @@ import WasmContext from "./WasmContext";
 import { SettingsContext } from "./AppStateProvider";
 
 interface IProps {
-  players: IPlayer[];
-  decks: IDeck[];
+  players: Player[];
+  decks: Deck[];
   points: { [playerId: number]: string[] };
   penalties: { [playerId: number]: number };
   landlordTeam: number[];
   landlord: number;
   hideLandlordPoints: boolean;
   smallerTeamSize: boolean;
-  gameScoringParameters: IGameScoringParameters;
+  gameScoringParameters: GameScoringParameters;
 }
 
 export const calculatePoints = (
-  players: IPlayer[],
+  players: Player[],
   landlordTeam: number[],
   points: { [playerId: number]: string[] },
   penalties: { [playerId: number]: number }

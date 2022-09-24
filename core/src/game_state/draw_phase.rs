@@ -1,4 +1,5 @@
 use anyhow::{anyhow, bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::bidding::Bid;
@@ -11,7 +12,7 @@ use crate::types::{Card, PlayerID, Rank, Trump};
 use crate::game_state::exchange_phase::ExchangePhase;
 use crate::game_state::initialize_phase::InitializePhase;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DrawPhase {
     num_decks: usize,
     game_mode: GameMode,

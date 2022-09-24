@@ -1,10 +1,10 @@
 import * as React from "react";
-import { IPlayer } from "./types";
+import { Player } from "./gen-types";
 
 interface IProps {
   landlordId: number | null;
   onChange: (newLandlord: number | null) => void;
-  players: IPlayer[];
+  players: Player[];
 }
 const LandlordSelector = (props: IProps): JSX.Element => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -24,7 +24,7 @@ const LandlordSelector = (props: IProps): JSX.Element => {
           onChange={handleChange}
         >
           <option value="">determined by the bid</option>
-          {props.players.map((player: IPlayer) => (
+          {props.players.map((player: Player) => (
             <option value={player.id} key={player.id}>
               {player.name}
             </option>

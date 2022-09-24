@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use anyhow::{bail, Error};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::message::MessageVariant;
@@ -18,7 +19,7 @@ use initialize_phase::InitializePhase;
 use play_phase::PlayPhase;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub enum GameState {
     Initialize(InitializePhase),
     Draw(DrawPhase),

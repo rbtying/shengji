@@ -1,11 +1,11 @@
 import * as React from "react";
-import { IGameScoringParameters, IDeck } from "./types";
+import { GameScoringParameters, Deck, ScoreSegment } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
-import { WasmContext, IScoreSegment } from "./WasmContext";
+import { WasmContext } from "./WasmContext";
 
 interface IProps {
-  params: IGameScoringParameters;
-  decks: IDeck[];
+  params: GameScoringParameters;
+  decks: Deck[];
 }
 
 export const GameScoringSettings = (props: IProps): JSX.Element => {
@@ -13,7 +13,7 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   const { explainScoring } = React.useContext(WasmContext);
   const [highlighted, setHighlighted] = React.useState<number | null>(null);
 
-  const updateSettings = (updates: Partial<IGameScoringParameters>): void => {
+  const updateSettings = (updates: Partial<GameScoringParameters>): void => {
     send({
       Action: {
         SetGameScoringParameters: { ...props.params, ...updates },
@@ -44,8 +44,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
 
   const scoreSegments: Array<{
     span: number;
-    segment: IScoreSegment;
-    bonusSegment: IScoreSegment | null;
+    segment: ScoreSegment;
+    bonusSegment: ScoreSegment | null;
   }> = [];
   let maxPts = 0;
   let maxLandlordDelta = 0;
