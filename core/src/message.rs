@@ -262,6 +262,8 @@ impl MessageVariant {
                 format!("{} required low no-trump bids to have every low joker (one less required for high joker)", n?),
             JokerBidPolicySet { policy: JokerBidPolicy::BothTwoOrMore } =>
                 format!("{} required no-trump bids to have at least two low or high jokers", n?),
+            JokerBidPolicySet { policy: JokerBidPolicy::Disabled } =>
+                format!("{} disabled no-trump bids", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: true } =>
                 format!("{} enabled the kitty to be revealed at the end of each game", n?),
             ShouldRevealKittyAtEndOfGameSet { should_reveal: false } =>

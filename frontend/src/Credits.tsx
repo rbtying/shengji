@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 17;
+const changeLogVersion: number = 18;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -41,6 +41,10 @@ const ChangeLog = (): JSX.Element => {
         style={{ content: contentStyle }}
       >
         <h2>Change Log</h2>
+        <p>9/25/2022:</p>
+        <ul>
+          <li>Add the ability to disable joker bids</li>
+        </ul>
         <p>4/17/2022:</p>
         <ul>
           <li>

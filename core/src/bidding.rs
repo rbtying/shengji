@@ -25,6 +25,7 @@ pub enum JokerBidPolicy {
     BothTwoOrMore,
     BothNumDecks,
     LJNumDecksHJNumDecksLessOne,
+    Disabled,
 }
 
 impl Default for JokerBidPolicy {
@@ -131,6 +132,8 @@ impl Bid {
                     if card.is_joker() {
                         let is_nt = bid_level == Some(Rank::NoTrump);
                         match (card, joker_bid_policy) {
+                            // If joker bids are disabled, don't allow any joker bids.
+                            (_, JokerBidPolicy::Disabled) => continue,
                             // If we're bidding against the no-trump rank, allow bids of one card
                             // in the default joker bid policy.
                             (_, JokerBidPolicy::BothTwoOrMore) if inner_count <= 1 && !is_nt => {

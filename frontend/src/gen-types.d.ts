@@ -174,7 +174,8 @@ export type BidReinforcementPolicy =
 export type JokerBidPolicy =
   | "BothTwoOrMore"
   | "BothNumDecks"
-  | "LJNumDecksHJNumDecksLessOne";
+  | "LJNumDecksHJNumDecksLessOne"
+  | "Disabled";
 export type MaxRank = string;
 export type GameModeSettings =
   | "Tractor"
