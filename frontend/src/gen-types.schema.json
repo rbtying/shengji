@@ -1553,7 +1553,12 @@
     },
     "JokerBidPolicy": {
       "type": "string",
-      "enum": ["BothTwoOrMore", "BothNumDecks", "LJNumDecksHJNumDecksLessOne"]
+      "enum": [
+        "BothTwoOrMore",
+        "BothNumDecks",
+        "LJNumDecksHJNumDecksLessOne",
+        "Disabled"
+      ]
     },
     "KittyBidPolicy": {
       "type": "string",

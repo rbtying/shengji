@@ -565,6 +565,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             <option value="LJNumDecksHJNumDecksLessOne">
               All the low jokers or all but one high joker to bid no trump
             </option>
+            <option value="Disabled">No trump / joker bids disabled</option>
           </select>
         </label>
       </div>
