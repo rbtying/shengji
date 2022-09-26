@@ -44,6 +44,7 @@ const ChangeLog = (): JSX.Element => {
         <p>9/25/2022:</p>
         <ul>
           <li>Add the ability to disable joker bids</li>
+          <li>Add the ability to set autodraw speed</li>
         </ul>
         <p>4/17/2022:</p>
         <ul>

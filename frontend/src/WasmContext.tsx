@@ -16,6 +16,7 @@ import {
   NextThresholdReachableRequest,
   ComputeScoreRequest,
   ComputeScoreResponse,
+  GameMessage,
 } from "./gen-types";
 
 interface Context {
@@ -34,7 +35,7 @@ interface Context {
   nextThresholdReachable: (req: NextThresholdReachableRequest) => boolean;
   computeScore: (req: ComputeScoreRequest) => ComputeScoreResponse;
   computeDeckLen: (req: Deck[]) => number;
-  decodeWireFormat: (req: any) => any;
+  decodeWireFormat: (req: Uint8Array) => GameMessage;
 }
 
 export const WasmContext = React.createContext<Context>({
@@ -55,7 +56,9 @@ export const WasmContext = React.createContext<Context>({
     next_threshold: 0,
   }),
   computeDeckLen: (_) => 0,
-  decodeWireFormat: (_) => {},
+  decodeWireFormat: (_) => {
+    throw new Error("cannot decode wire format");
+  },
 });
 
 export default WasmContext;
