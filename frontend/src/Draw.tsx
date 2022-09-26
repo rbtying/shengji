@@ -11,6 +11,7 @@ import InlineCard from "./InlineCard";
 interface IDrawProps {
   state: DrawPhase;
   playDrawCardSound: boolean;
+  autodrawSpeedMs: number | null;
   name: string;
   setTimeout: (fn: () => void, timeout: number) => number;
   clearTimeout: (id: number) => void;
@@ -90,9 +91,12 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       this.timeout === null &&
       this.state.autodraw
     ) {
-      this.timeout = this.props.setTimeout(() => {
-        this.drawCard();
-      }, 250);
+      this.timeout = this.props.setTimeout(
+        () => {
+          this.drawCard();
+        },
+        this.props.autodrawSpeedMs !== null ? this.props.autodrawSpeedMs : 250
+      );
     }
     this.could_draw = canDraw;
 
