@@ -73,7 +73,10 @@ const showPlayerName: State<boolean> = booleanLocalStorageState(
 const hideChatBox: State<boolean> = booleanLocalStorageState("hide_chat_box");
 const showPointsAboveGame: State<boolean> =
   booleanLocalStorageState("points_above_game");
-const autodrawSpeedMs: State<number | null> = numberLocalStorageState("autodrawSpeedMs", null);
+const autodrawSpeedMs: State<number | null> = numberLocalStorageState(
+  "autodrawSpeedMs",
+  null
+);
 const settings: State<Settings> = combineState({
   fourColor,
   darkMode,
