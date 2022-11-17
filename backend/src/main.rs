@@ -146,7 +146,7 @@ async fn main() {
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => &*DUMP_PATH));
 
-    match try_read_file::<HashMap<String, serde_json::Value>>(&*DUMP_PATH).await {
+    match try_read_file::<HashMap<String, serde_json::Value>>(&DUMP_PATH).await {
         Ok(dump) => {
             for (room_name, game_dump) in dump {
                 match serde_json::from_value(game_dump) {
@@ -183,7 +183,7 @@ async fn main() {
 
     let stats = Arc::new(Mutex::new(InMemoryStats::default()));
 
-    match try_read_file::<Vec<String>>(&*MESSAGE_PATH).await {
+    match try_read_file::<Vec<String>>(&MESSAGE_PATH).await {
         Ok(messages) => {
             let mut stats = stats.lock().await;
             stats.header_messages = messages;
@@ -288,7 +288,7 @@ async fn dump_state<S: Storage<VersionedGame, E>, E>(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let mut state_dump: HashMap<String, game_state::GameState> = HashMap::new();
 
-    let header_messages = try_read_file::<Vec<String>>(&*MESSAGE_PATH)
+    let header_messages = try_read_file::<Vec<String>>(&MESSAGE_PATH)
         .await
         .unwrap_or_default();
     let send_header_messages = {
@@ -396,7 +396,7 @@ async fn get_stats<S: Storage<VersionedGame, E>, E>(
         num_games_created,
         num_players_online_now,
         num_active_games,
-        sha: &*VERSION,
+        sha: &VERSION,
     }))
 }
 

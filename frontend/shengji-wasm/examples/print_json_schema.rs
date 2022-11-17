@@ -46,12 +46,12 @@ fn main() {
     let tmp_path = tmp.path().join("tmp.json");
     std::fs::write(&tmp_path, &contents).unwrap();
 
-    let existing = std::fs::read(&path);
+    let existing = std::fs::read(path);
     if let Ok(existing) = existing {
         if String::from_utf8(existing).unwrap() == contents {
             return;
         }
     }
 
-    std::fs::rename(&tmp_path, &path).unwrap()
+    std::fs::rename(&tmp_path, path).unwrap()
 }

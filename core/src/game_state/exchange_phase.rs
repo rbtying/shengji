@@ -156,7 +156,7 @@ impl ExchangePhase {
                             bail!("you can't pick a joker as your friend",)
                         }
                     }
-                    if self.trump.suit() != None && friend.card.suit() == self.trump.suit() {
+                    if self.trump.suit().is_some() && friend.card.suit() == self.trump.suit() {
                         bail!("you can't pick a trump suit as your friend")
                     }
                 }
