@@ -944,9 +944,7 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
     fn from(u: &'a TrickUnit) -> Self {
         match u {
             TrickUnit::Tractor { ref members, count } => UnitLike {
-                adjacent_tuples: std::iter::repeat(*count)
-                    .take(members.len())
-                    .collect(),
+                adjacent_tuples: std::iter::repeat(*count).take(members.len()).collect(),
             },
             TrickUnit::Repeated { count, .. } => UnitLike {
                 adjacent_tuples: vec![*count],
