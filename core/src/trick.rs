@@ -110,10 +110,10 @@ impl TrickUnit {
 
     pub fn size(&self) -> usize {
         match self {
-            TrickUnit::Repeated { count, .. } => *count as usize,
+            TrickUnit::Repeated { count, .. } => *count,
             TrickUnit::Tractor {
                 count, ref members, ..
-            } => (*count as usize) * members.len(),
+            } => *count * members.len(),
         }
     }
 
@@ -945,7 +945,7 @@ impl<'a> From<&'a TrickUnit> for UnitLike {
         match u {
             TrickUnit::Tractor { ref members, count } => UnitLike {
                 adjacent_tuples: std::iter::repeat(*count)
-                    .take(members.len() as usize)
+                    .take(members.len())
                     .collect(),
             },
             TrickUnit::Repeated { count, .. } => UnitLike {

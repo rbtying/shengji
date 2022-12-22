@@ -354,7 +354,7 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
 pub fn compute_deck_len(req: JsValue) -> Result<usize, JsValue> {
     let decks: Vec<Deck> = req.into_serde().map_err(|e| e.to_string())?;
 
-    Ok(decks.iter().map(|d| d.len() as usize).sum::<usize>())
+    Ok(decks.iter().map(|d| d.len()).sum::<usize>())
 }
 
 #[derive(Deserialize, JsonSchema)]
