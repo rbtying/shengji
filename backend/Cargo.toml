@@ -13,6 +13,7 @@ dynamic = ["slog-term"]
 
 [dependencies]
 anyhow = "1.0"
+ctrlc = { version = "3", features = ["termination"] }
 shengji-types = { path = "./backend-types" }
 futures = { version = "0.3" }
 lazy_static = "1.4.0"

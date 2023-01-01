@@ -145,6 +145,13 @@ async fn main() {
     let mut num_games_loaded = 0usize;
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => &*DUMP_PATH));
+    let ctrlc_logger = init_logger.clone();
+
+    ctrlc::set_handler(move || {
+        info!(ctrlc_logger, "Received SIGTERM, shutting down");
+        std::process::exit(0);
+    })
+    .unwrap();
 
     match try_read_file::<HashMap<String, serde_json::Value>>(&DUMP_PATH).await {
         Ok(dump) => {
