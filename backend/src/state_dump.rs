@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
-
 use slog::{error, info, o, Logger};
+use tokio::sync::Mutex;
 
 use shengji_core::game_state::GameState;
 use shengji_types::GameMessage;
@@ -100,10 +100,10 @@ pub async fn load_state(
     Ok((backend_storage, stats))
 }
 
-pub async fn dump_state<S: Storage<VersionedGame, E>, E>(
-    backend_storage: S,
-    stats: Arc<Mutex<InMemoryStats>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn dump_state(
+    Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
+    Extension(stats): Extension<Arc<Mutex<InMemoryStats>>>,
+) -> Result<Json<HashMap<String, GameState>>, &'static str> {
     let mut state_dump: HashMap<String, GameState> = HashMap::new();
 
     let header_messages = try_read_file::<Vec<String>>(&MESSAGE_PATH)
@@ -125,12 +125,12 @@ pub async fn dump_state<S: Storage<VersionedGame, E>, E>(
         .clone()
         .stats()
         .await
-        .map_err(|_| warp::reject())?;
+        .map_err(|_| "failed to get current number of games and players")?;
     let keys = backend_storage
         .clone()
         .get_all_keys()
         .await
-        .map_err(|_| warp::reject())?;
+        .map_err(|_| "failed to get ongoing games")?;
 
     let mut num_players = 0;
     let mut num_observers = 0;
@@ -182,5 +182,5 @@ pub async fn dump_state<S: Storage<VersionedGame, E>, E>(
         }
     }
 
-    Ok(warp::reply::json(&state_dump))
+    Ok(Json(state_dump))
 }

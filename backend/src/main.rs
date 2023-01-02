@@ -1,21 +1,36 @@
 #![deny(warnings)]
 
 use std::env;
+use std::net::SocketAddr;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
 };
 
+use axum::{
+    body::{Empty, Full},
+    extract::{
+        ws::{Message, WebSocketUpgrade},
+        Path,
+    },
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::get,
+    Extension, Json, Router,
+};
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use slog::{debug, error, info, o, Drain, Logger};
 use tokio::sync::{mpsc, Mutex};
-use warp::ws::{Message, WebSocket};
-use warp::Filter;
+
+#[cfg(feature = "dynamic")]
+use axum::routing::get_service;
+#[cfg(feature = "dynamic")]
+use tower_http::services::ServeDir;
 
 use shengji_core::{settings, types::FULL_DECK};
 use shengji_types::ZSTD_ZSTD_DICT;
-use storage::Storage;
+use storage::{HashMapStorage, Storage};
 
 mod serving_types;
 mod shengji_handler;
@@ -64,7 +79,26 @@ lazy_static::lazy_static! {
     static ref MESSAGE_PATH: String = {
         std::env::var("MESSAGE_PATH").unwrap_or_else(|_| "/tmp/shengji_messages.json".to_string())
     };
+    static ref WEBSOCKET_HOST: Option<String> = {
+        std::env::var("WEBSOCKET_HOST").ok()
+    };
+}
 
+async fn runtime_settings() -> impl IntoResponse {
+    let body = match WEBSOCKET_HOST.as_ref() {
+        Some(s) => format!(
+            "window._WEBSOCKET_HOST = \"{}\";window._VERSION = \"{}\";",
+            s, *VERSION,
+        ),
+        None => format!(
+            "window._WEBSOCKET_HOST = null;window._VERSION = \"{}\";",
+            *VERSION
+        ),
+    };
+    (
+        [(http::header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
+        body,
+    )
 }
 
 #[tokio::main]
@@ -76,91 +110,69 @@ async fn main() -> Result<(), anyhow::Error> {
         stats.clone(),
     ));
 
-    let games_filter = warp::any().map(move || (backend_storage.clone(), stats.clone()));
-
-    let api = warp::path("api")
-        .and(warp::ws())
-        .and(games_filter.clone())
-        .map(|ws: warp::ws::Ws, (backend_storage, stats)| {
-            ws.on_upgrade(move |socket| handle_websocket(socket, backend_storage, stats))
-        });
-
-    let cards = warp::path("cards.json").map(|| warp::reply::json(&*CARDS_JSON));
-
-    let websocket_host: Option<String> = std::env::var("WEBSOCKET_HOST").ok();
-    let runtime_settings = warp::path("runtime.js").map(move || {
-        warp::http::Response::builder()
-            .header("Content-Type", "text/javascript; charset=utf-8")
-            .body(match websocket_host.as_ref() {
-                Some(s) => format!(
-                    "window._WEBSOCKET_HOST = \"{}\";window._VERSION = \"{}\";",
-                    s, *VERSION,
-                ),
-                None => format!(
-                    "window._WEBSOCKET_HOST = null;window._VERSION = \"{}\";",
-                    *VERSION
-                ),
-            })
-    });
-
-    let dump_state = warp::path("full_state.json")
-        .and(games_filter.clone())
-        .and_then(|(backend_storage, stats)| state_dump::dump_state(backend_storage, stats));
-    let game_stats = warp::path("stats")
-        .and(games_filter)
-        .and_then(|(backend_storage, _)| get_stats(backend_storage));
+    let app = Router::new()
+        .route("/api", get(handle_websocket))
+        .route(
+            "/default_settings.json",
+            get(|| async { Json(settings::PropagatedState::default()) }),
+        )
+        .route("/full_state.json", get(state_dump::dump_state))
+        .route("/stats", get(get_stats))
+        .route("/runtime.js", get(runtime_settings))
+        .route("/cards.json", get(|| async { Json(CARDS_JSON.clone()) }));
 
     #[cfg(feature = "dynamic")]
-    let static_routes = warp::fs::dir("../frontend/dist").or(warp::fs::dir("../favicon"));
+    let app = app.fallback_service(
+        get_service(ServeDir::new("../frontend/dist").fallback(ServeDir::new("../favicon")))
+            .handle_error(handle_error),
+    );
     #[cfg(not(feature = "dynamic"))]
-    let static_routes =
-        static_dir::static_dir!("../frontend/dist").or(static_dir::static_dir!("../favicon"));
+    let app = app
+        .route(
+            "/",
+            get(|| async { serve_static_routes(Path("index.html".to_string())).await }),
+        )
+        .route("/*path", get(serve_static_routes));
 
-    // TODO: Figure out if this can be redirected safely without this duplicate hax.
-    #[cfg(feature = "dynamic")]
-    let rules = warp::path("rules").and(warp::fs::file("../frontend/dist/rules.html"));
-    #[cfg(not(feature = "dynamic"))]
-    let rules = warp::path("rules")
-        .map(|| warp::reply::html(include_str!("../../frontend/dist/rules.html")));
+    let app = app
+        .layer(Extension(backend_storage))
+        .layer(Extension(stats));
 
-    let default_settings = warp::path("default_settings.json").and_then(default_propagated);
-    let routes = runtime_settings
-        .or(cards)
-        .or(api)
-        .or(dump_state)
-        .or(game_stats)
-        .or(default_settings)
-        .or(static_routes)
-        .or(rules);
-
-    warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+    axum::Server::bind(&SocketAddr::from(([0, 0, 0, 0], 3030)))
+        .serve(app.into_make_service())
+        .await?;
 
     info!(ROOT_LOGGER, "Shutting down");
     Ok(())
 }
 
-async fn get_stats<S: Storage<VersionedGame, E>, E>(
-    backend_storage: S,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    #[derive(Debug, Serialize, Deserialize)]
-    struct GameStats<'a> {
-        num_games_created: u64,
-        num_active_games: usize,
-        num_players_online_now: usize,
-        sha: &'a str,
-    }
+#[cfg(feature = "dynamic")]
+async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
+    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...")
+}
 
+#[derive(Debug, Serialize, Deserialize)]
+struct GameStats {
+    num_games_created: u64,
+    num_active_games: usize,
+    num_players_online_now: usize,
+    sha: &'static str,
+}
+
+async fn get_stats(
+    Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
+) -> Result<Json<GameStats>, &'static str> {
     let num_games_created = backend_storage
         .clone()
         .get_states_created()
         .await
-        .map_err(|_| warp::reject())?;
+        .map_err(|_| "failed to get number of games created")?;
     let (num_active_games, num_players_online_now) = backend_storage
         .clone()
         .stats()
         .await
-        .map_err(|_| warp::reject())?;
-    Ok(warp::reply::json(&GameStats {
+        .map_err(|_| "failed to get number of active games and online players")?;
+    Ok(Json(GameStats {
         num_games_created,
         num_players_online_now,
         num_active_games,
@@ -168,65 +180,91 @@ async fn get_stats<S: Storage<VersionedGame, E>, E>(
     }))
 }
 
-async fn default_propagated() -> Result<impl warp::Reply, warp::Rejection> {
-    Ok(warp::reply::json(&settings::PropagatedState::default()))
-}
-
-async fn periodically_dump_state<S: Storage<VersionedGame, E>, E>(
-    backend_storage: S,
+async fn periodically_dump_state(
+    backend_storage: HashMapStorage<VersionedGame>,
     stats: Arc<Mutex<InMemoryStats>>,
 ) {
     let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
     loop {
         interval.tick().await;
-        let _ = state_dump::dump_state(backend_storage.clone(), stats.clone()).await;
+        let _ =
+            state_dump::dump_state(Extension(backend_storage.clone()), Extension(stats.clone()))
+                .await;
     }
 }
 
-async fn handle_websocket<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>(
-    ws: WebSocket,
-    backend_storage: S,
-    stats: Arc<Mutex<InMemoryStats>>,
-) {
-    let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
-    let logger = ROOT_LOGGER.new(o!("ws_id" => ws_id));
-    info!(logger, "Websocket connection initialized");
-    // Split the socket into a sender and receive of messages.
-    let (mut user_ws_tx, mut user_ws_rx) = ws.split();
+async fn handle_websocket(
+    ws: WebSocketUpgrade,
+    Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
+    Extension(stats): Extension<Arc<Mutex<InMemoryStats>>>,
+) -> impl IntoResponse {
+    ws.on_upgrade(|ws| {
+        let ws_id = NEXT_USER_ID.fetch_add(1, Ordering::Relaxed);
+        let logger = ROOT_LOGGER.new(o!("ws_id" => ws_id));
+        info!(logger, "Websocket connection initialized");
+        // Split the socket into a sender and receive of messages.
+        let (mut user_ws_tx, mut user_ws_rx) = ws.split();
 
-    // Use an unbounded channel to handle buffering and flushing of messages
-    // to the websocket...
-    let logger_ = logger.clone();
-    let (tx, mut rx) = mpsc::unbounded_channel();
-    tokio::task::spawn(async move {
-        while let Some(v) = rx.recv().await {
-            let _ = user_ws_tx.send(Message::binary(v)).await;
-        }
-        debug!(logger_, "Ending tx task");
-    });
+        // Use an unbounded channel to handle buffering and flushing of messages
+        // to the websocket...
+        let logger_ = logger.clone();
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        tokio::task::spawn(async move {
+            while let Some(v) = rx.recv().await {
+                let _ = user_ws_tx.send(Message::Binary(v)).await;
+            }
+            debug!(logger_, "Ending tx task");
+        });
 
-    // And another channel to receive messages from the websocket
-    let logger_ = logger.clone();
-    let (tx2, rx2) = mpsc::unbounded_channel();
-    tokio::task::spawn(async move {
-        while let Some(result) = user_ws_rx.next().await {
-            match result {
-                Ok(r) if r.is_close() => {
-                    break;
-                }
-                Ok(r) => {
-                    let _ = tx2.send(r.into_bytes());
-                }
-                Err(e) => {
-                    error!(logger_, "Failed to fetch message"; "error" => format!("{:?}", e));
-                    break;
+        // And another channel to receive messages from the websocket
+        let logger_ = logger.clone();
+        let (tx2, rx2) = mpsc::unbounded_channel();
+        tokio::task::spawn(async move {
+            while let Some(result) = user_ws_rx.next().await {
+                match result {
+                    Ok(Message::Close(_)) => {
+                        break;
+                    }
+                    Ok(Message::Binary(r)) => {
+                        let _ = tx2.send(r);
+                    }
+                    Ok(Message::Text(r)) => {
+                        let _ = tx2.send(r.into_bytes());
+                    }
+                    Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => (),
+                    Err(e) => {
+                        error!(logger_, "Failed to fetch message"; "error" => format!("{:?}", e));
+                        break;
+                    }
                 }
             }
-        }
-        debug!(logger_, "Ending rx task");
-    });
+            debug!(logger_, "Ending rx task");
+        });
 
-    shengji_handler::entrypoint(tx, rx2, ws_id, logger, backend_storage, stats).await
+        shengji_handler::entrypoint(tx, rx2, ws_id, logger, backend_storage, stats)
+    })
+}
+
+#[allow(unused)]
+async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
+    static DIST: include_dir::Dir<'_> = include_dir::include_dir!("frontend/dist");
+    static FAVICON: include_dir::Dir<'_> = include_dir::include_dir!("favicon");
+    let mime_type = mime_guess::from_path(&path).first_or_text_plain();
+
+    match DIST.get_file(&path).or_else(|| FAVICON.get_file(&path)) {
+        Some(f) => Response::builder()
+            .status(StatusCode::OK)
+            .header(
+                http::header::CONTENT_TYPE,
+                http::HeaderValue::from_str(mime_type.as_ref()).unwrap(),
+            )
+            .body(axum::body::boxed(Full::from(f.contents())))
+            .unwrap(),
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(axum::body::boxed(Empty::new()))
+            .unwrap(),
+    }
 }
 
 #[cfg(test)]
