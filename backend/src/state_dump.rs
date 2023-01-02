@@ -67,14 +67,6 @@ pub async fn load_state(
     let backend_storage = HashMapStorage::new(ROOT_LOGGER.new(o!("component" => "storage")));
 
     let init_logger = ROOT_LOGGER.new(o!("dump_path" => &*DUMP_PATH));
-    let ctrlc_logger = init_logger.clone();
-
-    ctrlc::set_handler(move || {
-        info!(ctrlc_logger, "Received SIGTERM, shutting down");
-        std::process::exit(0);
-    })
-    .unwrap();
-
     match load_dump_file(init_logger.clone(), backend_storage.clone()).await {
         Ok(n) => {
             info!(init_logger, "Loaded games from state dump"; "num_games" => n);

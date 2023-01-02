@@ -103,6 +103,12 @@ async fn runtime_settings() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
+    ctrlc::set_handler(move || {
+        info!(ROOT_LOGGER, "Received SIGTERM, shutting down");
+        std::process::exit(0);
+    })
+    .unwrap();
+
     let (backend_storage, stats) = state_dump::load_state().await?;
 
     tokio::task::spawn(periodically_dump_state(
