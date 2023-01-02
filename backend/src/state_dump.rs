@@ -173,7 +173,7 @@ pub async fn dump_state(
     ));
 
     // Best-effort attempt to write the full state to disk, for fun.
-    match write_state_to_disk(&*DUMP_PATH, &state_dump).await {
+    match write_state_to_disk(&DUMP_PATH, &state_dump).await {
         Ok(()) => {
             info!(logger, "Dumped state to disk");
         }

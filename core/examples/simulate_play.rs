@@ -200,20 +200,14 @@ fn main() {
                                     format.iter().cloned(),
                                     s.propagated().trick_draw_policy(),
                                 );
-                                if let Some(playable) = playables.first() {
-                                    Some(
-                                        playable
-                                            .into_iter()
+                                playables.first().map(|playable| playable
+                                            .iter()
                                             .flat_map(|x| {
-                                                x.into_iter().flat_map(|(card, count)| {
+                                                x.iter().flat_map(|(card, count)| {
                                                     std::iter::repeat(card.card).take(*count)
                                                 })
                                             })
-                                            .collect::<Vec<_>>(),
-                                    )
-                                } else {
-                                    None
-                                }
+                                            .collect::<Vec<_>>())
                             })
                             .next();
 
