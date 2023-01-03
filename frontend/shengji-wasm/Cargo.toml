@@ -12,12 +12,6 @@ publish = false
 [lib]
 crate-type = ["cdylib", "lib"]
 
-[profile.release]
-lto = true
-
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz"]
-
 [dependencies]
 console_error_panic_hook = "0.1.5"
 lazy_static = "1.4.0"

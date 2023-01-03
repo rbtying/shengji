@@ -10,5 +10,8 @@ members = [
 [profile.release]
 lto = true
 
-[profile.release.package."shengji-wasm"]
+[profile.release.package.shengji-wasm]
 opt-level = 'z'
+
+[profile.release.package.wasm-pack.metadata]
+wasm-opt = ["-Oz"]
