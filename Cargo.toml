@@ -11,7 +11,8 @@ members = [
 lto = true
 
 [profile.release.package.shengji-wasm]
-opt-level = 'z'
+# opt-level = 'z'
+debug = true
 
 [profile.release.package.wasm-pack.metadata]
-wasm-opt = ["-Oz"]
+# wasm-opt = ["-Oz"]

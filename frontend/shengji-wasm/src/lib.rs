@@ -57,9 +57,6 @@ pub struct FoundViablePlay {
 
 #[wasm_bindgen]
 pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let FindViablePlaysRequest {
         trump,
         cards,
@@ -100,9 +97,6 @@ pub struct DecomposedTrickFormat {
 
 #[wasm_bindgen]
 pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let DecomposeTrickFormatRequest {
         trick_format,
         hands,
@@ -168,9 +162,6 @@ pub struct CanPlayCardsResponse {
 
 #[wasm_bindgen]
 pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let CanPlayCardsRequest {
         trick,
         id,
@@ -207,9 +198,6 @@ pub struct FindValidBidsResult {
 
 #[wasm_bindgen]
 pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let req: FindValidBidsRequest = req
         .into_serde()
         .map_err(|_| "Failed to deserialize phase")?;
@@ -250,9 +238,6 @@ pub struct SuitGroup {
 
 #[wasm_bindgen]
 pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let SortAndGroupCardsRequest { trump, mut cards } =
         req.into_serde().map_err(|e| e.to_string())?;
 
@@ -286,9 +271,6 @@ pub struct NextThresholdReachableRequest {
 
 #[wasm_bindgen]
 pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let NextThresholdReachableRequest {
         decks,
         params,
@@ -323,9 +305,6 @@ pub struct ScoreSegment {
 
 #[wasm_bindgen]
 pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let ExplainScoringRequest {
         decks,
         params,
@@ -373,9 +352,6 @@ pub struct ComputeScoreResponse {
 
 #[wasm_bindgen]
 pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
-    #[cfg(debug_assertions)]
-    console_error_panic_hook::set_once();
-
     let ComputeScoreRequest {
         decks,
         params,
@@ -404,6 +380,8 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
+    console_error_panic_hook::set_once();
+
     let mut reader = Cursor::new(req);
     let mut frame_decoder = ZSTD_DECODER.lock().unwrap();
     let mut decoder =
