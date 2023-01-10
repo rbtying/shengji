@@ -25,6 +25,14 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+
       - name: Build frontend
         run: yarn build
         working-directory: ./frontend
@@ -40,15 +48,6 @@ jobs:
       - name: Check frontend formatting
         run: yarn prettier --check
         working-directory: ./frontend
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - name: Cache cargo build
-        uses: Swatinem/rust-cache@v2
-
       - name: Lint Rust code
         run: cargo clippy
 
