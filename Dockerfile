@@ -28,10 +28,12 @@ COPY --from=frontend-cacher /app/target /app/target
 COPY Cargo.toml .
 COPY Cargo.lock .
 COPY core ./core
+COPY mechanics ./mechanics
 COPY backend/backend-types ./backend/backend-types/
 COPY frontend ./frontend
+# Necessary to make cargo-metadata happy, but not needed for compilation
 COPY backend/Cargo.toml ./backend/Cargo.toml
-COPY backend/src/main.rs ./backend/src/
+COPY backend/src/main.rs ./backend/src/main.rs
 COPY storage ./storage
 WORKDIR /app/frontend
 RUN yarn build
@@ -70,6 +72,7 @@ esac
 COPY Cargo.toml .
 COPY Cargo.lock .
 COPY core ./core
+COPY mechanics ./mechanics
 COPY frontend ./frontend
 COPY backend/ ./backend
 COPY storage ./storage
@@ -104,6 +107,7 @@ esac
 COPY Cargo.toml .
 COPY Cargo.lock .
 COPY core ./core
+COPY mechanics ./mechanics
 COPY frontend ./frontend
 COPY backend/ ./backend
 COPY storage ./storage

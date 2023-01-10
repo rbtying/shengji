@@ -1,0 +1,16 @@
+[package]
+name = "shengji-json-schema"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+schemars = "0.8"
+serde = { version = "1.0", features = ["derive"]}
+shengji-mechanics = { path = "../../mechanics" }
+shengji-types = { path = "../../backend/backend-types" }
+serde_json = "1.0"
+tempdir = "0.3"
+shengji-core = { path = "../../core" }
+shengji-wasm = { path = "../shengji-wasm" }
