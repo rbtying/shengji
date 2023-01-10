@@ -6,12 +6,21 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::hands::{HandError, Hands};
-use crate::message::MessageVariant;
 use crate::ordered_card::{
     attempt_format_match, subsequent_decomposition_ordering, AdjacentTupleSizes, MatchingCards,
     OrderedCard,
 };
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
+
+pub enum PlayCardsMessage {
+    ThrowFailed {
+        original_cards: Vec<Card>,
+        better_player: Option<PlayerID>,
+    },
+    PlayedCards {
+        cards: Vec<Card>,
+    },
+}
 
 #[derive(Error, Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum TrickError {
@@ -49,7 +58,7 @@ impl Default for TrickDrawPolicy {
     }
 }
 
-impl_slog_value!(TrickDrawPolicy);
+crate::impl_slog_value!(TrickDrawPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum ThrowEvaluationPolicy {
@@ -58,7 +67,7 @@ pub enum ThrowEvaluationPolicy {
     TrickUnitLength,
 }
 
-impl_slog_value!(ThrowEvaluationPolicy);
+crate::impl_slog_value!(ThrowEvaluationPolicy);
 
 impl Default for ThrowEvaluationPolicy {
     fn default() -> Self {
@@ -83,7 +92,7 @@ impl Default for TractorRequirements {
     }
 }
 
-impl_slog_value!(TractorRequirements);
+crate::impl_slog_value!(TractorRequirements);
 
 type Members = Vec<OrderedCard>;
 
@@ -512,7 +521,7 @@ impl Trick {
     pub fn play_cards(
         &mut self,
         args: PlayCards<'_, '_, '_>,
-    ) -> Result<Vec<MessageVariant>, TrickError> {
+    ) -> Result<Vec<PlayCardsMessage>, TrickError> {
         let PlayCards {
             id,
             hands,
@@ -609,7 +618,7 @@ impl Trick {
 
                     tf.units = vec![forced_unit];
 
-                    msgs.push(MessageVariant::ThrowFailed {
+                    msgs.push(PlayCardsMessage::ThrowFailed {
                         original_cards: cards.clone(),
                         better_player: if hide_throw_halting_player {
                             None
@@ -630,13 +639,13 @@ impl Trick {
 
             self.trick_format = Some(tf);
 
-            msgs.push(MessageVariant::PlayedCards {
+            msgs.push(PlayCardsMessage::PlayedCards {
                 cards: cards.clone(),
             });
 
             (cards, bad_throw_cards, better_player)
         } else {
-            msgs.push(MessageVariant::PlayedCards {
+            msgs.push(PlayCardsMessage::PlayedCards {
                 cards: cards.clone(),
             });
             (cards, vec![], None)

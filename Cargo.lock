@@ -1191,6 +1191,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shengji-core",
+ "shengji-mechanics",
  "shengji-types",
  "slog",
  "slog-async",
@@ -1212,6 +1213,24 @@ dependencies = [
  "permutohedron",
  "rand 0.7.3",
  "rand_distr",
+ "schemars",
+ "serde",
+ "serde_json",
+ "shengji-mechanics",
+ "slog",
+ "slog_derive",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "shengji-mechanics"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "permutohedron",
+ "rand 0.7.3",
  "schemars",
  "serde",
  "serde_json",
@@ -1241,6 +1260,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shengji-core",
+ "shengji-mechanics",
  "shengji-types",
  "tempdir",
  "wasm-bindgen",

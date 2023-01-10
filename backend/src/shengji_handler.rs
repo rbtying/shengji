@@ -3,7 +3,8 @@ use std::sync::Arc;
 use slog::{debug, error, info, o, Logger};
 use tokio::sync::{mpsc, oneshot, Mutex};
 
-use shengji_core::{interactive::InteractiveGame, types::PlayerID};
+use shengji_core::interactive::InteractiveGame;
+use shengji_mechanics::types::PlayerID;
 use shengji_types::GameMessage;
 use storage::Storage;
 

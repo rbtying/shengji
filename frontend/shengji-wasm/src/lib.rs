@@ -5,7 +5,7 @@ use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use shengji_core::{
+use shengji_mechanics::{
     bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
     deck::Deck,
     hands::Hands,

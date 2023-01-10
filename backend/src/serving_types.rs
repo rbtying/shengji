@@ -2,10 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use shengji_core::{
-    interactive::Action,
-    types::{CardInfo, PlayerID},
-};
+use shengji_core::interactive::Action;
+use shengji_mechanics::types::{CardInfo, PlayerID};
 use shengji_types::GameMessage;
 use storage::State;
 

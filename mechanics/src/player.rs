@@ -5,10 +5,10 @@ use crate::types::{Number, PlayerID, Rank};
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Player {
-    pub(crate) id: PlayerID,
-    pub(crate) name: String,
-    pub(crate) level: Rank,
-    pub(crate) metalevel: usize,
+    pub id: PlayerID,
+    pub name: String,
+    pub level: Rank,
+    pub metalevel: usize,
 }
 
 impl Player {

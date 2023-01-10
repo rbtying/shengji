@@ -3,7 +3,8 @@ use std::io::{self, ErrorKind};
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use shengji_core::{interactive::InteractiveGame, types::PlayerID};
+use shengji_core::interactive::InteractiveGame;
+use shengji_mechanics::types::PlayerID;
 use shengji_types::GameMessage;
 use storage::Storage;
 

@@ -28,7 +28,8 @@ use axum::routing::get_service;
 #[cfg(feature = "dynamic")]
 use tower_http::services::ServeDir;
 
-use shengji_core::{settings, types::FULL_DECK};
+use shengji_core::settings;
+use shengji_mechanics::types::FULL_DECK;
 use shengji_types::ZSTD_ZSTD_DICT;
 use storage::{HashMapStorage, Storage};
 

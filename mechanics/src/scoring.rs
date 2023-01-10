@@ -18,7 +18,7 @@ impl Default for BonusLevelPolicy {
         BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
     }
 }
-impl_slog_value!(BonusLevelPolicy);
+crate::impl_slog_value!(BonusLevelPolicy);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct PartialGameScoreResult {
@@ -83,7 +83,7 @@ pub struct GameScoringParameters {
     truncate_zero_crossing_window: bool,
     pub bonus_level_policy: BonusLevelPolicy,
 }
-impl_slog_value!(GameScoringParameters);
+crate::impl_slog_value!(GameScoringParameters);
 
 impl Default for GameScoringParameters {
     fn default() -> Self {

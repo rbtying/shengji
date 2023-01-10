@@ -4,9 +4,10 @@ use anyhow::{bail, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use shengji_mechanics::types::PlayerID;
+
 use crate::message::MessageVariant;
 use crate::settings::PropagatedState;
-use crate::types::PlayerID;
 
 pub mod draw_phase;
 pub mod exchange_phase;

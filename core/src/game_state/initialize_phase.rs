@@ -6,8 +6,9 @@ use rand::{seq::SliceRandom, RngCore};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use shengji_mechanics::types::{Card, Number, PlayerID, Rank, ALL_SUITS};
+
 use crate::settings::{GameMode, GameModeSettings, GameStartPolicy, PropagatedState};
-use crate::types::{Card, Number, PlayerID, Rank, ALL_SUITS};
 
 use crate::game_state::DrawPhase;
 
