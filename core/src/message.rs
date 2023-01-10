@@ -4,17 +4,20 @@ use anyhow::Error;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
-use crate::deck::Deck;
+use shengji_mechanics::bidding::{
+    BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy,
+};
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::scoring::GameScoringParameters;
+use shengji_mechanics::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
+use shengji_mechanics::types::{Card, PlayerID, Rank};
+
 use crate::game_state::play_phase::PlayerGameFinishedResult;
-use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
     GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
     MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
-use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
-use crate::types::{Card, PlayerID, Rank};
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]

@@ -18,5 +18,9 @@ export const RandomizePlayersButton = (props: Props): JSX.Element => {
     });
   };
 
-  return <button onClick={randomize}>{props.children}</button>;
+  return (
+    <button className="big" onClick={randomize}>
+      {props.children}
+    </button>
+  );
 };

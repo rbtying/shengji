@@ -3,18 +3,23 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use slog::{debug, info, o, Logger};
 
-use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
-use crate::deck::Deck;
+use shengji_mechanics::bidding::{
+    BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy,
+};
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::scoring::GameScoringParameters;
+use shengji_mechanics::trick::{
+    ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit,
+};
+use shengji_mechanics::types::{Card, PlayerID, Rank};
+
 use crate::game_state::{initialize_phase::InitializePhase, GameState};
 use crate::message::MessageVariant;
-use crate::scoring::GameScoringParameters;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
     GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
     KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
-use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit};
-use crate::types::{Card, PlayerID, Rank};
 
 pub struct InteractiveGame {
     state: GameState,

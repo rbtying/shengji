@@ -1,9 +1,7 @@
 [workspace]
 members = [
-  "core",
-  "storage",
   "backend",
-  "backend/backend-types",
+  "frontend/json-schema-bin",
   "frontend/shengji-wasm"
 ]
 
@@ -11,8 +9,4 @@ members = [
 lto = true
 
 [profile.release.package.shengji-wasm]
-# opt-level = 'z'
 debug = true
-
-[profile.release.package.wasm-pack.metadata]
-# wasm-opt = ["-Oz"]

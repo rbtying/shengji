@@ -608,6 +608,8 @@ export interface _Combined {
   action: Action;
   can_play_cards_request: CanPlayCardsRequest;
   can_play_cards_response: CanPlayCardsResponse;
+  card_info: CardInfo;
+  card_info_request: CardInfoRequest;
   compute_score_request: ComputeScoreRequest;
   compute_score_response: ComputeScoreResponse;
   decompose_trick_format_request: DecomposeTrickFormatRequest;
@@ -727,6 +729,21 @@ export interface TrickFormat {
 }
 export interface CanPlayCardsResponse {
   playable: boolean;
+  [k: string]: unknown;
+}
+export interface CardInfo {
+  display_value: string;
+  effective_suit: EffectiveSuit;
+  number?: string | null;
+  points: number;
+  suit?: Suit | null;
+  typ: string;
+  value: string;
+  [k: string]: unknown;
+}
+export interface CardInfoRequest {
+  card: Card;
+  trump: Trump;
   [k: string]: unknown;
 }
 export interface ComputeScoreRequest {

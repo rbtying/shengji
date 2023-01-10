@@ -4,14 +4,15 @@ use anyhow::{anyhow, bail, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::bidding::Bid;
-use crate::deck::Deck;
-use crate::hands::Hands;
+use shengji_mechanics::bidding::Bid;
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::hands::Hands;
+use shengji_mechanics::types::{Card, Number, PlayerID, Rank, Trump};
+
 use crate::message::MessageVariant;
 use crate::settings::{
     Friend, FriendSelection, FriendSelectionPolicy, GameMode, KittyTheftPolicy, PropagatedState,
 };
-use crate::types::{Card, Number, PlayerID, Rank, Trump};
 
 use crate::game_state::{initialize_phase::InitializePhase, play_phase::PlayPhase};
 

@@ -98,13 +98,18 @@ const Cards = (props: IProps): JSX.Element => {
                 <Card
                   key={`${gidx}-${idx}`}
                   onClick={handleUnselect(c.card)}
+                  trump={props.trump}
                   card={c.card}
                 />
               ))}
             </div>
           ))}
           {props.selectedCards.length === 0 && (
-            <Card card="🂠" className={classNames({ notify: notifyEmpty })} />
+            <Card
+              card="🂠"
+              trump={props.trump}
+              className={classNames({ notify: notifyEmpty })}
+            />
           )}
         </div>
       ) : null}
@@ -126,13 +131,16 @@ const Cards = (props: IProps): JSX.Element => {
                 )}
                 onClick={handleSelect(c.card)}
                 card={c.card}
+                trump={props.trump}
                 onMouseEnter={(_) => setHighlightedSuit(c.suit)}
                 onMouseLeave={(_) => setHighlightedSuit(null)}
               />
             ))}
           </div>
         ))}
-        {unselectedCardGroups.length === 0 && <Card card="🂠" />}
+        {unselectedCardGroups.length === 0 && (
+          <Card trump={props.trump} card="🂠" />
+        )}
       </div>
     </div>
   );

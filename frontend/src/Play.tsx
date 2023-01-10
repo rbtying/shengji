@@ -239,6 +239,7 @@ const Play = (props: IProps): JSX.Element => {
           points={playPhase.points}
           penalties={playPhase.penalties}
           decks={playPhase.decks}
+          trump={playPhase.trump}
           players={playPhase.propagated.players}
           landlordTeam={playPhase.landlords_team}
           landlord={playPhase.landlord}
@@ -301,6 +302,7 @@ const Play = (props: IProps): JSX.Element => {
           {playPhase.propagated.players.map((p) => (
             <LabeledPlay
               key={p.id}
+              trump={playPhase.trump}
               label={p.name}
               cards={getCardsFromHand(p.id).flatMap((g) => g.cards)}
             />
@@ -384,11 +386,17 @@ const Play = (props: IProps): JSX.Element => {
         players={playPhase.propagated.players}
         landlordTeam={playPhase.landlords_team}
         landlord={playPhase.landlord}
+        trump={playPhase.trump}
         hideLandlordPoints={playPhase.propagated.hide_landlord_points}
         gameScoringParameters={playPhase.propagated.game_scoring_parameters}
         smallerTeamSize={smallerTeamSize}
       />
-      <LabeledPlay className="kitty" cards={playPhase.kitty} label="底牌" />
+      <LabeledPlay
+        trump={playPhase.trump}
+        className="kitty"
+        cards={playPhase.kitty}
+        label="底牌"
+      />
     </div>
   );
 };

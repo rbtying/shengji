@@ -1,6 +1,6 @@
 import * as React from "react";
 import ProgressBar from "./ProgressBar";
-import { Player, GameScoringParameters, Deck } from "./gen-types";
+import { Player, GameScoringParameters, Deck, Trump } from "./gen-types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
@@ -16,6 +16,7 @@ interface IProps {
   penalties: { [playerId: number]: number };
   landlordTeam: number[];
   landlord: number;
+  trump: Trump;
   hideLandlordPoints: boolean;
   smallerTeamSize: boolean;
   gameScoringParameters: GameScoringParameters;
@@ -98,6 +99,7 @@ const Points = (props: IProps): JSX.Element => {
       return (
         <LabeledPlay
           key={player.id}
+          trump={props.trump}
           className={classNames({ landlord: onLandlordTeam })}
           label={`${player.name}: ${pointsPerPlayer[player.id] - penalty}分`}
           cards={cards}

@@ -35,6 +35,7 @@ interface IBidAreaProps {
 const BidArea = (props: IBidAreaProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
   const { findValidBids } = React.useContext(WasmContext);
+  const trump = props.trump == null ? { NoTrump: {} } : props.trump;
 
   const takeBackBid = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
@@ -58,6 +59,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
         {props.autobid !== null ? (
           <LabeledPlay
             label={`${players[props.autobid.id].name} (from bottom)`}
+            trump={trump}
             cards={[props.autobid.card]}
           />
         ) : null}
@@ -67,12 +69,13 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
             <LabeledPlay
               label={name}
               key={idx}
+              trump={trump}
               cards={Array(bid.count).fill(bid.card)}
             />
           );
         })}
         {props.bids.length === 0 && props.autobid === null ? (
-          <LabeledPlay label={"No bids yet..."} cards={["🂠"]} />
+          <LabeledPlay trump={trump} label={"No bids yet..."} cards={["🂠"]} />
         ) : null}
       </div>
     );
@@ -126,6 +129,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
             <LabeledPlay
               label={`${players[props.autobid.id].name} (from bottom)`}
               cards={[props.autobid.card]}
+              trump={trump}
             />
           ) : null}
           {props.bids.map((bid, idx) => {
@@ -134,6 +138,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
               <LabeledPlay
                 label={name}
                 key={idx}
+                trump={trump}
                 cards={Array(bid.count).fill(bid.card)}
               />
             );
@@ -143,7 +148,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
           props.trump?.NoTrump?.number === null ? (
             <>No bidding in no trump!</>
           ) : props.bids.length === 0 && props.autobid === null ? (
-            <LabeledPlay label={"No bids yet..."} cards={["🂠"]} />
+            <LabeledPlay trump={trump} label={"No bids yet..."} cards={["🂠"]} />
           ) : null}
         </div>
         {props.prefixButtons}
@@ -168,6 +173,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
         {validBids.map((bid, idx) => {
           return (
             <LabeledPlay
+              trump={trump}
               cards={Array(bid.count).fill(bid.card)}
               key={idx}
               label={`Bid option ${idx + 1}`}

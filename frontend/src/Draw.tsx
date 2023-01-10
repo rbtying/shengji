@@ -253,6 +253,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         <LabeledPlay
           className="kitty"
           cards={this.props.state.kitty}
+          trump={{ NoTrump: {} }}
           label="底牌"
         />
       </div>

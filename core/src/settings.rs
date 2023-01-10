@@ -7,29 +7,16 @@ use serde::{Deserialize, Serialize};
 use slog_derive::KV;
 use url::Url;
 
-use crate::bidding::{BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy};
-use crate::deck::Deck;
-use crate::message::MessageVariant;
-use crate::player::Player;
-use crate::scoring::GameScoringParameters;
-use crate::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
-use crate::types::{Card, Number, PlayerID, Rank};
+use shengji_mechanics::bidding::{
+    BidPolicy, BidReinforcementPolicy, BidTakebackPolicy, JokerBidPolicy,
+};
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::player::Player;
+use shengji_mechanics::scoring::GameScoringParameters;
+use shengji_mechanics::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
+use shengji_mechanics::types::{Card, Number, PlayerID, Rank};
 
-#[macro_export]
-macro_rules! impl_slog_value {
-    ($x: ident) => {
-        impl slog::Value for $x {
-            fn serialize(
-                &self,
-                _: &slog::Record,
-                key: slog::Key,
-                serializer: &mut dyn slog::Serializer,
-            ) -> slog::Result {
-                serializer.emit_str(key, &format!("{:?}", self))
-            }
-        }
-    };
-}
+use crate::message::MessageVariant;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, PartialEq, Eq)]
 pub struct Friend {
@@ -100,7 +87,7 @@ impl Default for GameModeSettings {
     }
 }
 
-impl_slog_value!(GameModeSettings);
+shengji_mechanics::impl_slog_value!(GameModeSettings);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum ThrowPenalty {
@@ -114,7 +101,7 @@ impl Default for ThrowPenalty {
     }
 }
 
-impl_slog_value!(ThrowPenalty);
+shengji_mechanics::impl_slog_value!(ThrowPenalty);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyPenalty {
@@ -128,7 +115,7 @@ impl Default for KittyPenalty {
     }
 }
 
-impl_slog_value!(KittyPenalty);
+shengji_mechanics::impl_slog_value!(KittyPenalty);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum AdvancementPolicy {
@@ -143,7 +130,7 @@ impl Default for AdvancementPolicy {
     }
 }
 
-impl_slog_value!(AdvancementPolicy);
+shengji_mechanics::impl_slog_value!(AdvancementPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum FriendSelectionPolicy {
@@ -159,7 +146,7 @@ impl Default for FriendSelectionPolicy {
     }
 }
 
-impl_slog_value!(FriendSelectionPolicy);
+shengji_mechanics::impl_slog_value!(FriendSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum MultipleJoinPolicy {
@@ -173,7 +160,7 @@ impl Default for MultipleJoinPolicy {
     }
 }
 
-impl_slog_value!(MultipleJoinPolicy);
+shengji_mechanics::impl_slog_value!(MultipleJoinPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum FirstLandlordSelectionPolicy {
@@ -187,7 +174,7 @@ impl Default for FirstLandlordSelectionPolicy {
     }
 }
 
-impl_slog_value!(FirstLandlordSelectionPolicy);
+shengji_mechanics::impl_slog_value!(FirstLandlordSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyBidPolicy {
@@ -201,7 +188,7 @@ impl Default for KittyBidPolicy {
     }
 }
 
-impl_slog_value!(KittyBidPolicy);
+shengji_mechanics::impl_slog_value!(KittyBidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum PlayTakebackPolicy {
@@ -215,7 +202,7 @@ impl Default for PlayTakebackPolicy {
     }
 }
 
-impl_slog_value!(PlayTakebackPolicy);
+shengji_mechanics::impl_slog_value!(PlayTakebackPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum KittyTheftPolicy {
@@ -229,7 +216,7 @@ impl Default for KittyTheftPolicy {
     }
 }
 
-impl_slog_value!(KittyTheftPolicy);
+shengji_mechanics::impl_slog_value!(KittyTheftPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum GameShadowingPolicy {
@@ -243,7 +230,7 @@ impl Default for GameShadowingPolicy {
     }
 }
 
-impl_slog_value!(GameShadowingPolicy);
+shengji_mechanics::impl_slog_value!(GameShadowingPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum GameStartPolicy {
@@ -257,11 +244,11 @@ impl Default for GameStartPolicy {
     }
 }
 
-impl_slog_value!(GameStartPolicy);
+shengji_mechanics::impl_slog_value!(GameStartPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct MaxRank(Rank);
-impl_slog_value!(MaxRank);
+shengji_mechanics::impl_slog_value!(MaxRank);
 impl Default for MaxRank {
     fn default() -> Self {
         MaxRank(Rank::NoTrump)

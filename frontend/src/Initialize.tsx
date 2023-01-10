@@ -1,7 +1,7 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
 import * as ReactModal from "react-modal";
-import { IEmojiData } from "emoji-picker-react";
+import { EmojiStyle } from "emoji-picker-react";
 import ReadyCheck from "./ReadyCheck";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
@@ -43,6 +43,7 @@ const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",
   left: "50%",
+  width: "80%",
   transform: "translate(-50%, -50%)",
 };
 
@@ -314,7 +315,6 @@ const DeckSettings = (props: IDeckSettings): JSX.Element => {
           </form>
         </div>
       ))}
-      <pre>{JSON.stringify(props.decks, null, 2)}</pre>
     </>
   );
 
@@ -784,17 +784,10 @@ const Initialize = (props: IProps): JSX.Element => {
     send({ Action: "StartGame" });
   };
 
-  const setEmoji = (
-    evt: React.MouseEvent,
-    emojiObject: IEmojiData | null
-  ): void => {
-    evt.preventDefault();
+  const setEmoji = (emoji: string): void => {
     send({
       Action: {
-        SetLandlordEmoji:
-          emojiObject !== undefined && emojiObject !== null
-            ? emojiObject.emoji
-            : null,
+        SetLandlordEmoji: emoji,
       },
     });
   };
@@ -1143,6 +1136,7 @@ const Initialize = (props: IProps): JSX.Element => {
       {props.state.propagated.players.length >= 4 ? (
         <>
           <button
+            className="big"
             disabled={
               props.state.propagated.game_start_policy ===
                 "AllowLandlordOnly" &&
@@ -1343,7 +1337,10 @@ const Initialize = (props: IProps): JSX.Element => {
             </button>
             {showPicker ? (
               <React.Suspense fallback={"..."}>
-                <Picker onEmojiClick={setEmoji} />
+                <Picker
+                  onEmojiClick={(ecd) => setEmoji(ecd.emoji)}
+                  emojiStyle={EmojiStyle.NATIVE}
+                />
               </React.Suspense>
             ) : null}
           </label>

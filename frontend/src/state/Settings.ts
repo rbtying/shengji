@@ -3,6 +3,7 @@ import {
   booleanLocalStorageState,
   JSONLocalStorageState,
   numberLocalStorageState,
+  stringLocalStorageState,
 } from "../localStorageState";
 
 export interface Settings {
@@ -23,6 +24,8 @@ export interface Settings {
   showPlayerName: boolean;
   hideChatBox: boolean;
   showPointsAboveGame: boolean;
+  pointCardIcon: string;
+  trumpCardIcon: string;
   autodrawSpeedMs: number | null;
 }
 
@@ -50,7 +53,8 @@ const unsetAutoPlayWhenWinnerChanges: State<boolean> = booleanLocalStorageState(
   "unset_autoplay_on_winner_change"
 );
 const showTrickInPlayerOrder: State<boolean> = booleanLocalStorageState(
-  "show_trick_in_player_order"
+  "show_trick_in_player_order",
+  true
 );
 const separateCardsBySuit: State<boolean> = booleanLocalStorageState(
   "separate_cards_by_suit"
@@ -73,6 +77,16 @@ const showPlayerName: State<boolean> = booleanLocalStorageState(
 const hideChatBox: State<boolean> = booleanLocalStorageState("hide_chat_box");
 const showPointsAboveGame: State<boolean> =
   booleanLocalStorageState("points_above_game");
+export const DEFAULT_POINT_CARD_ICON: string = "💰";
+const pointCardIcon: State<string> = stringLocalStorageState(
+  "point_card_icon",
+  DEFAULT_POINT_CARD_ICON
+);
+export const DEFAULT_TRUMP_CARD_ICON: string = "👑";
+const trumpCardIcon: State<string> = stringLocalStorageState(
+  "trump_card_icon",
+  DEFAULT_TRUMP_CARD_ICON
+);
 const autodrawSpeedMs: State<number | null> = numberLocalStorageState(
   "autodrawSpeedMs",
   null
@@ -95,6 +109,8 @@ const settings: State<Settings> = combineState({
   showPlayerName,
   hideChatBox,
   showPointsAboveGame,
+  pointCardIcon,
+  trumpCardIcon,
   autodrawSpeedMs,
 });
 

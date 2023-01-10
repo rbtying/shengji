@@ -4,9 +4,10 @@ use anyhow::{bail, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use shengji_mechanics::types::PlayerID;
+
 use crate::message::MessageVariant;
 use crate::settings::PropagatedState;
-use crate::types::PlayerID;
 
 pub mod draw_phase;
 pub mod exchange_phase;
@@ -168,10 +169,11 @@ mod tests {
         KittyTheftPolicy,
     };
 
+    use shengji_mechanics::player::Player;
+    use shengji_mechanics::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
+
     use crate::game_state::{initialize_phase::InitializePhase, play_phase::PlayPhase};
     use crate::message::MessageVariant;
-    use crate::player::Player;
-    use crate::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
 
     const R2: Rank = Rank::Number(Number::Two);
     const R3: Rank = Rank::Number(Number::Three);
@@ -694,8 +696,10 @@ mod tests {
         use cards::*;
 
         let mut init = InitializePhase::new();
-        init.set_trick_draw_policy(crate::trick::TrickDrawPolicy::LongerTuplesProtected)
-            .unwrap();
+        init.set_trick_draw_policy(
+            shengji_mechanics::trick::TrickDrawPolicy::LongerTuplesProtected,
+        )
+        .unwrap();
         let p1 = init.add_player("p1".into()).unwrap().0;
         let p2 = init.add_player("p2".into()).unwrap().0;
         let p3 = init.add_player("p3".into()).unwrap().0;

@@ -2,12 +2,13 @@ use anyhow::{anyhow, bail, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::bidding::Bid;
-use crate::deck::Deck;
-use crate::hands::Hands;
+use shengji_mechanics::bidding::Bid;
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::hands::Hands;
+use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
+
 use crate::message::MessageVariant;
 use crate::settings::{FirstLandlordSelectionPolicy, GameMode, KittyBidPolicy, PropagatedState};
-use crate::types::{Card, PlayerID, Rank, Trump};
 
 use crate::game_state::exchange_phase::ExchangePhase;
 use crate::game_state::initialize_phase::InitializePhase;

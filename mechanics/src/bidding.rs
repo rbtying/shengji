@@ -18,7 +18,7 @@ impl Default for BidPolicy {
         BidPolicy::JokerOrGreaterLength
     }
 }
-impl_slog_value!(BidPolicy);
+crate::impl_slog_value!(BidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum JokerBidPolicy {
@@ -34,7 +34,7 @@ impl Default for JokerBidPolicy {
     }
 }
 
-impl_slog_value!(JokerBidPolicy);
+crate::impl_slog_value!(JokerBidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum BidReinforcementPolicy {
@@ -51,7 +51,7 @@ impl Default for BidReinforcementPolicy {
         BidReinforcementPolicy::ReinforceWhileWinning
     }
 }
-impl_slog_value!(BidReinforcementPolicy);
+crate::impl_slog_value!(BidReinforcementPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum BidTakebackPolicy {
@@ -65,15 +65,15 @@ impl Default for BidTakebackPolicy {
     }
 }
 
-impl_slog_value!(BidTakebackPolicy);
+crate::impl_slog_value!(BidTakebackPolicy);
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Hash)]
 pub struct Bid {
-    pub(crate) id: PlayerID,
-    pub(crate) card: Card,
-    pub(crate) count: usize,
+    pub id: PlayerID,
+    pub card: Card,
+    pub count: usize,
     #[serde(default)]
-    pub(crate) epoch: usize,
+    pub epoch: usize,
 }
 
 impl Bid {

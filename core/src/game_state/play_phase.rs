@@ -4,17 +4,18 @@ use anyhow::{anyhow, bail, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::deck::Deck;
-use crate::hands::Hands;
+use shengji_mechanics::deck::Deck;
+use shengji_mechanics::hands::Hands;
+use shengji_mechanics::player::Player;
+use shengji_mechanics::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
+use shengji_mechanics::trick::{PlayCards, PlayCardsMessage, Trick, TrickEnded, TrickUnit};
+use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
+
 use crate::message::MessageVariant;
-use crate::player::Player;
-use crate::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
 use crate::settings::{
     AdvancementPolicy, GameMode, KittyPenalty, MultipleJoinPolicy, PlayTakebackPolicy,
     PropagatedState, ThrowPenalty,
 };
-use crate::trick::{PlayCards, Trick, TrickEnded, TrickUnit};
-use crate::types::{Card, PlayerID, Rank, Trump};
 
 use crate::game_state::initialize_phase::InitializePhase;
 
@@ -181,12 +182,12 @@ impl PlayPhase {
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {
                 match msg {
-                    MessageVariant::PlayedCards { ref mut cards, .. } => {
+                    PlayCardsMessage::PlayedCards { ref mut cards, .. } => {
                         for card in cards {
                             *card = Card::Unknown;
                         }
                     }
-                    MessageVariant::ThrowFailed {
+                    PlayCardsMessage::ThrowFailed {
                         ref mut original_cards,
                         ..
                     } => {
@@ -194,11 +195,22 @@ impl PlayPhase {
                             *card = Card::Unknown;
                         }
                     }
-                    _ => (),
                 }
             }
         }
-        Ok(msgs)
+        Ok(msgs
+            .into_iter()
+            .map(|p| match p {
+                PlayCardsMessage::ThrowFailed {
+                    original_cards,
+                    better_player,
+                } => MessageVariant::ThrowFailed {
+                    original_cards,
+                    better_player,
+                },
+                PlayCardsMessage::PlayedCards { cards } => MessageVariant::PlayedCards { cards },
+            })
+            .collect())
     }
 
     pub fn take_back_cards(&mut self, id: PlayerID) -> Result<(), Error> {

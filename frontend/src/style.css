@@ -12,7 +12,7 @@ body {
   color: #fff;
 }
 
-button {
+button.big {
   padding: 10px;
   cursor: pointer;
   margin: 10px;
@@ -140,17 +140,31 @@ button.normal {
 }
 
 .hand .unselected-cards .card:hover .card-label {
-  bottom: 4.25em;
+  transform: translateY(-1.2em);
 }
 
-.hand .unselected-cards .card.svg:hover svg {
-  margin-bottom: 0.2em;
-  margin-top: -0.2em;
+.card .card-icon {
+  position: absolute;
+  font-size: initial;
+  left: 0.35em;
+  top: 0.5em;
+  z-index: 1;
 }
 
-.hand .unselected-cards .card.svg:hover .card-label {
-  left: 0.15em;
-  bottom: 5.4em;
+.more .card .card-icon {
+  top: -0.1em;
+}
+
+.card.svg .card-icon {
+  top: -0.16em;
+}
+
+.more .card.svg .card-icon {
+  top: -0.6em;
+}
+
+.hand .unselected-cards .card:hover .card-icon {
+  transform: translateY(-1.2em);
 }
 
 .kitty {
@@ -160,12 +174,6 @@ button.normal {
 .always-show-labels .card .card-label,
 .card:hover .card-label {
   display: inline-block;
-}
-
-.always-show-labels .card.svg .card-label,
-.card.svg:hover .card-label {
-  left: 0.15em;
-  bottom: 2.6em;
 }
 
 .ReactModal__Overlay {

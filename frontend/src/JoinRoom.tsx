@@ -70,7 +70,11 @@ const JoinRoom = (props: IProps): JSX.Element => {
 
   return (
     <div>
-      <LabeledPlay cards={["🃟", "🃟", "🃏", "🃏"]} label={null}></LabeledPlay>
+      <LabeledPlay
+        cards={["🃟", "🃟", "🃏", "🃏"]}
+        trump={{ NoTrump: {} }}
+        label={null}
+      ></LabeledPlay>
       <form className="join-room" onSubmit={handleSubmit}>
         <div>
           <h2>

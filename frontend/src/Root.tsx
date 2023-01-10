@@ -117,6 +117,7 @@ const Root = (): JSX.Element => {
                     send({ Action: "ResetGame" });
                   }
                 }}
+                title="Return to the game settings screen and re-deal all cards"
               >
                 Reset game
               </a>

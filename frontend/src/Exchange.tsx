@@ -167,7 +167,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           </h2>
           <div className="kitty">
             {this.props.state.kitty.map((c, idx) => (
-              <Card key={idx} onClick={() => this.moveCardToHand(c)} card={c} />
+              <Card
+                trump={this.props.state.trump}
+                key={idx}
+                onClick={() => this.moveCardToHand(c)}
+                card={c}
+              />
             ))}
           </div>
           {kittyTheftEnabled ? (
@@ -241,6 +246,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           />
           <LabeledPlay
             className="kitty"
+            trump={this.props.state.trump}
             cards={this.props.state.kitty}
             label="底牌"
           />

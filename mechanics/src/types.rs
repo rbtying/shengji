@@ -304,11 +304,11 @@ pub enum EffectiveSuit {
 
 #[derive(Copy, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Hash)]
 pub struct CardInfo {
-    value: char,
-    display_value: char,
-    typ: char,
-    number: Option<&'static str>,
-    points: usize,
+    pub value: char,
+    pub display_value: char,
+    pub typ: char,
+    pub number: Option<&'static str>,
+    pub points: usize,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
