@@ -6,11 +6,14 @@ import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 import { SettingsContext } from "./AppStateProvider";
 import { ISuitOverrides } from "./state/Settings";
+import { Trump } from "./gen-types";
+import WasmContext from "./WasmContext";
 
 const SvgCard = React.lazy(async () => await import("./SvgCard"));
 
 interface IProps {
   card: string;
+  trump: Trump;
   smaller?: boolean;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
@@ -20,6 +23,7 @@ interface IProps {
 
 const Card = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
+  const { getCardInfo } = React.useContext(WasmContext);
   if (!(props.card in cardLookup)) {
     const nonSVG = (
       <span className={classNames("card", "unknown", props.className)}>
@@ -55,6 +59,7 @@ const Card = (props: IProps): JSX.Element => {
     }
   } else {
     const cardInfo = cardLookup[props.card];
+    const extraInfo = getCardInfo({ card: props.card, trump: props.trump });
     const nonSVG = (
       <span
         className={classNames("card", cardInfo.typ, props.className)}
@@ -64,6 +69,10 @@ const Card = (props: IProps): JSX.Element => {
       >
         <div className="card-label">
           <InlineCard card={props.card} />
+        </div>
+        <div className="card-icon">
+          {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
+          {extraInfo.points > 0 && settings.pointCardIcon}
         </div>
         <CardCanvas
           card={cardInfo.display_value}
@@ -92,6 +101,10 @@ const Card = (props: IProps): JSX.Element => {
           >
             <div className="card-label">
               <InlineCard card={props.card} />
+            </div>
+            <div className="card-icon">
+              {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
+              {extraInfo.points > 0 && settings.pointCardIcon}
             </div>
             <SvgCard
               fourColor={settings.fourColor}

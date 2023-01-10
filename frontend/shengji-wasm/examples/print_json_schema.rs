@@ -4,11 +4,12 @@ use schemars::{schema_for, JsonSchema};
 use shengji_core::interactive::Action;
 use shengji_types::GameMessage;
 use shengji_wasm::{
-    CanPlayCardsRequest, CanPlayCardsResponse, ComputeScoreRequest, ComputeScoreResponse,
-    DecomposeTrickFormatRequest, DecomposeTrickFormatResponse, DecomposedTrickFormat,
-    ExplainScoringRequest, ExplainScoringResponse, FindValidBidsRequest, FindValidBidsResult,
-    FindViablePlaysRequest, FindViablePlaysResult, FoundViablePlay, NextThresholdReachableRequest,
-    ScoreSegment, SortAndGroupCardsRequest, SortAndGroupCardsResponse, SuitGroup,
+    CanPlayCardsRequest, CanPlayCardsResponse, CardInfo, CardInfoRequest, ComputeScoreRequest,
+    ComputeScoreResponse, DecomposeTrickFormatRequest, DecomposeTrickFormatResponse,
+    DecomposedTrickFormat, ExplainScoringRequest, ExplainScoringResponse, FindValidBidsRequest,
+    FindValidBidsResult, FindViablePlaysRequest, FindViablePlaysResult, FoundViablePlay,
+    NextThresholdReachableRequest, ScoreSegment, SortAndGroupCardsRequest,
+    SortAndGroupCardsResponse, SuitGroup,
 };
 use tempdir::TempDir;
 
@@ -35,6 +36,8 @@ pub struct _Combined {
     pub score_segment: ScoreSegment,
     pub compute_score_request: ComputeScoreRequest,
     pub compute_score_response: ComputeScoreResponse,
+    pub card_info_request: CardInfoRequest,
+    pub card_info: CardInfo,
 }
 
 fn main() {

@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 18;
+const changeLogVersion: number = 19;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -40,7 +40,42 @@ const ChangeLog = (): JSX.Element => {
         shouldCloseOnEsc
         style={{ content: contentStyle }}
       >
+        <h2>For new players</h2>
+        <p>
+          If you haven&apos;t learned to play the game yet, consider reading the{" "}
+          <a href="rules" target="_blank">
+            rules
+          </a>
+          .
+        </p>
+        <p>
+          There are a wide variety of game settings which may suit the way you
+          normally play, e.g. changing how many decks, how scoring works, etc.
+          These can be changed before every round.
+        </p>
+        <p>
+          There are also a bunch of UI customizations that you may want to turn
+          on (or leave off) -- click the gear icon at the top of the screen once
+          you&apos;re in the game.
+        </p>
         <h2>Change Log</h2>
+        <p>1/10/2023:</p>
+        <ul>
+          <li>
+            Changed default UI setting to &ldquo;show cards in player
+            order&rdquo;.
+          </li>
+          <li>
+            Added icons (can be turned off) for point cards and trump cards.
+          </li>
+        </ul>
+        <p>12/28/2023:</p>
+        <ul>
+          <li>
+            Fix bug where over-trumping a trumped throw would sometimes not
+            work.
+          </li>
+        </ul>
         <p>9/25/2022:</p>
         <ul>
           <li>Add the ability to disable joker bids</li>

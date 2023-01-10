@@ -103,6 +103,7 @@ const TrickE = (props: IProps): JSX.Element => {
             className={className}
             groupedCards={cardsFromMappingByID[id]}
             cards={cards}
+            trump={props.trick.trump}
             next={props.next}
             moreCards={playedByID[id]?.bad_throw_cards}
           />

@@ -6,6 +6,7 @@ const ReadyCheck = (): JSX.Element => {
 
   return (
     <button
+      className="big"
       onClick={() =>
         confirm("Are you ready to start the game?") && send("ReadyCheck")
       }

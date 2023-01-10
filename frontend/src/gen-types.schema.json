@@ -6,6 +6,8 @@
     "action",
     "can_play_cards_request",
     "can_play_cards_response",
+    "card_info",
+    "card_info_request",
     "compute_score_request",
     "compute_score_response",
     "decompose_trick_format_request",
@@ -34,6 +36,12 @@
     },
     "can_play_cards_response": {
       "$ref": "#/definitions/CanPlayCardsResponse"
+    },
+    "card_info": {
+      "$ref": "#/definitions/CardInfo"
+    },
+    "card_info_request": {
+      "$ref": "#/definitions/CardInfoRequest"
     },
     "compute_score_request": {
       "$ref": "#/definitions/ComputeScoreRequest"
@@ -690,6 +698,60 @@
     },
     "Card": {
       "type": "string"
+    },
+    "CardInfo": {
+      "type": "object",
+      "required": ["display_value", "effective_suit", "points", "typ", "value"],
+      "properties": {
+        "display_value": {
+          "type": "string",
+          "maxLength": 1,
+          "minLength": 1
+        },
+        "effective_suit": {
+          "$ref": "#/definitions/EffectiveSuit"
+        },
+        "number": {
+          "type": ["string", "null"]
+        },
+        "points": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "suit": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Suit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typ": {
+          "type": "string",
+          "maxLength": 1,
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 1,
+          "minLength": 1
+        }
+      }
+    },
+    "CardInfoRequest": {
+      "type": "object",
+      "required": ["card", "trump"],
+      "properties": {
+        "card": {
+          "$ref": "#/definitions/Card"
+        },
+        "trump": {
+          "$ref": "#/definitions/Trump"
+        }
+      }
     },
     "ComputeScoreRequest": {
       "type": "object",

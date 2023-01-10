@@ -2,6 +2,7 @@ import * as React from "react";
 
 import classNames from "classnames";
 import Card from "./Card";
+import { Trump } from "./gen-types";
 
 interface IProps {
   id?: number | null;
@@ -9,6 +10,7 @@ interface IProps {
   cards?: string[];
   groupedCards?: string[][];
   moreCards?: string[];
+  trump: Trump;
   label: string;
   next?: number | null;
   onClick?: () => void;
@@ -21,7 +23,9 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       props.id === props.next,
   });
 
-  const cards = props.cards.map((card, idx) => <Card card={card} key={idx} />);
+  const cards = props.cards.map((card, idx) => (
+    <Card card={card} key={idx} trump={props.trump} />
+  ));
 
   const groupedCards =
     props.groupedCards !== undefined
@@ -30,7 +34,11 @@ const LabeledPlay = (props: IProps): JSX.Element => {
             <div className="card-group" key={gidx}>
               {c.map(
                 (card, idx): JSX.Element => (
-                  <Card card={card} key={`${gidx}-${idx}`} />
+                  <Card
+                    trump={props.trump}
+                    card={card}
+                    key={`${gidx}-${idx}`}
+                  />
                 )
               )}
             </div>
@@ -56,7 +64,7 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       {props.moreCards !== undefined && props.moreCards.length > 0 ? (
         <div className="play more">
           {props.moreCards.map((card, idx) => (
-            <Card card={card} key={idx} smaller={true} />
+            <Card trump={props.trump} card={card} key={idx} smaller={true} />
           ))}
         </div>
       ) : null}

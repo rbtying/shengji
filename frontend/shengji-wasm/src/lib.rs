@@ -5,6 +5,7 @@ use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use shengji_mechanics::types::Suit;
 use shengji_mechanics::{
     bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
     deck::Deck,
@@ -374,6 +375,42 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
     Ok(JsValue::from_serde(&ComputeScoreResponse {
         score,
         next_threshold,
+    })
+    .map_err(|e| e.to_string())?)
+}
+
+#[derive(Serialize, JsonSchema)]
+pub struct CardInfo {
+    suit: Option<Suit>,
+    effective_suit: EffectiveSuit,
+    value: char,
+    display_value: char,
+    typ: char,
+    number: Option<&'static str>,
+    points: usize,
+}
+
+#[derive(Deserialize, JsonSchema)]
+pub struct CardInfoRequest {
+    card: Card,
+    trump: Trump,
+}
+
+#[wasm_bindgen]
+pub fn get_card_info(req: JsValue) -> Result<JsValue, JsValue> {
+    let CardInfoRequest { card, trump } = req.into_serde().map_err(|e| e.to_string())?;
+
+    let info = card.as_info();
+    let effective_suit = trump.effective_suit(card);
+
+    Ok(JsValue::from_serde(&CardInfo {
+        suit: card.suit(),
+        value: info.value,
+        display_value: info.display_value,
+        typ: info.typ,
+        number: info.number,
+        points: info.points,
+        effective_suit,
     })
     .map_err(|e| e.to_string())?)
 }

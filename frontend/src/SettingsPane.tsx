@@ -1,7 +1,14 @@
 import * as React from "react";
-import { Settings, ISuitOverrides } from "./state/Settings";
+import {
+  Settings,
+  ISuitOverrides,
+  DEFAULT_POINT_CARD_ICON,
+  DEFAULT_TRUMP_CARD_ICON,
+} from "./state/Settings";
 import { CompactPicker } from "react-color";
 import styled from "styled-components";
+
+const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
 const Row = styled.div`
   display: table-row;
@@ -22,8 +29,10 @@ interface IProps {
 
 const SettingsPane = (props: IProps): JSX.Element => {
   const { settings } = props;
-  const handleChange = (partialSettings: Partial<Settings>) => () =>
-    props.onChangeSettings({ ...props.settings, ...partialSettings });
+  const makeChangeHandler = (partialSettings: Partial<Settings>) => () => {
+    const newSettings = { ...props.settings, ...partialSettings };
+    props.onChangeSettings(newSettings);
+  };
 
   const [link, setLink] = React.useState<string>("");
 
@@ -63,7 +72,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="four-color-mode"
               type="checkbox"
               checked={settings.fourColor}
-              onChange={handleChange({ fourColor: !settings.fourColor })}
+              onChange={makeChangeHandler({ fourColor: !settings.fourColor })}
             />
           </Cell>
         </Row>
@@ -74,7 +83,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="dark-mode"
               type="checkbox"
               checked={settings.darkMode}
-              onChange={handleChange({ darkMode: !settings.darkMode })}
+              onChange={makeChangeHandler({ darkMode: !settings.darkMode })}
             />
           </Cell>
         </Row>
@@ -85,7 +94,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="svg-cards"
               type="checkbox"
               checked={settings.svgCards}
-              onChange={handleChange({ svgCards: !settings.svgCards })}
+              onChange={makeChangeHandler({ svgCards: !settings.svgCards })}
             />
           </Cell>
         </Row>
@@ -96,8 +105,40 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-card-labels"
               type="checkbox"
               checked={settings.showCardLabels}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showCardLabels: !settings.showCardLabels,
+              })}
+            />
+          </Cell>
+        </Row>
+        <Row>
+          <LabelCell>icon on point cards</LabelCell>
+          <Cell>
+            <EmojiPicker
+              value={settings.pointCardIcon}
+              setEmoji={(emoji) => {
+                makeChangeHandler({
+                  pointCardIcon: emoji,
+                })();
+              }}
+              setDefault={makeChangeHandler({
+                pointCardIcon: DEFAULT_POINT_CARD_ICON,
+              })}
+            />
+          </Cell>
+        </Row>
+        <Row>
+          <LabelCell>icon on trump cards</LabelCell>
+          <Cell>
+            <EmojiPicker
+              value={settings.trumpCardIcon}
+              setEmoji={(emoji) => {
+                makeChangeHandler({
+                  trumpCardIcon: emoji,
+                })();
+              }}
+              setDefault={makeChangeHandler({
+                trumpCardIcon: DEFAULT_TRUMP_CARD_ICON,
               })}
             />
           </Cell>
@@ -109,7 +150,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-last-trick"
               type="checkbox"
               checked={settings.showLastTrick}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showLastTrick: !settings.showLastTrick,
               })}
             />
@@ -122,7 +163,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="beep-on-turn"
               type="checkbox"
               checked={settings.beepOnTurn}
-              onChange={handleChange({ beepOnTurn: !settings.beepOnTurn })}
+              onChange={makeChangeHandler({ beepOnTurn: !settings.beepOnTurn })}
             />
           </Cell>
         </Row>
@@ -133,7 +174,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="reverse-card-order"
               type="checkbox"
               checked={settings.reverseCardOrder}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 reverseCardOrder: !settings.reverseCardOrder,
               })}
             />
@@ -146,7 +187,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="separate-cards-by-suit"
               type="checkbox"
               checked={settings.separateCardsBySuit}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 separateCardsBySuit: !settings.separateCardsBySuit,
               })}
             />
@@ -159,7 +200,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="disable-suit-highlights"
               type="checkbox"
               checked={settings.disableSuitHighlights}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 disableSuitHighlights: !settings.disableSuitHighlights,
               })}
             />
@@ -172,7 +213,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="unset-auto-play-when-winner-changes"
               type="checkbox"
               checked={settings.unsetAutoPlayWhenWinnerChanges}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 unsetAutoPlayWhenWinnerChanges:
                   !settings.unsetAutoPlayWhenWinnerChanges,
               })}
@@ -186,7 +227,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-trick-in-player-order"
               type="checkbox"
               checked={settings.showTrickInPlayerOrder}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showTrickInPlayerOrder: !settings.showTrickInPlayerOrder,
               })}
             />
@@ -217,7 +258,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="play-sound-when-drawing-card"
               type="checkbox"
               checked={settings.playDrawCardSound}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 playDrawCardSound: !settings.playDrawCardSound,
               })}
             />
@@ -230,7 +271,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-debug-info"
               type="checkbox"
               checked={settings.showDebugInfo}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showDebugInfo: !settings.showDebugInfo,
               })}
             />
@@ -243,7 +284,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-player-name"
               type="checkbox"
               checked={settings.showPlayerName}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showPlayerName: !settings.showPlayerName,
               })}
             />
@@ -256,7 +297,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="hide-chat-box"
               type="checkbox"
               checked={settings.hideChatBox}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 hideChatBox: !settings.hideChatBox,
               })}
             />
@@ -271,7 +312,7 @@ const SettingsPane = (props: IProps): JSX.Element => {
               name="show-points-above-game"
               type="checkbox"
               checked={settings.showPointsAboveGame}
-              onChange={handleChange({
+              onChange={makeChangeHandler({
                 showPointsAboveGame: !settings.showPointsAboveGame,
               })}
             />
@@ -287,7 +328,9 @@ const SettingsPane = (props: IProps): JSX.Element => {
                   : ""
               }
               onChange={(e) =>
-                handleChange({ autodrawSpeedMs: parseInt(e.target.value) })()
+                makeChangeHandler({
+                  autodrawSpeedMs: parseInt(e.target.value),
+                })()
               }
             >
               <option value="250">default</option>
@@ -370,6 +413,46 @@ const SuitColorPicker = (props: {
           />
         </div>
       ) : null}
+    </>
+  );
+};
+
+const EmojiPicker = (props: {
+  value: string;
+  setEmoji: (emoji: string) => void;
+  setDefault: () => void;
+}): JSX.Element => {
+  const [showPicker, setShowPicker] = React.useState<boolean>(false);
+  return (
+    <>
+      <span>{props.value}</span>
+      {!showPicker && (
+        <button className="normal" onClick={() => setShowPicker(true)}>
+          pick
+        </button>
+      )}
+      {showPicker && (
+        <button className="normal" onClick={() => setShowPicker(false)}>
+          hide
+        </button>
+      )}
+      <button className="normal" onClick={props.setDefault}>
+        reset
+      </button>
+      {props.value !== "" && (
+        <button className="normal" onClick={() => props.setEmoji("")}>
+          no icon
+        </button>
+      )}
+      {showPicker && (
+        <React.Suspense fallback={"..."}>
+          <Picker
+            onEmojiClick={(emoji) => {
+              props.setEmoji(emoji.emoji);
+            }}
+          />
+        </React.Suspense>
+      )}
     </>
   );
 };

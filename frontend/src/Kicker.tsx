@@ -28,6 +28,7 @@ const Kicker = (props: IProps): JSX.Element => {
           ))}
         </select>
         <button
+          className="normal"
           onClick={() => props.onKick(selection)}
           disabled={selection === null}
         >

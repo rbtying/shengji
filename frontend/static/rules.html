@@ -8,85 +8,91 @@
           .card { background: #fff; height: inherit; }
         </style>
     </head>
-    <body id="body">
-      <h1>Rules for 升级 and 找朋友</h1>
+  <body id="body">
+    <h1>Rules for 升级 and 找朋友</h1>
+    
+    <p>
+      Ben Zhang has written another introduction
+      <a href="https://benzhang.io/tractor" target="_blank">here</a>
+      that might also be worth reading
+    </p>
 
-      <label>
-        Show cards with a four-color deck
-        <input type="checkbox" id="four-color-toggle" />
-      </label>
+    <label>
+      Show cards with a four-color deck
+      <input type="checkbox" id="four-color-toggle" />
+    </label>
 
-      <p>
-        升级 is a family of trick-taking card games popular in China. It's also
-        known as tractor (拖拉机), 40 points (四十分), 80 points (八十分),
-        playing for 100 points (打百分), finding friends (找朋友), among
-        others. You can <a target="_blank" href="../">play online here</a>.
-      </p>
-      <p>
-        This online 升级 and 找朋友 implementation uses a fairly standard rule
-        set. There are a wide variety of house rules that aren't implemented;
-        but could be -- feel free to propose new functionality on
-        <a target="_blank" href="https://github.com/rbtying/shengji">GitHub</a>.
-      </p>
+    <p>
+      升级 is a family of trick-taking card games popular in China. It's also
+      known as tractor (拖拉机), 40 points (四十分), 80 points (八十分),
+      playing for 100 points (打百分), finding friends (找朋友), among
+      others. You can <a target="_blank" href="../">play online here</a>.
+    </p>
+    <p>
+      This online 升级 and 找朋友 implementation uses a fairly standard rule
+      set. There are a wide variety of house rules that aren't implemented;
+      but could be -- feel free to propose new functionality on
+      <a target="_blank" href="https://github.com/rbtying/shengji">GitHub</a>.
+    </p>
 
-      <h2>Deck</h2>
-      <p>
-        There are 54 cards per deck (13 cards per suit, plus a <span class="🃟">small joker</span> and
-        a <span class="🃏">big joker</span>). Aces (A) are treated as
-        higher-valued than Kings (K). Usually, a deck is added for every two
-        players in the game (so 4 players and 5 players play with 2 decks, but
-        6 players play with 3).
-      </p>
-      <p>
-        Kings, tens, and fives are valuable cards and have point values. Kings
-        and tens are worth ten points each. Fives are worth five points each.
-      </p>
-      <div class="labeled-play">
-        <div class="play" id="diamonds"></div>
-        <div class="label">
-          Diamonds
-        </div>
+    <h2>Deck</h2>
+    <p>
+      There are 54 cards per deck (13 cards per suit, plus a <span class="🃟">small joker</span> and
+      a <span class="🃏">big joker</span>). Aces (A) are treated as
+      higher-valued than Kings (K). Usually, a deck is added for every two
+      players in the game (so 4 players and 5 players play with 2 decks, but
+      6 players play with 3).
+    </p>
+    <p>
+      Kings, tens, and fives are valuable cards and have point values. Kings
+      and tens are worth ten points each. Fives are worth five points each.
+    </p>
+    <div class="labeled-play">
+      <div class="play" id="diamonds"></div>
+      <div class="label">
+        Diamonds
       </div>
-      <div class="labeled-play">
-        <div class="play" id="clubs"></div>
-        <div class="label">
-          Clubs
-        </div>
+    </div>
+    <div class="labeled-play">
+      <div class="play" id="clubs"></div>
+      <div class="label">
+        Clubs
       </div>
-      <div class="labeled-play">
-        <div class="play" id="hearts"></div>
-        <div class="label">
-          Hearts
-        </div>
+    </div>
+    <div class="labeled-play">
+      <div class="play" id="hearts"></div>
+      <div class="label">
+        Hearts
       </div>
-      <div class="labeled-play">
-        <div class="play" id="spades"></div>
-        <div class="label">
-          Spades
-        </div>
+    </div>
+    <div class="labeled-play">
+      <div class="play" id="spades"></div>
+      <div class="label">
+        Spades
       </div>
-      <p>
-        The two jokers are ordered, with the uncolored joker having a lower
-        value than the colored joker.
-      </p>
-      <div class="labeled-play">
-        <div class="play" id="jokers"></div>
-        <div class="label">
-          Jokers
-        </div>
+    </div>
+    <p>
+      The two jokers are ordered, with the uncolored joker having a lower
+      value than the colored joker.
+    </p>
+    <div class="labeled-play">
+      <div class="play" id="jokers"></div>
+      <div class="label">
+        Jokers
       </div>
+    </div>
 
-      <h2>Scoring</h2>
-      <p>
-        Scoring in each round of the game is determined by "point" cards. Only
-        fives, tens, and kings have points&mdash; all other cards do not count
-        for scoring.  Point scores are pooled within a team.
-      </p>
-      <table border="1">
-        <thead>
-          <tr><td>Card number</td><td>Point value</td></tr>
-        </thead>
-        <tbody>
+    <h2>Scoring</h2>
+    <p>
+      Scoring in each round of the game is determined by "point" cards. Only
+      fives, tens, and kings have points&mdash; all other cards do not count
+      for scoring.  Point scores are pooled within a team.
+    </p>
+    <table border="1">
+      <thead>
+        <tr><td>Card number</td><td>Point value</td></tr>
+      </thead>
+      <tbody>
           <tr><td>5</td><td>5</td></tr>
           <tr><td>10</td><td>10</td></tr>
           <tr><td>K</td><td>10</td></tr>
