@@ -7,6 +7,8 @@ use rand_distr::WeightedIndex;
 use shengji_core::{
     game_state::{initialize_phase::InitializePhase, GameState},
     settings::{FriendSelection, GameModeSettings},
+};
+use shengji_mechanics::{
     trick::{TractorRequirements, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, Number, Suit},
 };
