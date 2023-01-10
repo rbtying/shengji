@@ -186,7 +186,7 @@ const Root = (): JSX.Element => {
           </p>
           <p>
             If you&apos;re not familiar with the rules, check them out{" "}
-            <a href="rules">here</a>!
+            <a href="rules.html">here</a>!
           </p>
           <p>Connecting to the server...</p>
         </div>

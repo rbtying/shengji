@@ -44,7 +44,7 @@ const ChangeLog = (): JSX.Element => {
         <p>
           If you haven&apos;t learned to play the game yet, consider reading the{" "}
           <a href="rules" target="_blank">
-            rules
+            rules.html
           </a>
           .
         </p>
