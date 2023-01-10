@@ -6,7 +6,7 @@ interface IProps {
 }
 const GameModeE = (props: IProps): JSX.Element => {
   const rules = (
-    <a href="rules" target="_blank">
+    <a href="rules.html" target="_blank">
       rules
     </a>
   );
