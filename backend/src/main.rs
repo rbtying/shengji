@@ -8,13 +8,9 @@ use std::sync::{
 };
 
 use axum::{
-    body::{Empty, Full},
-    extract::{
-        ws::{Message, WebSocketUpgrade},
-        Path,
-    },
+    extract::ws::{Message, WebSocketUpgrade},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     routing::get,
     Extension, Json, Router,
 };
@@ -25,6 +21,12 @@ use tokio::sync::{mpsc, Mutex};
 
 #[cfg(feature = "dynamic")]
 use axum::routing::get_service;
+#[cfg(not(feature = "dynamic"))]
+use axum::{
+    body::{Empty, Full},
+    extract::Path,
+    response::Response,
+};
 #[cfg(feature = "dynamic")]
 use tower_http::services::ServeDir;
 
@@ -252,7 +254,7 @@ async fn handle_websocket(
     })
 }
 
-#[allow(unused)]
+#[cfg(not(feature = "dynamic"))]
 async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
     static DIST: include_dir::Dir<'_> = include_dir::include_dir!("frontend/dist");
     static FAVICON: include_dir::Dir<'_> = include_dir::include_dir!("favicon");
