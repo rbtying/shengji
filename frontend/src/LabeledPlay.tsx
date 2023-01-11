@@ -11,7 +11,7 @@ interface IProps {
   groupedCards?: string[][];
   moreCards?: string[];
   trump: Trump;
-  label: string;
+  label: string | JSX.Element;
   next?: number | null;
   onClick?: () => void;
 }
