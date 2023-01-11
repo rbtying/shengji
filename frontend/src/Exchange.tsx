@@ -171,6 +171,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                 trump={this.props.state.trump}
                 key={idx}
                 onClick={() => this.moveCardToHand(c)}
+                collapseRight={idx !== this.props.state.kitty.length - 1}
                 card={c}
               />
             ))}

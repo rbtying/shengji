@@ -230,6 +230,7 @@ const FourColorCards: {
 
 interface IProps {
   card: string;
+  height?: number;
   smaller?: boolean;
   fourColor: boolean;
 }
@@ -239,7 +240,7 @@ const SvgCard = (props: IProps): JSX.Element => {
   return React.createElement(
     (props.fourColor ? FourColorCards : NormalCards)[props.card],
     {
-      height: props.smaller ? 95 : 120,
+      height: props.height || 120,
     }
   );
   /* eslint-enable */

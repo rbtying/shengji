@@ -24,7 +24,12 @@ const LabeledPlay = (props: IProps): JSX.Element => {
   });
 
   const cards = props.cards.map((card, idx) => (
-    <Card card={card} key={idx} trump={props.trump} />
+    <Card
+      card={card}
+      key={idx}
+      trump={props.trump}
+      collapseRight={idx !== props.cards.length - 1}
+    />
   ));
 
   const groupedCards =
@@ -38,6 +43,7 @@ const LabeledPlay = (props: IProps): JSX.Element => {
                     trump={props.trump}
                     card={card}
                     key={`${gidx}-${idx}`}
+                    collapseRight={idx !== c.length - 1}
                   />
                 )
               )}
@@ -64,7 +70,13 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       {props.moreCards !== undefined && props.moreCards.length > 0 ? (
         <div className="play more">
           {props.moreCards.map((card, idx) => (
-            <Card trump={props.trump} card={card} key={idx} smaller={true} />
+            <Card
+              trump={props.trump}
+              card={card}
+              key={idx}
+              smaller={true}
+              collapseRight={idx !== props.moreCards.length - 1}
+            />
           ))}
         </div>
       ) : null}

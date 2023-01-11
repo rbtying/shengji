@@ -73,15 +73,14 @@ button.normal {
 }
 
 .card {
-  font-size: 8em;
   display: inline-block;
   cursor: pointer;
-  margin-right: -0.35em;
   background: transparent;
   user-select: none;
   font-family: "Apple Symbols", "Segoe UI Symbol", "Symbola", "DejaVu Sans",
     system;
   position: relative;
+  margin-top: 20px;
 }
 
 .card.highlighted {
@@ -113,7 +112,6 @@ button.normal {
   position: absolute;
   font-size: initial;
   left: 0.35em;
-  bottom: 2.6em;
   z-index: 1;
   background: #fff;
   width: 1.5em;
@@ -124,7 +122,6 @@ button.normal {
 }
 
 .more .card .card-label {
-  bottom: 1.95em;
 }
 
 .hand .unselected-cards.unclickable .card {
@@ -132,43 +129,31 @@ button.normal {
 }
 
 .hand .unselected-cards .card {
-  margin-top: 0.2em;
+  margin-top: 30px;
 }
 
 .hand .unselected-cards .card:hover svg {
-  transform: translateY(-0.15em);
+  transform: translateY(-20px);
 }
 
 .hand .unselected-cards .card:hover .card-label {
-  transform: translateY(-1.2em);
+  transform: translateY(-20px);
 }
 
 .card .card-icon {
   position: absolute;
   font-size: initial;
   left: 0.35em;
-  top: 0.5em;
   z-index: 1;
 }
 
-.more .card .card-icon {
-  top: -0.1em;
-}
-
-.card.svg .card-icon {
-  top: -0.16em;
-}
-
-.more .card.svg .card-icon {
-  top: -0.6em;
-}
-
 .hand .unselected-cards .card:hover .card-icon {
-  transform: translateY(-1.2em);
+  transform: translateY(-20px);
 }
 
 .kitty {
-  margin-top: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .always-show-labels .card .card-label,
@@ -214,10 +199,6 @@ button.normal {
 .dark-mode .card.notify {
   animation: blinkingTextDark 1.5s 1;
   color: #fff;
-}
-
-.card:last-child {
-  margin-right: 0;
 }
 
 .♢ {
@@ -387,6 +368,7 @@ button.normal {
   display: inline-block;
   padding: 10px;
   border: 1px solid #000;
+  margin-bottom: 20px;
 }
 
 .dark-mode .labeled-play {
@@ -414,10 +396,6 @@ button.normal {
   box-shadow: inset 0px 0px 0px 2px #bb0313;
 }
 
-.labeled-play .more .card {
-  font-size: 6em;
-}
-
 .always-show-labels .more .card.svg .card-label,
 .more .card.svg:hover .card-label {
   bottom: 1.8em;
@@ -425,6 +403,7 @@ button.normal {
 
 .labeled-play .play {
   display: inline-block;
+  padding-bottom: 20px;
 }
 
 .labeled-play .play + .play {
@@ -470,4 +449,13 @@ button.normal {
 
 label {
   line-height: 25px;
+}
+
+/* used by rules.html */
+.rules .card {
+  font-size: 8em;
+  margin-right: -0.4em;
+}
+.rules .card:last-child {
+  margin-right: 0;
 }
