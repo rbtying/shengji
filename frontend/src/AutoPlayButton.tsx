@@ -57,7 +57,7 @@ const AutoPlayButton = (props: IProps): JSX.Element => {
     }
   };
   return (
-    <button onClick={handleClick} disabled={!canSubmit}>
+    <button className="big" onClick={handleClick} disabled={!canSubmit}>
       {isCurrentPlayerTurn
         ? `Play selected cards${
             playDescription !== null ? " (" + playDescription + ")" : ""

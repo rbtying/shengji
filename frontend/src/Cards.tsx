@@ -100,6 +100,7 @@ const Cards = (props: IProps): JSX.Element => {
                   onClick={handleUnselect(c.card)}
                   trump={props.trump}
                   card={c.card}
+                  collapseRight={idx !== g.length - 1}
                 />
               ))}
             </div>
@@ -131,6 +132,7 @@ const Cards = (props: IProps): JSX.Element => {
                 )}
                 onClick={handleSelect(c.card)}
                 card={c.card}
+                collapseRight={idx !== g.length - 1}
                 trump={props.trump}
                 onMouseEnter={(_) => setHighlightedSuit(c.suit)}
                 onMouseLeave={(_) => setHighlightedSuit(null)}

@@ -271,11 +271,12 @@ const Play = (props: IProps): JSX.Element => {
         isCurrentPlayerTurn={isCurrentPlayerTurn}
       />
       {playPhase.propagated.play_takeback_policy === "AllowPlayTakeback" && (
-        <button onClick={takeBackCards} disabled={!canTakeBack}>
+        <button className="big" onClick={takeBackCards} disabled={!canTakeBack}>
           Take back last play
         </button>
       )}
       <button
+        className="big"
         onClick={endTrick}
         disabled={
           playPhase.trick.player_queue.length > 0 || playPhase.game_ended_early
@@ -285,6 +286,7 @@ const Play = (props: IProps): JSX.Element => {
       </button>
       {canEndGameEarly && (
         <button
+          className="big"
           onClick={() => {
             confirm(
               "Do you want to end the game early? There may still be points in the bottom..."
@@ -294,7 +296,11 @@ const Play = (props: IProps): JSX.Element => {
           End game early
         </button>
       )}
-      {canFinish && <button onClick={startNewGame}>Finish game</button>}
+      {canFinish && (
+        <button className="big" onClick={startNewGame}>
+          Finish game
+        </button>
+      )}
       <BeepButton />
       {canFinish && !noCardsLeft && (
         <div>
@@ -337,7 +343,7 @@ const Play = (props: IProps): JSX.Element => {
                       evt.preventDefault();
                       setGrouping([g]);
                     }}
-                    className="normal"
+                    className="big"
                   >
                     {g.description}
                   </button>
@@ -421,6 +427,7 @@ const TrickFormatHelper = (props: {
   return (
     <>
       <button
+        className="big"
         onClick={(evt) => {
           evt.preventDefault();
           setModalOpen(true);

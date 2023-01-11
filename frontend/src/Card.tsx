@@ -14,6 +14,7 @@ const SvgCard = React.lazy(async () => await import("./SvgCard"));
 interface IProps {
   card: string;
   trump: Trump;
+  collapseRight?: boolean;
   smaller?: boolean;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
@@ -24,12 +25,20 @@ interface IProps {
 const Card = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
   const { getCardInfo } = React.useContext(WasmContext);
+  const height = props.smaller ? 95 : 120;
+  const bounds = getCardBounds(height);
+
   if (!(props.card in cardLookup)) {
     const nonSVG = (
-      <span className={classNames("card", "unknown", props.className)}>
+      <div
+        className={classNames("card", "unknown", props.className)}
+        style={{
+          marginRight: props.collapseRight ? `-${bounds.width * 0.6}px` : "0",
+        }}
+      >
         <CardCanvas
           card={props.card}
-          height={props.smaller ? 95 : 120}
+          height={height}
           suit={classNames(
             "unknown",
             settings.fourColor ? "four-color" : null,
@@ -37,21 +46,26 @@ const Card = (props: IProps): JSX.Element => {
           )}
           backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
-      </span>
+      </div>
     );
 
     if (settings.svgCards) {
       return (
         <React.Suspense fallback={nonSVG}>
-          <span
+          <div
             className={classNames("card", "svg", "unknown", props.className)}
+            style={{
+              marginRight: props.collapseRight
+                ? `-${bounds.width * 0.6}px`
+                : "0",
+            }}
           >
             <SvgCard
               fourColor={settings.fourColor}
-              smaller={props.smaller}
+              height={height}
               card={"🂠"}
             />
-          </span>
+          </div>
         </React.Suspense>
       );
     } else {
@@ -60,23 +74,32 @@ const Card = (props: IProps): JSX.Element => {
   } else {
     const cardInfo = cardLookup[props.card];
     const extraInfo = getCardInfo({ card: props.card, trump: props.trump });
+    const label = (offset: number): JSX.Element => (
+      <div className="card-label" style={{ bottom: `${offset}px` }}>
+        <InlineCard card={props.card} />
+      </div>
+    );
+    const icon = (offset: number): JSX.Element => (
+      <div className="card-icon" style={{ bottom: `${offset}px` }}>
+        {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
+        {extraInfo.points > 0 && settings.pointCardIcon}
+      </div>
+    );
     const nonSVG = (
-      <span
+      <div
         className={classNames("card", cardInfo.typ, props.className)}
         onClick={props.onClick}
         onMouseEnter={props.onMouseEnter}
         onMouseLeave={props.onMouseLeave}
+        style={{
+          marginRight: props.collapseRight ? `-${bounds.width * 0.6}px` : "0",
+        }}
       >
-        <div className="card-label">
-          <InlineCard card={props.card} />
-        </div>
-        <div className="card-icon">
-          {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
-          {extraInfo.points > 0 && settings.pointCardIcon}
-        </div>
+        {label(bounds.height / 10)}
+        {icon(bounds.height)}
         <CardCanvas
           card={cardInfo.display_value}
-          height={props.smaller ? 95 : 120}
+          height={height}
           suit={classNames(
             cardInfo.typ,
             settings.fourColor ? "four-color" : null,
@@ -87,31 +110,31 @@ const Card = (props: IProps): JSX.Element => {
           }
           backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
-      </span>
+      </div>
     );
 
     if (settings.svgCards) {
       return (
         <React.Suspense fallback={nonSVG}>
-          <span
+          <div
             className={classNames("card", "svg", cardInfo.typ, props.className)}
             onClick={props.onClick}
             onMouseEnter={props.onMouseEnter}
             onMouseLeave={props.onMouseLeave}
+            style={{
+              marginRight: props.collapseRight
+                ? `-${bounds.width * 0.6}px`
+                : "0",
+            }}
           >
-            <div className="card-label">
-              <InlineCard card={props.card} />
-            </div>
-            <div className="card-icon">
-              {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
-              {extraInfo.points > 0 && settings.pointCardIcon}
-            </div>
+            {label(height / 10)}
+            {icon(height)}
             <SvgCard
               fourColor={settings.fourColor}
-              smaller={props.smaller}
+              height={height}
               card={props.card}
             />
-          </span>
+          </div>
         </React.Suspense>
       );
     } else {
@@ -134,7 +157,7 @@ const computeCanvasBounds = (font: string, dpr: number): TextMetrics => {
 };
 
 const computeSuitColor = (suit: string): string => {
-  const c = document.createElement("span");
+  const c = document.createElement("div");
   c.className = suit;
   c.style.display = "none";
   document.body.appendChild(c);
@@ -154,16 +177,14 @@ interface ICardCanvasProps {
   colorOverride?: string;
 }
 
-const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
-  const font = `${props.height}px solid`;
+const getCardBounds = (
+  height: number
+): { metrics: TextMetrics; height: number; width: number } => {
+  const font = `${height}px solid`;
   if (!(font in cardBoundsCache)) {
     cardBoundsCache[font] = memoize(() => computeCanvasBounds(font, 1));
   }
-  if (!(props.suit in suitColorCache)) {
-    suitColorCache[props.suit] = memoize(() => computeSuitColor(props.suit));
-  }
   const textMetrics = cardBoundsCache[font]();
-  const style = suitColorCache[props.suit]();
 
   const effectiveHeight = Math.round(
     textMetrics.actualBoundingBoxAscent +
@@ -175,29 +196,42 @@ const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
       Math.min(textMetrics.actualBoundingBoxLeft, 0) +
       2
   );
+  return {
+    metrics: textMetrics,
+    height: effectiveHeight,
+    width: effectiveWidth,
+  };
+};
+
+const CardCanvas = (props: ICardCanvasProps): JSX.Element => {
+  if (!(props.suit in suitColorCache)) {
+    suitColorCache[props.suit] = memoize(() => computeSuitColor(props.suit));
+  }
+  const { metrics, width, height } = getCardBounds(props.height);
+  const style = suitColorCache[props.suit]();
   return (
     <svg
       focusable="false"
       role="img"
       xmlns="http://www.w3.org/2000/svg"
-      height={effectiveHeight}
-      width={effectiveWidth}
+      height={height}
+      width={width}
     >
       <rect
         fill={
           props.backgroundColor !== undefined ? props.backgroundColor : "#fff"
         }
-        x={textMetrics.actualBoundingBoxLeft}
+        x={metrics.actualBoundingBoxLeft}
         y={0}
-        width={textMetrics.width - 2}
-        height={effectiveHeight}
+        width={metrics.width - 2}
+        height={height}
       ></rect>
       <text
         fill={props.colorOverride !== undefined ? props.colorOverride : style}
         fontSize={`${props.height}px`}
-        textLength={`${textMetrics.width}px`}
-        x={Math.min(textMetrics.actualBoundingBoxLeft, 0) + 1}
-        y={effectiveHeight - textMetrics.actualBoundingBoxDescent - 1}
+        textLength={`${width}px`}
+        x={Math.min(metrics.actualBoundingBoxLeft, 0) + 1}
+        y={height - metrics.actualBoundingBoxDescent - 1}
       >
         {props.card}
       </text>

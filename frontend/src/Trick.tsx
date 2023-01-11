@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import ReactTooltip from "react-tooltip";
 import classNames from "classnames";
 
 import LabeledPlay from "./LabeledPlay";
@@ -77,7 +78,29 @@ const TrickE = (props: IProps): JSX.Element => {
         const winning = props.trick.current_winner === id;
         const better = betterPlayer === id;
         const cards = id in playedByID ? playedByID[id].cards : blankCards;
-        const suffix = winning ? " (!)" : better ? " (-)" : "";
+        const suffix = winning ? (
+          <>
+            {" "}
+            <ReactTooltip id="winningTip" place="bottom" effect="solid">
+              Current winner of trick
+            </ReactTooltip>
+            <span data-tip data-for="winningTip">
+              (<code>!</code>)
+            </span>
+          </>
+        ) : better ? (
+          <>
+            {" "}
+            <ReactTooltip id="betterTip" place="bottom" effect="solid">
+              First player who can prevent the attempted throw
+            </ReactTooltip>
+            <span data-tip data-for="betterTip">
+              (<code>-</code>)
+            </span>
+          </>
+        ) : (
+          <></>
+        );
 
         const className = classNames(
           winning
@@ -96,9 +119,11 @@ const TrickE = (props: IProps): JSX.Element => {
             key={id}
             id={id}
             label={
-              namesById[id] +
-              (id === props.landlord ? " " + props.landlord_suffix : "") +
-              suffix
+              <>
+                {namesById[id] +
+                  (id === props.landlord ? " " + props.landlord_suffix : "")}
+                {suffix}
+              </>
             }
             className={className}
             groupedCards={cardsFromMappingByID[id]}
