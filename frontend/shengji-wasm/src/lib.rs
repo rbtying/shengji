@@ -117,7 +117,7 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
         .decomposition(trick_draw_policy)
         .map(|format| {
             let description = UnitLike::multi_description(format.iter().cloned());
-            let playables = UnitLike::check_play(
+            let (playable, units) = UnitLike::check_play(
                 trick_format.trump(),
                 available_cards.iter().copied(),
                 format.iter().cloned(),
@@ -126,12 +126,12 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
             DecomposedTrickFormat {
                 format,
                 description,
-                playable: if let Some(units) = playables.first() {
+                playable: if playable {
                     units
-                        .iter()
+                        .into_iter()
                         .flat_map(|u| {
-                            u.iter()
-                                .flat_map(|(card, count)| std::iter::repeat(card.card).take(*count))
+                            u.into_iter()
+                                .flat_map(|(card, count)| std::iter::repeat(card.card).take(count))
                                 .collect::<Vec<_>>()
                         })
                         .collect()

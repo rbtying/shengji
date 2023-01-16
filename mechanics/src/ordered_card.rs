@@ -92,26 +92,24 @@ pub fn attempt_format_match(
     counts: &mut BTreeMap<OrderedCard, usize>,
     mut units: impl Iterator<Item = AdjacentTupleSizes> + Clone,
     allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCardsRef) -> bool + Copy,
-) -> Vec<Vec<MatchingCards>> {
-    let mut res = vec![];
+) -> (bool, Vec<MatchingCards>) {
     match units.next() {
         Some(adj_req) => {
             for matching in attempt_match_permutations(counts, adj_req) {
                 if !allowed(counts, &matching) {
                     continue;
                 }
-                let paths = without_matching_cards(counts, &matching, |subcounts| {
+                let (found, mut path) = without_matching_cards(counts, &matching, |subcounts| {
                     attempt_format_match(subcounts, units.clone(), allowed)
                 });
-
-                res.extend(paths.into_iter().map(|mut p| {
-                    p.push(matching.clone());
-                    p
-                }));
+                if found {
+                    path.push(matching);
+                    return (true, path);
+                }
             }
-            res
+            (false, vec![])
         }
-        None => vec![vec![]],
+        None => (true, vec![]),
     }
 }
 
