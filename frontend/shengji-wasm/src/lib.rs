@@ -1,3 +1,4 @@
+#![allow(warnings)]
 use std::io::{Cursor, Read};
 use std::sync::Mutex;
 
@@ -10,6 +11,7 @@ use shengji_mechanics::{
     bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
     deck::Deck,
     hands::Hands,
+    ordered_card::OrderedCard,
     player::Player,
     scoring::{
         self, compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
@@ -94,6 +96,7 @@ pub struct DecomposedTrickFormat {
     format: Vec<UnitLike>,
     description: String,
     playable: Vec<Card>,
+    more_than_one: bool,
 }
 
 #[wasm_bindgen]
@@ -113,34 +116,46 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
     .copied()
     .collect::<Vec<_>>();
 
-    let results = trick_format
+    let mut results: Vec<_> = trick_format
         .decomposition(trick_draw_policy)
         .map(|format| {
             let description = UnitLike::multi_description(format.iter().cloned());
-            let (playable, units) = UnitLike::check_play(
-                trick_format.trump(),
-                available_cards.iter().copied(),
-                format.iter().cloned(),
-                trick_draw_policy,
-            );
             DecomposedTrickFormat {
                 format,
                 description,
-                playable: if playable {
-                    units
-                        .into_iter()
-                        .flat_map(|u| {
-                            u.into_iter()
-                                .flat_map(|(card, count)| std::iter::repeat(card.card).take(count))
-                                .collect::<Vec<_>>()
-                        })
-                        .collect()
-                } else {
-                    vec![]
-                },
+                playable: vec![],
+                more_than_one: false,
             }
         })
         .collect();
+
+    for res in results.iter_mut() {
+        let mut iter = UnitLike::check_play(
+            OrderedCard::make_map(available_cards.iter().copied(), trick_format.trump()),
+            res.format.iter().cloned(),
+            trick_draw_policy,
+        );
+
+        let playable = if let Some(units) = iter.next() {
+            units
+                .into_iter()
+                .flat_map(|u| {
+                    u.into_iter()
+                        .flat_map(|(card, count)| std::iter::repeat(card.card).take(count))
+                        .collect::<Vec<_>>()
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
+        if !playable.is_empty() {
+            res.playable = playable;
+            res.more_than_one = iter.next().is_some();
+            // Break after the first playable entry to reduce the compute cost of trying to find viable matches.
+            break;
+        }
+    }
     Ok(
         JsValue::from_serde(&DecomposeTrickFormatResponse { results })
             .map_err(|e| e.to_string())?,

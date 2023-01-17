@@ -9,6 +9,7 @@ use shengji_core::{
     settings::{FriendSelection, GameModeSettings},
 };
 use shengji_mechanics::{
+    ordered_card::OrderedCard,
     trick::{TractorRequirements, TrickUnit, UnitLike},
     types::{Card, EffectiveSuit, Number, Suit},
 };
@@ -196,26 +197,24 @@ fn main() {
                         let matching_play = trick_format
                             .decomposition(Default::default())
                             .filter_map(|format| {
-                                let (playable, units) = UnitLike::check_play(
-                                    trick_format.trump(),
-                                    available_cards.iter().copied(),
+                                let mut playable = UnitLike::check_play(
+                                    OrderedCard::make_map(
+                                        available_cards.iter().copied(),
+                                        trick_format.trump(),
+                                    ),
                                     format.iter().cloned(),
                                     s.propagated().trick_draw_policy(),
                                 );
-                                if playable {
-                                    Some(
-                                        units
-                                            .into_iter()
-                                            .flat_map(|x| {
-                                                x.into_iter().flat_map(|(card, count)| {
-                                                    std::iter::repeat(card.card).take(count)
-                                                })
+
+                                playable.next().map(|u| {
+                                    u.into_iter()
+                                        .flat_map(|x| {
+                                            x.into_iter().flat_map(|(card, count)| {
+                                                std::iter::repeat(card.card).take(count)
                                             })
-                                            .collect::<Vec<_>>(),
-                                    )
-                                } else {
-                                    None
-                                }
+                                        })
+                                        .collect::<Vec<_>>()
+                                })
                             })
                             .next();
 

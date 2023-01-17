@@ -6,7 +6,9 @@
 
 pub mod bidding;
 pub mod deck;
+pub mod format_match;
 pub mod hands;
+pub mod multiset_iter;
 pub mod ordered_card;
 pub mod player;
 pub mod scoring;
