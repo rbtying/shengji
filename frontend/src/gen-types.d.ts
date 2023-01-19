@@ -779,6 +779,7 @@ export interface DecomposeTrickFormatResponse {
 export interface DecomposedTrickFormat {
   description: string;
   format: UnitLike[];
+  more_than_one: boolean;
   playable: Card[];
   [k: string]: unknown;
 }

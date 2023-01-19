@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Mutex;
@@ -35,6 +36,18 @@ impl OrderedCard {
                 trump: self.trump,
             })
             .collect()
+    }
+
+    pub fn make_map(
+        cards: impl Iterator<Item = Card>,
+        trump: Trump,
+    ) -> BTreeMap<OrderedCard, usize> {
+        let mut counts = BTreeMap::new();
+        for card in cards {
+            let card = OrderedCard { card, trump };
+            *counts.entry(card).or_insert(0) += 1;
+        }
+        counts
     }
 
     pub fn card(self) -> Card {
@@ -86,88 +99,6 @@ fn without_matching_cards<T>(
     }
 
     res
-}
-
-pub fn attempt_format_match(
-    counts: &mut BTreeMap<OrderedCard, usize>,
-    mut units: impl Iterator<Item = AdjacentTupleSizes> + Clone,
-    allowed: impl Fn(&BTreeMap<OrderedCard, usize>, &MatchingCardsRef) -> bool + Copy,
-) -> (bool, Vec<MatchingCards>) {
-    match units.next() {
-        Some(adj_req) => {
-            for matching in attempt_match_permutations(counts, adj_req) {
-                if !allowed(counts, &matching) {
-                    continue;
-                }
-                let (found, mut path) = without_matching_cards(counts, &matching, |subcounts| {
-                    attempt_format_match(subcounts, units.clone(), allowed)
-                });
-                if found {
-                    path.push(matching);
-                    return (true, path);
-                }
-            }
-            (false, vec![])
-        }
-        None => (true, vec![]),
-    }
-}
-
-/// Attempt to find all adjacent subsequences of cards
-fn attempt_match_permutations(
-    counts: &BTreeMap<OrderedCard, usize>,
-    mut adj_req: AdjacentTupleSizes,
-) -> Vec<MatchingCards> {
-    if adj_req.iter().all(|v| *v == adj_req[0]) {
-        return attempt_match(counts, adj_req.iter().copied());
-    }
-
-    // Handle permutations.
-    let mut output: Vec<_> = vec![];
-    let mut processed = HashSet::new();
-    permutohedron::heap_recursive(&mut adj_req, |permutation| {
-        if !processed.contains(permutation) {
-            processed.insert(permutation.to_vec());
-            output.extend(attempt_match(counts, permutation.iter().copied()));
-        }
-    });
-    output
-}
-
-/// Attempt to find all adjacent subsequences of cards where the counts occur in the order
-/// specified by `adj_req`.
-pub fn attempt_match(
-    counts: &BTreeMap<OrderedCard, usize>,
-    adj_req: impl Iterator<Item = usize> + Clone,
-) -> Vec<MatchingCards> {
-    let mut output: Vec<_> = vec![];
-    for c in counts.keys() {
-        // Check the next subsequence
-        let mut card = vec![*c];
-        let mut selected = vec![];
-        let mut complete = true;
-
-        for req in adj_req.clone() {
-            let mut found = false;
-            for cc in &card {
-                if counts.get(cc).copied().unwrap_or_default() >= req {
-                    selected.push((*cc, req));
-                    found = true;
-                    card = cc.successor();
-                    break;
-                }
-            }
-            if !found {
-                complete = false;
-                break;
-            }
-        }
-        if complete {
-            output.push(selected);
-        }
-    }
-
-    output
 }
 
 type Usizes = Vec<usize>;
@@ -421,8 +352,8 @@ mod tests {
     };
 
     use super::{
-        attempt_match_permutations, find_all_groupings, full_decomposition_ordering,
-        subsequent_decomposition_ordering, usize_partitions, OrderedCard, PlayRequirements,
+        find_all_groupings, full_decomposition_ordering, subsequent_decomposition_ordering,
+        usize_partitions, OrderedCard, PlayRequirements,
     };
 
     const TRUMP: Trump = Trump::Standard {
@@ -436,66 +367,6 @@ mod tests {
                 trump: TRUMP,
             }
         };
-    }
-
-    #[test]
-    fn test_attempt_match() {
-        let counts = vec![
-            (oc!(S_2), 2),
-            (oc!(S_3), 3),
-            (oc!(S_5), 3),
-            (oc!(Card::BigJoker), 1),
-        ]
-        .into_iter()
-        .collect();
-        assert_eq!(
-            attempt_match_permutations(&counts, vec![1])
-                .into_iter()
-                .map(|x| x.to_vec())
-                .collect::<Vec<_>>(),
-            vec![
-                vec![(oc!(S_2), 1)],
-                vec![(oc!(S_3), 1)],
-                vec![(oc!(S_5), 1)],
-                vec![(oc!(Card::BigJoker), 1)]
-            ]
-        );
-        assert_eq!(
-            attempt_match_permutations(&counts, vec![2, 2])
-                .into_iter()
-                .map(|x| x.to_vec())
-                .collect::<Vec<_>>(),
-            vec![
-                vec![(oc!(S_2), 2), (oc!(S_3), 2)],
-                vec![(oc!(S_3), 2), (oc!(S_5), 2)],
-            ]
-        );
-        assert_eq!(
-            attempt_match_permutations(&counts, vec![2, 3])
-                .into_iter()
-                .map(|x| x.to_vec())
-                .collect::<Vec<_>>(),
-            vec![
-                vec![(oc!(S_2), 2), (oc!(S_3), 3)],
-                vec![(oc!(S_3), 2), (oc!(S_5), 3)],
-                vec![(oc!(S_3), 3), (oc!(S_5), 2)],
-            ]
-        );
-        assert_eq!(
-            attempt_match_permutations(&counts, vec![2, 2, 3])
-                .into_iter()
-                .map(|x| x.to_vec())
-                .collect::<Vec<_>>(),
-            vec![
-                vec![(oc!(S_2), 2), (oc!(S_3), 2), (oc!(S_5), 3)],
-                vec![(oc!(S_2), 2), (oc!(S_3), 3), (oc!(S_5), 2)],
-            ]
-        );
-        assert!(attempt_match_permutations(&counts, vec![3, 3, 3])
-            .into_iter()
-            .map(|x| x.to_vec())
-            .next()
-            .is_none());
     }
 
     #[test]

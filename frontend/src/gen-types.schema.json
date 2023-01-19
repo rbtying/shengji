@@ -842,7 +842,7 @@
     },
     "DecomposedTrickFormat": {
       "type": "object",
-      "required": ["description", "format", "playable"],
+      "required": ["description", "format", "more_than_one", "playable"],
       "properties": {
         "description": {
           "type": "string"
@@ -852,6 +852,9 @@
           "items": {
             "$ref": "#/definitions/UnitLike"
           }
+        },
+        "more_than_one": {
+          "type": "boolean"
         },
         "playable": {
           "type": "array",

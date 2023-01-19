@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::hands::{HandError, Hands};
 use crate::ordered_card::{
-    attempt_format_match, subsequent_decomposition_ordering, AdjacentTupleSizes, MatchingCards,
+    subsequent_decomposition_ordering, AdjacentTupleSizes, MatchingCards, MatchingCardsRef,
     OrderedCard,
 };
 use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
@@ -273,24 +273,24 @@ impl TrickFormat {
             for requirement in self.decomposition(trick_draw_policy) {
                 // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
-                    self.trump,
-                    proposed.iter().copied(),
+                    OrderedCard::make_map(proposed.iter().copied(), self.trump),
                     requirement.iter().cloned(),
                     TrickDrawPolicy::NoProtections,
                 )
-                .0;
+                .next()
+                .is_some();
 
                 if play_matches {
                     return true;
                 }
                 // Otherwise, if it could match in the player's hand, it's not OK.
                 let hand_can_play = UnitLike::check_play(
-                    self.trump,
-                    available_cards.iter().copied(),
+                    OrderedCard::make_map(available_cards.iter().copied(), self.trump),
                     requirement.iter().cloned(),
                     trick_draw_policy,
                 )
-                .0;
+                .next()
+                .is_some();
                 if hand_can_play {
                     return false;
                 }
@@ -302,7 +302,7 @@ impl TrickFormat {
         }
     }
 
-    pub fn matches(&self, cards: &'_ [Card]) -> Result<Units, TrickError> {
+    pub fn matches(&self, cards: &[Card]) -> Result<impl Iterator<Item = Units> + '_, TrickError> {
         let suit = self.trump.effective_suit(cards[0]);
         for card in cards {
             if self.trump.effective_suit(*card) != suit {
@@ -318,45 +318,32 @@ impl TrickFormat {
             return Err(TrickError::NonMatchingPlay);
         }
 
-        let (found, matches) = UnitLike::check_play(
-            self.trump,
-            cards.iter().copied(),
+        let mut matches = UnitLike::check_play(
+            OrderedCard::make_map(cards.iter().copied(), self.trump),
             self.units.iter().map(UnitLike::from),
             TrickDrawPolicy::NoProtections,
-        );
+        )
+        .peekable();
 
-        let found_units: Units = matches
-            .into_iter()
-            .map(|m| {
-                if m.len() == 1 {
-                    let (card, count) = m[0];
-                    TrickUnit::Repeated { count, card }
-                } else {
-                    let min = m.iter().map(|(_, count)| count).min().unwrap();
-                    let max = m.iter().map(|(_, count)| count).max().unwrap();
-                    debug_assert_eq!(min, max);
-                    TrickUnit::Tractor {
-                        count: *min,
-                        members: m.iter().map(|(card, _)| *card).collect(),
-                    }
-                }
-            })
-            .collect();
-
-        if found {
-            debug_assert_eq!(
-                self.units
-                    .iter()
-                    .map(UnitLike::from)
-                    .collect::<HashSet<_>>(),
-                found_units
-                    .iter()
-                    .map(UnitLike::from)
-                    .collect::<HashSet<_>>()
-            );
-            Ok(found_units)
-        } else {
+        if matches.peek().is_none() {
             Err(TrickError::NonMatchingPlay)
+        } else {
+            Ok(matches.map(|m| m.into_iter().map(Self::match_to_unit).collect()))
+        }
+    }
+
+    fn match_to_unit(m: Vec<(OrderedCard, usize)>) -> TrickUnit {
+        if m.len() == 1 {
+            let (card, count) = m[0];
+            TrickUnit::Repeated { count, card }
+        } else {
+            let min = m.iter().map(|(_, count)| count).min().unwrap();
+            let max = m.iter().map(|(_, count)| count).max().unwrap();
+            debug_assert_eq!(min, max);
+            TrickUnit::Tractor {
+                count: *min,
+                members: m.iter().map(|(card, _)| *card).collect(),
+            }
         }
     }
 
@@ -667,7 +654,8 @@ impl Trick {
         self.played_card_mappings.push(
             self.trick_format
                 .as_ref()
-                .and_then(|tf| tf.matches(&cards).ok()),
+                .and_then(|tf| tf.matches(&cards).ok())
+                .and_then(|mut f| f.next()),
         );
 
         self.played_cards.push(PlayedCards {
@@ -749,6 +737,51 @@ impl Trick {
         }
     }
 
+    fn _defeats(m: &Units, winner: &Units, throw_eval_policy: ThrowEvaluationPolicy) -> bool {
+        match throw_eval_policy {
+            ThrowEvaluationPolicy::All => m
+                .iter()
+                .zip(winner.iter())
+                .all(|(n, w)| n.first_card().cmp_effective(w.first_card()) == Ordering::Greater),
+            ThrowEvaluationPolicy::Highest => {
+                let n_max = m
+                    .iter()
+                    .map(|u| u.last_card())
+                    .max()
+                    .expect("trick format cannot be empty");
+                let w_max = winner
+                    .iter()
+                    .map(|u| u.last_card())
+                    .max()
+                    .expect("trick format cannot be empty");
+                n_max.cmp_effective(w_max) == Ordering::Greater
+            }
+            ThrowEvaluationPolicy::TrickUnitLength => {
+                // Don't worry about single cards if this is a throw with at
+                // least one unit that is longer than a single card, but do
+                // evaluate them if it isn't!
+                let skip_single_cards = m.len() > 1 && m.iter().any(|n| n.size() > 1);
+
+                let mut comparisons = m
+                    .iter()
+                    .zip(winner.iter())
+                    .filter(|(n, _)| !skip_single_cards || n.size() > 1)
+                    .map(|(n, w)| (n.size(), n.first_card().cmp_effective(w.first_card())))
+                    .collect::<Vec<_>>();
+                // Compare by size first, then try to skip equal-comparisons.
+                comparisons.sort_by_key(|(s, c)| (-(*s as isize), *c == Ordering::Equal));
+                let mut iter = comparisons.into_iter().map(|(_, c)| c);
+                loop {
+                    match iter.next() {
+                        Some(Ordering::Equal) => {}
+                        Some(Ordering::Greater) => break true,
+                        Some(Ordering::Less) | None => break false,
+                    }
+                }
+            }
+        }
+    }
+
     fn winner(
         trick_format: Option<&'_ TrickFormat>,
         played_cards: &'_ [PlayedCards],
@@ -759,57 +792,9 @@ impl Trick {
                 let mut winner = (0, tf.units.to_vec());
 
                 for (idx, pc) in played_cards.iter().enumerate().skip(1) {
-                    if let Ok(m) = tf.matches(&pc.cards) {
-                        let greater = match throw_eval_policy {
-                            ThrowEvaluationPolicy::All => {
-                                m.iter().zip(winner.1.iter()).all(|(n, w)| {
-                                    n.first_card().cmp_effective(w.first_card())
-                                        == Ordering::Greater
-                                })
-                            }
-                            ThrowEvaluationPolicy::Highest => {
-                                let n_max = m
-                                    .iter()
-                                    .map(|u| u.last_card())
-                                    .max()
-                                    .expect("trick format cannot be empty");
-                                let w_max = winner
-                                    .1
-                                    .iter()
-                                    .map(|u| u.last_card())
-                                    .max()
-                                    .expect("trick format cannot be empty");
-                                n_max.cmp_effective(w_max) == Ordering::Greater
-                            }
-                            ThrowEvaluationPolicy::TrickUnitLength => {
-                                // Don't worry about single cards if this is a throw with at
-                                // least one unit that is longer than a single card, but do
-                                // evaluate them if it isn't!
-                                let skip_single_cards =
-                                    m.len() > 1 && m.iter().any(|n| n.size() > 1);
-
-                                let mut comparisons = m
-                                    .iter()
-                                    .zip(winner.1.iter())
-                                    .filter(|(n, _)| !skip_single_cards || n.size() > 1)
-                                    .map(|(n, w)| {
-                                        (n.size(), n.first_card().cmp_effective(w.first_card()))
-                                    })
-                                    .collect::<Vec<_>>();
-                                // Compare by size first, then try to skip equal-comparisons.
-                                comparisons
-                                    .sort_by_key(|(s, c)| (-(*s as isize), *c == Ordering::Equal));
-                                let mut iter = comparisons.into_iter().map(|(_, c)| c);
-                                loop {
-                                    match iter.next() {
-                                        Some(Ordering::Equal) => {}
-                                        Some(Ordering::Greater) => break true,
-                                        Some(Ordering::Less) | None => break false,
-                                    }
-                                }
-                            }
-                        };
-                        if greater {
+                    if let Ok(mut mm) = tf.matches(&pc.cards) {
+                        let greater = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
+                        if let Some(m) = greater {
                             winner = (idx, m);
                         }
                     }
@@ -924,28 +909,26 @@ impl UnitLike {
     }
 
     pub fn check_play(
-        trump: Trump,
-        iter: impl IntoIterator<Item = Card>,
-        units: impl Iterator<Item = UnitLike> + Clone,
+        counts: BTreeMap<OrderedCard, usize>,
+        units: impl Iterator<Item = UnitLike>,
         trick_draw_policy: TrickDrawPolicy,
-    ) -> (bool, Vec<MatchingCards>) {
-        let mut counts = BTreeMap::new();
-        for card in iter.into_iter() {
-            let card = OrderedCard { card, trump };
-            *counts.entry(card).or_insert(0) += 1;
-        }
-        attempt_format_match(
-            &mut counts,
-            units.map(|u| u.adjacent_tuples),
-            |counts, matching| match trick_draw_policy {
-                TrickDrawPolicy::NoFormatBasedDraw
-                | TrickDrawPolicy::NoProtections
-                | TrickDrawPolicy::OnlyDrawTractorOnTractor => true,
-                TrickDrawPolicy::LongerTuplesProtected => !matching
-                    .iter()
-                    .any(|(card, count)| counts.get(card).copied().unwrap_or_default() > *count),
-            },
-        )
+    ) -> impl Iterator<Item = Vec<MatchingCards>> {
+        let counts_ = counts.clone();
+        let filter_func = move |matching: &MatchingCardsRef| match trick_draw_policy {
+            TrickDrawPolicy::NoFormatBasedDraw
+            | TrickDrawPolicy::NoProtections
+            | TrickDrawPolicy::OnlyDrawTractorOnTractor => true,
+            TrickDrawPolicy::LongerTuplesProtected => !matching
+                .iter()
+                .any(|(card, count)| counts_.get(card).copied().unwrap_or_default() > *count),
+        };
+        let units = units
+            .into_iter()
+            .map(|u| u.adjacent_tuples)
+            .collect::<Vec<_>>();
+
+        crate::format_match::find_format_matches(units, counts)
+            .filter(move |m| m.iter().all(|mm| filter_func(mm)))
     }
 }
 
@@ -1140,14 +1123,7 @@ mod tests {
     use std::iter::FromIterator;
 
     use crate::hands::Hands;
-    use crate::types::{
-        cards::{
-            C_10, C_4, C_5, C_6, C_7, C_8, C_A, C_K, C_Q, D_4, D_A, D_K, H_10, H_2, H_3, H_4, H_5,
-            H_7, H_8, H_9, H_A, H_K, S_10, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_A, S_J, S_K,
-            S_Q,
-        },
-        Card, EffectiveSuit, Number, PlayerID, Suit, Trump,
-    };
+    use crate::types::{cards::*, Card, EffectiveSuit, Number, PlayerID, Suit, Trump};
 
     use super::{
         OrderedCard, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
@@ -1243,8 +1219,8 @@ mod tests {
                     HashSet::from_iter(vec![$(vec![$(vec![$($y),+]),+]),+])
                 );
                 for u in units {
-                    let (found, play) = UnitLike::check_play(TRUMP, cards.iter().copied(), u.iter().map(UnitLike::from), TrickDrawPolicy::NoProtections);
-                    assert!(found);
+                    let mut iter = UnitLike::check_play(OrderedCard::make_map(cards.iter().copied(), TRUMP), u.iter().map(UnitLike::from), TrickDrawPolicy::NoProtections);
+                    let play = iter.next().unwrap();
                     assert_eq!(
                         u.iter().map(UnitLike::from).collect::<HashSet<_>>(),
                         play.iter().map(UnitLike::from).collect::<HashSet<_>>()
@@ -2276,5 +2252,48 @@ mod tests {
 
         let TrickEnded { winner, .. } = f(ThrowEvaluationPolicy::TrickUnitLength);
         assert_eq!(winner, P3);
+    }
+
+    #[test]
+    fn test_trick_format_multi_parse() {
+        let f = |tep| {
+            let trump = Trump::Standard {
+                number: Number::Two,
+                suit: Suit::Clubs,
+            };
+            let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+            hands.set_trump(trump);
+            hands.add(P1, vec![D_8, D_8, D_J, D_Q]).unwrap();
+            hands.add(P2, vec![C_5, C_5, C_A, S_2]).unwrap();
+            hands.add(P3, vec![S_3, S_3, C_7, C_8]).unwrap();
+            hands.add(P4, vec![C_6, C_6, C_2, C_2]).unwrap();
+
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            trick
+                .play_cards(pc!(P1, &mut hands, &[D_8, D_8, D_J, D_Q], tep))
+                .unwrap();
+            trick
+                .play_cards(pc!(P2, &mut hands, &[C_5, C_5, C_A, S_2], tep))
+                .unwrap();
+            trick
+                .play_cards(pc!(P3, &mut hands, &[S_3, S_3, C_7, C_8], tep))
+                .unwrap();
+
+            // test the case where there's an ambiguous trick-format parse (2/1/1, where the 2 can
+            // either be a pair of twos or a pair of sixes, and only one of them will win the
+            // trick.
+            trick
+                .play_cards(pc!(P4, &mut hands, &[C_6, C_6, C_2, C_2], tep))
+                .unwrap();
+            trick.complete().unwrap()
+        };
+        let TrickEnded { winner, .. } = f(ThrowEvaluationPolicy::All);
+        assert_eq!(winner, P4);
+
+        let TrickEnded { winner, .. } = f(ThrowEvaluationPolicy::Highest);
+        assert_eq!(winner, P4);
+
+        let TrickEnded { winner, .. } = f(ThrowEvaluationPolicy::TrickUnitLength);
+        assert_eq!(winner, P4);
     }
 }
