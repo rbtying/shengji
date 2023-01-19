@@ -10,7 +10,7 @@ use std::sync::{
 use axum::{
     extract::ws::{Message, WebSocketUpgrade},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Redirect},
     routing::get,
     Extension, Json, Router,
 };
@@ -128,7 +128,11 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/full_state.json", get(state_dump::dump_state))
         .route("/stats", get(get_stats))
         .route("/runtime.js", get(runtime_settings))
-        .route("/cards.json", get(|| async { Json(CARDS_JSON.clone()) }));
+        .route("/cards.json", get(|| async { Json(CARDS_JSON.clone()) }))
+        .route(
+            "/rules",
+            get(|| async { Redirect::permanent("/rules.html") }),
+        );
 
     #[cfg(feature = "dynamic")]
     let app = app.fallback_service(
