@@ -474,7 +474,11 @@ const Credits = (): JSX.Element => (
       friends
     </a>
     . Consider buying us boba via Venmo at @Robert-Ying or via{" "}
-    <a href="https://donate.stripe.com/aEU8x982f3oj4Ja7ss" target="_blank">
+    <a
+      href="https://donate.stripe.com/aEU8x982f3oj4Ja7ss"
+      target="_blank"
+      rel="noreferrer"
+    >
       other payment methods
     </a>
     , or contributing on{" "}
