@@ -1177,7 +1177,7 @@ dependencies = [
 
 [[package]]
 name = "shengji"
-version = "0.1.5-beta.13"
+version = "0.1.5-beta.14"
 dependencies = [
  "anyhow",
  "axum",
