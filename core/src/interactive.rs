@@ -123,7 +123,7 @@ impl InteractiveGame {
                 state.set_num_decks(num_decks)?
             }
             (Action::SetSpecialDecks(decks), GameState::Initialize(ref mut state)) => {
-                info!(logger, "Setting special decks"; "decks" => format!("{:?}", decks));
+                info!(logger, "Setting special decks"; "decks" => format!("{decks:?}"));
                 state.set_special_decks(decks)?
             }
             (Action::SetRank(rank), GameState::Initialize(ref mut state)) => {

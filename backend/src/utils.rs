@@ -75,14 +75,14 @@ where
     match res {
         Ok(_) => true,
         Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {}", action_description));
+            let err = GameMessage::Error(format!("Failed to {action_description}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
             false
         }
         Err(EitherError::E2(msg)) => {
-            let err = GameMessage::Error(format!("Failed to {}: {}", action_description, msg));
+            let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
@@ -143,14 +143,14 @@ where
     match res {
         Ok(_) => true,
         Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {}", action_description));
+            let err = GameMessage::Error(format!("Failed to {action_description}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
             false
         }
         Err(EitherError::E2(msg)) => {
-            let err = GameMessage::Error(format!("Failed to {}: {}", action_description, msg));
+            let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;

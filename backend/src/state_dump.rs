@@ -85,7 +85,7 @@ pub async fn load_state(
         }
         Ok(None) => (),
         Err(e) => {
-            error!(init_logger, "Failed to open message file"; "error" => format!("{:?}", e));
+            error!(init_logger, "Failed to open message file"; "error" => format!("{e:?}"));
         }
     }
 
@@ -170,7 +170,7 @@ pub async fn dump_state(
             info!(logger, "Dumped state to disk");
         }
         Err(e) => {
-            error!(logger, "Failed to dump state to disk"; "error" => format!("{:?}", e));
+            error!(logger, "Failed to dump state to disk"; "error" => format!("{e:?}"));
         }
     }
 

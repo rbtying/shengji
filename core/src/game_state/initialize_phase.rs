@@ -190,8 +190,7 @@ impl InitializePhase {
                         // Note: we would only hit this case if there are fewer decks than players,
                         // which should be prevented in the settings layer.
                         None => bail!(format!(
-                            "Couldn't find {:?} in the deck to remove",
-                            card_to_remove
+                            "Couldn't find {card_to_remove:?} in the deck to remove"
                         )),
                     }
                 }

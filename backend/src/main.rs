@@ -246,7 +246,7 @@ async fn handle_websocket(
                     }
                     Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => (),
                     Err(e) => {
-                        error!(logger_, "Failed to fetch message"; "error" => format!("{:?}", e));
+                        error!(logger_, "Failed to fetch message"; "error" => format!("{e:?}"));
                         break;
                     }
                 }

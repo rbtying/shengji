@@ -830,9 +830,9 @@ impl UnitLike {
                 .next()
                 .expect("only one item in description");
             if ct == 1 {
-                format!("a {}", desc)
+                format!("a {desc}")
             } else {
-                format!("{} {}", ct, desc)
+                format!("{ct} {desc}")
             }
         } else {
             let mut s =
@@ -840,7 +840,7 @@ impl UnitLike {
                     .into_iter()
                     .fold(String::new(), |mut s, (desc, ct): (String, usize)| {
                         use std::fmt::Write;
-                        let _ = write!(s, "{} {}, ", ct, desc);
+                        let _ = write!(s, "{ct} {desc}, ");
                         s
                     });
             s.pop();
@@ -904,7 +904,7 @@ impl UnitLike {
             3 => "triple".to_string(),
             4 => "quadruple".to_string(),
             5 => "quintuple".to_string(),
-            count => format!("{}-tuple", count),
+            count => format!("{count}-tuple"),
         }
     }
 
@@ -1464,7 +1464,7 @@ mod tests {
             let TrickEnded {
                 winner: winner_id, ..
             } = trick.complete().unwrap();
-            assert_eq!(winner_id, P4, "{:?}", tep);
+            assert_eq!(winner_id, P4, "{tep:?}");
         }
     }
 

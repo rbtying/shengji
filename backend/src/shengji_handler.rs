@@ -55,7 +55,7 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
                     break (room_name, name);
                 }
                 Ok(_) => GameMessage::Error("invalid room or name".to_string()),
-                Err(err) => GameMessage::Error(format!("couldn't deserialize message {:?}", err)),
+                Err(err) => GameMessage::Error(format!("couldn't deserialize message {err:?}")),
             };
 
             send_to_user(&tx, &err).await?;
@@ -75,7 +75,7 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
         Err(e) => {
             let _ = send_to_user(
                 &tx,
-                &GameMessage::Error(format!("Failed to join room: {:?}", e)),
+                &GameMessage::Error(format!("Failed to join room: {e:?}")),
             )
             .await;
             return Err(anyhow::anyhow!("Failed to join room {:?}", e));
@@ -275,19 +275,19 @@ async fn run_game_for_player<S: Storage<VersionedGame, E>, E: Send + std::fmt::D
                         .publish_to_single_subscriber(
                             room.as_bytes().to_vec(),
                             ws_id,
-                            GameMessage::Error(format!("Unexpected error {:?}", e)),
+                            GameMessage::Error(format!("Unexpected error {e:?}")),
                         )
                         .await;
                 }
             }
             Err(e) => {
-                error!(logger, "Failed to deserialize message"; "error" => format!("{:?}", e));
+                error!(logger, "Failed to deserialize message"; "error" => format!("{e:?}"));
                 let _ = backend_storage
                     .clone()
                     .publish_to_single_subscriber(
                         room.as_bytes().to_vec(),
                         ws_id,
-                        GameMessage::Error(format!("couldn't deserialize message {:?}", e)),
+                        GameMessage::Error(format!("couldn't deserialize message {e:?}")),
                     )
                     .await;
             }
@@ -430,7 +430,7 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E: Send>(
         .await;
     info!(logger, "Websocket disconnected";
         "room" => room,
-        "parent_span" => format!("{}:{}", room, parent),
-        "span" => format!("{}:ws_{}", room, ws_id)
+        "parent_span" => format!("{room}:{parent}"),
+        "span" => format!("{room}:ws_{ws_id}")
     );
 }

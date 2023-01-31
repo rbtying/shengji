@@ -210,7 +210,7 @@ impl MessageVariant {
             NewLandlordForNextGame { landlord } =>
                 format!("{} will start the next game", player_name(*landlord)?),
             PointsInKitty { points, multiplier } =>
-                format!("{} points were buried and are attached to the last trick, with a multiplier of {}", points, multiplier),
+                format!("{points} points were buried and are attached to the last trick, with a multiplier of {multiplier}"),
             JoinedGame { player } =>
                 format!("{} has joined the game", player_name(*player)?),
             JoinedGameAgain { player, game_shadowing_policy: GameShadowingPolicy::SingleSessionOnly } =>
@@ -221,7 +221,7 @@ impl MessageVariant {
                 format!("{} has joined the team", player_name(*player)?),
             JoinedTeam { player, already_joined: true } =>
                 format!("{} tried to join the team, but was already a member", player_name(*player)?),
-            LeftGame { ref name } => format!("{} has left the game", name),
+            LeftGame { ref name } => format!("{name} has left the game"),
             AdvancementPolicySet { policy: AdvancementPolicy::FullyUnrestricted } =>
                 format!("{} removed all advancement restrictions", n?),
             AdvancementPolicySet { policy: AdvancementPolicy::Unrestricted } =>
@@ -363,9 +363,9 @@ impl MessageVariant {
             GameEndedEarly => format!("{} ended the game early", n?),
             BonusLevelEarned => "Landlord team earned a bonus level for defending with a smaller team".to_string(),
             EndOfGameSummary { landlord_won : true, non_landlords_points } =>
-                format!("Landlord team won, opposing team only collected {} points", non_landlords_points),
+                format!("Landlord team won, opposing team only collected {non_landlords_points} points"),
             EndOfGameSummary { landlord_won: false, non_landlords_points } =>
-                format!("Landlord team lost, opposing team collected {} points", non_landlords_points),
+                format!("Landlord team lost, opposing team collected {non_landlords_points} points"),
             HideThrowHaltingPlayer { set: true } => format!("{} hid the player who prevents throws", n?),
             HideThrowHaltingPlayer { set: false } => format!("{} un-hid the player who prevents throws", n?),
             TractorRequirementsChanged { tractor_requirements } =>

@@ -342,7 +342,7 @@ impl Serialize for Card {
 impl<'d> Deserialize<'d> for Card {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let c = char::deserialize(deserializer)?;
-        Card::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected card '{:?}'", c)))
+        Card::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected card '{c:?}'")))
     }
 }
 
@@ -582,7 +582,7 @@ impl Serialize for Number {
 impl<'d> Deserialize<'d> for Number {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Number::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected number '{}'", s)))
+        Number::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected number '{s}'")))
     }
 }
 
@@ -742,7 +742,7 @@ impl Serialize for Suit {
 impl<'d> Deserialize<'d> for Suit {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let c = char::deserialize(deserializer)?;
-        Suit::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected suit '{:?}'", c)))
+        Suit::from_char(c).ok_or_else(|| D::Error::custom(format!("Unexpected suit '{c:?}'")))
     }
 }
 
@@ -1088,7 +1088,7 @@ impl Serialize for Rank {
 impl<'d> Deserialize<'d> for Rank {
     fn deserialize<D: serde::Deserializer<'d>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Rank::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected rank '{}'", s)))
+        Rank::from_str(&s).ok_or_else(|| D::Error::custom(format!("Unexpected rank '{s}'")))
     }
 }
 
@@ -1157,7 +1157,7 @@ mod tests {
         };
         hand.sort_by(|a, b| trump.compare(*a, *b));
         assert_eq!(
-            hand.iter().map(|c| format!("{:?}", c)).collect::<String>(),
+            hand.iter().map(|c| format!("{c:?}")).collect::<String>(),
             "4♡5♡6♡4♧3♢3♤2♡2♤LJHJ"
         );
     }

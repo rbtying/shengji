@@ -265,8 +265,7 @@ mod tests {
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
                     &ranks, v,
-                    "Starting rank: {:?} / {:?}",
-                    advance_policy, starting_rank
+                    "Starting rank: {advance_policy:?} / {starting_rank:?}"
                 );
             }
         }
@@ -317,8 +316,7 @@ mod tests {
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
                     &ranks, v,
-                    "Starting rank: {:?} / {:?}",
-                    advance_policy, starting_rank
+                    "Starting rank: {advance_policy:?} / {starting_rank:?}"
                 );
             }
         }
@@ -390,8 +388,7 @@ mod tests {
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
                     ranks, v,
-                    "Starting rank: {:?} / {:?}",
-                    advance_policy, starting_rank
+                    "Starting rank: {advance_policy:?} / {starting_rank:?}"
                 );
             }
         }
@@ -458,8 +455,7 @@ mod tests {
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
                     ranks, v,
-                    "Starting rank: {:?} / {:?}",
-                    advance_policy, starting_rank
+                    "Starting rank: {advance_policy:?} / {starting_rank:?}"
                 );
             }
         }
@@ -588,7 +584,7 @@ mod tests {
         init.set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
             .unwrap();
         for n_players in 4..10 {
-            init.add_player(format!("p{}", n_players)).unwrap();
+            init.add_player(format!("p{n_players}")).unwrap();
             for n_decks in 1..n_players {
                 for kitty_size in 1..30 {
                     let mut init_ = init.clone();

@@ -65,15 +65,9 @@ fn main() {
             initialize
                 .set_game_mode(GameModeSettings::FindingFriends { num_friends: None })
                 .unwrap();
-            println!(
-                "init: {} players, {} decks, finding friends",
-                num_players, num_decks
-            );
+            println!("init: {num_players} players, {num_decks} decks, finding friends");
         } else {
-            println!(
-                "init: {} players, {} decks, tractor",
-                num_players, num_decks
-            );
+            println!("init: {num_players} players, {num_decks} decks, tractor");
         }
 
         // TODO: set other settings

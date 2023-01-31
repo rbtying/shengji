@@ -18,7 +18,7 @@ impl slog::Value for Deck {
         key: slog::Key,
         serializer: &mut dyn slog::Serializer,
     ) -> slog::Result {
-        serializer.emit_str(key, &format!("{:?}", self))
+        serializer.emit_str(key, &format!("{self:?}"))
     }
 }
 
@@ -154,7 +154,7 @@ mod tests {
         ];
 
         for (deck, cards, points) in cases {
-            eprintln!("testing {:?} {:?} {:?}", deck, cards, points);
+            eprintln!("testing {deck:?} {cards:?} {points:?}");
             assert_eq!(deck.points(), points);
             assert_eq!(deck.len(), cards);
             assert_eq!(deck.cards().count(), cards);
