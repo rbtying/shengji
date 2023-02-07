@@ -35,9 +35,11 @@ const mapObject = <T, Value>(
 };
 
 const range = <T>(count: number, fn: (idx: number) => T): T[] =>
-  Array(count)
-    .fill(undefined)
-    .map((_, idx) => fn(idx));
+  count !== undefined && count >= 0
+    ? Array(count)
+        .fill(undefined)
+        .map((_, idx) => fn(idx))
+    : [];
 
 const shuffled = <T>(array: T[]): T[] =>
   array

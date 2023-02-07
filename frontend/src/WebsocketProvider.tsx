@@ -26,9 +26,11 @@ const getFileReader: () => IBlobToArrayBufferQueue = memoize(() => {
   const fr = new FileReader();
   fr.onload = () => {
     const next = queue.shift();
-    next.handler(fr.result as ArrayBuffer);
-    if (queue.length > 0) {
-      fr.readAsArrayBuffer(queue[0].blob);
+    if (next !== undefined) {
+      next.handler(fr.result as ArrayBuffer);
+      if (queue.length > 0) {
+        fr.readAsArrayBuffer(queue[0].blob);
+      }
     }
   };
   return {
@@ -50,11 +52,13 @@ const getBlobArrayBuffer: () => IBlobToArrayBufferQueue = memoize(() => {
   const inflight: number[] = [];
   const onload = (arr: ArrayBuffer): void => {
     const next = queue.shift();
-    inflight.shift();
-    next.handler(arr);
-    if (queue.length > 0) {
-      inflight.push(0);
-      queue[0].blob.arrayBuffer().then(onload, (err) => console.log(err));
+    if (next !== undefined) {
+      inflight.shift();
+      next.handler(arr);
+      if (queue.length > 0) {
+        inflight.push(0);
+        queue[0].blob.arrayBuffer().then(onload, (err) => console.log(err));
+      }
     }
   };
   return {
