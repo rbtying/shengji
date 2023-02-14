@@ -160,6 +160,7 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
               props.bids[props.bids.length - 1].id !== playerId ||
               props.bids[props.bids.length - 1].epoch !== props.epoch
             }
+            className="big"
           >
             Take back bid
           </button>
