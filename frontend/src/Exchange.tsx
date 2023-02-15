@@ -182,6 +182,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               disabled={
                 this.props.state.kitty.length !== this.props.state.kitty_size
               }
+              className="big"
             >
               Finalize exchanged cards
             </button>
@@ -199,6 +200,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             !this.props.state.finalized &&
             this.props.state.autobid === null)
         }
+        className="big"
       >
         Start game
       </button>
@@ -234,6 +236,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                     lastBid.id !== playerId ||
                     lastBid.epoch !== this.props.state.epoch
                   }
+                  className="big"
                 >
                   Pick up cards from the bottom
                 </button>
@@ -277,7 +280,9 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               />
             );
           })}
-          <button onClick={this.pickFriends}>Pick friends</button>
+          <button onClick={this.pickFriends} className="big">
+            Pick friends
+          </button>
         </div>
       ) : null;
 

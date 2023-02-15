@@ -113,15 +113,17 @@ const Play = (props: IProps): JSX.Element => {
 
     const newSelected = ArrayUtils.minus(selected, toRemove);
 
-    setSelected(newSelected);
-    setGrouping(
-      findViablePlays(
-        playPhase.trump,
-        playPhase.propagated.tractor_requirements,
-        newSelected
-      )
-    );
-  }, [playPhase.hands.hands, currentPlayer.id]);
+    if (toRemove.length > 0) {
+      setSelected(newSelected);
+      setGrouping(
+        findViablePlays(
+          playPhase.trump,
+          playPhase.propagated.tractor_requirements,
+          newSelected
+        )
+      );
+    }
+  }, [playPhase.hands.hands, currentPlayer.id, selected]);
 
   const nextPlayer = playPhase.trick.player_queue[0];
   const lastPlay =

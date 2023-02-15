@@ -189,6 +189,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                   this.drawCard();
                 }}
                 disabled={!canDraw}
+                className="big"
               >
                 Draw card
               </button>
@@ -222,6 +223,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                         .first_landlord_selection_policy === "ByFirstBid" &&
                         this.props.state.bids[0].id !== playerId)))
                 }
+                className="big"
               >
                 Pick up cards from the bottom
               </button>
@@ -239,6 +241,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                     landlord !== undefined &&
                     players[landlord].level === "NT")
                 }
+                className="big"
               >
                 Reveal card from the bottom
               </button>
