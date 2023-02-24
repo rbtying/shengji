@@ -7,6 +7,7 @@ use slog::{error, info, o, Logger};
 use tokio::sync::Mutex;
 
 use shengji_core::game_state::GameState;
+use shengji_core::settings::GameVisibility;
 use shengji_types::GameMessage;
 use storage::{HashMapStorage, Storage};
 
@@ -175,4 +176,28 @@ pub async fn dump_state(
     }
 
     Ok(Json(state_dump))
+}
+
+pub async fn public_games(
+    Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
+) -> Result<Json<HashMap<String, GameState>>, &'static str> {
+    let mut public_games: HashMap<String, GameState> = HashMap::new();
+
+    backend_storage.clone().prune().await;
+    let keys = backend_storage
+        .clone()
+        .get_all_keys()
+        .await
+        .map_err(|_| "failed to get ongoing games")?;
+    for room_name in keys {
+        if let Ok(versioned_game) = backend_storage.clone().get(room_name.clone()).await {
+            if versioned_game.game.game_visibility() == GameVisibility::Public {
+                if let Ok(name) = String::from_utf8(room_name.clone()) {
+                    public_games.insert(name, versioned_game.game);
+                }
+            }
+        }
+    }
+
+    Ok(Json(public_games))
 }

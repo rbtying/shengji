@@ -501,6 +501,16 @@
         },
         {
           "type": "object",
+          "required": ["SetGameVisibility"],
+          "properties": {
+            "SetGameVisibility": {
+              "$ref": "#/definitions/GameVisibility"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["Bid"],
           "properties": {
             "Bid": {
@@ -1580,6 +1590,10 @@
         }
       ]
     },
+    "GameVisibility": {
+      "type": "string",
+      "enum": ["Public", "Unlisted"]
+    },
     "Hands": {
       "type": "object",
       "required": ["hands"],
@@ -2021,6 +2035,19 @@
             "type": {
               "type": "string",
               "enum": ["KittyTheftPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "visibility"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["GameVisibilitySet"]
+            },
+            "visibility": {
+              "$ref": "#/definitions/GameVisibility"
             }
           }
         },
@@ -2762,6 +2789,14 @@
           "allOf": [
             {
               "$ref": "#/definitions/GameStartPolicy"
+            }
+          ]
+        },
+        "game_visibility": {
+          "default": "Unlisted",
+          "allOf": [
+            {
+              "$ref": "#/definitions/GameVisibility"
             }
           ]
         },
