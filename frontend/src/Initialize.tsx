@@ -1057,6 +1057,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "game_visibility":
+            send({
+              Action: {
+                SetGameVisibility: value,
+              },
+            });
+            break;
         }
       }
     }

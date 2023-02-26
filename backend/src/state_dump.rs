@@ -29,6 +29,12 @@ impl InMemoryStats {
     }
 }
 
+#[derive(Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+pub struct PublicGameInfo {
+    name: String,
+    num_players: usize,
+}
+
 pub async fn load_dump_file<S: Storage<VersionedGame, E>, E: Send + std::fmt::Debug>(
     logger: Logger,
     backend_storage: S,
@@ -180,8 +186,8 @@ pub async fn dump_state(
 
 pub async fn public_games(
     Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
-) -> Result<Json<HashMap<String, GameState>>, &'static str> {
-    let mut public_games: HashMap<String, GameState> = HashMap::new();
+) -> Result<Json<Vec<PublicGameInfo>>, &'static str> {
+    let mut public_games: Vec<PublicGameInfo> = Vec::new();
 
     backend_storage.clone().prune().await;
     let keys = backend_storage
@@ -191,13 +197,17 @@ pub async fn public_games(
         .map_err(|_| "failed to get ongoing games")?;
     for room_name in keys {
         if let Ok(versioned_game) = backend_storage.clone().get(room_name.clone()).await {
-            if versioned_game.game.game_visibility() == GameVisibility::Public {
+            if let GameVisibility::Public = versioned_game.game.game_visibility() {
                 if let Ok(name) = String::from_utf8(room_name.clone()) {
-                    public_games.insert(name, versioned_game.game);
+                    public_games.push(PublicGameInfo{
+                        name,
+                        num_players: versioned_game.game.players().len()
+                    });
                 }
             }
         }
     }
 
+    public_games.sort();
     Ok(Json(public_games))
 }

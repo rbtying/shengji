@@ -41,39 +41,7 @@ const PublicRoomsPane = (): JSX.Element => {
       const fetchAsync = async (): Promise<void> => {
         const fetchResult = await fetch("public_games.json");
         const resultJSON = await fetchResult.json();
-        const resultArray = Object.entries(resultJSON);
-
-        // sort by number of players first, then name second
-        resultArray.sort((a: [string, any], b: [string, any]) => {
-          const aKey = a[0];
-          const aValue = a[1];
-          const bKey = b[0];
-          const bValue = b[1];
-
-          if (
-            aValue.Initialize === undefined ||
-            aValue.Initialize.propagated === undefined ||
-            aValue.Initialize.propagated.players === undefined ||
-            bValue.Initialize === undefined ||
-            bValue.Initialize.propagated === undefined ||
-            bValue.Initialize.propagated.players === undefined
-          ) {
-            throw new Error(
-              `failed validation while sorting public rooms between ${aKey} ${bKey}`
-            );
-          }
-
-          const playerDiff =
-            bValue.Initialize.propagated.players.length -
-            aValue.Initialize.propagated.players.length;
-
-          if (playerDiff !== 0) {
-            return playerDiff;
-          }
-
-          return aKey.localeCompare(bKey);
-        });
-        setPublicRooms(resultArray);
+        setPublicRooms(resultJSON);
       };
 
       fetchAsync().catch((e) => {
@@ -106,12 +74,12 @@ const PublicRoomsPane = (): JSX.Element => {
           </LabelCell>
         </Row>
         {publicRooms.length === 0 && <div>No rooms available</div>}
-        {publicRooms.map(([key, value]) => {
+        {publicRooms.map((roomInfo) => {
           return (
             <PublicRoomRow
-              key={key}
-              roomName={key}
-              numPlayers={value.Initialize.propagated.players.length}
+              key={roomInfo.name}
+              roomName={roomInfo.name}
+              numPlayers={roomInfo.num_players}
             />
           );
         })}
