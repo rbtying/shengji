@@ -29,7 +29,7 @@ impl InMemoryStats {
     }
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct PublicGameInfo {
     name: String,
     num_players: usize,
@@ -208,6 +208,6 @@ pub async fn public_games(
         }
     }
 
-    public_games.sort();
+    public_games.sort_by_key( |p| (-(p.num_players as isize), p.name.clone()));
     Ok(Json(public_games))
 }

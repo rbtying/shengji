@@ -19,18 +19,29 @@ const Cell = styled.div`
 interface RowIProps {
   roomName: string;
   numPlayers: number;
+  setRoomName: (name: string, e: React.MouseEvent) => void;
 }
 
-const PublicRoomRow = ({ roomName, numPlayers }: RowIProps): JSX.Element => {
+const PublicRoomRow = ({
+  roomName,
+  numPlayers,
+  setRoomName,
+}: RowIProps): JSX.Element => {
   return (
     <Row>
-      <Cell>{roomName}</Cell>
+      <Cell>
+        <button onClick={(e) => setRoomName(roomName, e)}>{roomName}</button>
+      </Cell>
       <Cell>{numPlayers}</Cell>
     </Row>
   );
 };
 
-const PublicRoomsPane = (): JSX.Element => {
+interface IProps {
+  setRoomName: (name: string) => void;
+}
+
+const PublicRoomsPane = (props: IProps): JSX.Element => {
   const [publicRooms, setPublicRooms] = useState([]);
 
   useEffect(() => {
@@ -60,10 +71,6 @@ const PublicRoomsPane = (): JSX.Element => {
           The games listed below are open to the public. Join them to find new
           friends to play with!
         </p>
-        <p>
-          Copy the room name into the input above, fill out your player name,
-          and click join to enter the room.
-        </p>
       </div>
       <div style={{ display: "table", borderSpacing: 10 }}>
         <Row>
@@ -80,6 +87,7 @@ const PublicRoomsPane = (): JSX.Element => {
               key={roomInfo.name}
               roomName={roomInfo.name}
               numPlayers={roomInfo.num_players}
+              setRoomName={props.setRoomName}
             />
           );
         })}
