@@ -13,8 +13,11 @@ use shengji_mechanics::trick::{ThrowEvaluationPolicy, TractorRequirements, Trick
 use shengji_mechanics::types::{Card, PlayerID, Rank};
 
 use crate::game_state::play_phase::PlayerGameFinishedResult;
-use crate::settings::{AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty};
-
+use crate::settings::{
+    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
+    GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty,
+    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
+};
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum MessageVariant {

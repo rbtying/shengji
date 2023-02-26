@@ -816,7 +816,9 @@ impl PropagatedState {
     ) -> Result<Vec<MessageVariant>, Error> {
         if game_visibility != self.game_visibility {
             self.game_visibility = game_visibility;
-            Ok(vec![MessageVariant::GameVisibilitySet { visibility: game_visibility }])
+            Ok(vec![MessageVariant::GameVisibilitySet {
+                visibility: game_visibility,
+            }])
         } else {
             Ok(vec![])
         }

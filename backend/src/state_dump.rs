@@ -199,15 +199,15 @@ pub async fn public_games(
         if let Ok(versioned_game) = backend_storage.clone().get(room_name.clone()).await {
             if let GameVisibility::Public = versioned_game.game.game_visibility() {
                 if let Ok(name) = String::from_utf8(room_name.clone()) {
-                    public_games.push(PublicGameInfo{
+                    public_games.push(PublicGameInfo {
                         name,
-                        num_players: versioned_game.game.players().len()
+                        num_players: versioned_game.game.players().len(),
                     });
                 }
             }
         }
     }
 
-    public_games.sort_by_key( |p| (-(p.num_players as isize), p.name.clone()));
+    public_games.sort_by_key(|p| (-(p.num_players as isize), p.name.clone()));
     Ok(Json(public_games))
 }

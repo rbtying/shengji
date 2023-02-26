@@ -15,8 +15,12 @@ use shengji_mechanics::types::{Card, PlayerID, Rank};
 
 use crate::game_state::{initialize_phase::InitializePhase, GameState};
 use crate::message::MessageVariant;
-use crate::settings::{AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty};
-
+use crate::settings::{
+    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
+    ThrowPenalty,
+};
 pub struct InteractiveGame {
     state: GameState,
 }
