@@ -15,10 +15,9 @@ use shengji_mechanics::types::{Card, PlayerID, Rank};
 use crate::game_state::play_phase::PlayerGameFinishedResult;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
-    GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty, KittyTheftPolicy,
-    MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
+    GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty,
+    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
-
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum MessageVariant {
@@ -101,6 +100,9 @@ pub enum MessageVariant {
     },
     KittyTheftPolicySet {
         policy: KittyTheftPolicy,
+    },
+    GameVisibilitySet {
+        visibility: GameVisibility,
     },
     TookBackPlay,
     TookBackBid,
@@ -370,6 +372,8 @@ impl MessageVariant {
             HideThrowHaltingPlayer { set: false } => format!("{} un-hid the player who prevents throws", n?),
             TractorRequirementsChanged { tractor_requirements } =>
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
+            GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),
+            GameVisibilitySet { visibility: GameVisibility::Unlisted} => format!("{} unlisted the game", n?),
         })
     }
 }

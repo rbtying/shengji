@@ -132,7 +132,8 @@ async fn main() -> Result<(), anyhow::Error> {
         .route(
             "/rules",
             get(|| async { Redirect::permanent("/rules.html") }),
-        );
+        )
+        .route("/public_games.json", get(state_dump::public_games));
 
     #[cfg(feature = "dynamic")]
     let app = app.fallback_service(

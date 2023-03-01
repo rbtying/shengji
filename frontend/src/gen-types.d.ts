@@ -130,6 +130,9 @@ export type Action =
       SetTractorRequirements: TractorRequirements;
     }
   | {
+      SetGameVisibility: GameVisibility;
+    }
+  | {
       /**
        * @minItems 2
        * @maxItems 2
@@ -206,6 +209,7 @@ export type BidTakebackPolicy = "AllowBidTakeback" | "NoBidTakeback";
 export type KittyTheftPolicy = "AllowKittyTheft" | "NoKittyTheft";
 export type GameShadowingPolicy = "AllowMultipleSessions" | "SingleSessionOnly";
 export type GameStartPolicy = "AllowAnyPlayer" | "AllowLandlordOnly";
+export type GameVisibility = "Public" | "Unlisted";
 export type Card = string;
 export type TrickUnit =
   | {
@@ -447,6 +451,11 @@ export type MessageVariant =
   | {
       policy: KittyTheftPolicy;
       type: "KittyTheftPolicySet";
+      [k: string]: unknown;
+    }
+  | {
+      type: "GameVisibilitySet";
+      visibility: GameVisibility;
       [k: string]: unknown;
     }
   | {
@@ -866,6 +875,7 @@ export interface PropagatedState {
   game_scoring_parameters?: GameScoringParameters;
   game_shadowing_policy?: GameShadowingPolicy & string;
   game_start_policy?: GameStartPolicy & string;
+  game_visibility?: GameVisibility & string;
   hide_landlord_points?: boolean;
   hide_played_cards?: boolean;
   hide_throw_halting_player?: boolean;

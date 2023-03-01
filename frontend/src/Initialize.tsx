@@ -731,6 +731,7 @@ const Initialize = (props: IProps): JSX.Element => {
   const setGameShadowingPolicy = onSelectString("SetGameShadowingPolicy");
   const setGameStartPolicy = onSelectString("SetGameStartPolicy");
   const setBidTakebackPolicy = onSelectString("SetBidTakebackPolicy");
+  const setGameVisibility = onSelectString("SetGameVisibility");
 
   const setShouldRevealKittyAtEndOfGame = (
     evt: React.ChangeEvent<HTMLSelectElement>
@@ -1056,6 +1057,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "game_visibility":
+            send({
+              Action: {
+                SetGameVisibility: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -1291,6 +1299,18 @@ const Initialize = (props: IProps): JSX.Element => {
           setPlayTakebackPolicy={setPlayTakebackPolicy}
           setBidTakebackPolicy={setBidTakebackPolicy}
         />
+        <div>
+          <label>
+            Game Visibility{" "}
+            <select
+              value={props.state.propagated.game_visibility}
+              onChange={setGameVisibility}
+            >
+              <option value={"Unlisted"}>Unlisted</option>
+              <option value={"Public"}>Public</option>
+            </select>
+          </label>
+        </div>
         <h3>Continuation settings</h3>
         <LandlordSelector
           players={props.state.propagated.players}

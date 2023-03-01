@@ -2,6 +2,7 @@ import * as React from "react";
 import { WebsocketContext } from "./WebsocketProvider";
 import { TimerContext } from "./TimerProvider";
 import LabeledPlay from "./LabeledPlay";
+import PublicRoomsPane from "./PublicRoomsPane";
 
 interface IProps {
   name: string;
@@ -136,6 +137,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
           to you.
         </p>
       </div>
+      <PublicRoomsPane setRoomName={props.setRoomName} />
     </div>
   );
 };

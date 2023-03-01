@@ -17,10 +17,10 @@ use crate::game_state::{initialize_phase::InitializePhase, GameState};
 use crate::message::MessageVariant;
 use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameShadowingPolicy, GameStartPolicy, KittyBidPolicy, KittyPenalty,
-    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
+    ThrowPenalty,
 };
-
 pub struct InteractiveGame {
     state: GameState,
 }
@@ -219,6 +219,10 @@ impl InteractiveGame {
             (Action::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
                 state.set_game_mode(game_mode)?
+            }
+            (Action::SetGameVisibility(visibility), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting game visibility"; "visibility" => visibility);
+                state.set_game_visibility(visibility)?
             }
             (Action::SetKittyPenalty(kitty_penalty), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting kitty penalty"; "penalty" => kitty_penalty);
@@ -446,6 +450,7 @@ pub enum Action {
     SetShouldRevealKittyAtEndOfGame(bool),
     SetHideThrowHaltingPlayer(bool),
     SetTractorRequirements(TractorRequirements),
+    SetGameVisibility(GameVisibility),
     StartGame,
     DrawCard,
     RevealCard,

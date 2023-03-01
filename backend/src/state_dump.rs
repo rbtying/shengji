@@ -7,6 +7,7 @@ use slog::{error, info, o, Logger};
 use tokio::sync::Mutex;
 
 use shengji_core::game_state::GameState;
+use shengji_core::settings::GameVisibility;
 use shengji_types::GameMessage;
 use storage::{HashMapStorage, Storage};
 
@@ -26,6 +27,12 @@ impl InMemoryStats {
     pub fn header_messages(&self) -> &[String] {
         &self.header_messages
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PublicGameInfo {
+    name: String,
+    num_players: usize,
 }
 
 pub async fn load_dump_file<S: Storage<VersionedGame, E>, E: Send + std::fmt::Debug>(
@@ -175,4 +182,32 @@ pub async fn dump_state(
     }
 
     Ok(Json(state_dump))
+}
+
+pub async fn public_games(
+    Extension(backend_storage): Extension<HashMapStorage<VersionedGame>>,
+) -> Result<Json<Vec<PublicGameInfo>>, &'static str> {
+    let mut public_games: Vec<PublicGameInfo> = Vec::new();
+
+    backend_storage.clone().prune().await;
+    let keys = backend_storage
+        .clone()
+        .get_all_keys()
+        .await
+        .map_err(|_| "failed to get ongoing games")?;
+    for room_name in keys {
+        if let Ok(versioned_game) = backend_storage.clone().get(room_name.clone()).await {
+            if let GameVisibility::Public = versioned_game.game.game_visibility() {
+                if let Ok(name) = String::from_utf8(room_name.clone()) {
+                    public_games.push(PublicGameInfo {
+                        name,
+                        num_players: versioned_game.game.players().len(),
+                    });
+                }
+            }
+        }
+    }
+
+    public_games.sort_by_key(|p| (-(p.num_players as isize), p.name.clone()));
+    Ok(Json(public_games))
 }

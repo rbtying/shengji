@@ -247,6 +247,20 @@ impl Default for GameStartPolicy {
 shengji_mechanics::impl_slog_value!(GameStartPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub enum GameVisibility {
+    Public,
+    Unlisted,
+}
+
+impl Default for GameVisibility {
+    fn default() -> Self {
+        GameVisibility::Unlisted
+    }
+}
+
+shengji_mechanics::impl_slog_value!(GameVisibility);
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct MaxRank(Rank);
 shengji_mechanics::impl_slog_value!(MaxRank);
 impl Default for MaxRank {
@@ -334,6 +348,8 @@ pub struct PropagatedState {
     pub(crate) tractor_requirements: TractorRequirements,
     #[serde(default)]
     pub(crate) max_rank: MaxRank,
+    #[serde(default)]
+    pub(crate) game_visibility: GameVisibility,
 }
 
 impl PropagatedState {
@@ -355,6 +371,10 @@ impl PropagatedState {
 
     pub fn num_decks(&self) -> usize {
         self.num_decks.unwrap_or(self.players.len() / 2)
+    }
+
+    pub fn game_visibility(&self) -> GameVisibility {
+        self.game_visibility
     }
 
     pub fn decks(&self) -> Result<Vec<Deck>, Error> {
@@ -785,6 +805,20 @@ impl PropagatedState {
         if policy != self.kitty_theft_policy {
             self.kitty_theft_policy = policy;
             Ok(vec![MessageVariant::KittyTheftPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_game_visibility(
+        &mut self,
+        game_visibility: GameVisibility,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if game_visibility != self.game_visibility {
+            self.game_visibility = game_visibility;
+            Ok(vec![MessageVariant::GameVisibilitySet {
+                visibility: game_visibility,
+            }])
         } else {
             Ok(vec![])
         }
