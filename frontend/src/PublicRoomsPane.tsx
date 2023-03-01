@@ -10,7 +10,7 @@ const LabelCell = styled.div`
   display: table-cell;
   padding-right: 2em;
   font-weight: bold;
-  width: 125px;
+  width: 200px;
 `;
 const Cell = styled.div`
   display: table-cell;
@@ -30,7 +30,9 @@ const PublicRoomRow = ({
   return (
     <Row>
       <Cell>
-        <button onClick={(e) => setRoomName(roomName, e)}>{roomName}</button>
+        <button onClick={(e) => setRoomName(roomName, e)} className="normal">
+          {roomName}
+        </button>
       </Cell>
       <Cell>{numPlayers}</Cell>
     </Row>
@@ -77,10 +79,12 @@ const PublicRoomsPane = (props: IProps): JSX.Element => {
           <LabelCell>Room Name</LabelCell>
           <LabelCell>Players</LabelCell>
           <LabelCell>
-            <button onClick={loadPublicRooms}> Refresh </button>
+            <button onClick={loadPublicRooms} className="normal">
+              Refresh
+            </button>
           </LabelCell>
         </Row>
-        {publicRooms.length === 0 && <div>No rooms available</div>}
+        {publicRooms.length === 0 && <Cell>No public rooms available</Cell>}
         {publicRooms.map((roomInfo) => {
           return (
             <PublicRoomRow
