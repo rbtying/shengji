@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 21;
+const changeLogVersion: number = 22;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -59,6 +59,13 @@ const ChangeLog = (): JSX.Element => {
           you&apos;re in the game.
         </p>
         <h2>Change Log</h2>
+        <p>2/24/2023:</p>
+        <ul>
+          <li>
+            Added the ability to list a room publicly for others to join (thanks
+            jimmyfang94!)
+          </li>
+        </ul>
         <p>1/18/2023:</p>
         <ul>
           <li>Fixed performance issue when playing tricks with many cards</li>
