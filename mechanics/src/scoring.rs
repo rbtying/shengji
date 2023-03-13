@@ -8,16 +8,14 @@ use slog_derive::KV;
 use crate::deck::Deck;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum BonusLevelPolicy {
     NoBonusLevel,
+    #[default]
     BonusLevelForSmallerLandlordTeam,
 }
 
-impl Default for BonusLevelPolicy {
-    fn default() -> Self {
-        BonusLevelPolicy::BonusLevelForSmallerLandlordTeam
-    }
-}
+
 crate::impl_slog_value!(BonusLevelPolicy);
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]

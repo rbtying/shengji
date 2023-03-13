@@ -44,7 +44,9 @@ pub enum TrickError {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum TrickDrawPolicy {
+    #[default]
     NoProtections,
     LongerTuplesProtected,
     /// Only allow tractors to be drawn if the original format was also a tractor.
@@ -52,16 +54,14 @@ pub enum TrickDrawPolicy {
     NoFormatBasedDraw,
 }
 
-impl Default for TrickDrawPolicy {
-    fn default() -> Self {
-        TrickDrawPolicy::NoProtections
-    }
-}
+
 
 crate::impl_slog_value!(TrickDrawPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum ThrowEvaluationPolicy {
+    #[default]
     All,
     Highest,
     TrickUnitLength,
@@ -69,11 +69,7 @@ pub enum ThrowEvaluationPolicy {
 
 crate::impl_slog_value!(ThrowEvaluationPolicy);
 
-impl Default for ThrowEvaluationPolicy {
-    fn default() -> Self {
-        ThrowEvaluationPolicy::All
-    }
-}
+
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TractorRequirements {

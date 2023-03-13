@@ -51,7 +51,9 @@ impl GameMode {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum GameModeSettings {
+    #[default]
     Tractor,
     FindingFriends { num_friends: Option<usize> },
 }
@@ -81,182 +83,154 @@ impl slog::KV for GameModeSettings {
     }
 }
 
-impl Default for GameModeSettings {
-    fn default() -> Self {
-        GameModeSettings::Tractor
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(GameModeSettings);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum ThrowPenalty {
+    #[default]
     None,
     TenPointsPerAttempt,
 }
 
-impl Default for ThrowPenalty {
-    fn default() -> Self {
-        ThrowPenalty::None
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(ThrowPenalty);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum KittyPenalty {
+    #[default]
     Times,
     Power,
 }
 
-impl Default for KittyPenalty {
-    fn default() -> Self {
-        KittyPenalty::Times
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(KittyPenalty);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum AdvancementPolicy {
+    #[default]
     Unrestricted,
     FullyUnrestricted,
     DefendPoints,
 }
 
-impl Default for AdvancementPolicy {
-    fn default() -> Self {
-        AdvancementPolicy::Unrestricted
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(AdvancementPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum FriendSelectionPolicy {
+    #[default]
     Unrestricted,
     TrumpsIncluded,
     HighestCardNotAllowed,
     PointCardNotAllowed,
 }
 
-impl Default for FriendSelectionPolicy {
-    fn default() -> Self {
-        FriendSelectionPolicy::Unrestricted
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(FriendSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum MultipleJoinPolicy {
+    #[default]
     Unrestricted,
     NoDoubleJoin,
 }
 
-impl Default for MultipleJoinPolicy {
-    fn default() -> Self {
-        MultipleJoinPolicy::Unrestricted
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(MultipleJoinPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum FirstLandlordSelectionPolicy {
+    #[default]
     ByWinningBid,
     ByFirstBid,
 }
 
-impl Default for FirstLandlordSelectionPolicy {
-    fn default() -> Self {
-        FirstLandlordSelectionPolicy::ByWinningBid
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(FirstLandlordSelectionPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum KittyBidPolicy {
+    #[default]
     FirstCard,
     FirstCardOfLevelOrHighest,
 }
 
-impl Default for KittyBidPolicy {
-    fn default() -> Self {
-        KittyBidPolicy::FirstCard
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(KittyBidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum PlayTakebackPolicy {
+    #[default]
     AllowPlayTakeback,
     NoPlayTakeback,
 }
 
-impl Default for PlayTakebackPolicy {
-    fn default() -> Self {
-        PlayTakebackPolicy::AllowPlayTakeback
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(PlayTakebackPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum KittyTheftPolicy {
     AllowKittyTheft,
+    #[default]
     NoKittyTheft,
 }
 
-impl Default for KittyTheftPolicy {
-    fn default() -> Self {
-        KittyTheftPolicy::NoKittyTheft
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(KittyTheftPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum GameShadowingPolicy {
+    #[default]
     AllowMultipleSessions,
     SingleSessionOnly,
 }
 
-impl Default for GameShadowingPolicy {
-    fn default() -> Self {
-        GameShadowingPolicy::AllowMultipleSessions
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(GameShadowingPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum GameStartPolicy {
+    #[default]
     AllowAnyPlayer,
     AllowLandlordOnly,
 }
 
-impl Default for GameStartPolicy {
-    fn default() -> Self {
-        GameStartPolicy::AllowAnyPlayer
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(GameStartPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum GameVisibility {
     Public,
+    #[default]
     Unlisted,
 }
 
-impl Default for GameVisibility {
-    fn default() -> Self {
-        GameVisibility::Unlisted
-    }
-}
+
 
 shengji_mechanics::impl_slog_value!(GameVisibility);
 

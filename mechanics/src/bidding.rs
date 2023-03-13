@@ -7,38 +7,36 @@ use crate::player::Player;
 use crate::types::{Card, PlayerID, Rank};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum BidPolicy {
     JokerOrHigherSuit,
+    #[default]
     JokerOrGreaterLength,
     GreaterLength,
 }
 
-impl Default for BidPolicy {
-    fn default() -> Self {
-        BidPolicy::JokerOrGreaterLength
-    }
-}
+
 crate::impl_slog_value!(BidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum JokerBidPolicy {
+    #[default]
     BothTwoOrMore,
     BothNumDecks,
     LJNumDecksHJNumDecksLessOne,
     Disabled,
 }
 
-impl Default for JokerBidPolicy {
-    fn default() -> Self {
-        JokerBidPolicy::BothTwoOrMore
-    }
-}
+
 
 crate::impl_slog_value!(JokerBidPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum BidReinforcementPolicy {
     /// A bid can be reinforced when it is the winning bid.
+    #[default]
     ReinforceWhileWinning,
     /// A bid can be reinforced when it is the winning bid, or overturned with a greater bid.
     OverturnOrReinforceWhileWinning,
@@ -46,24 +44,18 @@ pub enum BidReinforcementPolicy {
     ReinforceWhileEquivalent,
 }
 
-impl Default for BidReinforcementPolicy {
-    fn default() -> Self {
-        BidReinforcementPolicy::ReinforceWhileWinning
-    }
-}
+
 crate::impl_slog_value!(BidReinforcementPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Default)]
 pub enum BidTakebackPolicy {
+    #[default]
     AllowBidTakeback,
     NoBidTakeback,
 }
 
-impl Default for BidTakebackPolicy {
-    fn default() -> Self {
-        BidTakebackPolicy::AllowBidTakeback
-    }
-}
+
 
 crate::impl_slog_value!(BidTakebackPolicy);
 
