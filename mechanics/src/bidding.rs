@@ -6,8 +6,7 @@ use crate::hands::Hands;
 use crate::player::Player;
 use crate::types::{Card, PlayerID, Rank};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum BidPolicy {
     JokerOrHigherSuit,
     #[default]
@@ -15,11 +14,9 @@ pub enum BidPolicy {
     GreaterLength,
 }
 
-
 crate::impl_slog_value!(BidPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum JokerBidPolicy {
     #[default]
     BothTwoOrMore,
@@ -28,12 +25,9 @@ pub enum JokerBidPolicy {
     Disabled,
 }
 
-
-
 crate::impl_slog_value!(JokerBidPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum BidReinforcementPolicy {
     /// A bid can be reinforced when it is the winning bid.
     #[default]
@@ -44,18 +38,14 @@ pub enum BidReinforcementPolicy {
     ReinforceWhileEquivalent,
 }
 
-
 crate::impl_slog_value!(BidReinforcementPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum BidTakebackPolicy {
     #[default]
     AllowBidTakeback,
     NoBidTakeback,
 }
-
-
 
 crate::impl_slog_value!(BidTakebackPolicy);
 

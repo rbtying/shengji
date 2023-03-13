@@ -50,12 +50,13 @@ impl GameMode {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum GameModeSettings {
     #[default]
     Tractor,
-    FindingFriends { num_friends: Option<usize> },
+    FindingFriends {
+        num_friends: Option<usize>,
+    },
 }
 
 impl GameModeSettings {
@@ -83,36 +84,27 @@ impl slog::KV for GameModeSettings {
     }
 }
 
-
-
 shengji_mechanics::impl_slog_value!(GameModeSettings);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum ThrowPenalty {
     #[default]
     None,
     TenPointsPerAttempt,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(ThrowPenalty);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum KittyPenalty {
     #[default]
     Times,
     Power,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(KittyPenalty);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum AdvancementPolicy {
     #[default]
     Unrestricted,
@@ -120,12 +112,9 @@ pub enum AdvancementPolicy {
     DefendPoints,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(AdvancementPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum FriendSelectionPolicy {
     #[default]
     Unrestricted,
@@ -134,103 +123,77 @@ pub enum FriendSelectionPolicy {
     PointCardNotAllowed,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(FriendSelectionPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum MultipleJoinPolicy {
     #[default]
     Unrestricted,
     NoDoubleJoin,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(MultipleJoinPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum FirstLandlordSelectionPolicy {
     #[default]
     ByWinningBid,
     ByFirstBid,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(FirstLandlordSelectionPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum KittyBidPolicy {
     #[default]
     FirstCard,
     FirstCardOfLevelOrHighest,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(KittyBidPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum PlayTakebackPolicy {
     #[default]
     AllowPlayTakeback,
     NoPlayTakeback,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(PlayTakebackPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum KittyTheftPolicy {
     AllowKittyTheft,
     #[default]
     NoKittyTheft,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(KittyTheftPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum GameShadowingPolicy {
     #[default]
     AllowMultipleSessions,
     SingleSessionOnly,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(GameShadowingPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum GameStartPolicy {
     #[default]
     AllowAnyPlayer,
     AllowLandlordOnly,
 }
 
-
-
 shengji_mechanics::impl_slog_value!(GameStartPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum GameVisibility {
     Public,
     #[default]
     Unlisted,
 }
-
-
 
 shengji_mechanics::impl_slog_value!(GameVisibility);
 

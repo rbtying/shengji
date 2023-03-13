@@ -7,14 +7,12 @@ use slog_derive::KV;
 
 use crate::deck::Deck;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum BonusLevelPolicy {
     NoBonusLevel,
     #[default]
     BonusLevelForSmallerLandlordTeam,
 }
-
 
 crate::impl_slog_value!(BonusLevelPolicy);
 

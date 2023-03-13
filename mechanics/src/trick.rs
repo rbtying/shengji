@@ -43,8 +43,7 @@ pub enum TrickError {
     NonMatchingProposal,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum TrickDrawPolicy {
     #[default]
     NoProtections,
@@ -54,12 +53,9 @@ pub enum TrickDrawPolicy {
     NoFormatBasedDraw,
 }
 
-
-
 crate::impl_slog_value!(TrickDrawPolicy);
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[derive(Default)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum ThrowEvaluationPolicy {
     #[default]
     All,
@@ -68,8 +64,6 @@ pub enum ThrowEvaluationPolicy {
 }
 
 crate::impl_slog_value!(ThrowEvaluationPolicy);
-
-
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TractorRequirements {
