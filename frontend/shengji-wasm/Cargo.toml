@@ -14,6 +14,8 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.5"
+# Need to include this otherwise getrandom doesn't work in wasm
+getrandom = { version = "0.2", features = ["js"] }
 gloo-utils = { version = "0.1", features = ["serde"] }
 ruzstd = "0.4"
 schemars = "0.8"

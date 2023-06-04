@@ -8,7 +8,6 @@ use std::sync::{
 
 use axum::{
     extract::ws::{Message, WebSocketUpgrade},
-    http::StatusCode,
     response::{IntoResponse, Redirect},
     routing::get,
     Extension, Json, Router,
@@ -134,10 +133,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/public_games.json", get(state_dump::public_games));
 
     #[cfg(feature = "dynamic")]
-    let app = app.fallback_service(
-        get_service(ServeDir::new("../frontend/dist").fallback(ServeDir::new("../favicon")))
-            .handle_error(handle_error),
-    );
+    let app = app.fallback_service(get_service(
+        ServeDir::new("../frontend/dist").fallback(ServeDir::new("../favicon")),
+    ));
     #[cfg(not(feature = "dynamic"))]
     let app = app
         .route(
@@ -156,11 +154,6 @@ async fn main() -> Result<(), anyhow::Error> {
 
     info!(ROOT_LOGGER, "Shutting down");
     Ok(())
-}
-
-#[cfg(feature = "dynamic")]
-async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...")
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -265,7 +258,7 @@ async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
 
     match DIST.get_file(&path).or_else(|| FAVICON.get_file(&path)) {
         Some(f) => Response::builder()
-            .status(StatusCode::OK)
+            .status(axum::http::StatusCode::OK)
             .header(
                 http::header::CONTENT_TYPE,
                 http::HeaderValue::from_str(mime_type.as_ref()).unwrap(),
@@ -273,7 +266,7 @@ async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
             .body(axum::body::boxed(Full::from(f.contents())))
             .unwrap(),
         None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
+            .status(axum::http::StatusCode::NOT_FOUND)
             .body(axum::body::boxed(Empty::new()))
             .unwrap(),
     }
