@@ -65,12 +65,12 @@ lazy_static::lazy_static! {
 
     static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::bulk::Compressor<'static>> = {
         // default zstd dictionary size is 112_640
-        let comp = zstd::bulk::Compressor::with_dictionary(0, &zstd::bulk::decompress(&ZSTD_ZSTD_DICT, 112_640).unwrap()).unwrap();
+        let comp = zstd::bulk::Compressor::with_dictionary(0, &zstd::bulk::decompress(ZSTD_ZSTD_DICT, 112_640).unwrap()).unwrap();
         std::sync::Mutex::new(comp)
     };
 
     static ref VERSION: String = {
-        std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string()).to_string()
+        std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string())
     };
 
     static ref DUMP_PATH: String = {
