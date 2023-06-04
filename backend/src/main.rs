@@ -1,6 +1,5 @@
 #![deny(warnings)]
 
-use std::env;
 use std::net::SocketAddr;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -57,7 +56,7 @@ lazy_static::lazy_static! {
         #[cfg(feature = "dynamic")]
         let drain = slog_term::FullFormat::new(slog_term::TermDecorator::new().build()).build();
 
-        let version = std::env::var("VERSION").unwrap_or_else(|_| env!("VERGEN_SHA_SHORT").to_string());
+        let version = std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string());
 
         Logger::root(
             slog_async::Async::new(drain.fuse()).build().fuse(),
@@ -65,15 +64,14 @@ lazy_static::lazy_static! {
         )
     };
 
-    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
-        let mut decomp = zstd::block::Decompressor::new();
+    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::bulk::Compressor<'static>> = {
         // default zstd dictionary size is 112_640
-        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112_640).unwrap());
+        let comp = zstd::bulk::Compressor::with_dictionary(0, &zstd::bulk::decompress(&ZSTD_ZSTD_DICT, 112_640).unwrap()).unwrap();
         std::sync::Mutex::new(comp)
     };
 
     static ref VERSION: String = {
-        std::env::var("VERSION").unwrap_or_else(|_| env!("VERGEN_SHA").to_string())
+        std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string()).to_string()
     };
 
     static ref DUMP_PATH: String = {

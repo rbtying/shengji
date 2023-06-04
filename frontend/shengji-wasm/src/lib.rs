@@ -1,7 +1,8 @@
-#![allow(warnings)]
+use std::cell::RefCell;
 use std::io::{Cursor, Read};
-use std::sync::Mutex;
 
+use gloo_utils::format::JsValueSerdeExt;
+use ruzstd::decoding::dictionary::Dictionary;
 use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
 use schemars::JsonSchema;
@@ -22,21 +23,19 @@ use shengji_mechanics::{
 use shengji_types::ZSTD_ZSTD_DICT;
 use wasm_bindgen::prelude::*;
 
-lazy_static::lazy_static! {
-    static ref ZSTD_DICT: Vec<u8> = {
+thread_local! {
+    static ZSTD_DECODER: RefCell<Option<FrameDecoder>> = {
         let mut reader = Cursor::new(ZSTD_ZSTD_DICT);
         let mut decoder =
             StreamingDecoder::new(&mut reader).map_err(|_| "Failed to construct decoder").unwrap();
-        let mut v = Vec::new();
+        let mut dict = Vec::new();
         decoder
-            .read_to_end(&mut v)
+            .read_to_end(&mut dict)
             .map_err(|e| format!("Failed to decode data {:?}", e)).unwrap();
-        v
-    };
-    static ref ZSTD_DECODER: Mutex<Option<FrameDecoder>> = {
+
         let mut fd = FrameDecoder::new();
-        fd.add_dict(&ZSTD_DICT).unwrap();
-        Mutex::new(Some(fd))
+        fd.add_dict(Dictionary::decode_dict(&dict).unwrap()).unwrap();
+        RefCell::new(Some(fd))
     };
 }
 
@@ -435,15 +434,16 @@ pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
     console_error_panic_hook::set_once();
 
     let mut reader = Cursor::new(req);
-    let mut frame_decoder = ZSTD_DECODER.lock().unwrap();
-    let mut decoder =
-        StreamingDecoder::new_with_decoder(&mut reader, frame_decoder.take().unwrap())
-            .map_err(|_| "Failed to construct decoder")?;
-    let mut v = Vec::new();
-    decoder
-        .read_to_end(&mut v)
-        .map_err(|e| format!("Failed to decode data {:?}", e))?;
-    *frame_decoder = Some(decoder.inner());
-    drop(frame_decoder);
-    Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
+    ZSTD_DECODER.with(|frame_decoder| {
+        let mut decoder =
+            StreamingDecoder::new_with_decoder(&mut reader, frame_decoder.take().unwrap())
+                .map_err(|_| "Failed to construct decoder")?;
+        let mut v = Vec::new();
+        decoder
+            .read_to_end(&mut v)
+            .map_err(|e| format!("Failed to decode data {:?}", e))?;
+        *(frame_decoder.borrow_mut()) = Some(decoder.inner());
+
+        Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
+    })
 }

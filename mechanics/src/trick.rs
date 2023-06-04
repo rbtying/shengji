@@ -856,24 +856,15 @@ impl UnitLike {
                 format!("{}-tractor of {}s", length, Self::tuple_description(count))
             }
         } else {
-            match length {
-                2 => format!(
-                    "an adjacent {} and a {}",
-                    Self::tuple_description(self.adjacent_tuples[0]),
-                    Self::tuple_description(self.adjacent_tuples[1])
-                ),
-                _ => {
-                    let tuples = self.adjacent_tuples[1..length]
-                        .iter()
-                        .map(|l| Self::tuple_description(*l))
-                        .collect::<Vec<_>>();
-                    format!(
-                        "an adjacent {}, and a {}",
-                        tuples.join(", "),
-                        Self::tuple_description(self.adjacent_tuples[0])
-                    )
-                }
-            }
+            let tuples = self.adjacent_tuples[1..length]
+                .iter()
+                .map(|l| Self::tuple_description(*l))
+                .collect::<Vec<_>>();
+            format!(
+                "{} followed immediately by a {}",
+                Self::tuple_description(self.adjacent_tuples[0]),
+                tuples.join(", ")
+            )
         }
     }
 
