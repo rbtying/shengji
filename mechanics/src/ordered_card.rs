@@ -201,7 +201,7 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
             }
         }
     }
-    full_decomp.dedup();
+    let full_decomp: Vec<_> = full_decomp.into_iter().unique().collect();
 
     let mut m = FULL_DECOMPOSITION_CACHE.lock().unwrap();
     m.insert(num_cards, full_decomp.clone());
@@ -458,8 +458,6 @@ mod tests {
                 vec![vec![3, 3], vec![2]],
                 vec![vec![3, 2], vec![3]],
                 vec![vec![3], vec![2, 3]],
-                vec![vec![3, 2], vec![3]],
-                vec![vec![3], vec![2, 3]],
                 vec![vec![3], vec![3], vec![2]],
                 vec![vec![3, 3], vec![1], vec![1]],
                 vec![vec![3], vec![3], vec![1], vec![1]],
@@ -527,8 +525,6 @@ mod tests {
                 vec![vec![3, 2, 3]],
                 vec![vec![2, 3, 3]],
                 vec![vec![3, 3], vec![2]],
-                vec![vec![3, 2], vec![3]],
-                vec![vec![3], vec![2, 3]],
                 vec![vec![3, 2], vec![3]],
                 vec![vec![3], vec![2, 3]],
                 vec![vec![3], vec![3], vec![2]],
