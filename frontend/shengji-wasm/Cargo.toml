@@ -14,10 +14,12 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.5"
-lazy_static = "1.4.0"
-ruzstd = "0.2.1"
+# Need to include this otherwise getrandom doesn't work in wasm
+getrandom = { version = "0.2", features = ["js"] }
+gloo-utils = { version = "0.1", features = ["serde"] }
+ruzstd = "0.4"
 schemars = "0.8"
-serde = { version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 shengji-mechanics = { path = "../../mechanics" }
 shengji-types = { path = "../../backend/backend-types" }
-wasm-bindgen = { version = "0.2.74", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.74" }

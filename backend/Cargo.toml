@@ -3,7 +3,6 @@ name = "shengji"
 version = "0.1.5-beta.16"
 authors = ["Robert Ying <rbtying@aeturnalus.com>"]
 edition = "2018"
-build = "build.rs"
 publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -31,9 +30,13 @@ slog-async = "2.5"
 slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 storage = { path = "../storage" }
-tokio = { version = "1.24", features = ["macros", "rt-multi-thread", "fs", "time", "sync", "io-util"] }
-tower-http = { version = "0.3", features = ["fs"], optional = true }
-zstd = "0.5"
-
-[build-dependencies]
-vergen = "3"
+tokio = { version = "1.28", features = [
+    "macros",
+    "rt-multi-thread",
+    "fs",
+    "time",
+    "sync",
+    "io-util",
+] }
+tower-http = { version = "0.4", features = ["fs"], optional = true }
+zstd = "0.12"

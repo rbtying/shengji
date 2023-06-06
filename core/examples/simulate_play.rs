@@ -52,6 +52,7 @@ fn main() {
         for _ in 0..num_players {
             let player_name = std::iter::repeat(())
                 .map(|()| Alphanumeric.sample(&mut rng))
+                .map(char::from)
                 .take(6)
                 .collect();
             players_ids.push(initialize.add_player(player_name).unwrap().0);
@@ -59,7 +60,7 @@ fn main() {
 
         initialize.set_num_decks(Some(num_decks)).unwrap();
 
-        let is_finding_friends = num_players % 2 == 1 || rng.gen_range(0, 2) == 0;
+        let is_finding_friends = num_players % 2 == 1 || rng.gen_range(0..2) == 0;
 
         if is_finding_friends {
             initialize

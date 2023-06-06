@@ -11,9 +11,13 @@ serde = "1.0"
 slog = "2.5"
 serde_json = "1.0"
 tokio = { version = "1.23", features = ["sync"] }
-redis = { version = "0.22", features = ["aio", "tokio-comp", "connection-manager"] }
+redis = { version = "0.23", features = [
+    "aio",
+    "tokio-comp",
+    "connection-manager",
+] }
 thiserror = "1.0"
 
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.23", features = ["sync", "macros", "rt-multi-thread"] }
+tokio = { version = "1.28", features = ["sync", "macros", "rt-multi-thread"] }

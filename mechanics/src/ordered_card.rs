@@ -1,8 +1,8 @@
-#![allow(unused)]
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Mutex;
 
+use itertools::Itertools;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -76,29 +76,6 @@ impl PartialOrd for OrderedCard {
     fn partial_cmp(&self, o: &OrderedCard) -> Option<Ordering> {
         Some(self.cmp(o))
     }
-}
-
-fn without_matching_cards<T>(
-    counts: &mut BTreeMap<OrderedCard, usize>,
-    cards: &MatchingCardsRef,
-    mut f: impl FnMut(&mut BTreeMap<OrderedCard, usize>) -> T,
-) -> T {
-    for (card, count) in cards {
-        let c = counts.get_mut(card).unwrap();
-        if *c == *count {
-            counts.remove(card);
-        } else {
-            *c -= count;
-        }
-    }
-
-    let res = f(counts);
-
-    for (card, count) in cards {
-        *counts.entry(*card).or_insert(0) += count
-    }
-
-    res
 }
 
 type Usizes = Vec<usize>;
@@ -224,7 +201,7 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
             }
         }
     }
-    full_decomp.dedup();
+    let full_decomp: Vec<_> = full_decomp.into_iter().unique().collect();
 
     let mut m = FULL_DECOMPOSITION_CACHE.lock().unwrap();
     m.insert(num_cards, full_decomp.clone());
@@ -285,19 +262,29 @@ fn partition(values: &[usize]) -> Vec<PlayRequirements> {
     let partitions = usize_partitions(values.len());
     partitions
         .into_iter()
-        .map(|partition| {
-            let mut out = vec![];
+        .flat_map(|partition| {
+            let partition: Vec<Vec<usize>> = partition
+                .into_iter()
+                .map(|subpartition| subpartition.into_iter().map(|idx| values[idx]).collect())
+                .collect();
 
-            for idxes in partition {
-                let mut p = vec![];
-                for idx in idxes {
-                    p.push(values[idx]);
-                }
-                out.push(p);
+            if partition.iter().all(|p| p.iter().all(|pp| *pp == p[0])) {
+                vec![partition]
+            } else {
+                partition
+                    .into_iter()
+                    .map(|p| {
+                        p.iter()
+                            .copied()
+                            .permutations(p.len())
+                            .unique()
+                            .collect::<Vec<_>>()
+                    })
+                    .multi_cartesian_product()
+                    .collect()
             }
-
-            out
         })
+        .unique()
         .collect()
 }
 
@@ -346,28 +333,11 @@ fn usize_partitions(n: usize) -> Vec<Vec<Usizes>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{
-        cards::{S_2, S_3, S_5},
-        Card, Number, Suit, Trump,
-    };
 
     use super::{
         find_all_groupings, full_decomposition_ordering, subsequent_decomposition_ordering,
-        usize_partitions, OrderedCard, PlayRequirements,
+        usize_partitions, PlayRequirements,
     };
-
-    const TRUMP: Trump = Trump::Standard {
-        number: Number::Four,
-        suit: Suit::Spades,
-    };
-    macro_rules! oc {
-        ($card:expr) => {
-            OrderedCard {
-                card: $card,
-                trump: TRUMP,
-            }
-        };
-    }
 
     #[test]
     fn test_subsequent_decomposition_ordering() {
@@ -469,25 +439,37 @@ mod tests {
             vec![
                 vec![vec![4], vec![4]],
                 vec![vec![4, 3], vec![1]],
+                vec![vec![3, 4], vec![1]],
                 vec![vec![4], vec![3], vec![1]],
                 vec![vec![4, 2, 2]],
+                vec![vec![2, 4, 2]],
+                vec![vec![2, 2, 4]],
                 vec![vec![4, 2], vec![2]],
+                vec![vec![2, 4], vec![2]],
                 vec![vec![4], vec![2, 2]],
                 vec![vec![4], vec![2], vec![2]],
                 vec![vec![4, 2], vec![1], vec![1]],
+                vec![vec![2, 4], vec![1], vec![1]],
                 vec![vec![4], vec![2], vec![1], vec![1]],
                 vec![vec![4], vec![1], vec![1], vec![1], vec![1]],
                 vec![vec![3, 3, 2]],
+                vec![vec![3, 2, 3]],
+                vec![vec![2, 3, 3]],
                 vec![vec![3, 3], vec![2]],
                 vec![vec![3, 2], vec![3]],
+                vec![vec![3], vec![2, 3]],
                 vec![vec![3], vec![3], vec![2]],
                 vec![vec![3, 3], vec![1], vec![1]],
                 vec![vec![3], vec![3], vec![1], vec![1]],
                 vec![vec![3, 2, 2], vec![1]],
+                vec![vec![2, 3, 2], vec![1]],
+                vec![vec![2, 2, 3], vec![1]],
                 vec![vec![3, 2], vec![2], vec![1]],
+                vec![vec![2, 3], vec![2], vec![1]],
                 vec![vec![3], vec![2, 2], vec![1]],
                 vec![vec![3], vec![2], vec![2], vec![1]],
                 vec![vec![3, 2], vec![1], vec![1], vec![1]],
+                vec![vec![2, 3], vec![1], vec![1], vec![1]],
                 vec![vec![3], vec![2], vec![1], vec![1], vec![1]],
                 vec![vec![3], vec![1], vec![1], vec![1], vec![1], vec![1]],
                 vec![vec![2, 2, 2, 2]],
@@ -526,25 +508,37 @@ mod tests {
             vec![
                 vec![vec![4], vec![4]],
                 vec![vec![4, 3], vec![1]],
+                vec![vec![3, 4], vec![1]],
                 vec![vec![4], vec![3], vec![1]],
                 vec![vec![4, 2, 2]],
+                vec![vec![2, 4, 2]],
+                vec![vec![2, 2, 4]],
                 vec![vec![4, 2], vec![2]],
+                vec![vec![2, 4], vec![2]],
                 vec![vec![4], vec![2, 2]],
                 vec![vec![4], vec![2], vec![2]],
                 vec![vec![4, 2], vec![1], vec![1]],
+                vec![vec![2, 4], vec![1], vec![1]],
                 vec![vec![4], vec![2], vec![1], vec![1]],
                 vec![vec![4], vec![1], vec![1], vec![1], vec![1]],
                 vec![vec![3, 3, 2]],
+                vec![vec![3, 2, 3]],
+                vec![vec![2, 3, 3]],
                 vec![vec![3, 3], vec![2]],
                 vec![vec![3, 2], vec![3]],
+                vec![vec![3], vec![2, 3]],
                 vec![vec![3], vec![3], vec![2]],
                 vec![vec![3, 3], vec![1], vec![1]],
                 vec![vec![3], vec![3], vec![1], vec![1]],
                 vec![vec![3, 2, 2], vec![1]],
+                vec![vec![2, 3, 2], vec![1]],
+                vec![vec![2, 2, 3], vec![1]],
                 vec![vec![3, 2], vec![2], vec![1]],
+                vec![vec![2, 3], vec![2], vec![1]],
                 vec![vec![3], vec![2, 2], vec![1]],
                 vec![vec![3], vec![2], vec![2], vec![1]],
                 vec![vec![3, 2], vec![1], vec![1], vec![1]],
+                vec![vec![2, 3], vec![1], vec![1], vec![1]],
                 vec![vec![3], vec![2], vec![1], vec![1], vec![1]],
                 vec![vec![3], vec![1], vec![1], vec![1], vec![1], vec![1]],
                 vec![vec![2, 2, 2, 2]],
@@ -694,6 +688,7 @@ mod tests {
                 vec![vec![5]],
                 vec![vec![4], vec![1]],
                 vec![vec![3, 2]],
+                vec![vec![2, 3]],
                 vec![vec![3], vec![2]],
                 vec![vec![3], vec![1], vec![1]],
                 vec![vec![2, 2], vec![1]],
@@ -708,11 +703,13 @@ mod tests {
                 vec![vec![6]],
                 vec![vec![5], vec![1]],
                 vec![vec![4, 2]],
+                vec![vec![2, 4]],
                 vec![vec![4], vec![2]],
                 vec![vec![4], vec![1], vec![1]],
                 vec![vec![3, 3]],
                 vec![vec![3], vec![3]],
                 vec![vec![3, 2], vec![1]],
+                vec![vec![2, 3], vec![1]],
                 vec![vec![3], vec![2], vec![1]],
                 vec![vec![3], vec![1], vec![1], vec![1]],
                 vec![vec![2, 2, 2]],

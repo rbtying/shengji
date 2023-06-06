@@ -1,6 +1,5 @@
 #![deny(warnings)]
 
-use std::env;
 use std::net::SocketAddr;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
@@ -9,7 +8,6 @@ use std::sync::{
 
 use axum::{
     extract::ws::{Message, WebSocketUpgrade},
-    http::StatusCode,
     response::{IntoResponse, Redirect},
     routing::get,
     Extension, Json, Router,
@@ -57,7 +55,7 @@ lazy_static::lazy_static! {
         #[cfg(feature = "dynamic")]
         let drain = slog_term::FullFormat::new(slog_term::TermDecorator::new().build()).build();
 
-        let version = std::env::var("VERSION").unwrap_or_else(|_| env!("VERGEN_SHA_SHORT").to_string());
+        let version = std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string());
 
         Logger::root(
             slog_async::Async::new(drain.fuse()).build().fuse(),
@@ -65,15 +63,14 @@ lazy_static::lazy_static! {
         )
     };
 
-    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::block::Compressor> = {
-        let mut decomp = zstd::block::Decompressor::new();
+    static ref ZSTD_COMPRESSOR: std::sync::Mutex<zstd::bulk::Compressor<'static>> = {
         // default zstd dictionary size is 112_640
-        let comp = zstd::block::Compressor::with_dict(decomp.decompress(ZSTD_ZSTD_DICT, 112_640).unwrap());
+        let comp = zstd::bulk::Compressor::with_dictionary(0, &zstd::bulk::decompress(ZSTD_ZSTD_DICT, 112_640).unwrap()).unwrap();
         std::sync::Mutex::new(comp)
     };
 
     static ref VERSION: String = {
-        std::env::var("VERSION").unwrap_or_else(|_| env!("VERGEN_SHA").to_string())
+        std::env::var("VERSION").unwrap_or_else(|_| "unknown_dev".to_string())
     };
 
     static ref DUMP_PATH: String = {
@@ -136,10 +133,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .route("/public_games.json", get(state_dump::public_games));
 
     #[cfg(feature = "dynamic")]
-    let app = app.fallback_service(
-        get_service(ServeDir::new("../frontend/dist").fallback(ServeDir::new("../favicon")))
-            .handle_error(handle_error),
-    );
+    let app = app.fallback_service(get_service(
+        ServeDir::new("../frontend/dist").fallback(ServeDir::new("../favicon")),
+    ));
     #[cfg(not(feature = "dynamic"))]
     let app = app
         .route(
@@ -158,11 +154,6 @@ async fn main() -> Result<(), anyhow::Error> {
 
     info!(ROOT_LOGGER, "Shutting down");
     Ok(())
-}
-
-#[cfg(feature = "dynamic")]
-async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...")
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -267,7 +258,7 @@ async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
 
     match DIST.get_file(&path).or_else(|| FAVICON.get_file(&path)) {
         Some(f) => Response::builder()
-            .status(StatusCode::OK)
+            .status(axum::http::StatusCode::OK)
             .header(
                 http::header::CONTENT_TYPE,
                 http::HeaderValue::from_str(mime_type.as_ref()).unwrap(),
@@ -275,7 +266,7 @@ async fn serve_static_routes(Path(path): Path<String>) -> impl IntoResponse {
             .body(axum::body::boxed(Full::from(f.contents())))
             .unwrap(),
         None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
+            .status(axum::http::StatusCode::NOT_FOUND)
             .body(axum::body::boxed(Empty::new()))
             .unwrap(),
     }

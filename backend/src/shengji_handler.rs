@@ -31,7 +31,7 @@ async fn send_to_user(
     msg: &GameMessage,
 ) -> Result<(), anyhow::Error> {
     if let Ok(j) = serde_json::to_vec(&msg) {
-        if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j, 0) {
+        if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j) {
             if tx.send(s).is_ok() {
                 return Ok(());
             }
