@@ -94,7 +94,7 @@ esac
 ARG TARGETPLATFORM
 RUN case "$TARGETPLATFORM" in \
   "linux/amd64") exit 0 ;; \
-  "linux/arm64") cargo install cargo-chef --target $(cat /host-target);; \
+  "linux/arm64") cargo install cargo-chef --target $(cat /host-target) ;; \
   *) exit 1 ;; \
 esac
 WORKDIR /app
