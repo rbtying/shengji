@@ -82,7 +82,7 @@ type Usizes = Vec<usize>;
 
 lazy_static::lazy_static! {
     static ref GROUP_CACHE: Mutex<HashMap<usize, Vec<AdjacentTupleSizes>>> = Mutex::new(HashMap::new());
-    static ref PARTITION_CACHE: Mutex<HashMap<usize, Vec<Vec<Usizes>>>> = Mutex::new(HashMap::new());
+    static ref SEQUENTIAL_ASSIGNMENT_CACHE: Mutex<HashMap<usize, Vec<Vec<Usizes>>>> = Mutex::new(HashMap::new());
     static ref FULL_DECOMPOSITION_CACHE: Mutex<HashMap<usize, Vec<PlayRequirements>>> = Mutex::new(HashMap::new());
 }
 
@@ -180,7 +180,7 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
         }
     }
 
-    let groupings = find_all_groupings(num_cards);
+    let groupings = find_tuple_partitions(num_cards);
 
     let mut full_decomp = vec![];
 
@@ -193,11 +193,10 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
         if gt_1.is_empty() {
             full_decomp.push(eq_1.iter().map(|v| vec![*v]).collect());
         } else {
-            let partitions = partition(gt_1);
-            for mut partition in partitions {
-                partition.extend(eq_1.iter().map(|v| vec![*v]));
-                partition.sort_by(|a, b| b.cmp(a));
-                full_decomp.push(partition);
+            for mut decomposition in group_into_sequential_tuples(gt_1) {
+                decomposition.extend(eq_1.iter().map(|v| vec![*v]));
+                decomposition.sort_by(|a, b| b.cmp(a));
+                full_decomp.push(decomposition);
             }
         }
     }
@@ -209,7 +208,14 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
     full_decomp
 }
 
-fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
+/// For a given number of cards `num`, compute all of the different ways we
+/// could break those cards up into smaller tuples, in descending order of
+/// complexity.
+///
+/// e.g. find_tuple_partitions(4) gives
+/// [[4], [3, 1], [2, 2], [2, 1, 1], [1, 1, 1, 1]]
+///
+fn find_tuple_partitions(num: usize) -> Vec<AdjacentTupleSizes> {
     assert!(num >= 1);
     {
         let m = GROUP_CACHE.lock().unwrap();
@@ -221,7 +227,7 @@ fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
     if num == 1 {
         groupings.push(vec![1]);
     } else {
-        let smaller_groupings = find_all_groupings(num - 1);
+        let smaller_groupings = find_tuple_partitions(num - 1);
         // try incrementing each smaller grouping
         for mut g in smaller_groupings {
             let mut incremented = HashSet::new();
@@ -258,20 +264,34 @@ fn find_all_groupings(num: usize) -> Vec<AdjacentTupleSizes> {
     groupings
 }
 
-fn partition(values: &[usize]) -> Vec<PlayRequirements> {
-    let partitions = usize_partitions(values.len());
-    partitions
+/// For a given slice of tuple-sizes, allocate them into all possible sequential
+/// orderings.
+///
+/// e.g. group_into_sequential_tuples(&[3, 2, 2]) returns [
+///     [[3, 2, 2]],
+///     [[2, 3, 2]],
+///     [[2, 2, 3]],
+///     [[3, 2], [2]],
+///     [[2, 3], [2]],
+///     [[3], [2], [2]]
+/// ]
+///
+/// The innermost vector is ordered, but the others are not.
+///
+fn group_into_sequential_tuples(values: &[usize]) -> Vec<PlayRequirements> {
+    let assignments = compute_adjacent_assignments(values.len());
+    assignments
         .into_iter()
-        .flat_map(|partition| {
-            let partition: Vec<Vec<usize>> = partition
+        .flat_map(|assignment| {
+            let assignment: Vec<Vec<usize>> = assignment
                 .into_iter()
-                .map(|subpartition| subpartition.into_iter().map(|idx| values[idx]).collect())
+                .map(|subassignment| subassignment.into_iter().map(|idx| values[idx]).collect())
                 .collect();
 
-            if partition.iter().all(|p| p.iter().all(|pp| *pp == p[0])) {
-                vec![partition]
+            if assignment.iter().all(|p| p.iter().all(|pp| *pp == p[0])) {
+                vec![assignment]
             } else {
-                partition
+                assignment
                     .into_iter()
                     .map(|p| {
                         p.iter()
@@ -288,55 +308,55 @@ fn partition(values: &[usize]) -> Vec<PlayRequirements> {
         .collect()
 }
 
-fn usize_partitions(n: usize) -> Vec<Vec<Usizes>> {
-    assert!(n >= 1);
-    if n == 1 {
+fn compute_adjacent_assignments(length: usize) -> Vec<Vec<Usizes>> {
+    assert!(length >= 1);
+    if length == 1 {
         return vec![vec![vec![0]]];
     }
 
     {
-        let m = PARTITION_CACHE.lock().unwrap();
-        if let Some(seq) = m.get(&n).as_ref() {
+        let m = SEQUENTIAL_ASSIGNMENT_CACHE.lock().unwrap();
+        if let Some(seq) = m.get(&length).as_ref() {
             return seq.to_vec();
         }
     }
 
-    let elem = n - 1;
-    let shorter = usize_partitions(n - 1);
-    let mut partitions: Vec<Vec<Usizes>> = vec![];
+    let elem = length - 1;
+    let shorter = compute_adjacent_assignments(length - 1);
+    let mut assignments: Vec<Vec<Usizes>> = vec![];
 
     for mut part in shorter {
         for i in 0..part.len() {
             let list = part.get_mut(i).unwrap();
             list.push(elem);
-            partitions.push(part.to_vec());
+            assignments.push(part.to_vec());
             let list = part.get_mut(i).unwrap();
             list.pop();
         }
         part.push(vec![elem]);
-        partitions.push(part.to_vec());
+        assignments.push(part.to_vec());
         part.pop();
     }
 
-    partitions.sort_by(|a, b| {
+    assignments.sort_by(|a, b| {
         let a_max_len = a.iter().map(|v| v.len()).max();
         let b_max_len = b.iter().map(|v| v.len()).max();
 
         b_max_len.cmp(&a_max_len).then(a.len().cmp(&b.len()))
     });
-    partitions.dedup();
+    assignments.dedup();
 
-    let mut m = PARTITION_CACHE.lock().unwrap();
-    m.insert(n, partitions.clone());
-    partitions
+    let mut m = SEQUENTIAL_ASSIGNMENT_CACHE.lock().unwrap();
+    m.insert(length, assignments.clone());
+    assignments
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::{
-        find_all_groupings, full_decomposition_ordering, subsequent_decomposition_ordering,
-        usize_partitions, PlayRequirements,
+        compute_adjacent_assignments, find_tuple_partitions, full_decomposition_ordering,
+        subsequent_decomposition_ordering, PlayRequirements,
     };
 
     #[test]
@@ -724,9 +744,9 @@ mod tests {
     }
 
     #[test]
-    fn test_usize_partitions() {
+    fn test_compute_adjacent_assignments() {
         let f = |n| -> Vec<Vec<Vec<usize>>> {
-            usize_partitions(n)
+            compute_adjacent_assignments(n)
                 .into_iter()
                 .map(|x| x.iter().map(|y| y.to_vec()).collect::<Vec<_>>())
                 .collect::<Vec<_>>()
@@ -766,9 +786,9 @@ mod tests {
     }
 
     #[test]
-    fn test_find_all_groupings() {
+    fn test_find_tuple_partitions() {
         let f = |n| -> Vec<Vec<usize>> {
-            find_all_groupings(n)
+            find_tuple_partitions(n)
                 .into_iter()
                 .map(|x| x.to_vec())
                 .collect::<Vec<_>>()
