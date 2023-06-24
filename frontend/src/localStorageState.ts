@@ -19,7 +19,7 @@ export const booleanLocalStorageState = (
 ): State<boolean> =>
   localStorageState(
     key,
-    (value: any): boolean => value === "on" || defaultValue,
+    (value: any): boolean => value === "on" || (value == null && defaultValue),
     (state: boolean) => (state ? "on" : "off")
   );
 
