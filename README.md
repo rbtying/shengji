@@ -82,7 +82,7 @@ all players have disconnected. The bulk of the game logic is implemented in the
 server, but players are expected to keep each other in check -- the server does
 not validate moves in their entirety.
 
-For simplicity, the game is written in Rust and Javascript, linking in Warp as
+For simplicity, the game is written in Rust and Javascript, linking in Axum as
 the WebSocket/HTTP server implementation and using React from a CDN.
 
 # Known issues
