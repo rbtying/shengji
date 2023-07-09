@@ -422,8 +422,14 @@ button.normal {
   margin: 10px;
 }
 
-.reset-link {
+.reset-block {
   float: right;
+  text-align: center;
+  width: 200px;
+}
+
+.reset-block p {
+  margin-block: 0;
 }
 
 .red {

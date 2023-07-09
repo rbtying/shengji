@@ -48,6 +48,7 @@ pub struct ExchangePhase {
     removed_cards: Vec<Card>,
     #[serde(default)]
     decks: Vec<Deck>,
+    player_requested_reset: Option<PlayerID>,
 }
 
 impl ExchangePhase {
@@ -81,6 +82,7 @@ impl ExchangePhase {
             decks,
             finalized: false,
             epoch: 1,
+            player_requested_reset: None,
         }
     }
 
@@ -387,7 +389,36 @@ impl ExchangePhase {
         )
     }
 
-    pub fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
+    pub fn request_reset(
+        &mut self,
+        player: PlayerID,
+    ) -> Result<(Option<InitializePhase>, Vec<MessageVariant>), Error> {
+        match self.player_requested_reset {
+            Some(p) => {
+                // ignore duplicate reset requests from same player
+                if p == player {
+                    return Ok((None, vec![]))
+                }
+
+                let (s, m) = self.return_to_initialize()?;
+                Ok((Some(s), m))
+            }
+            None => {
+                self.player_requested_reset = Some(player);
+                Ok((None, vec![MessageVariant::ResetRequested]))
+            }
+        }
+    }
+
+    pub fn cancel_reset(&mut self) -> Option<MessageVariant> {
+        if self.player_requested_reset.is_some() {
+            self.player_requested_reset = None;
+            return Some(MessageVariant::ResetCanceled);
+        }
+        None
+    }
+
+    fn return_to_initialize(&self) -> Result<(InitializePhase, Vec<MessageVariant>), Error> {
         let mut msgs = vec![MessageVariant::ResettingGame];
 
         let mut propagated = self.propagated.clone();

@@ -115,25 +115,53 @@ impl GameState {
         }
     }
 
-    pub fn reset(&mut self) -> Result<Vec<MessageVariant>, Error> {
+    pub fn request_reset(&mut self, player: PlayerID) -> Result<Vec<MessageVariant>, Error> {
         match self {
             GameState::Initialize(_) => bail!("Game has not started yet!"),
             GameState::Draw(ref mut p) => {
-                let (s, m) = p.return_to_initialize()?;
-                *self = GameState::Initialize(s);
+                let (s, m) = p.request_reset(player)?;
+                if let Some(s) = s {
+                    *self = GameState::Initialize(s);
+                }
                 Ok(m)
             }
             GameState::Exchange(ref mut p) => {
-                let (s, m) = p.return_to_initialize()?;
-                *self = GameState::Initialize(s);
+                let (s, m) = p.request_reset(player)?;
+                if let Some(s) = s {
+                    *self = GameState::Initialize(s);
+                }
                 Ok(m)
             }
             GameState::Play(ref mut p) => {
-                let (s, m) = p.return_to_initialize()?;
-                *self = GameState::Initialize(s);
+                let (s, m) = p.request_reset(player)?;
+                if let Some(s) = s {
+                    *self = GameState::Initialize(s);
+                }
                 Ok(m)
             }
         }
+    }
+
+    pub fn cancel_reset(&mut self) -> Result<Vec<MessageVariant>, Error> {
+        match self {
+            GameState::Initialize(_) => bail!("Game has not started yet!"),
+            GameState::Draw(ref mut p) => {
+                if let Some(m) = p.cancel_reset() {
+                    return Ok(vec![m]);
+                }
+            }
+            GameState::Exchange(ref mut p) => {
+                if let Some(m) = p.cancel_reset() {
+                    return Ok(vec![m]);
+                }
+            }
+            GameState::Play(ref mut p) => {
+                if let Some(m) = p.cancel_reset() {
+                    return Ok(vec![m]);
+                }
+            }
+        }
+        Ok(vec![])
     }
 
     pub fn for_player(&self, id: PlayerID) -> GameState {
