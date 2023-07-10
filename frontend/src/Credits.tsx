@@ -61,7 +61,10 @@ const ChangeLog = (): JSX.Element => {
         <h2>Change Log</h2>
         <p>7/10/2023:</p>
         <ul>
-          <li>Added a confirmation check when resetting the game</li>
+          <li>
+            Added a confirmation check from another player when resetting the
+            game
+          </li>
         </ul>
         <p>2/24/2023:</p>
         <ul>
