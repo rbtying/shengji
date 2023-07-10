@@ -12,11 +12,11 @@ import Chat from "./Chat";
 import Play from "./Play";
 import DebugInfo from "./DebugInfo";
 import TitleHandler from "./TitleHandler";
+import ResetButton from "./ResetButton";
 
 const Confetti = React.lazy(async () => await import("./Confetti"));
 
 const Root = (): JSX.Element => {
-  const send = (window as any).send;
   const { state, updateState } = React.useContext(AppStateContext);
   const timerContext = React.useContext(TimerContext);
 
@@ -108,19 +108,7 @@ const Root = (): JSX.Element => {
           ) : null}
           <div className="game">
             {"Initialize" in state.gameState ? null : (
-              <a
-                href={window.location.href}
-                className="reset-link"
-                onClick={(evt) => {
-                  evt.preventDefault();
-                  if (window.confirm("Do you really want to reset the game?")) {
-                    send({ Action: "ResetGame" });
-                  }
-                }}
-                title="Return to the game settings screen and re-deal all cards"
-              >
-                Reset game
-              </a>
+              <ResetButton state={state.gameState} name={state.name} />
             )}
             {"Initialize" in state.gameState ? (
               <Initialize

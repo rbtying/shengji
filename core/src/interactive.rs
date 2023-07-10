@@ -92,8 +92,12 @@ impl InteractiveGame {
 
         let msgs = match (msg, &mut self.state) {
             (Action::ResetGame, _) => {
-                info!(logger, "Resetting game");
-                self.state.reset()?
+                info!(logger, "Requesting game reset");
+                self.state.request_reset(id)?
+            }
+            (Action::CancelResetGame, _) => {
+                info!(logger, "Cancelling game reset request");
+                self.state.cancel_reset()?
             }
             (Action::SetChatLink(ref link), _) => {
                 self.state.set_chat_link(link.clone())?;
@@ -413,6 +417,7 @@ impl InteractiveGame {
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum Action {
+    CancelResetGame,
     ResetGame,
     MakeObserver(PlayerID),
     MakePlayer(PlayerID),

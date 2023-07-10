@@ -7,6 +7,7 @@
 
 export type Action =
   | (
+      | "CancelResetGame"
       | "ResetGame"
       | "StartGame"
       | "DrawCard"
@@ -319,6 +320,14 @@ export type GameMode =
       };
     };
 export type MessageVariant =
+  | {
+      type: "ResetRequested";
+      [k: string]: unknown;
+    }
+  | {
+      type: "ResetCanceled";
+      [k: string]: unknown;
+    }
   | {
       type: "ResettingGame";
       [k: string]: unknown;
@@ -912,6 +921,7 @@ export interface DrawPhase {
   kitty: Card[];
   level?: MaxRank | null;
   num_decks: number;
+  player_requested_reset?: number | null;
   position: number;
   propagated: PropagatedState;
   removed_cards?: Card[];
@@ -938,6 +948,7 @@ export interface ExchangePhase {
   kitty_size: number;
   landlord: number;
   num_decks: number;
+  player_requested_reset?: number | null;
   propagated: PropagatedState;
   removed_cards?: Card[];
   trump: Trump;
@@ -957,6 +968,7 @@ export interface PlayPhase {
   penalties: {
     [k: string]: number;
   };
+  player_requested_reset?: number | null;
   points: {
     [k: string]: Card[];
   };

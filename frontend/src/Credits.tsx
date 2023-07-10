@@ -59,6 +59,13 @@ const ChangeLog = (): JSX.Element => {
           you&apos;re in the game.
         </p>
         <h2>Change Log</h2>
+        <p>7/10/2023:</p>
+        <ul>
+          <li>
+            Added a confirmation check from another player when resetting the
+            game
+          </li>
+        </ul>
         <p>2/24/2023:</p>
         <ul>
           <li>
@@ -193,9 +200,8 @@ const ChangeLog = (): JSX.Element => {
         <p>1/18/2021:</p>
         <ul>
           <li>
-            Ammend the &ldquo;PointCardNotAllowed&rdquo; friend selection
-            policy. King is now a valid friend when the landlord&apos;s rank is
-            Ace.
+            Amend the &ldquo;PointCardNotAllowed&rdquo; friend selection policy.
+            King is now a valid friend when the landlord&apos;s rank is Ace.
           </li>
         </ul>
         <p>1/8/2021:</p>

@@ -21,6 +21,8 @@ use crate::settings::{
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum MessageVariant {
+    ResetRequested,
+    ResetCanceled,
     ResettingGame,
     StartingGame,
     TrickWon {
@@ -199,6 +201,8 @@ impl MessageVariant {
 
         use MessageVariant::*;
         Ok(match self {
+            ResetRequested => format!("{} requested game reset", n?),
+            ResetCanceled => format!("{} canceled game reset", n?),
             ResettingGame => format!("{} reset the game", n?),
             StartingGame => format!("{} started the game", n?),
             TrickWon { winner, points: 0 } =>
