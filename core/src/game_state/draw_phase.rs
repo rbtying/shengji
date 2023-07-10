@@ -326,7 +326,7 @@ impl DrawPhase {
             Some(p) => {
                 // ignore duplicate reset requests from same player
                 if p == player {
-                    return Ok((None, vec![]))
+                    return Ok((None, vec![]));
                 }
 
                 let (s, m) = self.return_to_initialize()?;
