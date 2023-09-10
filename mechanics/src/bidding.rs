@@ -158,6 +158,8 @@ impl Bid {
                                         (Card::SmallJoker, Card::BigJoker)
                                         | (Card::SmallJoker, Card::SmallJoker) => (),
                                         (Card::SmallJoker, _) => valid_bids.push(new_bid),
+                                        (_, Card::BigJoker)
+                                        | (_, Card::SmallJoker) => (),
                                         _ => {
                                             // The new bid count must have a size of at least 2 in
                                             // order to be compared by suit ranking
