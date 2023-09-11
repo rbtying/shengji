@@ -1191,7 +1191,7 @@ mod tests {
     fn test_play_formats() {
         macro_rules! test_eq {
             ($($x:expr),+; $([$([$($y:expr),+]),+]),+; $tr:expr) => {
-                let cards = [H_2, H_2, H_3, H_3, H_3, H_5, H_5, H_5];
+                let cards = vec![$($x),+];
                 let units = TrickUnit::find_plays(TRUMP, $tr, cards.iter().copied()).into_iter().collect::<Vec<_>>();
                 assert_eq!(
                     units.clone().into_iter().map(|units| {
