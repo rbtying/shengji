@@ -644,4 +644,113 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_level_deltas_no_deadzone() {
+        let decks = [Deck::default(), Deck::default()];
+        let gsp_nodeadzone = GameScoringParameters {
+            bonus_level_policy: BonusLevelPolicy::NoBonusLevel,
+            deadzone_size: 0,
+            ..Default::default()
+        };
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, -80, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 5,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, -40, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 4,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, -35, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 3,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 0, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 3,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 5, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 2,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 35, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 2,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 40, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 1,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 75, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 0,
+                landlord_delta: 1,
+                landlord_won: true,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 80, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 1,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 115, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 1,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
+        );
+        assert_eq!(
+            compute_level_deltas(&gsp_nodeadzone, &decks, 120, false,).unwrap(),
+            (GameScoreResult {
+                non_landlord_delta: 2,
+                landlord_delta: 0,
+                landlord_won: false,
+                landlord_bonus: false
+            })
+        );
+    }
 }
