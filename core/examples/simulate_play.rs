@@ -36,11 +36,11 @@ fn main() {
 
     // Test 4-8 players, ony tractor
     let weights = [4, 0, 2, 0, 1];
-    let player_dist = WeightedIndex::new(&weights).unwrap();
+    let player_dist = WeightedIndex::new(weights).unwrap();
 
     // Test up to two extra decks, usually zero
     let deck_weights = [4, 2, 1];
-    let deck_dist = WeightedIndex::new(&deck_weights).unwrap();
+    let deck_dist = WeightedIndex::new(deck_weights).unwrap();
 
     loop {
         let mut initialize = InitializePhase::new();

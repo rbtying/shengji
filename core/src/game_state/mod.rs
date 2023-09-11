@@ -730,10 +730,10 @@ mod tests {
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(PlayerID(0)).unwrap();
 
-        let p1_hand = vec![S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
-        let p2_hand = vec![S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
-        let p3_hand = vec![S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8, C_6, C_7];
-        let p4_hand = vec![S_6, S_6, S_6, C_8, C_9, C_10, C_J, C_Q, C_K, C_A, C_A];
+        let p1_hand = [S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
+        let p2_hand = [S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
+        let p3_hand = [S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8, C_6, C_7];
+        let p4_hand = [S_6, S_6, S_6, C_8, C_9, C_10, C_J, C_Q, C_K, C_A, C_A];
 
         let mut deck = vec![];
         for i in 0..11 {
@@ -865,8 +865,7 @@ mod tests {
 
         let mut draw = init.start(PlayerID(1)).unwrap();
 
-        let p1_hand = vec![
-            Card::SmallJoker,
+        let p1_hand = [Card::SmallJoker,
             D_7,
             D_7,
             H_7,
@@ -891,10 +890,8 @@ mod tests {
             C_K,
             C_J,
             C_9,
-            C_8,
-        ];
-        let p2_hand = vec![
-            Card::BigJoker,
+            C_8];
+        let p2_hand = [Card::BigJoker,
             Card::BigJoker,
             C_7,
             C_7,
@@ -919,10 +916,8 @@ mod tests {
             C_9,
             C_5,
             C_4,
-            C_3,
-        ];
-        let p3_hand = vec![
-            Card::SmallJoker,
+            C_3];
+        let p3_hand = [Card::SmallJoker,
             S_7,
             H_A,
             H_10,
@@ -947,14 +942,10 @@ mod tests {
             C_6,
             C_5,
             C_5,
-            C_2,
-        ];
-        let p4_hand = vec![
-            H_7, S_7, H_Q, H_Q, H_J, H_J, H_8, S_K, S_J, S_10, S_10, S_6, S_2, D_Q, D_8, D_5, D_3,
-            D_2, C_A, C_Q, C_J, C_9, C_8, C_6, C_2, C_2,
-        ];
-        let p5_hand = vec![
-            Card::SmallJoker,
+            C_2];
+        let p4_hand = [H_7, S_7, H_Q, H_Q, H_J, H_J, H_8, S_K, S_J, S_10, S_10, S_6, S_2, D_Q, D_8, D_5, D_3,
+            D_2, C_A, C_Q, C_J, C_9, C_8, C_6, C_2, C_2];
+        let p5_hand = [Card::SmallJoker,
             D_7,
             H_A,
             H_9,
@@ -979,10 +970,8 @@ mod tests {
             C_Q,
             C_10,
             C_3,
-            C_3,
-        ];
-        let p6_hand = vec![
-            Card::BigJoker,
+            C_3];
+        let p6_hand = [Card::BigJoker,
             H_7,
             H_A,
             H_Q,
@@ -1007,8 +996,7 @@ mod tests {
             C_8,
             C_6,
             C_4,
-            C_4,
-        ];
+            C_4];
 
         assert_eq!(p1_hand.len(), 26);
         assert_eq!(p2_hand.len(), 26);
@@ -1239,14 +1227,14 @@ mod tests {
 
         // We need at least two cards per person, since the landlord needs to
         // bid, and the biddable card can't be the friend-selection card.
-        let p1_hand = vec![cards::S_7, cards::D_3];
-        let p2_hand = vec![cards::D_4, cards::D_5];
-        let p3_hand = vec![cards::C_6, cards::C_8];
-        let p4_hand = vec![cards::C_9, cards::C_10];
-        let p5_hand = vec![cards::C_J, cards::C_Q];
-        let p6_hand = vec![cards::C_K, cards::C_A];
-        let p7_hand = vec![cards::H_2, cards::H_3];
-        let p8_hand = vec![cards::H_4, cards::H_5];
+        let p1_hand = [cards::S_7, cards::D_3];
+        let p2_hand = [cards::D_4, cards::D_5];
+        let p3_hand = [cards::C_6, cards::C_8];
+        let p4_hand = [cards::C_9, cards::C_10];
+        let p5_hand = [cards::C_J, cards::C_Q];
+        let p6_hand = [cards::C_K, cards::C_A];
+        let p7_hand = [cards::H_2, cards::H_3];
+        let p8_hand = [cards::H_4, cards::H_5];
 
         // Set up the deck to have the appropriate cards.
         for i in 0..2 {
