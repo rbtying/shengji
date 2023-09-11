@@ -93,7 +93,8 @@ impl FormatMatchState {
                 .ok_or_else(|| anyhow::anyhow!("Missing requested format bucket"))?;
 
             let v = options
-                .keys().next_back()
+                .keys()
+                .next_back()
                 .ok_or_else(|| anyhow::anyhow!("No remaining matchings for format"))?
                 .clone();
 

@@ -865,7 +865,8 @@ mod tests {
 
         let mut draw = init.start(PlayerID(1)).unwrap();
 
-        let p1_hand = [Card::SmallJoker,
+        let p1_hand = [
+            Card::SmallJoker,
             D_7,
             D_7,
             H_7,
@@ -890,8 +891,10 @@ mod tests {
             C_K,
             C_J,
             C_9,
-            C_8];
-        let p2_hand = [Card::BigJoker,
+            C_8,
+        ];
+        let p2_hand = [
+            Card::BigJoker,
             Card::BigJoker,
             C_7,
             C_7,
@@ -916,8 +919,10 @@ mod tests {
             C_9,
             C_5,
             C_4,
-            C_3];
-        let p3_hand = [Card::SmallJoker,
+            C_3,
+        ];
+        let p3_hand = [
+            Card::SmallJoker,
             S_7,
             H_A,
             H_10,
@@ -942,10 +947,14 @@ mod tests {
             C_6,
             C_5,
             C_5,
-            C_2];
-        let p4_hand = [H_7, S_7, H_Q, H_Q, H_J, H_J, H_8, S_K, S_J, S_10, S_10, S_6, S_2, D_Q, D_8, D_5, D_3,
-            D_2, C_A, C_Q, C_J, C_9, C_8, C_6, C_2, C_2];
-        let p5_hand = [Card::SmallJoker,
+            C_2,
+        ];
+        let p4_hand = [
+            H_7, S_7, H_Q, H_Q, H_J, H_J, H_8, S_K, S_J, S_10, S_10, S_6, S_2, D_Q, D_8, D_5, D_3,
+            D_2, C_A, C_Q, C_J, C_9, C_8, C_6, C_2, C_2,
+        ];
+        let p5_hand = [
+            Card::SmallJoker,
             D_7,
             H_A,
             H_9,
@@ -970,8 +979,10 @@ mod tests {
             C_Q,
             C_10,
             C_3,
-            C_3];
-        let p6_hand = [Card::BigJoker,
+            C_3,
+        ];
+        let p6_hand = [
+            Card::BigJoker,
             H_7,
             H_A,
             H_Q,
@@ -996,7 +1007,8 @@ mod tests {
             C_8,
             C_6,
             C_4,
-            C_4];
+            C_4,
+        ];
 
         assert_eq!(p1_hand.len(), 26);
         assert_eq!(p2_hand.len(), 26);

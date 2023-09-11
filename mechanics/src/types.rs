@@ -1139,7 +1139,8 @@ mod tests {
 
     #[test]
     fn test_ordering() {
-        let mut hand = [cards::H_6,
+        let mut hand = [
+            cards::H_6,
             cards::H_5,
             cards::H_4,
             cards::S_3,
@@ -1148,7 +1149,8 @@ mod tests {
             cards::H_2,
             cards::D_3,
             Card::SmallJoker,
-            Card::BigJoker];
+            Card::BigJoker,
+        ];
         let trump = Trump::Standard {
             number: Number::Two,
             suit: Suit::Spades,
