@@ -526,6 +526,31 @@ mod tests {
                 BidReinforcementPolicy::ReinforceWhileWinning,
                 vec![b!(p, C_2, 3)],
             ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), Card::SmallJoker, 2)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, C_2, 3),
+                    b!(p, Card::BigJoker, 2),
+                ],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), Card::BigJoker, 2)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![
+                    b!(p, C_2, 3),
+                ],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), Card::SmallJoker, 3)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![],
+            ),
+            (
+                vec![b!(p, C_2, 1), b!(PlayerID(1), Card::BigJoker, 3)],
+                BidReinforcementPolicy::ReinforceWhileWinning,
+                vec![],
+            ),
         ];
 
         for (bids, rpol, results) in test_cases_higher_suit {
