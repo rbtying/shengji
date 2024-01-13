@@ -120,7 +120,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
         </p>
         <p>
           If you&apos;re unfamiliar with the game, it might be helpful to{" "}
-          <a href="rules" target="_blank">
+          <a href="rules.html" target="_blank">
             read the rules
           </a>{" "}
           and then shadow another player&mdash;you can just join with the same
