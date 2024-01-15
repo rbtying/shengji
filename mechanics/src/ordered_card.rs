@@ -104,7 +104,7 @@ pub fn subsequent_decomposition_ordering(
         let mut decomp = full_decomposition_ordering(len);
         decomp.reverse();
         while let Some(v) = decomp.pop() {
-            if v.len() == 1 && v.get(0) == Some(adj_req) {
+            if v.len() == 1 && v.first() == Some(adj_req) {
                 break;
             }
         }

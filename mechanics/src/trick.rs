@@ -716,8 +716,7 @@ impl Trick {
                 points: all_card_points,
                 largest_trick_unit_size: tf.units.iter().map(|u| u.size()).max().unwrap_or(0),
                 failed_throw_size: self
-                    .played_cards
-                    .get(0)
+                    .played_cards.first()
                     .ok_or(TrickError::OutOfOrder)?
                     .bad_throw_cards
                     .len(),
