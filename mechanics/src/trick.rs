@@ -47,9 +47,13 @@ pub enum TrickError {
 pub enum TrickDrawPolicy {
     #[default]
     NoProtections,
+    /// Don't require longer tuples to be drawn if the original format was a
+    /// shorter tuple.
     LongerTuplesProtected,
     /// Only allow tractors to be drawn if the original format was also a tractor.
     OnlyDrawTractorOnTractor,
+    /// Both `LongerTuplesProtected` and `OnlyDrawTractorOnTractor`
+    LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
     NoFormatBasedDraw,
 }
 
@@ -205,7 +209,9 @@ impl TrickFormat {
             std::iter::once_with(move || {
                 subsequent_decomposition_ordering(
                     adj_tuples,
-                    trick_draw_policy != TrickDrawPolicy::OnlyDrawTractorOnTractor,
+                    trick_draw_policy != TrickDrawPolicy::OnlyDrawTractorOnTractor
+                        && trick_draw_policy
+                            != TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
                 )
                 .into_iter()
                 .map(|requirements| {
@@ -716,7 +722,8 @@ impl Trick {
                 points: all_card_points,
                 largest_trick_unit_size: tf.units.iter().map(|u| u.size()).max().unwrap_or(0),
                 failed_throw_size: self
-                    .played_cards.first()
+                    .played_cards
+                    .first()
                     .ok_or(TrickError::OutOfOrder)?
                     .bad_throw_cards
                     .len(),
@@ -898,7 +905,8 @@ impl UnitLike {
             TrickDrawPolicy::NoFormatBasedDraw
             | TrickDrawPolicy::NoProtections
             | TrickDrawPolicy::OnlyDrawTractorOnTractor => true,
-            TrickDrawPolicy::LongerTuplesProtected => !matching
+            TrickDrawPolicy::LongerTuplesProtected
+            | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => !matching
                 .iter()
                 .any(|(card, count)| counts_.get(card).copied().unwrap_or_default() > *count),
         };
@@ -1759,6 +1767,21 @@ mod tests {
             &[S_3, S_3, S_5, S_5],
             TrickDrawPolicy::LongerTuplesProtected
         ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_3, S_5, S_5],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
@@ -1804,6 +1827,16 @@ mod tests {
             &[S_2, S_2, S_5, S_5],
             TrickDrawPolicy::LongerTuplesProtected
         ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_5],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
         // This play is tenuously legal, since the 2222 is protected by the 355 is not, and the
         // trick-format is 2233. Normally we would expect that the 2233 is required, but the player
         // has decided to break the 22 but *not* play the 55.
@@ -1842,6 +1875,16 @@ mod tests {
             &[S_2, S_2, S_5],
             TrickDrawPolicy::LongerTuplesProtected
         ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+        ));
     }
 
     #[test]
@@ -1869,6 +1912,11 @@ mod tests {
             &hand,
             &[S_5, S_5, S_6],
             TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_5, S_6],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
         ));
         assert!(!tf.is_legal_play(
             &hand,
@@ -1898,6 +1946,16 @@ mod tests {
             &hand,
             &[S_5, S_6, S_7, S_8],
             TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::OnlyDrawTractorOnTractor
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
         ));
     }
 
@@ -1934,6 +1992,11 @@ mod tests {
         ));
         assert!(tf.is_legal_play(
             &hand,
+            &[S_3, S_5, S_10, S_J, S_Q],
+            TrickDrawPolicy::LongerTuplesProtected
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
             &[S_3, S_6, S_8, S_8, S_8],
             TrickDrawPolicy::NoProtections
         ));
@@ -1944,7 +2007,7 @@ mod tests {
         ));
         assert!(tf.is_legal_play(
             &hand,
-            &[S_3, S_5, S_10, S_J, S_Q],
+            &[S_3, S_6, S_8, S_8, S_8],
             TrickDrawPolicy::LongerTuplesProtected
         ));
     }
@@ -2000,6 +2063,8 @@ mod tests {
             TrickDrawPolicy::NoProtections,
             TrickDrawPolicy::LongerTuplesProtected,
             TrickDrawPolicy::NoFormatBasedDraw,
+            TrickDrawPolicy::OnlyDrawTractorOnTractor,
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
         ] {
             let mut hands = Hands::new(vec![P1, P2, P3, P4]);
 
@@ -2034,7 +2099,8 @@ mod tests {
                 }
                 TrickDrawPolicy::LongerTuplesProtected
                 | TrickDrawPolicy::NoProtections
-                | TrickDrawPolicy::OnlyDrawTractorOnTractor => {
+                | TrickDrawPolicy::OnlyDrawTractorOnTractor
+                | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => {
                     // This play should not succeed, because P2 also has S_K, S_K which is a pair.
                     if let Err(TrickError::IllegalPlay) = trick.play_cards(pc!(
                         P2,

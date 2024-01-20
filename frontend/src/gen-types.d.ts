@@ -199,10 +199,10 @@ export type BonusLevelPolicy =
 export type KittyPenalty = "Times" | "Power";
 export type KittyBidPolicy = "FirstCard" | "FirstCardOfLevelOrHighest";
 export type TrickDrawPolicy =
-  | "NoProtections"
+  | ("NoProtections" | "NoFormatBasedDraw")
   | "LongerTuplesProtected"
   | "OnlyDrawTractorOnTractor"
-  | "NoFormatBasedDraw";
+  | "LongerTuplesProtectedAndOnlyDrawTractorOnTractor";
 export type ThrowPenalty = "None" | "TenPointsPerAttempt";
 export type ThrowEvaluationPolicy = "All" | "Highest" | "TrickUnitLength";
 export type PlayTakebackPolicy = "AllowPlayTakeback" | "NoPlayTakeback";

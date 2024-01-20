@@ -1244,6 +1244,10 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="OnlyDrawTractorOnTractor">
                 Only tractors can draw tractors
               </option>
+              <option value="LongerTuplesProtectedAndOnlyDrawTractorOnTractor">
+                Longer tuples are protected from shorter, and only tractors can
+                draw tractors
+              </option>
               <option value="NoFormatBasedDraw">
                 No format-based requirements (pairs do not draw pairs)
               </option>

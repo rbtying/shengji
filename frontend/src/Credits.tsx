@@ -9,7 +9,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 22;
+const changeLogVersion: number = 23;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -64,6 +64,13 @@ const ChangeLog = (): JSX.Element => {
           <li>
             Added a confirmation check from another player when resetting the
             game
+          </li>
+        </ul>
+        <p>1/20/2024:</p>
+        <ul>
+          <li>
+            Added the ability to protect both longer tuples and tractors at the
+            same time.
           </li>
         </ul>
         <p>2/24/2023:</p>
