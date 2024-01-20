@@ -25,7 +25,7 @@ cd backend && cargo run --features dynamic
 
 ## Syncing types from Rust to Typescript
 
-There are shared types in the Rust backend and the Typescript frontend; the `frontend/shengji-wasm/examples/print_json_schema.rs` file dumps the Rust types to JSON Schema, and the `yarn types` command will generate the Typescript types.
+There are shared types in the Rust backend and the Typescript frontend; the `frontend/json-schema-bin/src/main.rs` file dumps the Rust types to JSON Schema, and the `yarn types` command will generate the Typescript types.
 
 ```
 yarn types && yarn prettier --write && yarn lint --fix
