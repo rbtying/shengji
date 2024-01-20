@@ -188,9 +188,7 @@ async fn register_user<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>(
             let (assigned_player_id, register_msgs) = g.register(name_)?;
             info!(logger_, "Joining room"; "player_id" => assigned_player_id.0);
             let mut clients_to_disconnect = vec![];
-            let clients = associated_websockets
-                .entry(assigned_player_id)
-                .or_default();
+            let clients = associated_websockets.entry(assigned_player_id).or_default();
             // If the same user joined before, remove the previous entries
             // from the state-store.
             if !g.allows_multiple_sessions_per_user() {
