@@ -640,11 +640,22 @@
       "enum": ["JokerOrHigherSuit", "JokerOrGreaterLength", "GreaterLength"]
     },
     "BidReinforcementPolicy": {
-      "type": "string",
-      "enum": [
-        "ReinforceWhileWinning",
-        "OverturnOrReinforceWhileWinning",
-        "ReinforceWhileEquivalent"
+      "oneOf": [
+        {
+          "description": "A bid can be reinforced when it is the winning bid.",
+          "type": "string",
+          "enum": ["ReinforceWhileWinning"]
+        },
+        {
+          "description": "A bid can be reinforced when it is the winning bid, or overturned with a greater bid.",
+          "type": "string",
+          "enum": ["OverturnOrReinforceWhileWinning"]
+        },
+        {
+          "description": "A bid can be reinforced if it is equivalent to the winning bid after reinforcement.",
+          "type": "string",
+          "enum": ["ReinforceWhileEquivalent"]
+        }
       ]
     },
     "BidTakebackPolicy": {
@@ -3131,12 +3142,26 @@
       }
     },
     "TrickDrawPolicy": {
-      "type": "string",
-      "enum": [
-        "NoProtections",
-        "LongerTuplesProtected",
-        "OnlyDrawTractorOnTractor",
-        "NoFormatBasedDraw"
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["NoProtections", "NoFormatBasedDraw"]
+        },
+        {
+          "description": "Don't require longer tuples to be drawn if the original format was a shorter tuple.",
+          "type": "string",
+          "enum": ["LongerTuplesProtected"]
+        },
+        {
+          "description": "Only allow tractors to be drawn if the original format was also a tractor.",
+          "type": "string",
+          "enum": ["OnlyDrawTractorOnTractor"]
+        },
+        {
+          "description": "Both `LongerTuplesProtected` and `OnlyDrawTractorOnTractor`",
+          "type": "string",
+          "enum": ["LongerTuplesProtectedAndOnlyDrawTractorOnTractor"]
+        }
       ]
     },
     "TrickFormat": {
