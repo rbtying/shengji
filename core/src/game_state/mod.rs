@@ -289,6 +289,7 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RNT,
+                    false,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -340,6 +341,7 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RA,
+                    false,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -412,6 +414,7 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RNT,
+                    false,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -479,6 +482,7 @@ mod tests {
                     (PlayerID(0), p0_rank),
                     advance_policy,
                     RNT,
+                    false,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -505,6 +509,7 @@ mod tests {
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
             RNT,
+            false,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R4, R2, RNT, R2],);
@@ -522,6 +527,7 @@ mod tests {
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
             RNT,
+            false,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R3, R2, R3, R2],);
@@ -541,6 +547,7 @@ mod tests {
             (PlayerID(0), R5),
             AdvancementPolicy::Unrestricted,
             RNT,
+            false,
         );
         for p in &players {
             assert_eq!(p.rank(), Rank::Number(Number::Four));
@@ -556,6 +563,7 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
             RNT,
+            false,
         );
         for p in &players {
             assert_eq!(p.rank(), R5);
@@ -572,6 +580,7 @@ mod tests {
             (PlayerID(0), RA),
             AdvancementPolicy::DefendPoints,
             RNT,
+            false,
         );
         for p in &players {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
@@ -592,6 +601,7 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
             RNT,
+            false,
         );
 
         for p in &players {
@@ -599,6 +609,83 @@ mod tests {
                 assert_eq!(p.rank(), R9);
             } else {
                 assert_eq!(p.rank(), R5);
+            }
+        }
+    }
+
+    #[test]
+    fn test_jack_variation_landlord_loses() {
+        let mut players = init_players();
+
+        // Neither side levels up, but the non-landlord team wins the final trick with 
+        // a single jack
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
+            0,
+            0,
+            &[PlayerID(0), PlayerID(2)],
+            false, // landlord team does not defend
+            (PlayerID(0), Rank::Number(Number::Jack)),
+            AdvancementPolicy::DefendPoints,
+            RNT,
+            true,
+        );
+
+        for p in &players {
+            assert_eq!(p.rank(), R2);
+        }
+    }
+
+    #[test]
+    fn test_jack_variation_landlord_advances_multiple() {
+        let mut players = init_players();
+
+        // The landlord team defends, but the non-landlord team wins the final trick with 
+        // a single jack
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
+            0,
+            2,
+            &[PlayerID(0), PlayerID(2)],
+            true, // landlord team defends
+            (PlayerID(0), Rank::Number(Number::Jack)),
+            AdvancementPolicy::DefendPoints,
+            RNT,
+            true,
+        );
+
+        for p in &players {
+            if p.id == PlayerID(0) || p.id == PlayerID(2) {
+                assert_eq!(p.rank(), R4);
+            } else {
+                assert_eq!(p.rank(), R2);
+            }
+        }
+    }
+
+    #[test]
+    fn test_jack_variation_non_landlord_advances() {
+        let mut players = init_players();
+
+        // The non-landlord team advances and they win the final trick with 
+        // a single jack
+        let _ = PlayPhase::compute_player_level_deltas(
+            players.iter_mut(),
+            2,
+            0,
+            &[PlayerID(0), PlayerID(2)],
+            false, // landlord team does not defend
+            (PlayerID(0), Rank::Number(Number::Jack)),
+            AdvancementPolicy::DefendPoints,
+            RNT,
+            true,
+        );
+
+        for p in &players {
+            if p.id == PlayerID(0) || p.id == PlayerID(2) {
+                assert_eq!(p.rank(), R2);
+            } else {
+                assert_eq!(p.rank(), R4);
             }
         }
     }

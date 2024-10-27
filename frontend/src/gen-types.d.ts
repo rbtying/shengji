@@ -128,6 +128,9 @@ export type Action =
       SetHideThrowHaltingPlayer: boolean;
     }
   | {
+      SetJackVariation: boolean;
+    }
+  | {
       SetTractorRequirements: TractorRequirements;
     }
   | {
@@ -160,26 +163,15 @@ export type Action =
       PlayCardsWithHint: [Card[], TrickUnit[]];
     };
 export type Number = string;
-export type FriendSelectionPolicy =
-  | "Unrestricted"
-  | "TrumpsIncluded"
-  | "HighestCardNotAllowed"
-  | "PointCardNotAllowed";
+export type FriendSelectionPolicy = "Unrestricted" | "TrumpsIncluded" | "HighestCardNotAllowed" | "PointCardNotAllowed";
 export type MultipleJoinPolicy = "Unrestricted" | "NoDoubleJoin";
 export type FirstLandlordSelectionPolicy = "ByWinningBid" | "ByFirstBid";
-export type BidPolicy =
-  | "JokerOrHigherSuit"
-  | "JokerOrGreaterLength"
-  | "GreaterLength";
+export type BidPolicy = "JokerOrHigherSuit" | "JokerOrGreaterLength" | "GreaterLength";
 export type BidReinforcementPolicy =
   | "ReinforceWhileWinning"
   | "OverturnOrReinforceWhileWinning"
   | "ReinforceWhileEquivalent";
-export type JokerBidPolicy =
-  | "BothTwoOrMore"
-  | "BothNumDecks"
-  | "LJNumDecksHJNumDecksLessOne"
-  | "Disabled";
+export type JokerBidPolicy = "BothTwoOrMore" | "BothNumDecks" | "LJNumDecksHJNumDecksLessOne" | "Disabled";
 export type MaxRank = string;
 export type GameModeSettings =
   | "Tractor"
@@ -189,13 +181,8 @@ export type GameModeSettings =
         [k: string]: unknown;
       };
     };
-export type AdvancementPolicy =
-  | "Unrestricted"
-  | "FullyUnrestricted"
-  | "DefendPoints";
-export type BonusLevelPolicy =
-  | "NoBonusLevel"
-  | "BonusLevelForSmallerLandlordTeam";
+export type AdvancementPolicy = "Unrestricted" | "FullyUnrestricted" | "DefendPoints";
+export type BonusLevelPolicy = "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
 export type KittyPenalty = "Times" | "Power";
 export type KittyBidPolicy = "FirstCard" | "FirstCardOfLevelOrHighest";
 export type TrickDrawPolicy =
@@ -242,13 +229,7 @@ export type Trump =
       };
     };
 export type Suit = string;
-export type EffectiveSuit =
-  | "Unknown"
-  | "Clubs"
-  | "Diamonds"
-  | "Spades"
-  | "Hearts"
-  | "Trump";
+export type EffectiveSuit = "Unknown" | "Clubs" | "Diamonds" | "Spades" | "Hearts" | "Trump";
 export type GameMessage =
   | {
       State: {
@@ -617,6 +598,11 @@ export type MessageVariant =
       [k: string]: unknown;
     }
   | {
+      set: boolean;
+      type: "JackVariation";
+      [k: string]: unknown;
+    }
+  | {
       tractor_requirements: TractorRequirements;
       type: "TractorRequirementsChanged";
       [k: string]: unknown;
@@ -888,6 +874,7 @@ export interface PropagatedState {
   hide_landlord_points?: boolean;
   hide_played_cards?: boolean;
   hide_throw_halting_player?: boolean;
+  jack_variation?: boolean;
   joker_bid_policy?: JokerBidPolicy & string;
   kitty_bid_policy?: KittyBidPolicy & string;
   kitty_penalty?: KittyPenalty & string;
