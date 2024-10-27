@@ -220,6 +220,13 @@ impl InteractiveGame {
                 info!(logger, "Setting hide throw halting player"; "hide_throw_halting_player" => hide_throw_halting_player);
                 state.set_hide_throw_halting_player(hide_throw_halting_player)?
             }
+            (
+                Action::SetJackVariation(jack_variation),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting jack variation"; "jack_variation" => jack_variation);
+                state.set_jack_variation(jack_variation)?
+            }
             (Action::SetGameMode(game_mode), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting game mode"; "game_mode" => game_mode.variant());
                 state.set_game_mode(game_mode)?
@@ -454,6 +461,7 @@ pub enum Action {
     SetGameStartPolicy(GameStartPolicy),
     SetShouldRevealKittyAtEndOfGame(bool),
     SetHideThrowHaltingPlayer(bool),
+    SetJackVariation(bool),
     SetTractorRequirements(TractorRequirements),
     SetGameVisibility(GameVisibility),
     StartGame,

@@ -33,6 +33,10 @@ impl Player {
         self.metalevel = metalevel;
     }
 
+    pub fn reset_rank(&mut self) {
+        self.level = Rank::Number(Number::Two);
+    }
+
     pub fn advance(&mut self, max_rank: Rank) {
         match self.level.successor() {
             Some(next_level) if self.level != max_rank => {

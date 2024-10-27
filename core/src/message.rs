@@ -186,6 +186,9 @@ pub enum MessageVariant {
     HideThrowHaltingPlayer {
         set: bool,
     },
+    JackVariation {
+        set: bool,
+    },
     TractorRequirementsChanged {
         tractor_requirements: TractorRequirements,
     },
@@ -376,6 +379,8 @@ impl MessageVariant {
                 format!("Landlord team lost, opposing team collected {non_landlords_points} points"),
             HideThrowHaltingPlayer { set: true } => format!("{} hid the player who prevents throws", n?),
             HideThrowHaltingPlayer { set: false } => format!("{} un-hid the player who prevents throws", n?),
+            JackVariation { set: true } => format!("{} enabled the jack variation", n?),
+            JackVariation { set: false } => format!("{} disabled the jack variation", n?),
             TractorRequirementsChanged { tractor_requirements } =>
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),

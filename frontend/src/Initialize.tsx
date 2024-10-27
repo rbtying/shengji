@@ -440,6 +440,7 @@ interface IUncommonSettings {
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setJackVariation: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHideThrowHaltingPlayer: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setTractorRequirements: (v: TractorRequirements) => void;
 }
@@ -612,6 +613,24 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
           </select>
         </label>
       </div>
+      <div>
+        <label>
+          Jacks variation:{" "}
+          <select
+            value={
+              props.state.propagated.jack_variation ? "enabled" : "disabled"
+            }
+            onChange={props.setJackVariation}
+          >
+            <option value="enabled">
+              Winning the last trick with a J will set the leader's team to rank 2
+            </option>
+            <option value="disabled">
+              Disable the J variation
+            </option>
+          </select>
+        </label>
+      </div>
     </>
   );
   return (
@@ -753,6 +772,18 @@ const Initialize = (props: IProps): JSX.Element => {
       send({
         Action: {
           SetHideThrowHaltingPlayer: evt.target.value === "hide",
+        },
+      });
+    }
+  };
+  const setJackVariation = (
+    evt: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    evt.preventDefault();
+    if (evt.target.value !== "") {
+      send({
+        Action: {
+          SetJackVariation: evt.target.value === "enabled",
         },
       });
     }
@@ -1014,6 +1045,9 @@ const Initialize = (props: IProps): JSX.Element => {
             break;
           case "hide_throw_halting_player":
             send({ Action: { SetHideThrowHaltingPlayer: value } });
+            break;
+          case "set_jack_variation":
+            send({ Action: { SetJackVariation: value } });
             break;
           case "game_scoring_parameters":
             send({
@@ -1286,6 +1320,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}
           setKittyBidPolicy={setKittyBidPolicy}
+          setJackVariation={setJackVariation}
           setTractorRequirements={(requirements) =>
             send({ Action: { SetTractorRequirements: requirements } })
           }
