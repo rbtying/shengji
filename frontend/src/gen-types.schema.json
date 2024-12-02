@@ -122,7 +122,9 @@
         },
         {
           "type": "object",
-          "required": ["MakeObserver"],
+          "required": [
+            "MakeObserver"
+          ],
           "properties": {
             "MakeObserver": {
               "type": "integer",
@@ -134,7 +136,9 @@
         },
         {
           "type": "object",
-          "required": ["MakePlayer"],
+          "required": [
+            "MakePlayer"
+          ],
           "properties": {
             "MakePlayer": {
               "type": "integer",
@@ -146,20 +150,30 @@
         },
         {
           "type": "object",
-          "required": ["SetChatLink"],
+          "required": [
+            "SetChatLink"
+          ],
           "properties": {
             "SetChatLink": {
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
-          "required": ["SetNumDecks"],
+          "required": [
+            "SetNumDecks"
+          ],
           "properties": {
             "SetNumDecks": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             }
@@ -168,7 +182,9 @@
         },
         {
           "type": "object",
-          "required": ["SetSpecialDecks"],
+          "required": [
+            "SetSpecialDecks"
+          ],
           "properties": {
             "SetSpecialDecks": {
               "type": "array",
@@ -181,10 +197,15 @@
         },
         {
           "type": "object",
-          "required": ["SetKittySize"],
+          "required": [
+            "SetKittySize"
+          ],
           "properties": {
             "SetKittySize": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             }
@@ -193,7 +214,9 @@
         },
         {
           "type": "object",
-          "required": ["SetFriendSelectionPolicy"],
+          "required": [
+            "SetFriendSelectionPolicy"
+          ],
           "properties": {
             "SetFriendSelectionPolicy": {
               "$ref": "#/definitions/FriendSelectionPolicy"
@@ -203,7 +226,9 @@
         },
         {
           "type": "object",
-          "required": ["SetMultipleJoinPolicy"],
+          "required": [
+            "SetMultipleJoinPolicy"
+          ],
           "properties": {
             "SetMultipleJoinPolicy": {
               "$ref": "#/definitions/MultipleJoinPolicy"
@@ -213,7 +238,9 @@
         },
         {
           "type": "object",
-          "required": ["SetFirstLandlordSelectionPolicy"],
+          "required": [
+            "SetFirstLandlordSelectionPolicy"
+          ],
           "properties": {
             "SetFirstLandlordSelectionPolicy": {
               "$ref": "#/definitions/FirstLandlordSelectionPolicy"
@@ -223,7 +250,9 @@
         },
         {
           "type": "object",
-          "required": ["SetBidPolicy"],
+          "required": [
+            "SetBidPolicy"
+          ],
           "properties": {
             "SetBidPolicy": {
               "$ref": "#/definitions/BidPolicy"
@@ -233,7 +262,9 @@
         },
         {
           "type": "object",
-          "required": ["SetBidReinforcementPolicy"],
+          "required": [
+            "SetBidReinforcementPolicy"
+          ],
           "properties": {
             "SetBidReinforcementPolicy": {
               "$ref": "#/definitions/BidReinforcementPolicy"
@@ -243,7 +274,9 @@
         },
         {
           "type": "object",
-          "required": ["SetJokerBidPolicy"],
+          "required": [
+            "SetJokerBidPolicy"
+          ],
           "properties": {
             "SetJokerBidPolicy": {
               "$ref": "#/definitions/JokerBidPolicy"
@@ -253,7 +286,9 @@
         },
         {
           "type": "object",
-          "required": ["SetHideLandlordsPoints"],
+          "required": [
+            "SetHideLandlordsPoints"
+          ],
           "properties": {
             "SetHideLandlordsPoints": {
               "type": "boolean"
@@ -263,7 +298,9 @@
         },
         {
           "type": "object",
-          "required": ["SetHidePlayedCards"],
+          "required": [
+            "SetHidePlayedCards"
+          ],
           "properties": {
             "SetHidePlayedCards": {
               "type": "boolean"
@@ -273,7 +310,9 @@
         },
         {
           "type": "object",
-          "required": ["ReorderPlayers"],
+          "required": [
+            "ReorderPlayers"
+          ],
           "properties": {
             "ReorderPlayers": {
               "type": "array",
@@ -288,7 +327,9 @@
         },
         {
           "type": "object",
-          "required": ["SetRank"],
+          "required": [
+            "SetRank"
+          ],
           "properties": {
             "SetRank": {
               "$ref": "#/definitions/Rank"
@@ -298,7 +339,9 @@
         },
         {
           "type": "object",
-          "required": ["SetMetaRank"],
+          "required": [
+            "SetMetaRank"
+          ],
           "properties": {
             "SetMetaRank": {
               "type": "integer",
@@ -310,7 +353,9 @@
         },
         {
           "type": "object",
-          "required": ["SetMaxRank"],
+          "required": [
+            "SetMaxRank"
+          ],
           "properties": {
             "SetMaxRank": {
               "$ref": "#/definitions/Rank"
@@ -320,10 +365,15 @@
         },
         {
           "type": "object",
-          "required": ["SetLandlord"],
+          "required": [
+            "SetLandlord"
+          ],
           "properties": {
             "SetLandlord": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             }
@@ -332,17 +382,24 @@
         },
         {
           "type": "object",
-          "required": ["SetLandlordEmoji"],
+          "required": [
+            "SetLandlordEmoji"
+          ],
           "properties": {
             "SetLandlordEmoji": {
-              "type": ["string", "null"]
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
-          "required": ["SetGameMode"],
+          "required": [
+            "SetGameMode"
+          ],
           "properties": {
             "SetGameMode": {
               "$ref": "#/definitions/GameModeSettings"
@@ -352,7 +409,9 @@
         },
         {
           "type": "object",
-          "required": ["SetAdvancementPolicy"],
+          "required": [
+            "SetAdvancementPolicy"
+          ],
           "properties": {
             "SetAdvancementPolicy": {
               "$ref": "#/definitions/AdvancementPolicy"
@@ -362,7 +421,9 @@
         },
         {
           "type": "object",
-          "required": ["SetGameScoringParameters"],
+          "required": [
+            "SetGameScoringParameters"
+          ],
           "properties": {
             "SetGameScoringParameters": {
               "$ref": "#/definitions/GameScoringParameters"
@@ -372,7 +433,9 @@
         },
         {
           "type": "object",
-          "required": ["SetKittyPenalty"],
+          "required": [
+            "SetKittyPenalty"
+          ],
           "properties": {
             "SetKittyPenalty": {
               "$ref": "#/definitions/KittyPenalty"
@@ -382,7 +445,9 @@
         },
         {
           "type": "object",
-          "required": ["SetKittyBidPolicy"],
+          "required": [
+            "SetKittyBidPolicy"
+          ],
           "properties": {
             "SetKittyBidPolicy": {
               "$ref": "#/definitions/KittyBidPolicy"
@@ -392,7 +457,9 @@
         },
         {
           "type": "object",
-          "required": ["SetTrickDrawPolicy"],
+          "required": [
+            "SetTrickDrawPolicy"
+          ],
           "properties": {
             "SetTrickDrawPolicy": {
               "$ref": "#/definitions/TrickDrawPolicy"
@@ -402,7 +469,9 @@
         },
         {
           "type": "object",
-          "required": ["SetThrowPenalty"],
+          "required": [
+            "SetThrowPenalty"
+          ],
           "properties": {
             "SetThrowPenalty": {
               "$ref": "#/definitions/ThrowPenalty"
@@ -412,7 +481,9 @@
         },
         {
           "type": "object",
-          "required": ["SetThrowEvaluationPolicy"],
+          "required": [
+            "SetThrowEvaluationPolicy"
+          ],
           "properties": {
             "SetThrowEvaluationPolicy": {
               "$ref": "#/definitions/ThrowEvaluationPolicy"
@@ -422,7 +493,9 @@
         },
         {
           "type": "object",
-          "required": ["SetPlayTakebackPolicy"],
+          "required": [
+            "SetPlayTakebackPolicy"
+          ],
           "properties": {
             "SetPlayTakebackPolicy": {
               "$ref": "#/definitions/PlayTakebackPolicy"
@@ -432,7 +505,9 @@
         },
         {
           "type": "object",
-          "required": ["SetBidTakebackPolicy"],
+          "required": [
+            "SetBidTakebackPolicy"
+          ],
           "properties": {
             "SetBidTakebackPolicy": {
               "$ref": "#/definitions/BidTakebackPolicy"
@@ -442,7 +517,9 @@
         },
         {
           "type": "object",
-          "required": ["SetKittyTheftPolicy"],
+          "required": [
+            "SetKittyTheftPolicy"
+          ],
           "properties": {
             "SetKittyTheftPolicy": {
               "$ref": "#/definitions/KittyTheftPolicy"
@@ -452,7 +529,9 @@
         },
         {
           "type": "object",
-          "required": ["SetGameShadowingPolicy"],
+          "required": [
+            "SetGameShadowingPolicy"
+          ],
           "properties": {
             "SetGameShadowingPolicy": {
               "$ref": "#/definitions/GameShadowingPolicy"
@@ -462,7 +541,9 @@
         },
         {
           "type": "object",
-          "required": ["SetGameStartPolicy"],
+          "required": [
+            "SetGameStartPolicy"
+          ],
           "properties": {
             "SetGameStartPolicy": {
               "$ref": "#/definitions/GameStartPolicy"
@@ -472,7 +553,9 @@
         },
         {
           "type": "object",
-          "required": ["SetShouldRevealKittyAtEndOfGame"],
+          "required": [
+            "SetShouldRevealKittyAtEndOfGame"
+          ],
           "properties": {
             "SetShouldRevealKittyAtEndOfGame": {
               "type": "boolean"
@@ -482,7 +565,9 @@
         },
         {
           "type": "object",
-          "required": ["SetHideThrowHaltingPlayer"],
+          "required": [
+            "SetHideThrowHaltingPlayer"
+          ],
           "properties": {
             "SetHideThrowHaltingPlayer": {
               "type": "boolean"
@@ -492,7 +577,9 @@
         },
         {
           "type": "object",
-          "required": ["SetTractorRequirements"],
+          "required": [
+            "SetTractorRequirements"
+          ],
           "properties": {
             "SetTractorRequirements": {
               "$ref": "#/definitions/TractorRequirements"
@@ -502,7 +589,9 @@
         },
         {
           "type": "object",
-          "required": ["SetGameVisibility"],
+          "required": [
+            "SetGameVisibility"
+          ],
           "properties": {
             "SetGameVisibility": {
               "$ref": "#/definitions/GameVisibility"
@@ -512,7 +601,9 @@
         },
         {
           "type": "object",
-          "required": ["Bid"],
+          "required": [
+            "Bid"
+          ],
           "properties": {
             "Bid": {
               "type": "array",
@@ -534,7 +625,9 @@
         },
         {
           "type": "object",
-          "required": ["MoveCardToKitty"],
+          "required": [
+            "MoveCardToKitty"
+          ],
           "properties": {
             "MoveCardToKitty": {
               "$ref": "#/definitions/Card"
@@ -544,7 +637,9 @@
         },
         {
           "type": "object",
-          "required": ["MoveCardToHand"],
+          "required": [
+            "MoveCardToHand"
+          ],
           "properties": {
             "MoveCardToHand": {
               "$ref": "#/definitions/Card"
@@ -554,7 +649,9 @@
         },
         {
           "type": "object",
-          "required": ["SetFriends"],
+          "required": [
+            "SetFriends"
+          ],
           "properties": {
             "SetFriends": {
               "type": "array",
@@ -567,7 +664,9 @@
         },
         {
           "type": "object",
-          "required": ["PlayCards"],
+          "required": [
+            "PlayCards"
+          ],
           "properties": {
             "PlayCards": {
               "type": "array",
@@ -580,7 +679,9 @@
         },
         {
           "type": "object",
-          "required": ["PlayCardsWithHint"],
+          "required": [
+            "PlayCardsWithHint"
+          ],
           "properties": {
             "PlayCardsWithHint": {
               "type": "array",
@@ -608,11 +709,19 @@
     },
     "AdvancementPolicy": {
       "type": "string",
-      "enum": ["Unrestricted", "FullyUnrestricted", "DefendPoints"]
+      "enum": [
+        "Unrestricted",
+        "FullyUnrestricted",
+        "DefendPoints"
+      ]
     },
     "Bid": {
       "type": "object",
-      "required": ["card", "count", "id"],
+      "required": [
+        "card",
+        "count",
+        "id"
+      ],
       "properties": {
         "card": {
           "$ref": "#/definitions/Card"
@@ -637,38 +746,58 @@
     },
     "BidPolicy": {
       "type": "string",
-      "enum": ["JokerOrHigherSuit", "JokerOrGreaterLength", "GreaterLength"]
+      "enum": [
+        "JokerOrHigherSuit",
+        "JokerOrGreaterLength",
+        "GreaterLength"
+      ]
     },
     "BidReinforcementPolicy": {
       "oneOf": [
         {
           "description": "A bid can be reinforced when it is the winning bid.",
           "type": "string",
-          "enum": ["ReinforceWhileWinning"]
+          "enum": [
+            "ReinforceWhileWinning"
+          ]
         },
         {
           "description": "A bid can be reinforced when it is the winning bid, or overturned with a greater bid.",
           "type": "string",
-          "enum": ["OverturnOrReinforceWhileWinning"]
+          "enum": [
+            "OverturnOrReinforceWhileWinning"
+          ]
         },
         {
           "description": "A bid can be reinforced if it is equivalent to the winning bid after reinforcement.",
           "type": "string",
-          "enum": ["ReinforceWhileEquivalent"]
+          "enum": [
+            "ReinforceWhileEquivalent"
+          ]
         }
       ]
     },
     "BidTakebackPolicy": {
       "type": "string",
-      "enum": ["AllowBidTakeback", "NoBidTakeback"]
+      "enum": [
+        "AllowBidTakeback",
+        "NoBidTakeback"
+      ]
     },
     "BonusLevelPolicy": {
       "type": "string",
-      "enum": ["NoBonusLevel", "BonusLevelForSmallerLandlordTeam"]
+      "enum": [
+        "NoBonusLevel",
+        "BonusLevelForSmallerLandlordTeam"
+      ]
     },
     "BroadcastMessage": {
       "type": "object",
-      "required": ["actor", "actor_name", "variant"],
+      "required": [
+        "actor",
+        "actor_name",
+        "variant"
+      ],
       "properties": {
         "actor": {
           "type": "integer",
@@ -685,7 +814,13 @@
     },
     "CanPlayCardsRequest": {
       "type": "object",
-      "required": ["cards", "hands", "id", "trick", "trick_draw_policy"],
+      "required": [
+        "cards",
+        "hands",
+        "id",
+        "trick",
+        "trick_draw_policy"
+      ],
       "properties": {
         "cards": {
           "type": "array",
@@ -711,7 +846,9 @@
     },
     "CanPlayCardsResponse": {
       "type": "object",
-      "required": ["playable"],
+      "required": [
+        "playable"
+      ],
       "properties": {
         "playable": {
           "type": "boolean"
@@ -723,7 +860,13 @@
     },
     "CardInfo": {
       "type": "object",
-      "required": ["display_value", "effective_suit", "points", "typ", "value"],
+      "required": [
+        "display_value",
+        "effective_suit",
+        "points",
+        "typ",
+        "value"
+      ],
       "properties": {
         "display_value": {
           "type": "string",
@@ -734,7 +877,10 @@
           "$ref": "#/definitions/EffectiveSuit"
         },
         "number": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "points": {
           "type": "integer",
@@ -765,7 +911,10 @@
     },
     "CardInfoRequest": {
       "type": "object",
-      "required": ["card", "trump"],
+      "required": [
+        "card",
+        "trump"
+      ],
       "properties": {
         "card": {
           "$ref": "#/definitions/Card"
@@ -804,7 +953,10 @@
     },
     "ComputeScoreResponse": {
       "type": "object",
-      "required": ["next_threshold", "score"],
+      "required": [
+        "next_threshold",
+        "score"
+      ],
       "properties": {
         "next_threshold": {
           "type": "integer",
@@ -817,7 +969,11 @@
     },
     "Deck": {
       "type": "object",
-      "required": ["exclude_big_joker", "exclude_small_joker", "min"],
+      "required": [
+        "exclude_big_joker",
+        "exclude_small_joker",
+        "min"
+      ],
       "properties": {
         "exclude_big_joker": {
           "type": "boolean"
@@ -832,7 +988,12 @@
     },
     "DecomposeTrickFormatRequest": {
       "type": "object",
-      "required": ["hands", "player_id", "trick_draw_policy", "trick_format"],
+      "required": [
+        "hands",
+        "player_id",
+        "trick_draw_policy",
+        "trick_format"
+      ],
       "properties": {
         "hands": {
           "$ref": "#/definitions/Hands"
@@ -852,7 +1013,9 @@
     },
     "DecomposeTrickFormatResponse": {
       "type": "object",
-      "required": ["results"],
+      "required": [
+        "results"
+      ],
       "properties": {
         "results": {
           "type": "array",
@@ -864,7 +1027,12 @@
     },
     "DecomposedTrickFormat": {
       "type": "object",
-      "required": ["description", "format", "more_than_one", "playable"],
+      "required": [
+        "description",
+        "format",
+        "more_than_one",
+        "playable"
+      ],
       "properties": {
         "description": {
           "type": "string"
@@ -957,7 +1125,10 @@
           "minimum": 0.0
         },
         "player_requested_reset": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -986,7 +1157,14 @@
     },
     "EffectiveSuit": {
       "type": "string",
-      "enum": ["Unknown", "Clubs", "Diamonds", "Spades", "Hearts", "Trump"]
+      "enum": [
+        "Unknown",
+        "Clubs",
+        "Diamonds",
+        "Spades",
+        "Hearts",
+        "Trump"
+      ]
     },
     "ExchangePhase": {
       "type": "object",
@@ -1070,7 +1248,10 @@
           "minimum": 0.0
         },
         "player_requested_reset": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -1091,7 +1272,11 @@
     },
     "ExplainScoringRequest": {
       "type": "object",
-      "required": ["decks", "params", "smaller_landlord_team_size"],
+      "required": [
+        "decks",
+        "params",
+        "smaller_landlord_team_size"
+      ],
       "properties": {
         "decks": {
           "type": "array",
@@ -1109,7 +1294,11 @@
     },
     "ExplainScoringResponse": {
       "type": "object",
-      "required": ["results", "step_size", "total_points"],
+      "required": [
+        "results",
+        "step_size",
+        "total_points"
+      ],
       "properties": {
         "results": {
           "type": "array",
@@ -1171,7 +1360,10 @@
           "$ref": "#/definitions/JokerBidPolicy"
         },
         "landlord": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -1190,7 +1382,9 @@
     },
     "FindValidBidsResult": {
       "type": "object",
-      "required": ["results"],
+      "required": [
+        "results"
+      ],
       "properties": {
         "results": {
           "type": "array",
@@ -1202,7 +1396,11 @@
     },
     "FindViablePlaysRequest": {
       "type": "object",
-      "required": ["cards", "tractor_requirements", "trump"],
+      "required": [
+        "cards",
+        "tractor_requirements",
+        "trump"
+      ],
       "properties": {
         "cards": {
           "type": "array",
@@ -1220,7 +1418,9 @@
     },
     "FindViablePlaysResult": {
       "type": "object",
-      "required": ["results"],
+      "required": [
+        "results"
+      ],
       "properties": {
         "results": {
           "type": "array",
@@ -1232,11 +1432,17 @@
     },
     "FirstLandlordSelectionPolicy": {
       "type": "string",
-      "enum": ["ByWinningBid", "ByFirstBid"]
+      "enum": [
+        "ByWinningBid",
+        "ByFirstBid"
+      ]
     },
     "FoundViablePlay": {
       "type": "object",
-      "required": ["description", "grouping"],
+      "required": [
+        "description",
+        "grouping"
+      ],
       "properties": {
         "description": {
           "type": "string"
@@ -1251,7 +1457,11 @@
     },
     "Friend": {
       "type": "object",
-      "required": ["card", "initial_skip", "skip"],
+      "required": [
+        "card",
+        "initial_skip",
+        "skip"
+      ],
       "properties": {
         "card": {
           "$ref": "#/definitions/Card"
@@ -1262,7 +1472,10 @@
           "minimum": 0.0
         },
         "player_id": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -1275,7 +1488,10 @@
     },
     "FriendSelection": {
       "type": "object",
-      "required": ["card", "initial_skip"],
+      "required": [
+        "card",
+        "initial_skip"
+      ],
       "properties": {
         "card": {
           "$ref": "#/definitions/Card"
@@ -1300,11 +1516,15 @@
       "oneOf": [
         {
           "type": "object",
-          "required": ["State"],
+          "required": [
+            "State"
+          ],
           "properties": {
             "State": {
               "type": "object",
-              "required": ["state"],
+              "required": [
+                "state"
+              ],
               "properties": {
                 "state": {
                   "$ref": "#/definitions/GameState"
@@ -1316,11 +1536,16 @@
         },
         {
           "type": "object",
-          "required": ["Message"],
+          "required": [
+            "Message"
+          ],
           "properties": {
             "Message": {
               "type": "object",
-              "required": ["from", "message"],
+              "required": [
+                "from",
+                "message"
+              ],
               "properties": {
                 "from": {
                   "type": "string"
@@ -1335,11 +1560,16 @@
         },
         {
           "type": "object",
-          "required": ["Broadcast"],
+          "required": [
+            "Broadcast"
+          ],
           "properties": {
             "Broadcast": {
               "type": "object",
-              "required": ["data", "message"],
+              "required": [
+                "data",
+                "message"
+              ],
               "properties": {
                 "data": {
                   "$ref": "#/definitions/BroadcastMessage"
@@ -1354,11 +1584,15 @@
         },
         {
           "type": "object",
-          "required": ["Beep"],
+          "required": [
+            "Beep"
+          ],
           "properties": {
             "Beep": {
               "type": "object",
-              "required": ["target"],
+              "required": [
+                "target"
+              ],
               "properties": {
                 "target": {
                   "type": "string"
@@ -1370,11 +1604,15 @@
         },
         {
           "type": "object",
-          "required": ["ReadyCheck"],
+          "required": [
+            "ReadyCheck"
+          ],
           "properties": {
             "ReadyCheck": {
               "type": "object",
-              "required": ["from"],
+              "required": [
+                "from"
+              ],
               "properties": {
                 "from": {
                   "type": "string"
@@ -1386,7 +1624,9 @@
         },
         {
           "type": "object",
-          "required": ["Error"],
+          "required": [
+            "Error"
+          ],
           "properties": {
             "Error": {
               "type": "string"
@@ -1396,11 +1636,15 @@
         },
         {
           "type": "object",
-          "required": ["Header"],
+          "required": [
+            "Header"
+          ],
           "properties": {
             "Header": {
               "type": "object",
-              "required": ["messages"],
+              "required": [
+                "messages"
+              ],
               "properties": {
                 "messages": {
                   "type": "array",
@@ -1415,11 +1659,15 @@
         },
         {
           "type": "object",
-          "required": ["Kicked"],
+          "required": [
+            "Kicked"
+          ],
           "properties": {
             "Kicked": {
               "type": "object",
-              "required": ["target"],
+              "required": [
+                "target"
+              ],
               "properties": {
                 "target": {
                   "type": "string"
@@ -1435,15 +1683,22 @@
       "oneOf": [
         {
           "type": "string",
-          "enum": ["Tractor"]
+          "enum": [
+            "Tractor"
+          ]
         },
         {
           "type": "object",
-          "required": ["FindingFriends"],
+          "required": [
+            "FindingFriends"
+          ],
           "properties": {
             "FindingFriends": {
               "type": "object",
-              "required": ["friends", "num_friends"],
+              "required": [
+                "friends",
+                "num_friends"
+              ],
               "properties": {
                 "friends": {
                   "type": "array",
@@ -1467,17 +1722,24 @@
       "oneOf": [
         {
           "type": "string",
-          "enum": ["Tractor"]
+          "enum": [
+            "Tractor"
+          ]
         },
         {
           "type": "object",
-          "required": ["FindingFriends"],
+          "required": [
+            "FindingFriends"
+          ],
           "properties": {
             "FindingFriends": {
               "type": "object",
               "properties": {
                 "num_friends": {
-                  "type": ["integer", "null"],
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
                   "format": "uint",
                   "minimum": 0.0
                 }
@@ -1562,17 +1824,25 @@
     },
     "GameShadowingPolicy": {
       "type": "string",
-      "enum": ["AllowMultipleSessions", "SingleSessionOnly"]
+      "enum": [
+        "AllowMultipleSessions",
+        "SingleSessionOnly"
+      ]
     },
     "GameStartPolicy": {
       "type": "string",
-      "enum": ["AllowAnyPlayer", "AllowLandlordOnly"]
+      "enum": [
+        "AllowAnyPlayer",
+        "AllowLandlordOnly"
+      ]
     },
     "GameState": {
       "oneOf": [
         {
           "type": "object",
-          "required": ["Initialize"],
+          "required": [
+            "Initialize"
+          ],
           "properties": {
             "Initialize": {
               "$ref": "#/definitions/InitializePhase"
@@ -1582,7 +1852,9 @@
         },
         {
           "type": "object",
-          "required": ["Draw"],
+          "required": [
+            "Draw"
+          ],
           "properties": {
             "Draw": {
               "$ref": "#/definitions/DrawPhase"
@@ -1592,7 +1864,9 @@
         },
         {
           "type": "object",
-          "required": ["Exchange"],
+          "required": [
+            "Exchange"
+          ],
           "properties": {
             "Exchange": {
               "$ref": "#/definitions/ExchangePhase"
@@ -1602,7 +1876,9 @@
         },
         {
           "type": "object",
-          "required": ["Play"],
+          "required": [
+            "Play"
+          ],
           "properties": {
             "Play": {
               "$ref": "#/definitions/PlayPhase"
@@ -1614,11 +1890,16 @@
     },
     "GameVisibility": {
       "type": "string",
-      "enum": ["Public", "Unlisted"]
+      "enum": [
+        "Public",
+        "Unlisted"
+      ]
     },
     "Hands": {
       "type": "object",
-      "required": ["hands"],
+      "required": [
+        "hands"
+      ],
       "properties": {
         "hands": {
           "type": "object",
@@ -1645,7 +1926,9 @@
     },
     "InitializePhase": {
       "type": "object",
-      "required": ["propagated"],
+      "required": [
+        "propagated"
+      ],
       "properties": {
         "propagated": {
           "$ref": "#/definitions/PropagatedState"
@@ -1663,15 +1946,24 @@
     },
     "KittyBidPolicy": {
       "type": "string",
-      "enum": ["FirstCard", "FirstCardOfLevelOrHighest"]
+      "enum": [
+        "FirstCard",
+        "FirstCardOfLevelOrHighest"
+      ]
     },
     "KittyPenalty": {
       "type": "string",
-      "enum": ["Times", "Power"]
+      "enum": [
+        "Times",
+        "Power"
+      ]
     },
     "KittyTheftPolicy": {
       "type": "string",
-      "enum": ["AllowKittyTheft", "NoKittyTheft"]
+      "enum": [
+        "AllowKittyTheft",
+        "NoKittyTheft"
+      ]
     },
     "MaxRank": {
       "$ref": "#/definitions/Rank"
@@ -1680,47 +1972,67 @@
       "oneOf": [
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["ResetRequested"]
+              "enum": [
+                "ResetRequested"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["ResetCanceled"]
+              "enum": [
+                "ResetCanceled"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["ResettingGame"]
+              "enum": [
+                "ResettingGame"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["StartingGame"]
+              "enum": [
+                "StartingGame"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["points", "type", "winner"],
+          "required": [
+            "points",
+            "type",
+            "winner"
+          ],
           "properties": {
             "points": {
               "type": "integer",
@@ -1729,7 +2041,9 @@
             },
             "type": {
               "type": "string",
-              "enum": ["TrickWon"]
+              "enum": [
+                "TrickWon"
+              ]
             },
             "winner": {
               "type": "integer",
@@ -1740,7 +2054,11 @@
         },
         {
           "type": "object",
-          "required": ["new_rank", "player", "type"],
+          "required": [
+            "new_rank",
+            "player",
+            "type"
+          ],
           "properties": {
             "new_rank": {
               "$ref": "#/definitions/Rank"
@@ -1752,13 +2070,19 @@
             },
             "type": {
               "type": "string",
-              "enum": ["RankAdvanced"]
+              "enum": [
+                "RankAdvanced"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["player", "rank", "type"],
+          "required": [
+            "player",
+            "rank",
+            "type"
+          ],
           "properties": {
             "player": {
               "type": "integer",
@@ -1770,13 +2094,18 @@
             },
             "type": {
               "type": "string",
-              "enum": ["AdvancementBlocked"]
+              "enum": [
+                "AdvancementBlocked"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["landlord", "type"],
+          "required": [
+            "landlord",
+            "type"
+          ],
           "properties": {
             "landlord": {
               "type": "integer",
@@ -1785,13 +2114,19 @@
             },
             "type": {
               "type": "string",
-              "enum": ["NewLandlordForNextGame"]
+              "enum": [
+                "NewLandlordForNextGame"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["multiplier", "points", "type"],
+          "required": [
+            "multiplier",
+            "points",
+            "type"
+          ],
           "properties": {
             "multiplier": {
               "type": "integer",
@@ -1805,13 +2140,18 @@
             },
             "type": {
               "type": "string",
-              "enum": ["PointsInKitty"]
+              "enum": [
+                "PointsInKitty"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["cards", "type"],
+          "required": [
+            "cards",
+            "type"
+          ],
           "properties": {
             "cards": {
               "type": "array",
@@ -1821,13 +2161,18 @@
             },
             "type": {
               "type": "string",
-              "enum": ["EndOfGameKittyReveal"]
+              "enum": [
+                "EndOfGameKittyReveal"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["player", "type"],
+          "required": [
+            "player",
+            "type"
+          ],
           "properties": {
             "player": {
               "type": "integer",
@@ -1836,13 +2181,19 @@
             },
             "type": {
               "type": "string",
-              "enum": ["JoinedGame"]
+              "enum": [
+                "JoinedGame"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["game_shadowing_policy", "player", "type"],
+          "required": [
+            "game_shadowing_policy",
+            "player",
+            "type"
+          ],
           "properties": {
             "game_shadowing_policy": {
               "$ref": "#/definitions/GameShadowingPolicy"
@@ -1854,13 +2205,19 @@
             },
             "type": {
               "type": "string",
-              "enum": ["JoinedGameAgain"]
+              "enum": [
+                "JoinedGameAgain"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["already_joined", "player", "type"],
+          "required": [
+            "already_joined",
+            "player",
+            "type"
+          ],
           "properties": {
             "already_joined": {
               "type": "boolean"
@@ -1872,145 +2229,202 @@
             },
             "type": {
               "type": "string",
-              "enum": ["JoinedTeam"]
+              "enum": [
+                "JoinedTeam"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["name", "type"],
+          "required": [
+            "name",
+            "type"
+          ],
           "properties": {
             "name": {
               "type": "string"
             },
             "type": {
               "type": "string",
-              "enum": ["LeftGame"]
+              "enum": [
+                "LeftGame"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/AdvancementPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["AdvancementPolicySet"]
+              "enum": [
+                "AdvancementPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "size": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             },
             "type": {
               "type": "string",
-              "enum": ["KittySizeSet"]
+              "enum": [
+                "KittySizeSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/FriendSelectionPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["FriendSelectionPolicySet"]
+              "enum": [
+                "FriendSelectionPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/MultipleJoinPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["MultipleJoinPolicySet"]
+              "enum": [
+                "MultipleJoinPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/FirstLandlordSelectionPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["FirstLandlordSelectionPolicySet"]
+              "enum": [
+                "FirstLandlordSelectionPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/BidPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["BidPolicySet"]
+              "enum": [
+                "BidPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/BidReinforcementPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["BidReinforcementPolicySet"]
+              "enum": [
+                "BidReinforcementPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/JokerBidPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["JokerBidPolicySet"]
+              "enum": [
+                "JokerBidPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["should_reveal", "type"],
+          "required": [
+            "should_reveal",
+            "type"
+          ],
           "properties": {
             "should_reveal": {
               "type": "boolean"
             },
             "type": {
               "type": "string",
-              "enum": ["ShouldRevealKittyAtEndOfGameSet"]
+              "enum": [
+                "ShouldRevealKittyAtEndOfGameSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["special_decks", "type"],
+          "required": [
+            "special_decks",
+            "type"
+          ],
           "properties": {
             "special_decks": {
               "type": "array",
@@ -2020,73 +2434,104 @@
             },
             "type": {
               "type": "string",
-              "enum": ["SpecialDecksSet"]
+              "enum": [
+                "SpecialDecksSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "num_decks": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             },
             "type": {
               "type": "string",
-              "enum": ["NumDecksSet"]
+              "enum": [
+                "NumDecksSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "num_friends": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             },
             "type": {
               "type": "string",
-              "enum": ["NumFriendsSet"]
+              "enum": [
+                "NumFriendsSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["game_mode", "type"],
+          "required": [
+            "game_mode",
+            "type"
+          ],
           "properties": {
             "game_mode": {
               "$ref": "#/definitions/GameModeSettings"
             },
             "type": {
               "type": "string",
-              "enum": ["GameModeSet"]
+              "enum": [
+                "GameModeSet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/KittyTheftPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["KittyTheftPolicySet"]
+              "enum": [
+                "KittyTheftPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type", "visibility"],
+          "required": [
+            "type",
+            "visibility"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["GameVisibilitySet"]
+              "enum": [
+                "GameVisibilitySet"
+              ]
             },
             "visibility": {
               "$ref": "#/definitions/GameVisibility"
@@ -2095,27 +2540,38 @@
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["TookBackPlay"]
+              "enum": [
+                "TookBackPlay"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["TookBackBid"]
+              "enum": [
+                "TookBackBid"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["cards", "type"],
+          "required": [
+            "cards",
+            "type"
+          ],
           "properties": {
             "cards": {
               "type": "array",
@@ -2125,16 +2581,24 @@
             },
             "type": {
               "type": "string",
-              "enum": ["PlayedCards"]
+              "enum": [
+                "PlayedCards"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["original_cards", "type"],
+          "required": [
+            "original_cards",
+            "type"
+          ],
           "properties": {
             "better_player": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             },
@@ -2146,17 +2610,24 @@
             },
             "type": {
               "type": "string",
-              "enum": ["ThrowFailed"]
+              "enum": [
+                "ThrowFailed"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type", "visible"],
+          "required": [
+            "type",
+            "visible"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["SetDefendingPointVisibility"]
+              "enum": [
+                "SetDefendingPointVisibility"
+              ]
             },
             "visible": {
               "type": "boolean"
@@ -2165,11 +2636,16 @@
         },
         {
           "type": "object",
-          "required": ["type", "visible"],
+          "required": [
+            "type",
+            "visible"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["SetCardVisibility"]
+              "enum": [
+                "SetCardVisibility"
+              ]
             },
             "visible": {
               "type": "boolean"
@@ -2178,48 +2654,68 @@
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "landlord": {
-              "type": ["integer", "null"],
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "uint",
               "minimum": 0.0
             },
             "type": {
               "type": "string",
-              "enum": ["SetLandlord"]
+              "enum": [
+                "SetLandlord"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["emoji", "type"],
+          "required": [
+            "emoji",
+            "type"
+          ],
           "properties": {
             "emoji": {
               "type": "string"
             },
             "type": {
               "type": "string",
-              "enum": ["SetLandlordEmoji"]
+              "enum": [
+                "SetLandlordEmoji"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["rank", "type"],
+          "required": [
+            "rank",
+            "type"
+          ],
           "properties": {
             "rank": {
               "$ref": "#/definitions/Rank"
             },
             "type": {
               "type": "string",
-              "enum": ["SetRank"]
+              "enum": [
+                "SetRank"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["metarank", "type"],
+          "required": [
+            "metarank",
+            "type"
+          ],
           "properties": {
             "metarank": {
               "type": "integer",
@@ -2228,26 +2724,37 @@
             },
             "type": {
               "type": "string",
-              "enum": ["SetMetaRank"]
+              "enum": [
+                "SetMetaRank"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["rank", "type"],
+          "required": [
+            "rank",
+            "type"
+          ],
           "properties": {
             "rank": {
               "$ref": "#/definitions/Rank"
             },
             "type": {
               "type": "string",
-              "enum": ["SetMaxRank"]
+              "enum": [
+                "SetMaxRank"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["card", "count", "type"],
+          "required": [
+            "card",
+            "count",
+            "type"
+          ],
           "properties": {
             "card": {
               "$ref": "#/definitions/Card"
@@ -2259,130 +2766,181 @@
             },
             "type": {
               "type": "string",
-              "enum": ["MadeBid"]
+              "enum": [
+                "MadeBid"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["kitty_penalty", "type"],
+          "required": [
+            "kitty_penalty",
+            "type"
+          ],
           "properties": {
             "kitty_penalty": {
               "$ref": "#/definitions/KittyPenalty"
             },
             "type": {
               "type": "string",
-              "enum": ["KittyPenaltySet"]
+              "enum": [
+                "KittyPenaltySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["throw_penalty", "type"],
+          "required": [
+            "throw_penalty",
+            "type"
+          ],
           "properties": {
             "throw_penalty": {
               "$ref": "#/definitions/ThrowPenalty"
             },
             "type": {
               "type": "string",
-              "enum": ["ThrowPenaltySet"]
+              "enum": [
+                "ThrowPenaltySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/KittyBidPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["KittyBidPolicySet"]
+              "enum": [
+                "KittyBidPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/TrickDrawPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["TrickDrawPolicySet"]
+              "enum": [
+                "TrickDrawPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/ThrowEvaluationPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["ThrowEvaluationPolicySet"]
+              "enum": [
+                "ThrowEvaluationPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/PlayTakebackPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["PlayTakebackPolicySet"]
+              "enum": [
+                "PlayTakebackPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/BidTakebackPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["BidTakebackPolicySet"]
+              "enum": [
+                "BidTakebackPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/GameShadowingPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["GameShadowingPolicySet"]
+              "enum": [
+                "GameShadowingPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["policy", "type"],
+          "required": [
+            "policy",
+            "type"
+          ],
           "properties": {
             "policy": {
               "$ref": "#/definitions/GameStartPolicy"
             },
             "type": {
               "type": "string",
-              "enum": ["GameStartPolicySet"]
+              "enum": [
+                "GameStartPolicySet"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["old_parameters", "parameters", "type"],
+          "required": [
+            "old_parameters",
+            "parameters",
+            "type"
+          ],
           "properties": {
             "old_parameters": {
               "$ref": "#/definitions/GameScoringParameters"
@@ -2392,53 +2950,74 @@
             },
             "type": {
               "type": "string",
-              "enum": ["GameScoringParametersChanged"]
+              "enum": [
+                "GameScoringParametersChanged"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["PickedUpCards"]
+              "enum": [
+                "PickedUpCards"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["PutDownCards"]
+              "enum": [
+                "PutDownCards"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["RevealedCardFromKitty"]
+              "enum": [
+                "RevealedCardFromKitty"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["GameEndedEarly"]
+              "enum": [
+                "GameEndedEarly"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["result", "type"],
+          "required": [
+            "result",
+            "type"
+          ],
           "properties": {
             "result": {
               "type": "object",
@@ -2448,23 +3027,33 @@
             },
             "type": {
               "type": "string",
-              "enum": ["GameFinished"]
+              "enum": [
+                "GameFinished"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["BonusLevelEarned"]
+              "enum": [
+                "BonusLevelEarned"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["landlord_won", "non_landlords_points", "type"],
+          "required": [
+            "landlord_won",
+            "non_landlords_points",
+            "type"
+          ],
           "properties": {
             "landlord_won": {
               "type": "boolean"
@@ -2475,33 +3064,45 @@
             },
             "type": {
               "type": "string",
-              "enum": ["EndOfGameSummary"]
+              "enum": [
+                "EndOfGameSummary"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["set", "type"],
+          "required": [
+            "set",
+            "type"
+          ],
           "properties": {
             "set": {
               "type": "boolean"
             },
             "type": {
               "type": "string",
-              "enum": ["HideThrowHaltingPlayer"]
+              "enum": [
+                "HideThrowHaltingPlayer"
+              ]
             }
           }
         },
         {
           "type": "object",
-          "required": ["tractor_requirements", "type"],
+          "required": [
+            "tractor_requirements",
+            "type"
+          ],
           "properties": {
             "tractor_requirements": {
               "$ref": "#/definitions/TractorRequirements"
             },
             "type": {
               "type": "string",
-              "enum": ["TractorRequirementsChanged"]
+              "enum": [
+                "TractorRequirementsChanged"
+              ]
             }
           }
         }
@@ -2509,11 +3110,19 @@
     },
     "MultipleJoinPolicy": {
       "type": "string",
-      "enum": ["Unrestricted", "NoDoubleJoin"]
+      "enum": [
+        "Unrestricted",
+        "NoDoubleJoin"
+      ]
     },
     "NextThresholdReachableRequest": {
       "type": "object",
-      "required": ["decks", "non_landlord_points", "observed_points", "params"],
+      "required": [
+        "decks",
+        "non_landlord_points",
+        "observed_points",
+        "params"
+      ],
       "properties": {
         "decks": {
           "type": "array",
@@ -2540,7 +3149,10 @@
     "OrderedCard": {
       "description": "A wrapper around a card with a given trump, which provides ordering characteristics.",
       "type": "object",
-      "required": ["card", "trump"],
+      "required": [
+        "card",
+        "trump"
+      ],
       "properties": {
         "card": {
           "$ref": "#/definitions/Card"
@@ -2632,7 +3244,10 @@
           }
         },
         "player_requested_reset": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -2665,11 +3280,18 @@
     },
     "PlayTakebackPolicy": {
       "type": "string",
-      "enum": ["AllowPlayTakeback", "NoPlayTakeback"]
+      "enum": [
+        "AllowPlayTakeback",
+        "NoPlayTakeback"
+      ]
     },
     "PlayedCards": {
       "type": "object",
-      "required": ["bad_throw_cards", "cards", "id"],
+      "required": [
+        "bad_throw_cards",
+        "cards",
+        "id"
+      ],
       "properties": {
         "bad_throw_cards": {
           "type": "array",
@@ -2678,7 +3300,10 @@
           }
         },
         "better_player": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -2697,7 +3322,12 @@
     },
     "Player": {
       "type": "object",
-      "required": ["id", "level", "metalevel", "name"],
+      "required": [
+        "id",
+        "level",
+        "metalevel",
+        "name"
+      ],
       "properties": {
         "id": {
           "type": "integer",
@@ -2752,7 +3382,12 @@
     },
     "PropagatedState": {
       "type": "object",
-      "required": ["game_mode", "max_player_id", "observers", "players"],
+      "required": [
+        "game_mode",
+        "max_player_id",
+        "observers",
+        "players"
+      ],
       "properties": {
         "advancement_policy": {
           "default": "Unrestricted",
@@ -2787,7 +3422,10 @@
           ]
         },
         "chat_link": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "first_landlord_selection_policy": {
           "default": "ByWinningBid",
@@ -2884,7 +3522,10 @@
           ]
         },
         "kitty_size": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -2897,13 +3538,19 @@
           ]
         },
         "landlord": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
         "landlord_emoji": {
           "default": null,
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "max_player_id": {
           "type": "integer",
@@ -2927,7 +3574,10 @@
           ]
         },
         "num_decks": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -3010,7 +3660,10 @@
     },
     "ScoreSegment": {
       "type": "object",
-      "required": ["point_threshold", "results"],
+      "required": [
+        "point_threshold",
+        "results"
+      ],
       "properties": {
         "point_threshold": {
           "type": "integer",
@@ -3023,7 +3676,10 @@
     },
     "SortAndGroupCardsRequest": {
       "type": "object",
-      "required": ["cards", "trump"],
+      "required": [
+        "cards",
+        "trump"
+      ],
       "properties": {
         "cards": {
           "type": "array",
@@ -3038,7 +3694,9 @@
     },
     "SortAndGroupCardsResponse": {
       "type": "object",
-      "required": ["results"],
+      "required": [
+        "results"
+      ],
       "properties": {
         "results": {
           "type": "array",
@@ -3053,7 +3711,10 @@
     },
     "SuitGroup": {
       "type": "object",
-      "required": ["cards", "suit"],
+      "required": [
+        "cards",
+        "suit"
+      ],
       "properties": {
         "cards": {
           "type": "array",
@@ -3068,15 +3729,25 @@
     },
     "ThrowEvaluationPolicy": {
       "type": "string",
-      "enum": ["All", "Highest", "TrickUnitLength"]
+      "enum": [
+        "All",
+        "Highest",
+        "TrickUnitLength"
+      ]
     },
     "ThrowPenalty": {
       "type": "string",
-      "enum": ["None", "TenPointsPerAttempt"]
+      "enum": [
+        "None",
+        "TenPointsPerAttempt"
+      ]
     },
     "TractorRequirements": {
       "type": "object",
-      "required": ["min_count", "min_length"],
+      "required": [
+        "min_count",
+        "min_length"
+      ],
       "properties": {
         "min_count": {
           "description": "The minimum number of cards in each unit of the tractor",
@@ -3094,10 +3765,17 @@
     },
     "Trick": {
       "type": "object",
-      "required": ["played_cards", "player_queue", "trump"],
+      "required": [
+        "played_cards",
+        "player_queue",
+        "trump"
+      ],
       "properties": {
         "current_winner": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "format": "uint",
           "minimum": 0.0
         },
@@ -3106,7 +3784,10 @@
           "default": [],
           "type": "array",
           "items": {
-            "type": ["array", "null"],
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "$ref": "#/definitions/TrickUnit"
             }
@@ -3145,28 +3826,41 @@
       "oneOf": [
         {
           "type": "string",
-          "enum": ["NoProtections", "NoFormatBasedDraw"]
+          "enum": [
+            "NoProtections",
+            "NoFormatBasedDraw"
+          ]
         },
         {
           "description": "Don't require longer tuples to be drawn if the original format was a shorter tuple.",
           "type": "string",
-          "enum": ["LongerTuplesProtected"]
+          "enum": [
+            "LongerTuplesProtected"
+          ]
         },
         {
           "description": "Only allow tractors to be drawn if the original format was also a tractor.",
           "type": "string",
-          "enum": ["OnlyDrawTractorOnTractor"]
+          "enum": [
+            "OnlyDrawTractorOnTractor"
+          ]
         },
         {
           "description": "Both `LongerTuplesProtected` and `OnlyDrawTractorOnTractor`",
           "type": "string",
-          "enum": ["LongerTuplesProtectedAndOnlyDrawTractorOnTractor"]
+          "enum": [
+            "LongerTuplesProtectedAndOnlyDrawTractorOnTractor"
+          ]
         }
       ]
     },
     "TrickFormat": {
       "type": "object",
-      "required": ["suit", "trump", "units"],
+      "required": [
+        "suit",
+        "trump",
+        "units"
+      ],
       "properties": {
         "suit": {
           "$ref": "#/definitions/EffectiveSuit"
@@ -3186,11 +3880,16 @@
       "oneOf": [
         {
           "type": "object",
-          "required": ["Tractor"],
+          "required": [
+            "Tractor"
+          ],
           "properties": {
             "Tractor": {
               "type": "object",
-              "required": ["count", "members"],
+              "required": [
+                "count",
+                "members"
+              ],
               "properties": {
                 "count": {
                   "type": "integer",
@@ -3210,11 +3909,16 @@
         },
         {
           "type": "object",
-          "required": ["Repeated"],
+          "required": [
+            "Repeated"
+          ],
           "properties": {
             "Repeated": {
               "type": "object",
-              "required": ["card", "count"],
+              "required": [
+                "card",
+                "count"
+              ],
               "properties": {
                 "card": {
                   "$ref": "#/definitions/OrderedCard"
@@ -3235,11 +3939,16 @@
       "oneOf": [
         {
           "type": "object",
-          "required": ["Standard"],
+          "required": [
+            "Standard"
+          ],
           "properties": {
             "Standard": {
               "type": "object",
-              "required": ["number", "suit"],
+              "required": [
+                "number",
+                "suit"
+              ],
               "properties": {
                 "number": {
                   "$ref": "#/definitions/Number"
@@ -3254,7 +3963,9 @@
         },
         {
           "type": "object",
-          "required": ["NoTrump"],
+          "required": [
+            "NoTrump"
+          ],
           "properties": {
             "NoTrump": {
               "type": "object",
@@ -3278,7 +3989,9 @@
     },
     "UnitLike": {
       "type": "object",
-      "required": ["adjacent_tuples"],
+      "required": [
+        "adjacent_tuples"
+      ],
       "properties": {
         "adjacent_tuples": {
           "type": "array",
