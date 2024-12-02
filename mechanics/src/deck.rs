@@ -99,7 +99,7 @@ pub struct DeckIterator<'d> {
     index: usize,
 }
 
-impl<'d> Iterator for DeckIterator<'d> {
+impl Iterator for DeckIterator<'_> {
     type Item = Card;
     fn next(&mut self) -> Option<Card> {
         loop {

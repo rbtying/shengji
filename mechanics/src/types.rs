@@ -1118,6 +1118,7 @@ impl Rank {
 #[cfg(test)]
 mod tests {
     use super::{cards, Card, Number, Rank, Suit, Trump, FULL_DECK};
+    use std::fmt::Write;
 
     #[test]
     fn test_char_roundtrip() {
@@ -1157,7 +1158,10 @@ mod tests {
         };
         hand.sort_by(|a, b| trump.compare(*a, *b));
         assert_eq!(
-            hand.iter().map(|c| format!("{c:?}")).collect::<String>(),
+            hand.iter().fold(String::new(), |mut o, c| {
+                let _ = write!(o, "{:?}", c);
+                o
+            }),
             "4♡5♡6♡4♧3♢3♤2♡2♤LJHJ"
         );
     }
