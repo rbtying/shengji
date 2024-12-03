@@ -160,15 +160,26 @@ export type Action =
       PlayCardsWithHint: [Card[], TrickUnit[]];
     };
 export type Number = string;
-export type FriendSelectionPolicy = "Unrestricted" | "TrumpsIncluded" | "HighestCardNotAllowed" | "PointCardNotAllowed";
+export type FriendSelectionPolicy =
+  | "Unrestricted"
+  | "TrumpsIncluded"
+  | "HighestCardNotAllowed"
+  | "PointCardNotAllowed";
 export type MultipleJoinPolicy = "Unrestricted" | "NoDoubleJoin";
 export type FirstLandlordSelectionPolicy = "ByWinningBid" | "ByFirstBid";
-export type BidPolicy = "JokerOrHigherSuit" | "JokerOrGreaterLength" | "GreaterLength";
+export type BidPolicy =
+  | "JokerOrHigherSuit"
+  | "JokerOrGreaterLength"
+  | "GreaterLength";
 export type BidReinforcementPolicy =
   | "ReinforceWhileWinning"
   | "OverturnOrReinforceWhileWinning"
   | "ReinforceWhileEquivalent";
-export type JokerBidPolicy = "BothTwoOrMore" | "BothNumDecks" | "LJNumDecksHJNumDecksLessOne" | "Disabled";
+export type JokerBidPolicy =
+  | "BothTwoOrMore"
+  | "BothNumDecks"
+  | "LJNumDecksHJNumDecksLessOne"
+  | "Disabled";
 export type MaxRank = string;
 export type GameModeSettings =
   | "Tractor"
@@ -178,8 +189,13 @@ export type GameModeSettings =
         [k: string]: unknown;
       };
     };
-export type AdvancementPolicy = "Unrestricted" | "FullyUnrestricted" | "DefendPoints";
-export type BonusLevelPolicy = "NoBonusLevel" | "BonusLevelForSmallerLandlordTeam";
+export type AdvancementPolicy =
+  | "Unrestricted"
+  | "FullyUnrestricted"
+  | "DefendPoints";
+export type BonusLevelPolicy =
+  | "NoBonusLevel"
+  | "BonusLevelForSmallerLandlordTeam";
 export type KittyPenalty = "Times" | "Power";
 export type KittyBidPolicy = "FirstCard" | "FirstCardOfLevelOrHighest";
 export type TrickDrawPolicy =
@@ -226,7 +242,13 @@ export type Trump =
       };
     };
 export type Suit = string;
-export type EffectiveSuit = "Unknown" | "Clubs" | "Diamonds" | "Spades" | "Hearts" | "Trump";
+export type EffectiveSuit =
+  | "Unknown"
+  | "Clubs"
+  | "Diamonds"
+  | "Spades"
+  | "Hearts"
+  | "Trump";
 export type GameMessage =
   | {
       State: {
