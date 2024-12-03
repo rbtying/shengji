@@ -36,7 +36,7 @@ const bootstrap = (): void => {
       Chrome browsers.
     </>
   );
-  ReactModal.setAppElement(root);
+  ReactModal.setAppElement(root!);
   ReactDOM.render(
     <Sentry.ErrorBoundary fallback={fallback}>
       <React.Suspense fallback={"loading..."}>

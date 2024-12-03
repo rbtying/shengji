@@ -60,7 +60,7 @@ const Play = (props: IProps): JSX.Element => {
     setGrouping([]);
   };
 
-  const sendEvent = (event: {}) => () => send(event);
+  const sendEvent = (event: object) => () => send(event);
   const takeBackCards = sendEvent({ Action: "TakeBackCards" });
   const endTrick = sendEvent({ Action: "EndTrick" });
   const endGameEarly = sendEvent({ Action: "EndGameEarly" });
@@ -118,7 +118,7 @@ const Play = (props: IProps): JSX.Element => {
       setGrouping(
         findViablePlays(
           playPhase.trump,
-          playPhase.propagated.tractor_requirements,
+          playPhase.propagated.tractor_requirements!,
           newSelected,
         ),
       );
@@ -133,10 +133,10 @@ const Play = (props: IProps): JSX.Element => {
     if (!isSpectator) {
       let playable = canPlayCards({
         trick: playPhase.trick,
-        id: currentPlayer.id,
+        id: currentPlayer!.id,
         hands: playPhase.hands,
         cards: selected,
-        trick_draw_policy: playPhase.propagated.trick_draw_policy,
+        trick_draw_policy: playPhase.propagated.trick_draw_policy!,
       });
       // In order to play the first trick, the grouping must be disambiguated!
       if (lastPlay === undefined) {
@@ -187,8 +187,8 @@ const Play = (props: IProps): JSX.Element => {
   const canEndGameEarly =
     !canFinish &&
     !nextThresholdReachable({
-      decks: playPhase.decks,
-      params: playPhase.propagated.game_scoring_parameters,
+      decks: playPhase.decks!,
+      params: playPhase.propagated.game_scoring_parameters!,
       non_landlord_points: nonLandlordPointsWithPenalties,
       observed_points: totalPointsPlayed,
     });
@@ -241,10 +241,10 @@ const Play = (props: IProps): JSX.Element => {
       />
       <Trump trump={playPhase.trump} />
       <Friends gameMode={playPhase.game_mode} showPlayed={true} />
-      {playPhase.removed_cards.length > 0 ? (
+      {playPhase.removed_cards!.length > 0 ? (
         <p>
           Note:{" "}
-          {playPhase.removed_cards.map((c) => (
+          {playPhase.removed_cards!.map((c) => (
             <InlineCard key={c} card={c} />
           ))}{" "}
           have been removed from the deck
@@ -254,13 +254,13 @@ const Play = (props: IProps): JSX.Element => {
         <ProgressBarDisplay
           points={playPhase.points}
           penalties={playPhase.penalties}
-          decks={playPhase.decks}
+          decks={playPhase.decks!}
           trump={playPhase.trump}
           players={playPhase.propagated.players}
           landlordTeam={playPhase.landlords_team}
           landlord={playPhase.landlord}
-          hideLandlordPoints={playPhase.propagated.hide_landlord_points}
-          gameScoringParameters={playPhase.propagated.game_scoring_parameters}
+          hideLandlordPoints={playPhase.propagated.hide_landlord_points!}
+          gameScoringParameters={playPhase.propagated.game_scoring_parameters!}
           smallerTeamSize={smallerTeamSize}
         />
       )}
@@ -281,8 +281,8 @@ const Play = (props: IProps): JSX.Element => {
             ? grouping[0].description
             : null
         }
-        canSubmit={canPlay}
-        currentWinner={playPhase.trick.current_winner}
+        canSubmit={canPlay!}
+        currentWinner={playPhase.trick.current_winner!}
         unsetAutoPlayWhenWinnerChanges={props.unsetAutoPlayWhenWinnerChanges}
         isCurrentPlayerTurn={isCurrentPlayerTurn}
       />
@@ -304,9 +304,13 @@ const Play = (props: IProps): JSX.Element => {
         <button
           className="big"
           onClick={() => {
-            confirm(
-              "Do you want to end the game early? There may still be points in the bottom...",
-            ) && endGameEarly();
+            if (
+              confirm(
+                "Do you want to end the game early? There may still be points in the bottom...",
+              )
+            ) {
+              endGameEarly();
+            }
           }}
         >
           End game early
@@ -337,16 +341,16 @@ const Play = (props: IProps): JSX.Element => {
           !isSpectator &&
           playPhase.trick.player_queue.includes(currentPlayer.id) ? (
             <TrickFormatHelper
-              format={playPhase.trick.trick_format}
+              format={playPhase.trick.trick_format!}
               hands={playPhase.hands}
               playerId={currentPlayer.id}
-              trickDrawPolicy={playPhase.propagated.trick_draw_policy}
+              trickDrawPolicy={playPhase.propagated.trick_draw_policy!}
               setSelected={(newSelected) => {
                 setSelected(newSelected);
                 setGrouping(
                   findViablePlays(
                     playPhase.trump,
-                    playPhase.propagated.tractor_requirements,
+                    playPhase.propagated.tractor_requirements!,
                     newSelected,
                   ),
                 );
@@ -386,7 +390,7 @@ const Play = (props: IProps): JSX.Element => {
               setGrouping(
                 findViablePlays(
                   playPhase.trump,
-                  playPhase.propagated.tractor_requirements,
+                  playPhase.propagated.tractor_requirements!,
                   newSelected,
                 ),
               );
@@ -411,18 +415,22 @@ const Play = (props: IProps): JSX.Element => {
           />
         </div>
       ) : null}
-      <Points
-        points={playPhase.points}
-        penalties={playPhase.penalties}
-        decks={playPhase.decks}
-        players={playPhase.propagated.players}
-        landlordTeam={playPhase.landlords_team}
-        landlord={playPhase.landlord}
-        trump={playPhase.trump}
-        hideLandlordPoints={playPhase.propagated.hide_landlord_points}
-        gameScoringParameters={playPhase.propagated.game_scoring_parameters}
-        smallerTeamSize={smallerTeamSize}
-      />
+      {playPhase.propagated.game_scoring_parameters ? (
+        <Points
+          points={playPhase.points}
+          penalties={playPhase.penalties}
+          decks={playPhase.decks || []}
+          players={playPhase.propagated.players}
+          landlordTeam={playPhase.landlords_team}
+          landlord={playPhase.landlord}
+          trump={playPhase.trump}
+          hideLandlordPoints={
+            playPhase.propagated.hide_landlord_points || false
+          }
+          gameScoringParameters={playPhase.propagated.game_scoring_parameters}
+          smallerTeamSize={smallerTeamSize}
+        />
+      ) : null}
       <LabeledPlay
         trump={playPhase.trump}
         className="kitty"

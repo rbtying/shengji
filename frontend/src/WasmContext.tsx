@@ -59,7 +59,7 @@ export const WasmContext = React.createContext<Context>({
     next_threshold: 0,
   }),
   computeDeckLen: (_) => 0,
-  getCardInfo: (req) => {
+  getCardInfo: () => {
     throw new Error("cannot get card info");
   },
   decodeWireFormat: (_) => {

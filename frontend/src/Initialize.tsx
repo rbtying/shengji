@@ -416,7 +416,7 @@ const ScoringSettings = (props: IScoringSettings): JSX.Element => {
           style={{ content: contentStyle }}
         >
           <GameScoringSettings
-            params={props.state.propagated.game_scoring_parameters}
+            params={props.state.propagated.game_scoring_parameters!}
             decks={props.decks}
           />
         </ReactModal>
@@ -570,7 +570,7 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
         </label>
       </div>
       <TractorRequirementsE
-        tractorRequirements={props.state.propagated.tractor_requirements}
+        tractorRequirements={props.state.propagated.tractor_requirements!}
         numDecks={props.numDecksEffective}
         onChange={(req) => props.setTractorRequirements(req)}
       />
@@ -808,7 +808,7 @@ const Initialize = (props: IProps): JSX.Element => {
     props.state.propagated.num_decks > 0
       ? props.state.propagated.num_decks
       : Math.max(Math.floor(props.state.propagated.players.length / 2), 1);
-  const decks = [...props.state.propagated.special_decks];
+  const decks = [...(props.state.propagated.special_decks || [])];
   while (decks.length < decksEffective) {
     decks.push({
       exclude_big_joker: false,
@@ -1100,7 +1100,7 @@ const Initialize = (props: IProps): JSX.Element => {
             JSON.stringify(props.state.propagated),
           );
         });
-      } catch (err) {
+      } catch {
         localStorage.setItem(
           "gameSettingsInLocalStorage",
           JSON.stringify(props.state.propagated),
@@ -1345,7 +1345,7 @@ const Initialize = (props: IProps): JSX.Element => {
             <button
               className="normal"
               onClick={() => {
-                showPicker ? setShowPicker(false) : setShowPicker(true);
+                setShowPicker(!showPicker);
               }}
             >
               {showPicker ? "Hide" : "Pick"}

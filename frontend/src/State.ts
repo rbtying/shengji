@@ -12,7 +12,7 @@ export const noPersistence = <T>(loadDefault: () => T): State<T> => {
   };
 };
 
-export const combineState = <S extends {}>(object: {
+export const combineState = <S extends object>(object: {
   [K in keyof S]: State<S[K]>;
 }): State<S> => {
   return {

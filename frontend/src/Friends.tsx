@@ -39,7 +39,7 @@ const Friends = (props: IProps): JSX.Element => {
       </div>
     );
   } else {
-    return null;
+    return <></>;
   }
 };
 

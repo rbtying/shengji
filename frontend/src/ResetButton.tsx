@@ -10,7 +10,7 @@ interface IProps {
 const ResetButton = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
 
-  let requester: string = null;
+  let requester: string | undefined = undefined;
   if ("Draw" in props.state) {
     const state = props.state.Draw;
     requester = state.propagated.players.find(
@@ -65,7 +65,7 @@ const ResetButton = (props: IProps): JSX.Element => {
         <p>{requester} wants to reset the game</p>
         <a
           href={window.location.href}
-          onClick={(evt) => {
+          onClick={() => {
             send({ Action: "ResetGame" });
           }}
           title="Return to the game settings screen and re-deal all cards"

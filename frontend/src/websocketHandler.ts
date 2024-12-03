@@ -87,7 +87,6 @@ const beepHandler = (message: GameMessage): void => {
       lastBeeped = now;
     }
   }
-  return null;
 };
 
 let lastReadyChecked = performance.now();
@@ -106,7 +105,6 @@ const readyCheckHandler = (
       }
     }
   }
-  return null;
 };
 
 const gameFinishedHandler: WebsocketHandler = (

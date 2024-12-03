@@ -190,7 +190,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         </>
       ) : null;
 
-    const lastBid = this.props.state.bids[this.props.state.bids.length - 1];
+    const lastBid = this.props.state.bids![this.props.state.bids!.length - 1];
     const startGame = (
       <button
         onClick={this.startGame}
@@ -209,24 +209,24 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       kittyTheftEnabled &&
       this.props.state.finalized &&
       this.props.state.autobid === null &&
-      (!isExchanger || lastBid.epoch + 1 !== this.props.state.epoch) ? (
+      (!isExchanger || lastBid.epoch! + 1 !== this.props.state.epoch) ? (
         <>
           <BidArea
-            bids={this.props.state.bids}
+            bids={this.props.state.bids!}
             autobid={this.props.state.autobid}
             hands={this.props.state.hands}
-            epoch={this.props.state.epoch}
+            epoch={this.props.state.epoch!}
             name={this.props.name}
-            landlord={this.props.state.propagated.landlord}
+            landlord={this.props.state.propagated.landlord!}
             players={this.props.state.propagated.players}
-            bidPolicy={this.props.state.propagated.bid_policy}
+            bidPolicy={this.props.state.propagated.bid_policy!}
             bidReinforcementPolicy={
-              this.props.state.propagated.bid_reinforcement_policy
+              this.props.state.propagated.bid_reinforcement_policy!
             }
-            jokerBidPolicy={this.props.state.propagated.joker_bid_policy}
+            jokerBidPolicy={this.props.state.propagated.joker_bid_policy!}
             numDecks={this.props.state.num_decks}
             header={
-              <h2>Bids (round {this.props.state.epoch + 1} of bidding)</h2>
+              <h2>Bids (round {this.props.state.epoch! + 1} of bidding)</h2>
             }
             suffixButtons={
               <>
@@ -274,7 +274,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
                 friend={friend}
                 trump={this.props.state.trump}
                 friend_selection_policy={
-                  this.props.state.propagated.friend_selection_policy
+                  this.props.state.propagated.friend_selection_policy!
                 }
                 num_decks={this.props.state.num_decks}
               />
@@ -300,10 +300,10 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           name={this.props.name}
         />
         <Trump trump={this.props.state.trump} />
-        {this.props.state.removed_cards.length > 0 ? (
+        {(this.props.state.removed_cards || []).length > 0 ? (
           <p>
             Note:{" "}
-            {this.props.state.removed_cards.map((c) => (
+            {(this.props.state.removed_cards || []).map((c) => (
               <InlineCard key={c} card={c} />
             ))}{" "}
             have been removed from the deck

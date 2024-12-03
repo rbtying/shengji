@@ -31,17 +31,19 @@ const Chat = (props: IProps): JSX.Element => {
   const handleSubmit = (message: string): void => send({ Message: message });
 
   return (
-    !settings.hideChatBox && (
-      <div className="chat">
-        <div className="messages">
-          {props.messages.map((m, idx) => (
-            <ChatMessage message={m} key={idx} />
-          ))}
-          <div className="chat-anchor" ref={anchor} />
+    <>
+      {!settings.hideChatBox && (
+        <div className="chat">
+          <div className="messages">
+            {props.messages.map((m, idx) => (
+              <ChatMessage message={m} key={idx} />
+            ))}
+            <div className="chat-anchor" ref={anchor} />
+          </div>
+          <ChatInput onSubmit={handleSubmit} />
         </div>
-        <ChatInput onSubmit={handleSubmit} />
-      </div>
-    )
+      )}
+    </>
   );
 };
 

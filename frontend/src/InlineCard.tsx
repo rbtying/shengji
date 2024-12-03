@@ -13,8 +13,8 @@ const InlineCardBase = styled.span`
   padding-right: 0.1em;
 `;
 
-function Suit(className: string): React.FunctionComponent<{}> {
-  const component = (props: {}): JSX.Element => {
+function Suit(className: string): React.FunctionComponent<object> {
+  const component = (props: object): JSX.Element => {
     const settings = React.useContext(SettingsContext);
     return (
       <InlineCardBase
@@ -37,7 +37,9 @@ const LittleJoker = Suit("🃟");
 const BigJoker = Suit("🃏");
 const Unknown = Suit("🂠");
 
-const suitComponent = (suitCard: ISuitCard): React.FunctionComponent<{}> => {
+const suitComponent = (
+  suitCard: ISuitCard,
+): React.FunctionComponent<object> => {
   switch (suitCard.suit) {
     case "diamonds":
       return Diamonds;

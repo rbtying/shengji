@@ -113,7 +113,7 @@ const Points = (props: IProps): JSX.Element => {
 
   let thresholdStr = "";
   if (score.landlord_won) {
-    thresholdStr = `${landlord.name}'s team will go up ${
+    thresholdStr = `${landlord?.name}'s team will go up ${
       score.landlord_delta
     } level${score.landlord_delta === 1 ? "" : "s"}`;
     if (score.landlord_bonus) {
@@ -155,7 +155,7 @@ const Points = (props: IProps): JSX.Element => {
           ? nonLandlordPoints
           : `${nonLandlordPoints} + ${penaltyDelta}`}
         分{props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
-        from {landlord.name}&apos;s team. {thresholdStr}
+        from {landlord?.name}&apos;s team. {thresholdStr}
       </p>
       {playerPointElements}
     </div>

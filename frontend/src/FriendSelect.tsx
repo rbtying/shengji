@@ -40,7 +40,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
     initial_skip: parseInt(select.value, 10),
   }));
 
-  const rank: string | null =
+  const rank: string | null | undefined =
     "Standard" in props.trump
       ? props.trump.Standard.number
       : props.trump.NoTrump.number;
@@ -75,7 +75,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
       );
     },
     Unrestricted: (c: ICardInfo) => notTrumpFilter(c),
-    TrumpsIncluded: (c: ICardInfo) => true,
+    TrumpsIncluded: (_) => true,
   };
   const policyFilter: (c: ICardInfo) => boolean =
     policyFilters[props.friend_selection_policy];

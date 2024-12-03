@@ -38,7 +38,9 @@ const TrickE = (props: IProps): JSX.Element => {
   props.trick.played_cards.forEach((played, idx) => {
     playOrder.push(played.id);
     playedByID[played.id] = played;
-    const m = props.trick.played_card_mappings[idx];
+    const m = props.trick.played_card_mappings
+      ? props.trick.played_card_mappings[idx]
+      : undefined;
     if (m !== undefined && m !== null && m.length > 0) {
       // We should coalesce blocks of `Repeated` of count 1 together, since
       // that displays more nicely.

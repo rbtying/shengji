@@ -44,7 +44,7 @@ interface IProps {
 }
 
 const PublicRoomsPane = (props: IProps): JSX.Element => {
-  const [publicRooms, setPublicRooms] = useState([]);
+  const [publicRooms, setPublicRooms] = useState<any[]>([]);
 
   useEffect(() => {
     loadPublicRooms();

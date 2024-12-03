@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AppStateContext } from "./AppStateProvider";
 
-export const DebugInfo = (_props: {}): JSX.Element => {
+export const DebugInfo = (_props: unknown): JSX.Element => {
   const appState = React.useContext(AppStateContext);
 
   return (

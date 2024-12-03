@@ -35,13 +35,24 @@ export const stringLocalStorageState = (
 
 export const numberLocalStorageState = (
   key: string,
-  defaultValue = 0,
+  defaultValue: number = 0,
 ): State<number> =>
   localStorageState(
     key,
     (value: any): number =>
       value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue,
     (state: number) => state,
+  );
+
+export const nullableNumberLocalStorageState = (
+  key: string,
+  defaultValue: number | null = 0,
+): State<number | null> =>
+  localStorageState(
+    key,
+    (value: any): number | null =>
+      value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue,
+    (state: number | null) => state,
   );
 
 export function JSONLocalStorageState<T>(
@@ -58,7 +69,7 @@ export function JSONLocalStorageState<T>(
         } else {
           return defaultValue;
         }
-      } catch (e) {
+      } catch {
         return defaultValue;
       }
     },

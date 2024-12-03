@@ -32,7 +32,7 @@ const appState: State<AppState> = combineState({
   roomName: noPersistence(() => window.location.hash.slice(1, 17)),
   name: stringLocalStorageState("name"),
   changeLogLastViewed: numberLocalStorageState("change_log_last_viewed"),
-  gameState: noPersistence<GameState>(() => null),
+  gameState: noPersistence<GameState | null>(() => null),
   headerMessages: noPersistence<string[]>(() => []),
   errors: noPersistence<string[]>(() => []),
   messages: noPersistence<Message[]>(() => []),

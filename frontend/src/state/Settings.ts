@@ -2,7 +2,7 @@ import { State, combineState } from "../State";
 import {
   booleanLocalStorageState,
   JSONLocalStorageState,
-  numberLocalStorageState,
+  nullableNumberLocalStorageState,
   stringLocalStorageState,
 } from "../localStorageState";
 
@@ -87,7 +87,7 @@ const trumpCardIcon: State<string> = stringLocalStorageState(
   "trump_card_icon",
   DEFAULT_TRUMP_CARD_ICON,
 );
-const autodrawSpeedMs: State<number | null> = numberLocalStorageState(
+const autodrawSpeedMs: State<number | null> = nullableNumberLocalStorageState(
   "autodrawSpeedMs",
   null,
 );

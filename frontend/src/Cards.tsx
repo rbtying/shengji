@@ -37,7 +37,7 @@ const Cards = (props: IProps): JSX.Element => {
   const handleUnselect = (card: string) => () => {
     if (selectedCards !== undefined) {
       const index = selectedCards.indexOf(card);
-      if (index >= 0) {
+      if (index >= 0 && props.onSelect) {
         props.onSelect(ArrayUtils.minus(selectedCards, [card]));
       }
     }

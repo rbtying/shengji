@@ -11,7 +11,7 @@ interface IProps {
   groupedCards?: string[][];
   moreCards?: string[];
   trump: Trump;
-  label: string | JSX.Element;
+  label: string | JSX.Element | null;
   next?: number | null;
   onClick?: () => void;
 }
@@ -23,12 +23,12 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       props.id === props.next,
   });
 
-  const cards = props.cards.map((card, idx) => (
+  const cards = (props.cards || []).map((card, idx) => (
     <Card
       card={card}
       key={idx}
       trump={props.trump}
-      collapseRight={idx !== props.cards.length - 1}
+      collapseRight={idx !== (props.cards || []).length - 1}
     />
   ));
 
@@ -61,7 +61,9 @@ const LabeledPlay = (props: IProps): JSX.Element => {
         props.onClick !== undefined
           ? (evt) => {
               evt.preventDefault();
-              props.onClick();
+              if (props.onClick) {
+                props.onClick();
+              }
             }
           : undefined
       }
@@ -75,7 +77,9 @@ const LabeledPlay = (props: IProps): JSX.Element => {
               card={card}
               key={idx}
               smaller={true}
-              collapseRight={idx !== props.moreCards.length - 1}
+              collapseRight={
+                props.moreCards && idx !== props.moreCards.length - 1
+              }
             />
           ))}
         </div>

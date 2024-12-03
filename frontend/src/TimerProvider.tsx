@@ -35,7 +35,10 @@ const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
       const data = evt.data;
       const id = data.id as number;
       if (callbacks.current.has(id)) {
-        callbacks.current.get(id)();
+        const cb = callbacks.current.get(id);
+        if (cb) {
+          cb();
+        }
       }
       if (data.variant === "timeout") {
         callbacks.current.delete(id);
@@ -59,7 +62,9 @@ const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   };
 
   const clearTimeout = (id: number): void => {
-    worker.postMessage({ command: "clearTimeout", id });
+    if (worker) {
+      worker.postMessage({ command: "clearTimeout", id });
+    }
     callbacks.current.delete(id);
   };
 

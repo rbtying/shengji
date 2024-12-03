@@ -2,8 +2,8 @@ import * as React from "react";
 import { Player } from "./gen-types";
 
 interface IProps {
-  landlordId: number | null;
-  onChange: (newLandlord: number | null) => void;
+  landlordId: number | null | undefined;
+  onChange: (newLandlord: number | null | undefined) => void;
   players: Player[];
 }
 const LandlordSelector = (props: IProps): JSX.Element => {

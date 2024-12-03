@@ -17,7 +17,7 @@ const renderMessage = (message: Message): JSX.Element => {
     case "MadeBid":
       return (
         <span>
-          {message.data.actor_name} bid{" "}
+          {message.data?.actor_name} bid{" "}
           {ArrayUtil.range(variant.count, (i) => (
             <InlineCard card={variant.card} key={i} />
           ))}
@@ -26,7 +26,7 @@ const renderMessage = (message: Message): JSX.Element => {
     case "PlayedCards":
       return (
         <span>
-          {message.data.actor_name} played{" "}
+          {message.data?.actor_name} played{" "}
           {variant.cards.map((card, i) => (
             <InlineCard card={card} key={i} />
           ))}
@@ -119,11 +119,11 @@ const renderScoringMessage = (message: Message): JSX.Element => {
     }
     return (
       <span>
-        {message.data.actor_name} updated the scoring parameters: {changes}
+        {message.data?.actor_name} updated the scoring parameters: {changes}
       </span>
     );
   } else {
-    return null;
+    return <></>;
   }
 };
 

@@ -6,7 +6,7 @@ import WasmContext from "./WasmContext";
 interface IProps {
   numPlayers: number;
   decks: Deck[];
-  kittySize: number | null;
+  kittySize: number | null | undefined;
   onChange: (newKittySize: number | null) => void;
 }
 

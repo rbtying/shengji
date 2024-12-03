@@ -151,18 +151,18 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         />
         <BidArea
           bids={this.props.state.bids}
-          autobid={this.props.state.autobid}
+          autobid={this.props.state.autobid!}
           hands={this.props.state.hands}
           epoch={0}
           name={this.props.name}
           trump={trump}
-          landlord={landlord}
+          landlord={landlord!}
           players={this.props.state.propagated.players}
-          bidPolicy={this.props.state.propagated.bid_policy}
+          bidPolicy={this.props.state.propagated.bid_policy!}
           bidReinforcementPolicy={
-            this.props.state.propagated.bid_reinforcement_policy
+            this.props.state.propagated.bid_reinforcement_policy!
           }
-          jokerBidPolicy={this.props.state.propagated.joker_bid_policy}
+          jokerBidPolicy={this.props.state.propagated.joker_bid_policy!}
           numDecks={this.props.state.num_decks}
           header={
             <>
@@ -170,10 +170,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                 Bids ({this.props.state.deck.length} cards remaining in the
                 deck)
               </h2>
-              {this.props.state.removed_cards.length > 0 ? (
+              {this.props.state.removed_cards!.length > 0 ? (
                 <p>
                   Note:{" "}
-                  {this.props.state.removed_cards.map((c) => (
+                  {this.props.state.removed_cards!.map((c) => (
                     <InlineCard key={c} card={c} />
                   ))}{" "}
                   have been removed from the deck
@@ -212,7 +212,11 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                   this.props.state.deck.length > 0 ||
                   (this.props.state.bids.length === 0 &&
                     this.props.state.autobid === null &&
-                    !(landlord !== null && players[landlord].level === "NT")) ||
+                    !(
+                      landlord !== null &&
+                      landlord !== undefined &&
+                      players[landlord].level === "NT"
+                    )) ||
                   (landlord !== null && landlord !== playerId) ||
                   (landlord === null &&
                     ((this.props.state.propagated
@@ -235,7 +239,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
                   this.props.state.deck.length > 0 ||
                   this.props.state.bids.length > 0 ||
                   this.props.state.autobid !== null ||
-                  this.props.state.revealed_cards >=
+                  (this.props.state.revealed_cards || 0) >=
                     this.props.state.kitty.length ||
                   (landlord !== null &&
                     landlord !== undefined &&

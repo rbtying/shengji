@@ -3,7 +3,7 @@ import ArrayUtils from "./util/array";
 
 interface IProps {
   numPlayers: number;
-  numDecks: number | null;
+  numDecks: number | null | undefined;
   onChange: (newNumDecks: number | null) => void;
 }
 

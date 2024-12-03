@@ -148,6 +148,9 @@ const computeCanvasBounds = (font: string, dpr: number): TextMetrics => {
   c.style.display = "none";
   document.body.appendChild(c);
   const ctx = c.getContext("2d");
+  if (ctx === null) {
+    throw new Error("Could not get 2d context");
+  }
   ctx.scale(dpr, dpr);
   ctx.font = font;
   const text = "🂠";
