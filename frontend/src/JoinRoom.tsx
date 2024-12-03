@@ -14,7 +14,7 @@ interface IProps {
 const JoinRoom = (props: IProps): JSX.Element => {
   const [editable, setEditable] = React.useState<boolean>(false);
   const [shouldGenerate, setShouldGenerate] = React.useState<boolean>(
-    props.room_name.length !== 16
+    props.room_name.length !== 16,
   );
   const { send } = React.useContext(WebsocketContext);
   const { setTimeout } = React.useContext(TimerContext);
@@ -61,7 +61,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
     window.crypto.getRandomValues(arr);
     setShouldGenerate(false);
     props.setRoomName(
-      Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join("")
+      Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join(""),
     );
   };
 

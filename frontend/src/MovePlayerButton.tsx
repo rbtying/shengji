@@ -9,7 +9,7 @@ interface Props {
 
 function MovePlayerButton(
   relative: number,
-  children: string
+  children: string,
 ): React.FunctionComponent<Props> {
   const component = (props: Props): JSX.Element => {
     const { players, player } = props;

@@ -3,7 +3,7 @@ import { State } from "./State";
 export const localStorageState = <T>(
   key: string,
   extractor: (value: any) => T,
-  serializer: (t: T) => any
+  serializer: (t: T) => any,
 ): State<T> => {
   return {
     loadDefault: () => extractor(window.localStorage.getItem(key)),
@@ -15,38 +15,38 @@ export const localStorageState = <T>(
 
 export const booleanLocalStorageState = (
   key: string,
-  defaultValue = false
+  defaultValue = false,
 ): State<boolean> =>
   localStorageState(
     key,
     (value: any): boolean => value === "on" || (value == null && defaultValue),
-    (state: boolean) => (state ? "on" : "off")
+    (state: boolean) => (state ? "on" : "off"),
   );
 
 export const stringLocalStorageState = (
   key: string,
-  defaultValue = ""
+  defaultValue = "",
 ): State<string> =>
   localStorageState(
     key,
     (value: any): string => (typeof value === "string" ? value : defaultValue),
-    (state: string) => state
+    (state: string) => state,
   );
 
 export const numberLocalStorageState = (
   key: string,
-  defaultValue = 0
+  defaultValue = 0,
 ): State<number> =>
   localStorageState(
     key,
     (value: any): number =>
       value != null && !isNaN(value) ? parseInt(value, 10) : defaultValue,
-    (state: number) => state
+    (state: number) => state,
   );
 
 export function JSONLocalStorageState<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): State<T> {
   return localStorageState(
     key,
@@ -62,6 +62,6 @@ export function JSONLocalStorageState<T>(
         return defaultValue;
       }
     },
-    (state: T) => JSON.stringify(state)
+    (state: T) => JSON.stringify(state),
   );
 }

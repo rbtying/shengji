@@ -45,10 +45,10 @@ const LabeledPlay = (props: IProps): JSX.Element => {
                     key={`${gidx}-${idx}`}
                     collapseRight={idx !== c.length - 1}
                   />
-                )
+                ),
               )}
             </div>
-          )
+          ),
         )
       : cards;
 

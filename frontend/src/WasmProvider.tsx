@@ -14,7 +14,7 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
         findViablePlays: (
           trump: Trump,
           tractorRequirements: TractorRequirements,
-          cards: string[]
+          cards: string[],
         ) => {
           return Shengji.find_viable_plays({
             trump,

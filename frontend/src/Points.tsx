@@ -26,20 +26,20 @@ export const calculatePoints = (
   players: Player[],
   landlordTeam: number[],
   points: { [playerId: number]: string[] },
-  penalties: { [playerId: number]: number }
+  penalties: { [playerId: number]: number },
 ): {
   nonLandlordPoints: number;
   totalPointsPlayed: number;
   nonLandlordPointsWithPenalties: number;
 } => {
   const pointsPerPlayer = ObjectUtils.mapValues(points, (cards) =>
-    ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
+    ArrayUtils.sum(cards.map((card) => cardLookup[card].points)),
   );
   const totalPointsPlayed = ArrayUtils.sum(Object.values(pointsPerPlayer));
   const nonLandlordPoints = ArrayUtils.sum(
     players
       .filter((p) => !landlordTeam.includes(p.id))
-      .map((p) => pointsPerPlayer[p.id])
+      .map((p) => pointsPerPlayer[p.id]),
   );
 
   let nonLandlordPointsWithPenalties = nonLandlordPoints;
@@ -63,7 +63,7 @@ export const calculatePoints = (
 
 const Points = (props: IProps): JSX.Element => {
   const pointsPerPlayer = ObjectUtils.mapValues(props.points, (cards) =>
-    ArrayUtils.sum(cards.map((card) => cardLookup[card].points))
+    ArrayUtils.sum(cards.map((card) => cardLookup[card].points)),
   );
   const settings = React.useContext(SettingsContext);
   const { computeScore, explainScoring } = React.useContext(WasmContext);
@@ -75,7 +75,7 @@ const Points = (props: IProps): JSX.Element => {
     props.players,
     props.landlordTeam,
     props.points,
-    props.penalties
+    props.penalties,
   );
   const penaltyDelta = nonLandlordPointsWithPenalties - nonLandlordPoints;
 
@@ -172,7 +172,7 @@ export const ProgressBarDisplay = (props: IProps): JSX.Element => {
     props.players,
     props.landlordTeam,
     props.points,
-    props.penalties
+    props.penalties,
   );
 
   const { results: scoreTransitions, total_points: totalPoints } =

@@ -72,11 +72,11 @@ const Play = (props: IProps): JSX.Element => {
   // the Player object
   let isSpectator = true;
   let currentPlayer = playPhase.propagated.players.find(
-    (p) => p.name === props.name
+    (p) => p.name === props.name,
   );
   if (currentPlayer === undefined) {
     currentPlayer = playPhase.propagated.observers.find(
-      (p) => p.name === props.name
+      (p) => p.name === props.name,
     );
   } else {
     isSpectator = false;
@@ -119,8 +119,8 @@ const Play = (props: IProps): JSX.Element => {
         findViablePlays(
           playPhase.trump,
           playPhase.propagated.tractor_requirements,
-          newSelected
-        )
+          newSelected,
+        ),
       );
     }
   }, [playPhase.hands.hands, currentPlayer.id, selected]);
@@ -168,15 +168,15 @@ const Play = (props: IProps): JSX.Element => {
 
   const remainingCardsInHands = ArrayUtils.sum(
     Object.values(playPhase.hands.hands).map((playerHand) =>
-      ArrayUtils.sum(Object.values(playerHand))
-    )
+      ArrayUtils.sum(Object.values(playerHand)),
+    ),
   );
 
   const { totalPointsPlayed, nonLandlordPointsWithPenalties } = calculatePoints(
     playPhase.propagated.players,
     playPhase.landlords_team,
     playPhase.points,
-    playPhase.penalties
+    playPhase.penalties,
   );
 
   const noCardsLeft =
@@ -215,7 +215,7 @@ const Play = (props: IProps): JSX.Element => {
     const cardsInHand =
       pid in playPhase.hands.hands
         ? Object.entries(playPhase.hands.hands[pid]).flatMap(([c, ct]) =>
-            Array(ct).fill(c)
+            Array(ct).fill(c),
           )
         : [];
     return sortAndGroupCards({
@@ -305,7 +305,7 @@ const Play = (props: IProps): JSX.Element => {
           className="big"
           onClick={() => {
             confirm(
-              "Do you want to end the game early? There may still be points in the bottom..."
+              "Do you want to end the game early? There may still be points in the bottom...",
             ) && endGameEarly();
           }}
         >
@@ -347,8 +347,8 @@ const Play = (props: IProps): JSX.Element => {
                   findViablePlays(
                     playPhase.trump,
                     playPhase.propagated.tractor_requirements,
-                    newSelected
-                  )
+                    newSelected,
+                  ),
                 );
               }}
             />
@@ -387,8 +387,8 @@ const Play = (props: IProps): JSX.Element => {
                 findViablePlays(
                   playPhase.trump,
                   playPhase.propagated.tractor_requirements,
-                  newSelected
-                )
+                  newSelected,
+                ),
               );
             }}
             notifyEmpty={isCurrentPlayerTurn}
@@ -449,7 +449,7 @@ const HelperContents = (props: {
         player_id: props.playerId,
         trick_draw_policy: props.trickDrawPolicy,
       }),
-    [props.format, props.hands, props.playerId, props.trickDrawPolicy]
+    [props.format, props.hands, props.playerId, props.trickDrawPolicy],
   );
   const trickSuit = props.format.suit;
   const bestMatch = decomp.findIndex((d) => d.playable.length > 0);

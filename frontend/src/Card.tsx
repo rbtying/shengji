@@ -42,7 +42,7 @@ const Card = (props: IProps): JSX.Element => {
           suit={classNames(
             "unknown",
             settings.fourColor ? "four-color" : null,
-            settings.darkMode ? "dark-mode" : null
+            settings.darkMode ? "dark-mode" : null,
           )}
           backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
@@ -103,7 +103,7 @@ const Card = (props: IProps): JSX.Element => {
           suit={classNames(
             cardInfo.typ,
             settings.fourColor ? "four-color" : null,
-            settings.darkMode ? "dark-mode" : null
+            settings.darkMode ? "dark-mode" : null,
           )}
           colorOverride={
             settings.suitColorOverrides[cardInfo.typ as keyof ISuitOverrides]
@@ -178,7 +178,7 @@ interface ICardCanvasProps {
 }
 
 const getCardBounds = (
-  height: number
+  height: number,
 ): { metrics: TextMetrics; height: number; width: number } => {
   const font = `${height}px solid`;
   if (!(font in cardBoundsCache)) {
@@ -189,12 +189,12 @@ const getCardBounds = (
   const effectiveHeight = Math.round(
     textMetrics.actualBoundingBoxAscent +
       textMetrics.actualBoundingBoxDescent +
-      2
+      2,
   );
   const effectiveWidth = Math.round(
     textMetrics.actualBoundingBoxRight +
       Math.min(textMetrics.actualBoundingBoxLeft, 0) +
-      2
+      2,
   );
   return {
     metrics: textMetrics,

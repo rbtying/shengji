@@ -13,7 +13,7 @@ export const DebugInfo = (_props: {}): JSX.Element => {
           roomName: appState.state.roomName,
         },
         null,
-        2
+        2,
       )}
     </pre>
   );

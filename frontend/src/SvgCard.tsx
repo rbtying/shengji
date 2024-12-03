@@ -241,7 +241,7 @@ const SvgCard = (props: IProps): JSX.Element => {
     (props.fourColor ? FourColorCards : NormalCards)[props.card],
     {
       height: props.height || 120,
-    }
+    },
   );
   /* eslint-enable */
 };

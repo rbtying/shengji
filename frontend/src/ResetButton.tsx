@@ -14,17 +14,17 @@ const ResetButton = (props: IProps): JSX.Element => {
   if ("Draw" in props.state) {
     const state = props.state.Draw;
     requester = state.propagated.players.find(
-      (player) => player.id === state.player_requested_reset
+      (player) => player.id === state.player_requested_reset,
     )?.name;
   } else if ("Exchange" in props.state) {
     const state = props.state.Exchange;
     requester = state.propagated.players.find(
-      (player) => player.id === state.player_requested_reset
+      (player) => player.id === state.player_requested_reset,
     )?.name;
   } else if ("Play" in props.state) {
     const state = props.state.Play;
     requester = state.propagated.players.find(
-      (player) => player.id === state.player_requested_reset
+      (player) => player.id === state.player_requested_reset,
     )?.name;
   }
 
