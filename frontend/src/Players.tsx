@@ -20,7 +20,7 @@ const Players = (props: IProps): JSX.Element => {
     players,
     observers,
     landlord,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     landlords_team,
     movable,
     next,

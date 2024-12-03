@@ -32,11 +32,11 @@ const appState: State<AppState> = combineState({
   roomName: noPersistence(() => window.location.hash.slice(1, 17)),
   name: stringLocalStorageState("name"),
   changeLogLastViewed: numberLocalStorageState("change_log_last_viewed"),
-  gameState: noPersistence(() => null),
-  headerMessages: noPersistence(() => []),
-  errors: noPersistence(() => []),
-  messages: noPersistence(() => []),
-  confetti: noPersistence(() => null),
+  gameState: noPersistence<GameState>(() => null),
+  headerMessages: noPersistence<string[]>(() => []),
+  errors: noPersistence<string[]>(() => []),
+  messages: noPersistence<Message[]>(() => []),
+  confetti: noPersistence<string | null>(() => null),
 });
 
 interface Context {

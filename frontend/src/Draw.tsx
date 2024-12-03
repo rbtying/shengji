@@ -50,7 +50,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             "434472_dersuperanton_taking-card.mp3",
           );
         }
-        // eslint-disable-next-line
+
         this.drawCardAudio.play();
       }
       (window as any).send({ Action: "DrawCard" });

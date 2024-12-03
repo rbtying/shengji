@@ -20,9 +20,7 @@ const Chat = (props: IProps): JSX.Element => {
       const isVisible =
         rect.top >= 0 &&
         rect.left >= 0 &&
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         rect.bottom <= (window.innerHeight || html.clientHeight) &&
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         rect.right <= (window.innerWidth || html.clientWidth);
       if (isVisible) {
         anchor.current?.scrollIntoView({ block: "nearest", inline: "start" });

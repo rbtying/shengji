@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "noImplicitAny": true,
+    "strictNullChecks": true,
     "module": "esnext",
     "moduleResolution": "node",
     "target": "es5",
     "jsx": "react",
     "allowJs": true,
-    "lib": ["dom", "es6", "es2017", "esnext.asynciterable", "esnext.array"],
+    "lib": ["dom", "es6", "es2017", "es2019", "esnext.asynciterable", "esnext.array"],
     "noUnusedLocals": true
   },
   "include": ["src", "custom_typings"],
