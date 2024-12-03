@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import IconButton from "./IconButton";
 import BarChart from "./icons/BarChart";
 import GameStatisticsPane from "./GameStatisticsPane";

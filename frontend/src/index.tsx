@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import * as Sentry from "@sentry/react";
 
 import "./style.css";

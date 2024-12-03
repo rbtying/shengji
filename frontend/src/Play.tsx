@@ -1,6 +1,6 @@
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import {
   PlayPhase,
   TrickFormat,
