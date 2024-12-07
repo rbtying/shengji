@@ -725,7 +725,7 @@ export interface Trick {
    *
    * TODO: remove default deserialization attribute in a few days.
    */
-  played_card_mappings?: Array<TrickUnit[] | null>;
+  played_card_mappings?: (TrickUnit[] | null)[];
   played_cards: PlayedCards[];
   player_queue: number[];
   trick_format?: TrickFormat | null;
