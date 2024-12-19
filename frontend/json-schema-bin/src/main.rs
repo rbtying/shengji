@@ -56,5 +56,5 @@ fn main() {
         }
     }
 
-    std::fs::rename(&tmp_path, path).unwrap()
+    std::fs::copy(&tmp_path, path).unwrap();
 }
