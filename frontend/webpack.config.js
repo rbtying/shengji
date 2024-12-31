@@ -48,7 +48,9 @@ module.exports = {
     },
     minimizer: [
       (compiler) => () => {
-        new TerserPlugin({ terserOptions: { sourceMap: true } }).apply(compiler);
+        new TerserJsPlugin({ terserOptions: { sourceMap: true } }).apply(
+          compiler
+        );
       },
       new CssMinimizerPlugin({}),
     ],
