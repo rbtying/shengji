@@ -37,7 +37,7 @@
   "scripts": {
     "build": "rimraf dist/ && webpack",
     "watch": "rimraf dist/ && webpack --watch --mode=development",
-    "types": "cargo run --bin shengji-json-schema --quiet src/gen-types.schema.json && npx json2ts src/gen-types.schema.json src/gen-types.d.ts",
+    "types": "cargo run --bin shengji-json-schema --quiet src/gen-types.schema.json && npx json2ts src/gen-types.schema.json src/gen-types.d.ts && prettier src --write",
     "prettier": "prettier src",
     "lint": "eslint \"src/\"",
     "test": "jest",
