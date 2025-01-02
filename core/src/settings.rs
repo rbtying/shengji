@@ -282,6 +282,8 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) hide_throw_halting_player: bool,
     #[serde(default)]
+    pub(crate) jack_variation: bool,
+    #[serde(default)]
     pub(crate) tractor_requirements: TractorRequirements,
     #[serde(default)]
     pub(crate) max_rank: MaxRank,
@@ -793,6 +795,20 @@ impl PropagatedState {
             self.hide_throw_halting_player = hide_throw_halting_player;
             Ok(vec![MessageVariant::HideThrowHaltingPlayer {
                 set: hide_throw_halting_player,
+            }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_jack_variation(
+        &mut self,
+        jack_variation: bool,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if self.jack_variation != jack_variation {
+            self.jack_variation = jack_variation;
+            Ok(vec![MessageVariant::JackVariation {
+                set: jack_variation,
             }])
         } else {
             Ok(vec![])
