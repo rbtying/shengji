@@ -14,9 +14,9 @@ use shengji_mechanics::types::{Card, PlayerID, Rank};
 
 use crate::game_state::play_phase::PlayerGameFinishedResult;
 use crate::settings::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
-    GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty,
-    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty, BackToTwoSetting,
+    AdvancementPolicy, BackToTwoSetting, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]

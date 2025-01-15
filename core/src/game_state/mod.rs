@@ -193,18 +193,20 @@ impl Deref for GameState {
 #[cfg(test)]
 mod tests {
     use crate::settings::{
-        AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameMode, GameModeSettings,
-        KittyTheftPolicy, BackToTwoSetting,
+        AdvancementPolicy, BackToTwoSetting, FriendSelection, FriendSelectionPolicy, GameMode,
+        GameModeSettings, KittyTheftPolicy,
     };
 
     use shengji_mechanics::player::Player;
-    use shengji_mechanics::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK, Trump, Suit};
+    use shengji_mechanics::types::{cards, Card, Number, PlayerID, Rank, Suit, Trump, FULL_DECK};
 
     use crate::game_state::{initialize_phase::InitializePhase, play_phase::PlayPhase};
     use crate::message::MessageVariant;
 
-    use shengji_mechanics::trick::{PlayCards, TractorRequirements, ThrowEvaluationPolicy, Trick, TrickDrawPolicy};
     use shengji_mechanics::hands::Hands;
+    use shengji_mechanics::trick::{
+        PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
+    };
 
     const R2: Rank = Rank::Number(Number::Two);
     const R3: Rank = Rank::Number(Number::Three);
@@ -667,7 +669,7 @@ mod tests {
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
-        // Neither side levels up, but the non-landlord team wins the final trick with 
+        // Neither side levels up, but the non-landlord team wins the final trick with
         // a single jack
         let _ = PlayPhase::compute_player_level_deltas(
             players.iter_mut(),
@@ -703,7 +705,7 @@ mod tests {
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
-        // The landlord team defends, but the non-landlord team wins the final trick with 
+        // The landlord team defends, but the non-landlord team wins the final trick with
         // a single jack
         let _ = PlayPhase::compute_player_level_deltas(
             players.iter_mut(),
@@ -743,7 +745,7 @@ mod tests {
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
-        // The non-landlord team advances and they win the final trick with 
+        // The non-landlord team advances and they win the final trick with
         // a single jack
         let _ = PlayPhase::compute_player_level_deltas(
             players.iter_mut(),

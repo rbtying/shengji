@@ -16,10 +16,10 @@ use shengji_mechanics::types::{Card, PlayerID, Rank};
 use crate::game_state::{initialize_phase::InitializePhase, GameState};
 use crate::message::MessageVariant;
 use crate::settings::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
-    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
-    ThrowPenalty, BackToTwoSetting,
+    AdvancementPolicy, BackToTwoSetting, FirstLandlordSelectionPolicy, FriendSelection,
+    FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility,
+    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy,
+    PropagatedState, ThrowPenalty,
 };
 pub struct InteractiveGame {
     state: GameState,
@@ -220,10 +220,7 @@ impl InteractiveGame {
                 info!(logger, "Setting hide throw halting player"; "hide_throw_halting_player" => hide_throw_halting_player);
                 state.set_hide_throw_halting_player(hide_throw_halting_player)?
             }
-            (
-                Action::SetJackVariation(jack_variation),
-                GameState::Initialize(ref mut state),
-            ) => {
+            (Action::SetJackVariation(jack_variation), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting jack variation"; "jack_variation" => jack_variation);
                 state.set_jack_variation(jack_variation)?
             }

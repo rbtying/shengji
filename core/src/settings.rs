@@ -227,13 +227,15 @@ impl BackToTwoSetting {
         match self {
             BackToTwoSetting::Disabled => false,
             BackToTwoSetting::SingleJack => landlord_rank == Rank::Number(Number::Jack),
-        } 
+        }
     }
 
     pub fn compute(&self, cards: &[Card]) -> bool {
         match self {
             BackToTwoSetting::Disabled => false,
-            BackToTwoSetting::SingleJack => cards.len() == 1 && cards[0].number() == Some(Number::Jack),
+            BackToTwoSetting::SingleJack => {
+                cards.len() == 1 && cards[0].number() == Some(Number::Jack)
+            }
         }
     }
 }
@@ -831,7 +833,9 @@ impl PropagatedState {
         jack_variation: BackToTwoSetting,
     ) -> Result<Vec<MessageVariant>, Error> {
         self.jack_variation = jack_variation;
-        Ok(vec![MessageVariant::JackVariation { variation: jack_variation }])
+        Ok(vec![MessageVariant::JackVariation {
+            variation: jack_variation,
+        }])
     }
 
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {

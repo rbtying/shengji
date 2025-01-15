@@ -8,13 +8,15 @@ use shengji_mechanics::deck::Deck;
 use shengji_mechanics::hands::Hands;
 use shengji_mechanics::player::Player;
 use shengji_mechanics::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
-use shengji_mechanics::trick::{PlayCards, PlayCardsMessage, Trick, TrickEnded, TrickUnit, PlayedCards};
+use shengji_mechanics::trick::{
+    PlayCards, PlayCardsMessage, PlayedCards, Trick, TrickEnded, TrickUnit,
+};
 use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
 
 use crate::message::MessageVariant;
 use crate::settings::{
-    AdvancementPolicy, GameMode, KittyPenalty, MultipleJoinPolicy, PlayTakebackPolicy,
-    PropagatedState, ThrowPenalty, BackToTwoSetting,
+    AdvancementPolicy, BackToTwoSetting, GameMode, KittyPenalty, MultipleJoinPolicy,
+    PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 
 use crate::game_state::initialize_phase::InitializePhase;
@@ -365,7 +367,8 @@ impl PlayPhase {
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
 
-        let should_go_back_to_two = Self::check_jacks_last_trick(last_trick, jack_variation, landlords_team, landlord.1);
+        let should_go_back_to_two =
+            Self::check_jacks_last_trick(last_trick, jack_variation, landlords_team, landlord.1);
 
         let result = players
             .map(|player| {
@@ -454,31 +457,31 @@ impl PlayPhase {
     }
 
     pub fn check_jacks_last_trick(
-        last_trick: Option<Trick>, 
-        jack_variation: BackToTwoSetting, 
+        last_trick: Option<Trick>,
+        jack_variation: BackToTwoSetting,
         landlords_team: &[PlayerID],
-        landlord_rank: Rank) -> bool {
+        landlord_rank: Rank,
+    ) -> bool {
         if !jack_variation.is_applicable(landlord_rank) {
-            return false
+            return false;
         }
 
         let last_trick = last_trick.unwrap();
         let TrickEnded {
-            winner: winner_pid,
-            ..
+            winner: winner_pid, ..
         } = last_trick.complete().unwrap();
 
         // In any jack variation, the rule can only applies if the non-landord team wins the
         // last trick
         if landlords_team.contains(&winner_pid) {
-            return false
+            return false;
         }
 
         let lt_played_cards = last_trick.played_cards();
-        let PlayedCards {
-            cards,
-            ..
-        } = lt_played_cards.iter().find(|pc| pc.id == winner_pid).unwrap();
+        let PlayedCards { cards, .. } = lt_played_cards
+            .iter()
+            .find(|pc| pc.id == winner_pid)
+            .unwrap();
 
         // In the jack variation, the last trick must be won with a single (trump) jack
         jack_variation.compute(cards)
