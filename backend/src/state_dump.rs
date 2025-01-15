@@ -111,7 +111,7 @@ pub async fn dump_state(
     let send_header_messages = {
         let mut stats = stats.lock().await;
         if stats.header_messages != header_messages {
-            stats.header_messages = header_messages.clone();
+            stats.header_messages.clone_from(&header_messages);
             true
         } else {
             false

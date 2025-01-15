@@ -230,7 +230,7 @@ impl BackToTwoSetting {
         } 
     }
 
-    pub fn compute(&self, cards: &Vec<Card>) -> bool {
+    pub fn compute(&self, cards: &[Card]) -> bool {
         match self {
             BackToTwoSetting::Disabled => false,
             BackToTwoSetting::SingleJack => cards.len() == 1 && cards[0].number() == Some(Number::Jack),
