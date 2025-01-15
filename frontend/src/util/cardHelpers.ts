@@ -4,7 +4,7 @@ import ArrayUtils from "../util/array";
 
 export const cardLookup = ArrayUtils.mapObject(
   preloadedCards,
-  (c: ICardInfo) => [c.value, c],
+  (c: ICardInfo) => [c.value, c]
 );
 
 // prettier-ignore
@@ -78,7 +78,7 @@ export const unicodeToCard = (unicode: string): Card => {
 
 export const cardToUnicodeSuit = (
   card: ISuitCard,
-  fill: boolean = true,
+  fill: boolean = true
 ): string => {
   const table = fill ? suitToFilledUnicode : suitToUnicode;
   return table[card.suit];

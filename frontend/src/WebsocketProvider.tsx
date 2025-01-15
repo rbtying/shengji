@@ -120,10 +120,10 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
     setWebsocket(ws);
 
     ws.addEventListener("open", () =>
-      updateStateRef.current({ connected: true, everConnected: true }),
+      updateStateRef.current({ connected: true, everConnected: true })
     );
     ws.addEventListener("close", () =>
-      updateStateRef.current({ connected: false }),
+      updateStateRef.current({ connected: false })
     );
     ws.addEventListener("message", (event: MessageEvent) => {
       if (timerRef.current !== null) {

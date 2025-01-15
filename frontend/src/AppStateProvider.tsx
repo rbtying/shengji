@@ -50,7 +50,7 @@ export const AppStateContext = React.createContext<Context>({
 });
 
 export const SettingsContext = React.createContext<Settings>(
-  appState.loadDefault().settings,
+  appState.loadDefault().settings
 );
 
 export const AppStateConsumer = AppStateContext.Consumer;

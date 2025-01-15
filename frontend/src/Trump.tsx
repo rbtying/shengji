@@ -11,7 +11,7 @@ const TrumpE = (props: IProps): JSX.Element => {
   if ("Standard" in trump) {
     const { suit, number: rank } = trump.Standard;
     const card = preloadedCards.filter(
-      (v) => v.typ === suit && v.number === rank,
+      (v) => v.typ === suit && v.number === rank
     )[0].value;
     return (
       <div className="trump">

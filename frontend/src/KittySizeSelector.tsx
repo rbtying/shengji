@@ -28,7 +28,7 @@ const KittySizeSelector = (props: IProps): JSX.Element => {
   ];
   const potentialOptions = ArrayUtils.range(
     kittyOffset + 4 * props.numPlayers,
-    (v) => v,
+    (v) => v
   );
 
   const options = potentialOptions.filter(
@@ -36,7 +36,7 @@ const KittySizeSelector = (props: IProps): JSX.Element => {
       !defaultOptions.includes(v) &&
       v < deckLen - props.numPlayers &&
       // Note: this isn't quite right, but it seems fine for the common case of no short decks.
-      (deckLen - v) % props.numPlayers <= props.decks.length * 4,
+      (deckLen - v) % props.numPlayers <= props.decks.length * 4
   );
 
   return (

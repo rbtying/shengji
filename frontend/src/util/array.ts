@@ -9,7 +9,7 @@ const identity = <T>(l: T, r: T): boolean => l === r;
 const minus = <T>(
   large: T[],
   small: T[],
-  equality: Equality<T> = identity,
+  equality: Equality<T> = identity
 ): T[] => {
   const result = [...large];
   small.forEach((valueToRemove: T) => {
@@ -24,7 +24,7 @@ const minus = <T>(
 
 const mapObject = <T, Value>(
   array: T[],
-  mapper: (t: T) => [string, Value],
+  mapper: (t: T) => [string, Value]
 ): { [key: string]: Value } => {
   const result: { [key: string]: Value } = {};
   array.forEach((t: T) => {

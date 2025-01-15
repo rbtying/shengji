@@ -54,16 +54,16 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
     const span = Math.max(
       scoreTransitions[i].point_threshold -
         scoreTransitions[i - 1].point_threshold,
-      10,
+      10
     );
     const segment = scoreTransitions[i - 1];
     maxLandlordDelta = Math.max(
       segment.results.landlord_delta,
-      maxLandlordDelta,
+      maxLandlordDelta
     );
     maxNonLandlordDelta = Math.max(
       segment.results.non_landlord_delta,
-      maxNonLandlordDelta,
+      maxNonLandlordDelta
     );
     scoreSegments.push({
       span,
@@ -85,11 +85,11 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   maxPts += 5 * props.decks.length;
   maxNonLandlordDelta = Math.max(
     scoreTransitions[last].results.non_landlord_delta,
-    maxNonLandlordDelta,
+    maxNonLandlordDelta
   );
   maxLandlordDelta = Math.max(
     scoreTransitions[last].results.landlord_delta,
-    maxLandlordDelta,
+    maxLandlordDelta
   );
 
   const text = (idx: number): JSX.Element => {
@@ -267,8 +267,8 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
             {Array(
               Math.max(
                 maxSteps,
-                props.params.num_steps_to_non_landlord_turnover,
-              ),
+                props.params.num_steps_to_non_landlord_turnover
+              )
             )
               .fill(undefined)
               .map((_, idx) => (

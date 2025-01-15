@@ -25,12 +25,12 @@ interface Context {
   findViablePlays: (
     trump: Trump,
     tractorRequirements: TractorRequirements,
-    cards: string[],
+    cards: string[]
   ) => FoundViablePlay[];
   findValidBids: (req: FindValidBidsRequest) => Bid[];
   sortAndGroupCards: (req: SortAndGroupCardsRequest) => SuitGroup[];
   decomposeTrickFormat: (
-    req: DecomposeTrickFormatRequest,
+    req: DecomposeTrickFormatRequest
   ) => DecomposedTrickFormat[];
   canPlayCards: (req: CanPlayCardsRequest) => boolean;
   explainScoring: (req: ExplainScoringRequest) => ExplainScoringResponse;

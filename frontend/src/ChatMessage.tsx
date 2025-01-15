@@ -59,7 +59,7 @@ const renderScoringMessage = (message: Message): JSX.Element => {
       changes.push(
         <span key={changes.length}>
           step size: {variant.parameters.step_size_per_deck}分 per deck
-        </span>,
+        </span>
       );
     }
     if (
@@ -68,7 +68,7 @@ const renderScoringMessage = (message: Message): JSX.Element => {
       changes.push(
         <span key={changes.length}>
           non-leveling steps: {variant.parameters.deadzone_size}{" "}
-        </span>,
+        </span>
       );
     }
     if (
@@ -79,7 +79,7 @@ const renderScoringMessage = (message: Message): JSX.Element => {
         <span key={changes.length}>
           steps to turnover:{" "}
           {variant.parameters.num_steps_to_non_landlord_turnover}{" "}
-        </span>,
+        </span>
       );
     }
     for (const k in variant.parameters.step_adjustments) {
@@ -88,7 +88,7 @@ const renderScoringMessage = (message: Message): JSX.Element => {
         changes.push(
           <span key={changes.length}>
             step size adjustment for {k} decks set to {adj}{" "}
-          </span>,
+          </span>
         );
       }
     }
@@ -96,7 +96,7 @@ const renderScoringMessage = (message: Message): JSX.Element => {
       const adj = variant.parameters.step_adjustments[k];
       if (adj === undefined || adj === null || adj === 0) {
         changes.push(
-          <span key={changes.length}>adjustment for {k} decks removed </span>,
+          <span key={changes.length}>adjustment for {k} decks removed </span>
         );
       }
     }
@@ -109,11 +109,11 @@ const renderScoringMessage = (message: Message): JSX.Element => {
         "BonusLevelForSmallerLandlordTeam"
       ) {
         changes.push(
-          <span key={changes.length}>small-team bonus enabled</span>,
+          <span key={changes.length}>small-team bonus enabled</span>
         );
       } else {
         changes.push(
-          <span key={changes.length}>small-team bonus disabled</span>,
+          <span key={changes.length}>small-team bonus disabled</span>
         );
       }
     }

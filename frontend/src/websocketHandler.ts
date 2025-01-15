@@ -16,12 +16,12 @@ const truncateMessages = truncate(300);
 
 type WebsocketHandler = (
   state: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => Partial<AppState> | null;
 
 const messageHandler: WebsocketHandler = (
   state: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => {
   if ("Message" in message) {
     return { messages: truncateMessages([...state.messages, message.Message]) };
@@ -32,7 +32,7 @@ const messageHandler: WebsocketHandler = (
 
 const broadcastHandler: WebsocketHandler = (
   state: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => {
   if ("Broadcast" in message) {
     const newMessage: Message = {
@@ -49,7 +49,7 @@ const broadcastHandler: WebsocketHandler = (
 
 const errorHandler: WebsocketHandler = (
   state: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => {
   if ("Error" in message) {
     return { errors: [...state.errors, message.Error] };
@@ -68,7 +68,7 @@ const stateHandler: WebsocketHandler = (_: AppState, message: GameMessage) => {
 
 const headerMessageHandler: WebsocketHandler = (
   _: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => {
   if ("Header" in message) {
     return { headerMessages: message.Header.messages };
@@ -92,7 +92,7 @@ const beepHandler = (message: GameMessage): void => {
 let lastReadyChecked = performance.now();
 const readyCheckHandler = (
   message: GameMessage,
-  send: (msg: any) => void,
+  send: (msg: any) => void
 ): void => {
   if ("ReadyCheck" in message) {
     const now = performance.now();
@@ -109,7 +109,7 @@ const readyCheckHandler = (
 
 const gameFinishedHandler: WebsocketHandler = (
   state: AppState,
-  message: GameMessage,
+  message: GameMessage
 ) => {
   if (
     "Broadcast" in message &&
@@ -174,7 +174,7 @@ const allHandlers: WebsocketHandler[] = [
 const composedHandlers = (
   state: AppState,
   message: GameMessage,
-  send: (msg: any) => void,
+  send: (msg: any) => void
 ): Partial<AppState> => {
   let partials = {};
   allHandlers.forEach((h) => {

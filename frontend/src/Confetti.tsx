@@ -39,7 +39,7 @@ const Confetti = (props: IProps): JSX.Element => {
             angle: randomInRange(65, 115),
           })!.then(
             () => {},
-            () => {},
+            () => {}
           );
         }
       }, 500);

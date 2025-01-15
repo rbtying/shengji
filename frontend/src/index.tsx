@@ -53,7 +53,7 @@ const bootstrap = (): void => {
         </WasmProvider>
       </React.Suspense>
     </Sentry.ErrorBoundary>,
-    root,
+    root
   );
 };
 
