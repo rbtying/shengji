@@ -47,7 +47,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
       if (this.props.playDrawCardSound) {
         if (this.drawCardAudio === null) {
           this.drawCardAudio = new Audio(
-            "434472_dersuperanton_taking-card.mp3"
+            "434472_dersuperanton_taking-card.mp3",
           );
         }
 
@@ -95,7 +95,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         () => {
           this.drawCard();
         },
-        this.props.autodrawSpeedMs !== null ? this.props.autodrawSpeedMs : 250
+        this.props.autodrawSpeedMs !== null ? this.props.autodrawSpeedMs : 250,
       );
     }
     this.could_draw = canDraw;

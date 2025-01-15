@@ -52,13 +52,13 @@ const TrickE = (props: IProps): JSX.Element => {
           singles.push(mm.Repeated.card.card);
         } else if ("Repeated" in mm) {
           mapping.push(
-            ArrayUtils.range(mm.Repeated.count, (_) => mm.Repeated.card.card)
+            ArrayUtils.range(mm.Repeated.count, (_) => mm.Repeated.card.card),
           );
         } else if ("Tractor" in mm) {
           mapping.push(
             mm.Tractor.members.flatMap((mmm) =>
-              ArrayUtils.range(mm.Tractor.count, (_) => mmm.card)
-            )
+              ArrayUtils.range(mm.Tractor.count, (_) => mmm.card),
+            ),
           );
         }
       });
@@ -108,12 +108,12 @@ const TrickE = (props: IProps): JSX.Element => {
           winning
             ? "winning"
             : props.trick.player_queue[0] === id
-            ? "notify"
-            : "",
+              ? "notify"
+              : "",
           {
             landlord:
               id === props.landlord || props.landlords_team?.includes(id),
-          }
+          },
         );
 
         return (

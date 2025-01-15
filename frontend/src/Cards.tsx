@@ -18,7 +18,7 @@ interface IProps {
 
 const Cards = (props: IProps): JSX.Element => {
   const [highlightedSuit, setHighlightedSuit] = React.useState<string | null>(
-    null
+    null,
   );
 
   const { hands, selectedCards, notifyEmpty } = props;
@@ -46,7 +46,7 @@ const Cards = (props: IProps): JSX.Element => {
   const cardsInHand =
     props.playerId in hands.hands
       ? Object.entries(hands.hands[props.playerId]).flatMap(([c, ct]) =>
-          Array(ct).fill(c)
+          Array(ct).fill(c),
         )
       : [];
 
@@ -64,7 +64,7 @@ const Cards = (props: IProps): JSX.Element => {
           g.cards.map((c) => ({
             card: c,
             suit: g.suit,
-          }))
+          })),
         )
       : [];
 
@@ -75,7 +75,7 @@ const Cards = (props: IProps): JSX.Element => {
     g.cards.map((c) => ({
       card: c,
       suit: g.suit,
-    }))
+    })),
   );
 
   if (!separateCardsBySuit) {
@@ -128,7 +128,7 @@ const Cards = (props: IProps): JSX.Element => {
                 className={classNames(
                   !disableSuitHighlights && highlightedSuit === c.suit
                     ? "highlighted"
-                    : null
+                    : null,
                 )}
                 onClick={handleSelect(c.card)}
                 card={c.card}

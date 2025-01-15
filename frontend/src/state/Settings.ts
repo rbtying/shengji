@@ -50,29 +50,29 @@ const beepOnTurn: State<boolean> = booleanLocalStorageState("beep_on_turn");
 const reverseCardOrder: State<boolean> =
   booleanLocalStorageState("reverse_card_order");
 const unsetAutoPlayWhenWinnerChanges: State<boolean> = booleanLocalStorageState(
-  "unset_autoplay_on_winner_change"
+  "unset_autoplay_on_winner_change",
 );
 const showTrickInPlayerOrder: State<boolean> = booleanLocalStorageState(
   "show_trick_in_player_order",
-  true
+  true,
 );
 const separateCardsBySuit: State<boolean> = booleanLocalStorageState(
-  "separate_cards_by_suit"
+  "separate_cards_by_suit",
 );
 const disableSuitHighlights: State<boolean> = booleanLocalStorageState(
-  "disable_suit_highlights"
+  "disable_suit_highlights",
 );
 const suitColorOverrides: State<ISuitOverrides> = JSONLocalStorageState(
   "suit_color_overrides",
-  {}
+  {},
 );
 const playDrawCardSound: State<boolean> = booleanLocalStorageState(
-  "play_draw_card_sound"
+  "play_draw_card_sound",
 );
 const showDebugInfo: State<boolean> =
   booleanLocalStorageState("show_debug_info");
 const showPlayerName: State<boolean> = booleanLocalStorageState(
-  "show_player_name_in_title"
+  "show_player_name_in_title",
 );
 const hideChatBox: State<boolean> = booleanLocalStorageState("hide_chat_box");
 const showPointsAboveGame: State<boolean> =
@@ -80,16 +80,16 @@ const showPointsAboveGame: State<boolean> =
 export const DEFAULT_POINT_CARD_ICON: string = "💰";
 const pointCardIcon: State<string> = stringLocalStorageState(
   "point_card_icon",
-  DEFAULT_POINT_CARD_ICON
+  DEFAULT_POINT_CARD_ICON,
 );
 export const DEFAULT_TRUMP_CARD_ICON: string = "👑";
 const trumpCardIcon: State<string> = stringLocalStorageState(
   "trump_card_icon",
-  DEFAULT_TRUMP_CARD_ICON
+  DEFAULT_TRUMP_CARD_ICON,
 );
 const autodrawSpeedMs: State<number | null> = nullableNumberLocalStorageState(
   "autodrawSpeedMs",
-  null
+  null,
 );
 const settings: State<Settings> = combineState({
   fourColor,

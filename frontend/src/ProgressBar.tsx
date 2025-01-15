@@ -70,11 +70,11 @@ const ProgressBar = (props: IProps): JSX.Element => {
     }
   });
   const landlordPosition = convertToPercentage(
-    (totalPoints - landlordPoints) / totalPoints
+    (totalPoints - landlordPoints) / totalPoints,
   );
   const landlordWidth = convertToPercentage(landlordPoints / totalPoints);
   const challengerPosition = convertToPercentage(
-    challengerPoints / totalPoints
+    challengerPoints / totalPoints,
   );
 
   return (

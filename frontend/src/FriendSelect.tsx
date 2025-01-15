@@ -86,7 +86,7 @@ const FriendSelect = (props: IProps): JSX.Element => {
       cardOptions.push({
         label: `${c.number}${c.typ}`,
         value: c.value,
-      })
+      }),
     );
 
   return (

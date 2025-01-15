@@ -7,7 +7,9 @@ const Button = styled.button`
   margin: 0;
   border: 0;
   background-color: transparent;
-  transition: opacity 100ms ease-in-out, color 150ms ease-in-out,
+  transition:
+    opacity 100ms ease-in-out,
+    color 150ms ease-in-out,
     transform 100ms ease-in-out;
   color: #111;
   &:hover {
@@ -16,7 +18,7 @@ const Button = styled.button`
 `;
 
 const IconButton = (
-  props: React.ComponentProps<typeof Button>
+  props: React.ComponentProps<typeof Button>,
 ): JSX.Element => {
   return <Button className="icon-button" {...props} />;
 };
