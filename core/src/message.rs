@@ -14,9 +14,9 @@ use shengji_mechanics::types::{Card, PlayerID, Rank};
 
 use crate::game_state::play_phase::PlayerGameFinishedResult;
 use crate::settings::{
-    AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelectionPolicy, GameModeSettings,
-    GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy, KittyPenalty,
-    KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
+    AdvancementPolicy, BackToTwoSetting, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
+    GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
 };
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
@@ -185,6 +185,9 @@ pub enum MessageVariant {
     },
     HideThrowHaltingPlayer {
         set: bool,
+    },
+    JackVariation {
+        variation: BackToTwoSetting,
     },
     TractorRequirementsChanged {
         tractor_requirements: TractorRequirements,
@@ -376,6 +379,8 @@ impl MessageVariant {
                 format!("Landlord team lost, opposing team collected {non_landlords_points} points"),
             HideThrowHaltingPlayer { set: true } => format!("{} hid the player who prevents throws", n?),
             HideThrowHaltingPlayer { set: false } => format!("{} un-hid the player who prevents throws", n?),
+            JackVariation { variation: BackToTwoSetting::SingleJack } => format!("{} enabled the single jack variation", n?),
+            JackVariation { variation: BackToTwoSetting::Disabled } => format!("{} disabled the jack variation", n?),
             TractorRequirementsChanged { tractor_requirements } =>
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),

@@ -213,6 +213,33 @@ impl Deref for MaxRank {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default, KV)]
+pub enum BackToTwoSetting {
+    #[default]
+    Disabled,
+    SingleJack,
+}
+
+shengji_mechanics::impl_slog_value!(BackToTwoSetting);
+
+impl BackToTwoSetting {
+    pub fn is_applicable(&self, landlord_rank: Rank) -> bool {
+        match self {
+            BackToTwoSetting::Disabled => false,
+            BackToTwoSetting::SingleJack => landlord_rank == Rank::Number(Number::Jack),
+        }
+    }
+
+    pub fn compute(&self, cards: &[Card]) -> bool {
+        match self {
+            BackToTwoSetting::Disabled => false,
+            BackToTwoSetting::SingleJack => {
+                cards.len() == 1 && cards[0].number() == Some(Number::Jack)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema, KV)]
 pub struct PropagatedState {
     #[slog(skip)]
@@ -281,6 +308,8 @@ pub struct PropagatedState {
     pub(crate) game_scoring_parameters: GameScoringParameters,
     #[serde(default)]
     pub(crate) hide_throw_halting_player: bool,
+    #[serde(default)]
+    pub(crate) jack_variation: BackToTwoSetting,
     #[serde(default)]
     pub(crate) tractor_requirements: TractorRequirements,
     #[serde(default)]
@@ -797,6 +826,16 @@ impl PropagatedState {
         } else {
             Ok(vec![])
         }
+    }
+
+    pub fn set_jack_variation(
+        &mut self,
+        jack_variation: BackToTwoSetting,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.jack_variation = jack_variation;
+        Ok(vec![MessageVariant::JackVariation {
+            variation: jack_variation,
+        }])
     }
 
     pub fn make_observer(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {

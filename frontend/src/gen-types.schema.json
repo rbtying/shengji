@@ -492,6 +492,16 @@
         },
         {
           "type": "object",
+          "required": ["SetJackVariation"],
+          "properties": {
+            "SetJackVariation": {
+              "$ref": "#/definitions/BackToTwoSetting"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetTractorRequirements"],
           "properties": {
             "SetTractorRequirements": {
@@ -609,6 +619,10 @@
     "AdvancementPolicy": {
       "type": "string",
       "enum": ["Unrestricted", "FullyUnrestricted", "DefendPoints"]
+    },
+    "BackToTwoSetting": {
+      "type": "string",
+      "enum": ["Disabled", "SingleJack"]
     },
     "Bid": {
       "type": "object",
@@ -2494,6 +2508,19 @@
         },
         {
           "type": "object",
+          "required": ["type", "variation"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["JackVariation"]
+            },
+            "variation": {
+              "$ref": "#/definitions/BackToTwoSetting"
+            }
+          }
+        },
+        {
+          "type": "object",
           "required": ["tractor_requirements", "type"],
           "properties": {
             "tractor_requirements": {
@@ -2858,6 +2885,14 @@
         "hide_throw_halting_player": {
           "default": false,
           "type": "boolean"
+        },
+        "jack_variation": {
+          "default": "Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BackToTwoSetting"
+            }
+          ]
         },
         "joker_bid_policy": {
           "default": "BothTwoOrMore",

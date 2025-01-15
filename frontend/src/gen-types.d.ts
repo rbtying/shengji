@@ -128,6 +128,9 @@ export type Action =
       SetHideThrowHaltingPlayer: boolean;
     }
   | {
+      SetJackVariation: BackToTwoSetting;
+    }
+  | {
       SetTractorRequirements: TractorRequirements;
     }
   | {
@@ -210,6 +213,7 @@ export type BidTakebackPolicy = "AllowBidTakeback" | "NoBidTakeback";
 export type KittyTheftPolicy = "AllowKittyTheft" | "NoKittyTheft";
 export type GameShadowingPolicy = "AllowMultipleSessions" | "SingleSessionOnly";
 export type GameStartPolicy = "AllowAnyPlayer" | "AllowLandlordOnly";
+export type BackToTwoSetting = "Disabled" | "SingleJack";
 export type GameVisibility = "Public" | "Unlisted";
 export type Card = string;
 export type TrickUnit =
@@ -617,6 +621,11 @@ export type MessageVariant =
       [k: string]: unknown;
     }
   | {
+      type: "JackVariation";
+      variation: BackToTwoSetting;
+      [k: string]: unknown;
+    }
+  | {
       tractor_requirements: TractorRequirements;
       type: "TractorRequirementsChanged";
       [k: string]: unknown;
@@ -888,6 +897,7 @@ export interface PropagatedState {
   hide_landlord_points?: boolean;
   hide_played_cards?: boolean;
   hide_throw_halting_player?: boolean;
+  jack_variation?: BackToTwoSetting & string;
   joker_bid_policy?: JokerBidPolicy & string;
   kitty_bid_policy?: KittyBidPolicy & string;
   kitty_penalty?: KittyPenalty & string;

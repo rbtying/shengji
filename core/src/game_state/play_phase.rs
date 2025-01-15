@@ -8,13 +8,15 @@ use shengji_mechanics::deck::Deck;
 use shengji_mechanics::hands::Hands;
 use shengji_mechanics::player::Player;
 use shengji_mechanics::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
-use shengji_mechanics::trick::{PlayCards, PlayCardsMessage, Trick, TrickEnded, TrickUnit};
+use shengji_mechanics::trick::{
+    PlayCards, PlayCardsMessage, PlayedCards, Trick, TrickEnded, TrickUnit,
+};
 use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
 
 use crate::message::MessageVariant;
 use crate::settings::{
-    AdvancementPolicy, GameMode, KittyPenalty, MultipleJoinPolicy, PlayTakebackPolicy,
-    PropagatedState, ThrowPenalty,
+    AdvancementPolicy, BackToTwoSetting, GameMode, KittyPenalty, MultipleJoinPolicy,
+    PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 
 use crate::game_state::initialize_phase::InitializePhase;
@@ -360,8 +362,13 @@ impl PlayPhase {
         landlord: (PlayerID, Rank),
         advancement_policy: AdvancementPolicy,
         max_rank: Rank,
+        last_trick: Option<Trick>,
+        jack_variation: BackToTwoSetting,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
+
+        let should_go_back_to_two =
+            Self::check_jacks_last_trick(last_trick, jack_variation, landlords_team, landlord.1);
 
         let result = players
             .map(|player| {
@@ -373,6 +380,9 @@ impl PlayPhase {
                 };
                 let mut num_advances = 0;
                 let mut was_blocked = false;
+                if is_defending && should_go_back_to_two {
+                    player.reset_rank();
+                };
                 let initial_rank = player.rank();
 
                 for bump_idx in 0..bump {
@@ -444,6 +454,37 @@ impl PlayPhase {
 
         msgs.push(MessageVariant::GameFinished { result });
         msgs
+    }
+
+    pub fn check_jacks_last_trick(
+        last_trick: Option<Trick>,
+        jack_variation: BackToTwoSetting,
+        landlords_team: &[PlayerID],
+        landlord_rank: Rank,
+    ) -> bool {
+        if !jack_variation.is_applicable(landlord_rank) {
+            return false;
+        }
+
+        let last_trick = last_trick.unwrap();
+        let TrickEnded {
+            winner: winner_pid, ..
+        } = last_trick.complete().unwrap();
+
+        // In any jack variation, the rule can only applies if the non-landord team wins the
+        // last trick
+        if landlords_team.contains(&winner_pid) {
+            return false;
+        }
+
+        let lt_played_cards = last_trick.played_cards();
+        let PlayedCards { cards, .. } = lt_played_cards
+            .iter()
+            .find(|pc| pc.id == winner_pid)
+            .unwrap();
+
+        // In the jack variation, the last trick must be won with a single (trump) jack
+        jack_variation.compute(cards)
     }
 
     pub fn calculate_points(&self) -> (isize, isize) {
@@ -559,6 +600,8 @@ impl PlayPhase {
             (self.landlord, self.propagated.players[landlord_idx].level),
             propagated.advancement_policy,
             *propagated.max_rank,
+            self.last_trick.clone(),
+            self.propagated.jack_variation,
         ));
 
         let mut idx = (landlord_idx + 1) % propagated.players.len();
