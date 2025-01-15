@@ -453,10 +453,10 @@ impl PlayPhase {
         msgs
     }
 
-    pub fn check_jacks_last_trick<'a>(
+    pub fn check_jacks_last_trick(
         last_trick: Option<Trick>, 
         jack_variation: BackToTwoSetting, 
-        landlords_team: &'a [PlayerID],
+        landlords_team: &[PlayerID],
         landlord_rank: Rank) -> bool {
         if !jack_variation.is_applicable(landlord_rank) {
             return false
@@ -481,7 +481,7 @@ impl PlayPhase {
         } = lt_played_cards.iter().find(|pc| pc.id == winner_pid).unwrap();
 
         // In the jack variation, the last trick must be won with a single (trump) jack
-        return jack_variation.compute(cards);
+        jack_variation.compute(cards)
     }
 
     pub fn calculate_points(&self) -> (isize, isize) {
