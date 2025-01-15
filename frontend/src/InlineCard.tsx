@@ -38,7 +38,7 @@ const BigJoker = Suit("🃏");
 const Unknown = Suit("🂠");
 
 const suitComponent = (
-  suitCard: ISuitCard,
+  suitCard: ISuitCard
 ): React.FunctionComponent<object> => {
   switch (suitCard.suit) {
     case "diamonds":

@@ -19,7 +19,7 @@ use crate::settings::{
     AdvancementPolicy, FirstLandlordSelectionPolicy, FriendSelection, FriendSelectionPolicy,
     GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
     KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, PropagatedState,
-    ThrowPenalty,
+    ThrowPenalty, BackToTwoSetting,
 };
 pub struct InteractiveGame {
     state: GameState,
@@ -461,7 +461,7 @@ pub enum Action {
     SetGameStartPolicy(GameStartPolicy),
     SetShouldRevealKittyAtEndOfGame(bool),
     SetHideThrowHaltingPlayer(bool),
-    SetJackVariation(bool),
+    SetJackVariation(BackToTwoSetting),
     SetTractorRequirements(TractorRequirements),
     SetGameVisibility(GameVisibility),
     StartGame,

@@ -194,14 +194,17 @@ impl Deref for GameState {
 mod tests {
     use crate::settings::{
         AdvancementPolicy, FriendSelection, FriendSelectionPolicy, GameMode, GameModeSettings,
-        KittyTheftPolicy,
+        KittyTheftPolicy, BackToTwoSetting,
     };
 
     use shengji_mechanics::player::Player;
-    use shengji_mechanics::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK};
+    use shengji_mechanics::types::{cards, Card, Number, PlayerID, Rank, FULL_DECK, Trump, Suit};
 
     use crate::game_state::{initialize_phase::InitializePhase, play_phase::PlayPhase};
     use crate::message::MessageVariant;
+
+    use shengji_mechanics::trick::{PlayCards, TractorRequirements, ThrowEvaluationPolicy, Trick, TrickDrawPolicy};
+    use shengji_mechanics::hands::Hands;
 
     const R2: Rank = Rank::Number(Number::Two);
     const R3: Rank = Rank::Number(Number::Three);
@@ -217,6 +220,31 @@ mod tests {
     const RK: Rank = Rank::Number(Number::King);
     const RA: Rank = Rank::Number(Number::Ace);
     const RNT: Rank = Rank::NoTrump;
+
+    const P1: PlayerID = PlayerID(0);
+    const P2: PlayerID = PlayerID(1);
+    const P3: PlayerID = PlayerID(2);
+    const P4: PlayerID = PlayerID(3);
+
+    macro_rules! pc {
+        ($id:expr, $hands:expr, $cards:expr) => {
+            PlayCards {
+                id: $id,
+                hands: $hands,
+                cards: $cards,
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+            }
+        };
+    }
+
+    const JACK_TRUMP: Trump = Trump::Standard {
+        number: Number::Jack,
+        suit: Suit::Spades,
+    };
 
     fn init_players() -> Vec<Player> {
         vec![
@@ -289,7 +317,8 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RNT,
-                    false,
+                    None,
+                    BackToTwoSetting::Disabled,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -341,7 +370,8 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RA,
-                    false,
+                    None,
+                    BackToTwoSetting::Disabled,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -414,7 +444,8 @@ mod tests {
                     (PlayerID(0), starting_rank),
                     advance_policy,
                     RNT,
-                    false,
+                    None,
+                    BackToTwoSetting::Disabled,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -482,7 +513,8 @@ mod tests {
                     (PlayerID(0), p0_rank),
                     advance_policy,
                     RNT,
-                    false,
+                    None,
+                    BackToTwoSetting::Disabled,
                 );
                 let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
                 assert_eq!(
@@ -509,7 +541,8 @@ mod tests {
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R4, R2, RNT, R2],);
@@ -527,7 +560,8 @@ mod tests {
             (PlayerID(0), p0_rank),
             AdvancementPolicy::Unrestricted,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
         let ranks = p.iter().map(|pp| pp.rank()).collect::<Vec<Rank>>();
         assert_eq!(ranks, vec![R3, R2, R3, R2],);
@@ -547,7 +581,8 @@ mod tests {
             (PlayerID(0), R5),
             AdvancementPolicy::Unrestricted,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
         for p in &players {
             assert_eq!(p.rank(), Rank::Number(Number::Four));
@@ -563,7 +598,8 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
         for p in &players {
             assert_eq!(p.rank(), R5);
@@ -580,7 +616,8 @@ mod tests {
             (PlayerID(0), RA),
             AdvancementPolicy::DefendPoints,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
         for p in &players {
             if p.id == PlayerID(0) || p.id == PlayerID(2) {
@@ -601,7 +638,8 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Ace)),
             AdvancementPolicy::DefendPoints,
             RNT,
-            false,
+            None,
+            BackToTwoSetting::Disabled,
         );
 
         for p in &players {
@@ -615,7 +653,19 @@ mod tests {
 
     #[test]
     fn test_jack_variation_landlord_loses() {
+        use cards::*;
+
         let mut players = init_players();
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_2]).unwrap();
+        hands.add(P2, vec![S_J]).unwrap();
+        hands.add(P3, vec![S_2]).unwrap();
+        hands.add(P4, vec![S_3]).unwrap();
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
+        trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
         // Neither side levels up, but the non-landlord team wins the final trick with 
         // a single jack
@@ -628,7 +678,8 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Jack)),
             AdvancementPolicy::DefendPoints,
             RNT,
-            true,
+            Some(trick),
+            BackToTwoSetting::SingleJack,
         );
 
         for p in &players {
@@ -638,7 +689,19 @@ mod tests {
 
     #[test]
     fn test_jack_variation_landlord_advances_multiple() {
+        use cards::*;
+
         let mut players = init_players();
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_2]).unwrap();
+        hands.add(P2, vec![S_J]).unwrap();
+        hands.add(P3, vec![S_2]).unwrap();
+        hands.add(P4, vec![S_3]).unwrap();
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
+        trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
         // The landlord team defends, but the non-landlord team wins the final trick with 
         // a single jack
@@ -651,7 +714,8 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Jack)),
             AdvancementPolicy::DefendPoints,
             RNT,
-            true,
+            Some(trick),
+            BackToTwoSetting::SingleJack,
         );
 
         for p in &players {
@@ -665,7 +729,19 @@ mod tests {
 
     #[test]
     fn test_jack_variation_non_landlord_advances() {
+        use cards::*;
+
         let mut players = init_players();
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_2]).unwrap();
+        hands.add(P2, vec![S_J]).unwrap();
+        hands.add(P3, vec![S_2]).unwrap();
+        hands.add(P4, vec![S_3]).unwrap();
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
+        trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
+        trick.play_cards(pc!(P4, &mut hands, &[S_3])).unwrap();
 
         // The non-landlord team advances and they win the final trick with 
         // a single jack
@@ -678,7 +754,8 @@ mod tests {
             (PlayerID(0), Rank::Number(Number::Jack)),
             AdvancementPolicy::DefendPoints,
             RNT,
-            true,
+            Some(trick),
+            BackToTwoSetting::SingleJack,
         );
 
         for p in &players {

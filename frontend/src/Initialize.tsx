@@ -279,7 +279,7 @@ const DeckSettings = (props: IDeckSettings): JSX.Element => {
                 onChange={(evt) =>
                   setDeckAtIndex(
                     { ...d, exclude_big_joker: !evt.target.checked },
-                    i,
+                    i
                   )
                 }
               />
@@ -292,7 +292,7 @@ const DeckSettings = (props: IDeckSettings): JSX.Element => {
                 onChange={(evt) =>
                   setDeckAtIndex(
                     { ...d, exclude_small_joker: !evt.target.checked },
-                    i,
+                    i
                   )
                 }
               />
@@ -352,7 +352,7 @@ interface ITractorRequirementsProps {
 }
 
 const TractorRequirementsE = (
-  props: ITractorRequirementsProps,
+  props: ITractorRequirementsProps
 ): JSX.Element => {
   return (
     <div>
@@ -432,10 +432,10 @@ interface IUncommonSettings {
   setBidReinforcementPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setJokerBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setShouldRevealKittyAtEndOfGame: (
-    v: React.ChangeEvent<HTMLSelectElement>,
+    v: React.ChangeEvent<HTMLSelectElement>
   ) => void;
   setFirstLandlordSelectionPolicy: (
-    v: React.ChangeEvent<HTMLSelectElement>,
+    v: React.ChangeEvent<HTMLSelectElement>
   ) => void;
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -617,17 +617,14 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
         <label>
           Jacks variation:{" "}
           <select
-            value={
-              props.state.propagated.jack_variation ? "enabled" : "disabled"
-            }
+            value={props.state.propagated.jack_variation}
             onChange={props.setJackVariation}
           >
-            <option value="enabled">
-              Winning the last trick with a J will set the leader's team to rank 2
+            <option value="SingleJack">
+              Winning the last trick with a single J will set the leader's team
+              to rank 2
             </option>
-            <option value="disabled">
-              Disable the J variation
-            </option>
+            <option value="Disabled">Disable the J variation</option>
           </select>
         </label>
       </div>
@@ -723,7 +720,7 @@ const Initialize = (props: IProps): JSX.Element => {
   const onSelectStringDefault =
     (
       action: string,
-      defaultValue: null | string,
+      defaultValue: null | string
     ): ((evt: React.ChangeEvent<HTMLSelectElement>) => void) =>
     (evt: React.ChangeEvent<HTMLSelectElement>): void => {
       evt.preventDefault();
@@ -737,7 +734,7 @@ const Initialize = (props: IProps): JSX.Element => {
   const setFriendSelectionPolicy = onSelectString("SetFriendSelectionPolicy");
   const setMultipleJoinPolicy = onSelectString("SetMultipleJoinPolicy");
   const setFirstLandlordSelectionPolicy = onSelectString(
-    "SetFirstLandlordSelectionPolicy",
+    "SetFirstLandlordSelectionPolicy"
   );
   const setBidPolicy = onSelectString("SetBidPolicy");
   const setBidReinforcementPolicy = onSelectString("SetBidReinforcementPolicy");
@@ -753,7 +750,7 @@ const Initialize = (props: IProps): JSX.Element => {
   const setGameVisibility = onSelectString("SetGameVisibility");
 
   const setShouldRevealKittyAtEndOfGame = (
-    evt: React.ChangeEvent<HTMLSelectElement>,
+    evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -765,7 +762,7 @@ const Initialize = (props: IProps): JSX.Element => {
     }
   };
   const setHideThrowHaltingPlayer = (
-    evt: React.ChangeEvent<HTMLSelectElement>,
+    evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     if (evt.target.value !== "") {
@@ -783,7 +780,7 @@ const Initialize = (props: IProps): JSX.Element => {
     if (evt.target.value !== "") {
       send({
         Action: {
-          SetJackVariation: evt.target.value === "enabled",
+          SetJackVariation: evt.target.value,
         },
       });
     }
@@ -792,20 +789,20 @@ const Initialize = (props: IProps): JSX.Element => {
   const setKittyPenalty = onSelectStringDefault("SetKittyPenalty", null);
   const setAdvancementPolicy = onSelectStringDefault(
     "SetAdvancementPolicy",
-    "Unrestricted",
+    "Unrestricted"
   );
   const setMaxRank = onSelectStringDefault("SetMaxRank", "NT");
   const setThrowPenalty = onSelectStringDefault("SetThrowPenalty", null);
 
   const setHideLandlordsPoints = (
-    evt: React.ChangeEvent<HTMLSelectElement>,
+    evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     send({ Action: { SetHideLandlordsPoints: evt.target.value === "hide" } });
   };
 
   const setHidePlayedCards = (
-    evt: React.ChangeEvent<HTMLSelectElement>,
+    evt: React.ChangeEvent<HTMLSelectElement>
   ): void => {
     evt.preventDefault();
     send({ Action: { SetHidePlayedCards: evt.target.value === "hide" } });
@@ -850,11 +847,11 @@ const Initialize = (props: IProps): JSX.Element => {
   decks.length = decksEffective;
 
   let currentPlayer = props.state.propagated.players.find(
-    (p: Player) => p.name === props.name,
+    (p: Player) => p.name === props.name
   );
   if (currentPlayer === undefined) {
     currentPlayer = props.state.propagated.observers.find(
-      (p) => p.name === props.name,
+      (p) => p.name === props.name
     );
   }
   if (currentPlayer === undefined) {
@@ -867,13 +864,13 @@ const Initialize = (props: IProps): JSX.Element => {
   }
 
   const landlordIndex = props.state.propagated.players.findIndex(
-    (p: Player) => p.id === props.state.propagated.landlord,
+    (p: Player) => p.id === props.state.propagated.landlord
   );
   const saveGameSettings = (evt: React.SyntheticEvent): void => {
     evt.preventDefault();
     localStorage.setItem(
       "gameSettingsInLocalStorage",
-      JSON.stringify(props.state.propagated),
+      JSON.stringify(props.state.propagated)
     );
   };
 
@@ -1131,13 +1128,13 @@ const Initialize = (props: IProps): JSX.Element => {
           console.error(e);
           localStorage.setItem(
             "gameSettingsInLocalStorage",
-            JSON.stringify(props.state.propagated),
+            JSON.stringify(props.state.propagated)
           );
         });
       } catch {
         localStorage.setItem(
           "gameSettingsInLocalStorage",
-          JSON.stringify(props.state.propagated),
+          JSON.stringify(props.state.propagated)
         );
       }
     }
@@ -1221,13 +1218,13 @@ const Initialize = (props: IProps): JSX.Element => {
                 {ArrayUtils.range(
                   Math.max(
                     Math.floor(props.state.propagated.players.length / 2) - 1,
-                    0,
+                    0
                   ),
                   (idx) => (
                     <option value={idx + 1} key={idx}>
                       {idx + 1}
                     </option>
-                  ),
+                  )
                 )}
               </select>
             </label>

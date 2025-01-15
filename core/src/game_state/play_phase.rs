@@ -9,12 +9,12 @@ use shengji_mechanics::hands::Hands;
 use shengji_mechanics::player::Player;
 use shengji_mechanics::scoring::{compute_level_deltas, next_threshold_reachable, GameScoreResult};
 use shengji_mechanics::trick::{PlayCards, PlayCardsMessage, Trick, TrickEnded, TrickUnit, PlayedCards};
-use shengji_mechanics::types::{Card, PlayerID, Rank, Trump, Number};
+use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
 
 use crate::message::MessageVariant;
 use crate::settings::{
     AdvancementPolicy, GameMode, KittyPenalty, MultipleJoinPolicy, PlayTakebackPolicy,
-    PropagatedState, ThrowPenalty,
+    PropagatedState, ThrowPenalty, BackToTwoSetting,
 };
 
 use crate::game_state::initialize_phase::InitializePhase;
@@ -238,8 +238,6 @@ impl PlayPhase {
             failed_throw_size,
         } = self.trick.complete()?;
 
-        println!("{:?}", self.trick.played_cards());
-
         let kitty_multipler = match self.propagated.kitty_penalty {
             KittyPenalty::Times => 2 * largest_trick_unit_size,
             KittyPenalty::Power => 2usize.pow(largest_trick_unit_size as u32),
@@ -362,9 +360,12 @@ impl PlayPhase {
         landlord: (PlayerID, Rank),
         advancement_policy: AdvancementPolicy,
         max_rank: Rank,
-        lost_on_single_jack: bool,
+        last_trick: Option<Trick>,
+        jack_variation: BackToTwoSetting,
     ) -> Vec<MessageVariant> {
         let mut msgs = vec![];
+
+        let should_go_back_to_two = Self::check_jacks_last_trick(last_trick, jack_variation, landlords_team, landlord.1);
 
         let result = players
             .map(|player| {
@@ -376,10 +377,7 @@ impl PlayPhase {
                 };
                 let mut num_advances = 0;
                 let mut was_blocked = false;
-                // If the landlord team lost the final trick with a single jack, then they will go back to Rank 2,
-                // regardless of whether or not they successfully defended or not. If they successfully defended,
-                // then the level bumps will still apply.
-                if is_defending && lost_on_single_jack {
+                if is_defending && should_go_back_to_two {
                     player.reset_rank();
                 };
                 let initial_rank = player.rank();
@@ -453,6 +451,37 @@ impl PlayPhase {
 
         msgs.push(MessageVariant::GameFinished { result });
         msgs
+    }
+
+    pub fn check_jacks_last_trick<'a>(
+        last_trick: Option<Trick>, 
+        jack_variation: BackToTwoSetting, 
+        landlords_team: &'a [PlayerID],
+        landlord_rank: Rank) -> bool {
+        if !jack_variation.is_applicable(landlord_rank) {
+            return false
+        }
+
+        let last_trick = last_trick.unwrap();
+        let TrickEnded {
+            winner: winner_pid,
+            ..
+        } = last_trick.complete().unwrap();
+
+        // In any jack variation, the rule can only applies if the non-landord team wins the
+        // last trick
+        if landlords_team.contains(&winner_pid) {
+            return false
+        }
+
+        let lt_played_cards = last_trick.played_cards();
+        let PlayedCards {
+            cards,
+            ..
+        } = lt_played_cards.iter().find(|pc| pc.id == winner_pid).unwrap();
+
+        // In the jack variation, the last trick must be won with a single (trump) jack
+        return jack_variation.compute(cards);
     }
 
     pub fn calculate_points(&self) -> (isize, isize) {
@@ -568,7 +597,8 @@ impl PlayPhase {
             (self.landlord, self.propagated.players[landlord_idx].level),
             propagated.advancement_policy,
             *propagated.max_rank,
-            self.check_jacks_last_trick(),
+            self.last_trick.clone(),
+            self.propagated.jack_variation,
         ));
 
         let mut idx = (landlord_idx + 1) % propagated.players.len();
@@ -629,35 +659,6 @@ impl PlayPhase {
         msgs.extend(propagated.make_all_observers_into_players()?);
 
         Ok((InitializePhase::from_propagated(propagated), msgs))
-    }
-
-    fn check_jacks_last_trick(&self) -> bool {
-        // When playing with the jacks variation, the trump number has to be Jack, so we can
-        // return early otherwise
-        if !(self.propagated.jack_variation && self.trump.number() == Some(Number::Jack)) {
-            return false
-        }
-
-        let last_trick = self.last_trick.clone().unwrap();
-        let TrickEnded {
-            winner: winner_pid,
-            ..
-        } = last_trick.complete().unwrap();
-
-        // In the jack variation, the rule can only applies if the non-landord team wins the
-        // last trick
-        if self.landlords_team.contains(&winner_pid) {
-            return false
-        }
-
-        let lt_played_cards = last_trick.played_cards();
-        let PlayedCards {
-            cards,
-            ..
-        } = lt_played_cards.iter().find(|pc| pc.id == winner_pid).unwrap();
-
-        // In the jack variation, the last trick must be won with a single (trump) jack
-        return cards.len() == 1 && cards[0].number() == Some(Number::Jack);
     }
 
     pub fn destructively_redact_for_player(&mut self, player: PlayerID) {

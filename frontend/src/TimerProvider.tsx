@@ -70,7 +70,7 @@ const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
 
   const setInterval = (
     fn: () => void,
-    interval: number | undefined,
+    interval: number | undefined
   ): number => {
     timeoutId.current += 1;
     interval = interval === undefined ? 0 : interval;

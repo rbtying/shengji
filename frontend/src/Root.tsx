@@ -24,7 +24,7 @@ const Root = (): JSX.Element => {
     string[]
   >([]);
   const [showHeaderMessages, setShowHeaderMessages] = React.useState<boolean>(
-    state.headerMessages.length > 0,
+    state.headerMessages.length > 0
   );
   React.useEffect(() => {
     if (
@@ -93,7 +93,7 @@ const Root = (): JSX.Element => {
           className={classNames(
             state.settings.fourColor ? "four-color" : null,
             state.settings.showCardLabels ? "always-show-labels" : null,
-            state.settings.hideChatBox ? "hide-chat-box" : null,
+            state.settings.hideChatBox ? "hide-chat-box" : null
           )}
         >
           {headerMessages}
