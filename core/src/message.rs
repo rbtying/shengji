@@ -385,7 +385,7 @@ impl MessageVariant {
             JackVariation { variation: BackToTwoSetting::SingleJack } => format!("{} enabled the single jack variation", n?),
             JackVariation { variation: BackToTwoSetting::Disabled } => format!("{} disabled the jack variation", n?),
             TractorRequirementsChanged { tractor_requirements } =>
-                format!("{} changed the tractor requirements: {:?}", n?, tractor_requirements),
+                format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),
             GameVisibilitySet { visibility: GameVisibility::Unlisted} => format!("{} unlisted the game", n?),
             MaxPlayersSet { max_players: Some(max_players) } => format!("{} set the maximum number of players to {}", n?, max_players),
