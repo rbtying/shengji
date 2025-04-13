@@ -137,6 +137,9 @@ export type Action =
       SetGameVisibility: GameVisibility;
     }
   | {
+      SetMaxPlayers: number | null;
+    }
+  | {
       /**
        * @minItems 2
        * @maxItems 2
@@ -629,6 +632,11 @@ export type MessageVariant =
       tractor_requirements: TractorRequirements;
       type: "TractorRequirementsChanged";
       [k: string]: unknown;
+    }
+  | {
+      max_players: number | null;
+      type: "MaxPlayersSet";
+      [k: string]: unknown;
     };
 
 export interface _Combined {
@@ -919,6 +927,7 @@ export interface PropagatedState {
   throw_penalty?: ThrowPenalty & string;
   tractor_requirements?: TractorRequirements;
   trick_draw_policy?: TrickDrawPolicy & string;
+  max_players?: number | null;
   [k: string]: unknown;
 }
 export interface DrawPhase {

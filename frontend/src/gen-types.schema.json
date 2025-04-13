@@ -522,6 +522,18 @@
         },
         {
           "type": "object",
+          "required": ["SetMaxPlayers"],
+          "properties": {
+            "SetMaxPlayers": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["Bid"],
           "properties": {
             "Bid": {
@@ -993,6 +1005,11 @@
         "revealed_cards": {
           "default": 0,
           "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "max_players": {
+          "type": ["integer", "null"],
           "format": "uint",
           "minimum": 0.0
         }
@@ -2531,6 +2548,20 @@
               "enum": ["TractorRequirementsChanged"]
             }
           }
+        },
+        {
+          "required": ["max_players", "type"],
+          "properties": {
+            "max_players": {
+              "type": ["integer", "null"],
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["MaxPlayersSet"]
+            }
+          }
         }
       ]
     },
@@ -2687,6 +2718,11 @@
         },
         "trump": {
           "$ref": "#/definitions/Trump"
+        },
+        "max_players": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
         }
       }
     },
@@ -3037,6 +3073,11 @@
               "$ref": "#/definitions/TrickDrawPolicy"
             }
           ]
+        },
+        "max_players": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
         }
       }
     },

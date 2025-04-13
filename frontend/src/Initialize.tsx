@@ -1095,6 +1095,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "max_players":
+            send({
+              Action: {
+                SetMaxPlayers: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -1150,6 +1157,12 @@ const Initialize = (props: IProps): JSX.Element => {
     };
 
     fetchAsync().catch((e) => console.error(e));
+  };
+
+  const setMaxPlayers = (evt: React.ChangeEvent<HTMLInputElement>): void => {
+    evt.preventDefault();
+    const num = parseInt(evt.target.value, 10);
+    send({ Action: { SetMaxPlayers: isNaN(num) ? null : num } });
   };
 
   return (
@@ -1345,6 +1358,17 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value={"Unlisted"}>Unlisted</option>
               <option value={"Public"}>Public</option>
             </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Max players:{" "}
+            <input
+              type="number"
+              min={props.state.propagated.players.length}
+              value={props.state.propagated.max_players ?? ""}
+              onChange={setMaxPlayers}
+            />
           </label>
         </div>
         <h3>Continuation settings</h3>

@@ -316,6 +316,8 @@ pub struct PropagatedState {
     pub(crate) max_rank: MaxRank,
     #[serde(default)]
     pub(crate) game_visibility: GameVisibility,
+    #[serde(default)]
+    pub(crate) max_players: Option<usize>,
 }
 
 impl PropagatedState {
@@ -384,6 +386,12 @@ impl PropagatedState {
     }
 
     pub fn add_player(&mut self, name: String) -> Result<(PlayerID, Vec<MessageVariant>), Error> {
+        if let Some(max_players) = self.max_players {
+            if self.players.len() >= max_players {
+                bail!("Maximum number of players reached");
+            }
+        }
+
         let id = PlayerID(self.max_player_id);
         if self.players.iter().any(|p| p.name == name)
             || self.observers.iter().any(|p| p.name == name)
@@ -852,9 +860,14 @@ impl PropagatedState {
     }
 
     pub fn make_player(&mut self, player_id: PlayerID) -> Result<Vec<MessageVariant>, Error> {
-        if let Some(player) = self.observers.iter().find(|p| p.id == player_id).cloned() {
+        if let Some(observer) = self.observers.iter().find(|p| p.id == player_id).cloned() {
+            if let Some(max_players) = self.max_players {
+                if self.players.len() >= max_players {
+                    bail!("Maximum number of players reached");
+                }
+            }
             self.observers.retain(|p| p.id != player_id);
-            self.players.push(player);
+            self.players.push(observer);
             self.num_players_changed()
         } else {
             bail!("player not found")
@@ -911,5 +924,18 @@ impl PropagatedState {
         } else {
             Ok(vec![])
         }
+    }
+
+    pub fn set_max_players(
+        &mut self,
+        max_players: Option<usize>,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if let Some(max_players) = max_players {
+            if max_players < self.players.len() {
+                bail!("Cannot set max players below current number of players");
+            }
+        }
+        self.max_players = max_players;
+        Ok(vec![MessageVariant::MaxPlayersSet { max_players }])
     }
 }
