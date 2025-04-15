@@ -45,10 +45,10 @@ pub async fn execute_immutable_operation<S, E, F>(
     backend_storage: S,
     operation: F,
     action_description: &'static str,
-) -> bool
+) -> Result<(), anyhow::Error>
 where
     S: Storage<VersionedGame, E>,
-    E: Send,
+    E: Send + std::fmt::Debug,
     F: FnOnce(&InteractiveGame, u64) -> Result<Vec<GameMessage>, anyhow::Error> + Send + 'static,
 {
     let room_name_ = room_name.as_bytes().to_vec();
@@ -72,21 +72,23 @@ where
             },
         )
         .await;
+
     match res {
-        Ok(_) => true,
-        Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {action_description}"));
+        Ok(_) => Ok(()),
+        Err(EitherError::E(e)) => {
+            let err_msg = format!("Failed to {action_description} due to storage error");
+            let err = GameMessage::Error(err_msg.clone());
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(anyhow::anyhow!("{}: {:?}", err_msg, e))
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(msg)
         }
     }
 }
@@ -97,10 +99,10 @@ pub async fn execute_operation<S, E, F>(
     backend_storage: S,
     operation: F,
     action_description: &'static str,
-) -> bool
+) -> Result<(), anyhow::Error>
 where
     S: Storage<VersionedGame, E>,
-    E: Send,
+    E: Send + std::fmt::Debug,
     F: FnOnce(
             &mut InteractiveGame,
             u64,
@@ -140,21 +142,23 @@ where
             },
         )
         .await;
+
     match res {
-        Ok(_) => true,
-        Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {action_description}"));
+        Ok(_) => Ok(()),
+        Err(EitherError::E(e)) => {
+            let err_msg = format!("Failed to {action_description} due to storage error");
+            let err = GameMessage::Error(err_msg.clone());
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(anyhow::anyhow!("{}: {:?}", err_msg, e))
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(msg)
         }
     }
 }
