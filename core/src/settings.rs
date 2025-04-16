@@ -938,4 +938,8 @@ impl PropagatedState {
         self.max_players = max_players;
         Ok(vec![MessageVariant::MaxPlayersSet { max_players }])
     }
+
+    pub fn max_players(&self) -> Option<usize> {
+        self.max_players
+    }
 }

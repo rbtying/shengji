@@ -19,22 +19,25 @@ const Cell = styled.div`
 interface RowIProps {
   roomName: string;
   numPlayers: number;
-  setRoomName: (name: string, e: React.MouseEvent) => void;
+  maxPlayers: number | null;
+  setRoomName: (name: string) => void;
 }
 
 const PublicRoomRow = ({
   roomName,
   numPlayers,
+  maxPlayers,
   setRoomName,
 }: RowIProps): JSX.Element => {
+  const playersDisplay = maxPlayers ? `${numPlayers}/${maxPlayers}` : `${numPlayers}`;
   return (
     <Row>
       <Cell>
-        <button onClick={(e) => setRoomName(roomName, e)} className="normal">
+        <button onClick={() => setRoomName(roomName)} className="normal">
           {roomName}
         </button>
       </Cell>
-      <Cell>{numPlayers}</Cell>
+      <Cell>{playersDisplay}</Cell>
     </Row>
   );
 };
@@ -91,6 +94,7 @@ const PublicRoomsPane = (props: IProps): JSX.Element => {
               key={roomInfo.name}
               roomName={roomInfo.name}
               numPlayers={roomInfo.num_players}
+              maxPlayers={roomInfo.max_players}
               setRoomName={props.setRoomName}
             />
           );

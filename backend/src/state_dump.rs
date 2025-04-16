@@ -33,6 +33,7 @@ impl InMemoryStats {
 pub struct PublicGameInfo {
     name: String,
     num_players: usize,
+    max_players: Option<usize>,
 }
 
 pub async fn load_dump_file<S: Storage<VersionedGame, E>, E: Send + std::fmt::Debug>(
@@ -202,6 +203,7 @@ pub async fn public_games(
                     public_games.push(PublicGameInfo {
                         name,
                         num_players: versioned_game.game.players().len(),
+                        max_players: versioned_game.game.max_players(),
                     });
                 }
             }
