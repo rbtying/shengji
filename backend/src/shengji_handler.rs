@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use slog::{debug, error, info, o, Logger};
 use tokio::sync::{mpsc, oneshot, Mutex};
-use tokio::time::{sleep, Duration};
 
 use shengji_core::interactive::InteractiveGame;
 use shengji_mechanics::types::PlayerID;
@@ -24,7 +23,11 @@ pub async fn entrypoint<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>
     backend_storage: S,
     stats: Arc<Mutex<InMemoryStats>>,
 ) {
-    let _ = handle_user_connected(tx, rx, ws_id, logger, backend_storage, stats).await;
+    // Handle the result, logging error if connection setup fails
+    if let Err(e) = handle_user_connected(tx, rx, ws_id, logger.clone(), backend_storage, stats).await {
+        error!(logger, "User connection handler failed"; "ws_id" => ws_id, "error" => format!("{:?}", e));
+    }
+    info!(logger, "User connection handler finished"; "ws_id" => ws_id);
 }
 
 async fn send_to_user(
@@ -109,8 +112,7 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
         Err(e) => {
             error!(logger, "User registration failed (error sent to client)"; "error" => format!("{:?}", e));
             let _ = subscribe_player_id_tx.send(None);
-            sleep(Duration::from_secs(2)).await;
-            return Ok(());
+            return Err(e);
         }
     };
 
