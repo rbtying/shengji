@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { AppState } from "./AppStateProvider";
 
 const Row = styled.div`
   display: table-row;
@@ -44,6 +45,7 @@ const PublicRoomRow = ({
 
 interface IProps {
   setRoomName: (name: string) => void;
+  updateState: (newState: Partial<AppState>) => void;
 }
 
 const PublicRoomsPane = (props: IProps): JSX.Element => {
@@ -53,6 +55,9 @@ const PublicRoomsPane = (props: IProps): JSX.Element => {
     loadPublicRooms();
   }, []);
   const loadPublicRooms = (): void => {
+    // Clear any previous join error when refreshing
+    props.updateState({ joinError: null });
+
     try {
       const fetchAsync = async (): Promise<void> => {
         const fetchResult = await fetch("public_games.json");

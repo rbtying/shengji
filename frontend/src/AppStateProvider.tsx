@@ -22,6 +22,8 @@ export interface AppState {
   messages: Message[];
   confetti: string | null;
   changeLogLastViewed: number;
+  joinError: string | null;
+  connectionNonce: number;
 }
 
 const appState: State<AppState> = combineState({
@@ -37,6 +39,8 @@ const appState: State<AppState> = combineState({
   errors: noPersistence<string[]>(() => []),
   messages: noPersistence<Message[]>(() => []),
   confetti: noPersistence<string | null>(() => null),
+  joinError: noPersistence<string | null>(() => null),
+  connectionNonce: noPersistence<number>(() => 0),
 });
 
 interface Context {

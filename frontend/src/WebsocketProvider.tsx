@@ -106,7 +106,9 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
     setTimerRef.current = setTimer;
   }, [timer, setTimerRef]);
 
+  // Make this effect depend on state.connectionNonce
   React.useEffect(() => {
+    console.log(`[WebsocketProvider Effect] Running effect due to connectionNonce: ${stateRef.current.connectionNonce}`);
     const runtimeWebsocketHost = (window as any)._WEBSOCKET_HOST;
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
@@ -160,9 +162,19 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
         clearTimeoutRef.current(timerRef.current);
       }
     };
-  }, []);
+  }, [state.connectionNonce]);
 
   const send = (value: any): void => {
+    // Check if this is the initial JoinRoom message
+    const isJoinRoomMessage = typeof value === 'object' && value !== null && 'room_name' in value && 'name' in value;
+
+    // Prevent sending JoinRoom message automatically if a previous join attempt failed
+    if (isJoinRoomMessage && stateRef.current.joinError) {
+      // console.log("Preventing automatic JoinRoom send due to previous error:", stateRef.current.joinError);
+      // Optionally, clear the error here if we want the *next* explicit join click to work
+      return; // Don't send the message
+    }
+
     if (timerRef.current !== null) {
       clearTimeoutRef.current(timerRef.current);
     }
