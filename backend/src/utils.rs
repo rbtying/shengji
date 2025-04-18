@@ -45,10 +45,10 @@ pub async fn execute_immutable_operation<S, E, F>(
     backend_storage: S,
     operation: F,
     action_description: &'static str,
-) -> bool
+) -> Result<(), anyhow::Error>
 where
     S: Storage<VersionedGame, E>,
-    E: Send,
+    E: Send + std::fmt::Debug,
     F: FnOnce(&InteractiveGame, u64) -> Result<Vec<GameMessage>, anyhow::Error> + Send + 'static,
 {
     let room_name_ = room_name.as_bytes().to_vec();
@@ -72,21 +72,23 @@ where
             },
         )
         .await;
+
     match res {
-        Ok(_) => true,
-        Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {action_description}"));
+        Ok(_) => Ok(()),
+        Err(EitherError::E(e)) => {
+            let err_msg = format!("Failed to {action_description} due to storage error");
+            let err = GameMessage::Error(err_msg.clone());
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(anyhow::anyhow!("{}: {:?}", err_msg, e))
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(msg)
         }
     }
 }
@@ -97,10 +99,10 @@ pub async fn execute_operation<S, E, F>(
     backend_storage: S,
     operation: F,
     action_description: &'static str,
-) -> bool
+) -> Result<(), anyhow::Error>
 where
     S: Storage<VersionedGame, E>,
-    E: Send,
+    E: Send + std::fmt::Debug,
     F: FnOnce(
             &mut InteractiveGame,
             u64,
@@ -118,43 +120,69 @@ where
             move |versioned_game| {
                 let mut g = InteractiveGame::new_from_state(versioned_game.game);
                 let mut associated_websockets = versioned_game.associated_websockets;
-                let mut msgs = operation(
+                let msgs_to_broadcast = operation(
                     &mut g,
                     versioned_game.monotonic_id,
                     &mut associated_websockets,
                 )
                 .map_err(EitherError::E2)?;
-                let game = g.into_state();
-                msgs.push(GameMessage::State {
-                    state: game.clone(),
-                });
+                let final_game_state = g.into_state();
                 Ok((
                     VersionedGame {
                         room_name: versioned_game.room_name,
-                        game,
+                        game: final_game_state,
                         associated_websockets,
                         monotonic_id: versioned_game.monotonic_id + 1,
                     },
-                    msgs,
+                    msgs_to_broadcast,
                 ))
             },
         )
         .await;
+
     match res {
-        Ok(_) => true,
-        Err(EitherError::E(_)) => {
-            let err = GameMessage::Error(format!("Failed to {action_description}"));
+        Ok(new_version) => match backend_storage.clone().get(room_name_.clone()).await {
+            Ok(updated_versioned_game) => {
+                if updated_versioned_game.monotonic_id == new_version {
+                    let targeted_state_msg = GameMessage::State {
+                        state: updated_versioned_game.game,
+                    };
+                    let _ = backend_storage
+                        .publish_to_single_subscriber(room_name_, ws_id, targeted_state_msg)
+                        .await;
+                    Ok(())
+                } else {
+                    let err_msg = format!("Operation succeeded but version mismatch after fetching state (expected {}, got {})", new_version, updated_versioned_game.monotonic_id);
+                    let err = GameMessage::Error(err_msg.clone());
+                    let _ = backend_storage
+                        .publish_to_single_subscriber(room_name_.clone(), ws_id, err)
+                        .await;
+                    Err(anyhow::anyhow!(err_msg))
+                }
+            }
+            Err(e) => {
+                let err_msg = format!("Operation succeeded but failed to fetch updated state");
+                let err = GameMessage::Error(err_msg.clone());
+                let _ = backend_storage
+                    .publish_to_single_subscriber(room_name_.clone(), ws_id, err)
+                    .await;
+                Err(anyhow::anyhow!("{}: {:?}", err_msg, e))
+            }
+        },
+        Err(EitherError::E(e)) => {
+            let err_msg = format!("Failed to {action_description} due to storage error");
+            let err = GameMessage::Error(err_msg.clone());
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(anyhow::anyhow!("{}: {:?}", err_msg, e))
         }
         Err(EitherError::E2(msg)) => {
             let err = GameMessage::Error(format!("Failed to {action_description}: {msg}"));
             let _ = backend_storage
                 .publish_to_single_subscriber(room_name_, ws_id, err)
                 .await;
-            false
+            Err(msg)
         }
     }
 }

@@ -192,6 +192,9 @@ pub enum MessageVariant {
     TractorRequirementsChanged {
         tractor_requirements: TractorRequirements,
     },
+    MaxPlayersSet {
+        max_players: Option<usize>,
+    },
 }
 
 impl MessageVariant {
@@ -385,6 +388,8 @@ impl MessageVariant {
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),
             GameVisibilitySet { visibility: GameVisibility::Unlisted} => format!("{} unlisted the game", n?),
+            MaxPlayersSet { max_players: Some(max_players) } => format!("{} set the maximum number of players to {}", n?, max_players),
+            MaxPlayersSet { max_players: None } => format!("{} removed the maximum number of players limit", n?),
         })
     }
 }

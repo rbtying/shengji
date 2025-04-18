@@ -391,6 +391,10 @@ impl InteractiveGame {
                 self.state = GameState::Initialize(new_s);
                 msgs
             }
+            (Action::SetMaxPlayers(max_players), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting max players"; "max_players" => max_players);
+                state.set_max_players(max_players)?
+            }
             _ => bail!("not supported in current phase"),
         };
 
@@ -461,6 +465,7 @@ pub enum Action {
     SetJackVariation(BackToTwoSetting),
     SetTractorRequirements(TractorRequirements),
     SetGameVisibility(GameVisibility),
+    SetMaxPlayers(Option<usize>),
     StartGame,
     DrawCard,
     RevealCard,

@@ -3,6 +3,7 @@ import { WebsocketContext } from "./WebsocketProvider";
 import { TimerContext } from "./TimerProvider";
 import LabeledPlay from "./LabeledPlay";
 import PublicRoomsPane from "./PublicRoomsPane";
+import { AppStateContext } from "./AppStateProvider";
 
 interface IProps {
   name: string;
@@ -18,6 +19,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
   );
   const { send } = React.useContext(WebsocketContext);
   const { setTimeout } = React.useContext(TimerContext);
+  const { state, updateState } = React.useContext(AppStateContext);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void =>
     props.setName(event.target.value.trim());
@@ -27,6 +29,9 @@ const JoinRoom = (props: IProps): JSX.Element => {
 
   const handleSubmit = (event: React.SyntheticEvent): void => {
     event.preventDefault();
+    if (state.joinError) {
+      updateState({ joinError: null });
+    }
     if (props.name.length > 0 && props.room_name.length === 16) {
       send({
         room_name: props.room_name,
@@ -63,6 +68,9 @@ const JoinRoom = (props: IProps): JSX.Element => {
     props.setRoomName(
       Array.from(arr, (d) => ("0" + d.toString(16)).substr(-2)).join(""),
     );
+    if (state.joinError) {
+      updateState({ joinError: null });
+    }
   };
 
   if (shouldGenerate) {
@@ -108,7 +116,8 @@ const JoinRoom = (props: IProps): JSX.Element => {
             disabled={
               props.room_name.length !== 16 ||
               props.name.length === 0 ||
-              props.name.length > 32
+              props.name.length > 32 ||
+              state.joinError !== null
             }
           />
         </div>
@@ -137,7 +146,10 @@ const JoinRoom = (props: IProps): JSX.Element => {
           to you.
         </p>
       </div>
-      <PublicRoomsPane setRoomName={props.setRoomName} />
+      <PublicRoomsPane
+        setRoomName={props.setRoomName}
+        updateState={updateState}
+      />
     </div>
   );
 };

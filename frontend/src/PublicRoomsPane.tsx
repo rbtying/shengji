@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { AppState } from "./AppStateProvider";
 
 const Row = styled.div`
   display: table-row;
@@ -19,28 +20,34 @@ const Cell = styled.div`
 interface RowIProps {
   roomName: string;
   numPlayers: number;
-  setRoomName: (name: string, e: React.MouseEvent) => void;
+  maxPlayers: number | null;
+  setRoomName: (name: string) => void;
 }
 
 const PublicRoomRow = ({
   roomName,
   numPlayers,
+  maxPlayers,
   setRoomName,
 }: RowIProps): JSX.Element => {
+  const playersDisplay = maxPlayers
+    ? `${numPlayers}/${maxPlayers}`
+    : `${numPlayers}`;
   return (
     <Row>
       <Cell>
-        <button onClick={(e) => setRoomName(roomName, e)} className="normal">
+        <button onClick={() => setRoomName(roomName)} className="normal">
           {roomName}
         </button>
       </Cell>
-      <Cell>{numPlayers}</Cell>
+      <Cell>{playersDisplay}</Cell>
     </Row>
   );
 };
 
 interface IProps {
   setRoomName: (name: string) => void;
+  updateState: (newState: Partial<AppState>) => void;
 }
 
 const PublicRoomsPane = (props: IProps): JSX.Element => {
@@ -50,6 +57,9 @@ const PublicRoomsPane = (props: IProps): JSX.Element => {
     loadPublicRooms();
   }, []);
   const loadPublicRooms = (): void => {
+    // Clear any previous join error when refreshing
+    props.updateState({ joinError: null });
+
     try {
       const fetchAsync = async (): Promise<void> => {
         const fetchResult = await fetch("public_games.json");
@@ -91,6 +101,7 @@ const PublicRoomsPane = (props: IProps): JSX.Element => {
               key={roomInfo.name}
               roomName={roomInfo.name}
               numPlayers={roomInfo.num_players}
+              maxPlayers={roomInfo.max_players}
               setRoomName={props.setRoomName}
             />
           );

@@ -52,7 +52,16 @@ const errorHandler: WebsocketHandler = (
   message: GameMessage,
 ) => {
   if ("Error" in message) {
-    return { errors: [...state.errors, message.Error] };
+    const errorMsg = message.Error;
+    const isJoinError = errorMsg.includes("Maximum number of players reached");
+    return {
+      errors: [...state.errors, errorMsg],
+      gameState: null,
+      joinError: isJoinError ? errorMsg : state.joinError,
+      connectionNonce: isJoinError
+        ? state.connectionNonce + 1
+        : state.connectionNonce,
+    };
   } else {
     return null;
   }

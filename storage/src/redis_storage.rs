@@ -83,7 +83,7 @@ impl<S: State> RedisStorage<S> {
                 .cmd("INCR")
                 .arg("states_created")
                 .ignore()
-                .query_async(connection_manager)
+                .query_async::<_, ()>(connection_manager)
                 .await?;
         } else {
             redis::pipe()
@@ -92,7 +92,7 @@ impl<S: State> RedisStorage<S> {
                 .arg(key)
                 .arg(as_json)
                 .ignore()
-                .query_async(connection_manager)
+                .query_async::<_, ()>(connection_manager)
                 .await?;
         }
         Ok(())
@@ -139,14 +139,14 @@ impl<S: State> RedisStorage<S> {
     ) -> Result<R, E> {
         redis::cmd("WATCH")
             .arg(key.clone())
-            .query_async(&mut connection_manager)
+            .query_async::<_, ()>(&mut connection_manager)
             .await
             .map_err(RedisStorageError::from)?;
         let res = op.await;
         if res.is_err() {
             redis::cmd("UNWATCH")
                 .arg(key)
-                .query_async(&mut connection_manager)
+                .query_async::<_, ()>(&mut connection_manager)
                 .await
                 .map_err(RedisStorageError::from)?;
         }
