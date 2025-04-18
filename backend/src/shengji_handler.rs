@@ -24,7 +24,9 @@ pub async fn entrypoint<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>
     stats: Arc<Mutex<InMemoryStats>>,
 ) {
     // Handle the result, logging error if connection setup fails
-    if let Err(e) = handle_user_connected(tx, rx, ws_id, logger.clone(), backend_storage, stats).await {
+    if let Err(e) =
+        handle_user_connected(tx, rx, ws_id, logger.clone(), backend_storage, stats).await
+    {
         error!(logger, "User connection handler failed"; "ws_id" => ws_id, "error" => format!("{:?}", e));
     }
     info!(logger, "User connection handler finished"; "ws_id" => ws_id);
@@ -146,7 +148,7 @@ async fn player_subscribe_task(
 ) {
     debug!(logger_, "Subscribed to messages");
     if let Ok(player_id_option) = subscribe_player_id_rx.await {
-        let logger_ = logger_.new(o!("player_id" => format!("{:?}", player_id_option.map(|p|p.0))));
+        let logger_ = logger_.new(o!("player_id" => dbg!(player_id_option.map(|p|p.0))));
         debug!(logger_, "Received player ID option");
         while let Some(v) = subscription.recv().await {
             let should_send = match &v {
@@ -168,7 +170,9 @@ async fn player_subscribe_task(
                             let g = InteractiveGame::new_from_state(state);
                             g.dump_state_for_player(player_id)
                                 .ok()
-                                .map(|filtered_state| GameMessage::State { state: filtered_state })
+                                .map(|filtered_state| GameMessage::State {
+                                    state: filtered_state,
+                                })
                         } else {
                             Some(v)
                         }
@@ -186,7 +190,10 @@ async fn player_subscribe_task(
             }
         }
     } else {
-        error!(logger_, "Failed to receive player ID option from oneshot channel");
+        error!(
+            logger_,
+            "Failed to receive player ID option from oneshot channel"
+        );
     }
     debug!(logger_, "Subscription task completed");
 }
@@ -266,9 +273,9 @@ async fn register_user<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>(
             }
             Ok((player_id, version))
         }
-        Err(_) => {
-            Err(anyhow::anyhow!("Failed to receive player ID after registration operation"))
-        }
+        Err(_) => Err(anyhow::anyhow!(
+            "Failed to receive player ID after registration operation"
+        )),
     }
 }
 
@@ -353,7 +360,8 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E: Send + std::fmt::De
                 },
                 "send appropriate beep",
             )
-            .await {
+            .await
+            {
                 error!(logger, "Beep operation failed"; "error" => format!("{:?}", e));
             }
         }
@@ -412,13 +420,14 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E: Send + std::fmt::De
                 },
                 "kick player",
             )
-            .await {
+            .await
+            {
                 error!(logger, "Kick operation failed"; "target_id" => id.0, "error" => format!("{:?}", e));
             }
         }
         UserMessage::Action(action) => {
-            let action_clone_for_log = action.clone();
-            let logger_clone_for_log = logger.clone();
+            let action_ = action.clone();
+            let logger_ = logger.clone();
             if let Err(e) = execute_operation(
                 ws_id,
                 room_name,
@@ -432,8 +441,9 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E: Send + std::fmt::De
                 },
                 "perform action",
             )
-            .await {
-                error!(logger_clone_for_log, "Action execution failed"; "action" => format!("{:?}", action_clone_for_log), "error" => format!("{:?}", e));
+            .await
+            {
+                error!(logger_, "Action execution failed"; "action" => format!("{:?}", action_), "error" => format!("{:?}", e));
             }
         }
     }
@@ -447,33 +457,34 @@ async fn user_disconnected<S: Storage<VersionedGame, E>, E: Send + std::fmt::Deb
     logger: slog::Logger,
     parent: u64,
 ) {
-    let room_name = room.as_bytes().to_vec();
-    let room_name_str = String::from_utf8_lossy(&room_name);
-
-    info!(logger, "User disconnected, cleaning up websocket association");
+    info!(
+        logger,
+        "User disconnected, cleaning up websocket association"
+    );
 
     // Clean up websocket association
-    if let Err(e) = execute_operation(
+    let _ = execute_operation(
         ws_id,
-        &room_name_str,
+        &room,
         backend_storage.clone(),
-        move |_g, _, associated_websockets| {
-            for player_websockets in associated_websockets.values_mut() {
-                player_websockets.retain(|id| *id != ws_id);
+        move |_, _, associated_websockets| {
+            for ws in associated_websockets.values_mut() {
+                ws.retain(|w| *w != ws_id);
             }
             associated_websockets.retain(|_, player_websockets| !player_websockets.is_empty());
             Ok(vec![])
         },
-        "clean up disconnected websocket",
+        "disconnect player",
     )
-    .await
-    {
-        error!(logger, "Failed to clean up websocket association on disconnect"; "error" => format!("{:?}", e));
-    }
+    .await;
 
     let _ = backend_storage
-        .unsubscribe(room_name, ws_id)
+        .unsubscribe(room.as_bytes().to_vec(), ws_id)
         .await;
 
-    info!(logger, "Finished user disconnected cleanup"; "parent_id" => parent);
+    info!(logger, "Websocket disconnected";
+        "room" => room,
+        "parent_span" => format!("{}:{}", room, parent),
+        "span" => format!("{}:ws_{}", room, ws_id)
+    );
 }
