@@ -108,7 +108,9 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
 
   // Make this effect depend on state.connectionNonce
   React.useEffect(() => {
-    console.log(`[WebsocketProvider Effect] Running effect due to connectionNonce: ${stateRef.current.connectionNonce}`);
+    console.log(
+      `[WebsocketProvider Effect] Running effect due to connectionNonce: ${stateRef.current.connectionNonce}`,
+    );
     const runtimeWebsocketHost = (window as any)._WEBSOCKET_HOST;
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
@@ -166,7 +168,11 @@ const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
 
   const send = (value: any): void => {
     // Check if this is the initial JoinRoom message
-    const isJoinRoomMessage = typeof value === 'object' && value !== null && 'room_name' in value && 'name' in value;
+    const isJoinRoomMessage =
+      typeof value === "object" &&
+      value !== null &&
+      "room_name" in value &&
+      "name" in value;
 
     // Prevent sending JoinRoom message automatically if a previous join attempt failed
     if (isJoinRoomMessage && stateRef.current.joinError) {

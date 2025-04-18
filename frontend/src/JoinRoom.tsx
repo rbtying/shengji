@@ -146,7 +146,10 @@ const JoinRoom = (props: IProps): JSX.Element => {
           to you.
         </p>
       </div>
-      <PublicRoomsPane setRoomName={props.setRoomName} updateState={updateState} />
+      <PublicRoomsPane
+        setRoomName={props.setRoomName}
+        updateState={updateState}
+      />
     </div>
   );
 };

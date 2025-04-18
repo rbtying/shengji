@@ -58,7 +58,9 @@ const errorHandler: WebsocketHandler = (
       errors: [...state.errors, errorMsg],
       gameState: null,
       joinError: isJoinError ? errorMsg : state.joinError,
-      connectionNonce: isJoinError ? state.connectionNonce + 1 : state.connectionNonce,
+      connectionNonce: isJoinError
+        ? state.connectionNonce + 1
+        : state.connectionNonce,
     };
   } else {
     return null;

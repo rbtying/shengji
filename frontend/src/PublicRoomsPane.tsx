@@ -30,7 +30,9 @@ const PublicRoomRow = ({
   maxPlayers,
   setRoomName,
 }: RowIProps): JSX.Element => {
-  const playersDisplay = maxPlayers ? `${numPlayers}/${maxPlayers}` : `${numPlayers}`;
+  const playersDisplay = maxPlayers
+    ? `${numPlayers}/${maxPlayers}`
+    : `${numPlayers}`;
   return (
     <Row>
       <Cell>
