@@ -206,7 +206,7 @@ fn main() {
                                     u.into_iter()
                                         .flat_map(|x| {
                                             x.into_iter().flat_map(|(card, count)| {
-                                                std::iter::repeat(card.card).take(count)
+                                                std::iter::repeat_n(card.card, count)
                                             })
                                         })
                                         .collect::<Vec<_>>()
