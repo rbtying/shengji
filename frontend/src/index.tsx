@@ -1,5 +1,5 @@
+import { createRoot } from "react-dom/client";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import ReactModal from "react-modal";
 import * as Sentry from "@sentry/react";
 
@@ -37,7 +37,9 @@ const bootstrap = (): void => {
     </>
   );
   ReactModal.setAppElement(root!);
-  ReactDOM.render(
+  const root_ = createRoot(root!);
+
+  root_.render(
     <Sentry.ErrorBoundary fallback={fallback}>
       <React.Suspense fallback={"loading..."}>
         <WasmProvider>
@@ -53,7 +55,6 @@ const bootstrap = (): void => {
         </WasmProvider>
       </React.Suspense>
     </Sentry.ErrorBoundary>,
-    root,
   );
 };
 

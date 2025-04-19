@@ -3,6 +3,8 @@ import { Trump } from "./gen-types";
 import InlineCard from "./InlineCard";
 import preloadedCards from "./preloadedCards";
 
+import type { JSX } from "react";
+
 interface IProps {
   trump: Trump;
 }

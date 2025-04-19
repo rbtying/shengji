@@ -1,6 +1,8 @@
 import * as React from "react";
 import ArrayUtils from "./util/array";
 
+import type { JSX } from "react";
+
 interface IProps {
   numPlayers: number;
   numDecks: number | null | undefined;

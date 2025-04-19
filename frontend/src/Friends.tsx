@@ -2,6 +2,8 @@ import * as React from "react";
 import { GameMode } from "./gen-types";
 import InlineCard from "./InlineCard";
 
+import type { JSX } from "react";
+
 interface IProps {
   gameMode: GameMode;
   showPlayed: boolean;

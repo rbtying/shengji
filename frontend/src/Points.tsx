@@ -9,6 +9,8 @@ import { cardLookup } from "./util/cardHelpers";
 import WasmContext from "./WasmContext";
 import { SettingsContext } from "./AppStateProvider";
 
+import type { JSX } from "react";
+
 interface IProps {
   players: Player[];
   decks: Deck[];

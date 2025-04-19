@@ -3,9 +3,11 @@ import ReactModal from "react-modal";
 import IconButton from "./IconButton";
 import Gear from "./icons/Gear";
 import SettingsPane from "./SettingsPane";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import { Settings } from "./state/Settings";
 import { AppStateContext } from "./AppStateProvider";
+
+import type { JSX } from "react";
 
 const contentStyle: React.CSSProperties = {
   position: "absolute",
@@ -20,13 +22,11 @@ const SettingsButton = (): JSX.Element => {
   const { state, updateState } = React.useContext(AppStateContext);
   return (
     <>
-      <ReactTooltip id="settingsTip" place="top" effect="solid">
-        Change user interface settings
-      </ReactTooltip>
+      <Tooltip id="settingsTip" place="top" />
       <IconButton
         onClick={() => setModalOpen(true)}
-        data-tip
-        data-for="settingsTip"
+        data-tooltip-id="settingsTip"
+        data-tooltip-content="Change user interface settings"
       >
         <Gear width="2em" />
       </IconButton>

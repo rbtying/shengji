@@ -1,6 +1,8 @@
 import * as React from "react";
 import { GameModeSettings, GameMode } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   gameMode: GameModeSettings | GameMode;
 }

@@ -108,8 +108,12 @@ import Svg4ColorKs from "./generated/playing-cards-4color/Ks";
 import Svg4ColorQh from "./generated/playing-cards-4color/Qh";
 import Svg4ColorTd from "./generated/playing-cards-4color/Td";
 
+import type { JSX } from "react";
+
 const NormalCards: {
-  [card: string]: React.FunctionComponent<React.SVGProps<SVGElement>>;
+  [card: string]: React.FunctionComponent<
+    React.PropsWithChildren<React.SVGProps<SVGElement>>
+  >;
 } = {
   "🃁": SvgAd,
   "🃎": SvgKd,
@@ -169,7 +173,9 @@ const NormalCards: {
 };
 
 const FourColorCards: {
-  [card: string]: React.FunctionComponent<React.SVGProps<SVGElement>>;
+  [card: string]: React.FunctionComponent<
+    React.PropsWithChildren<React.SVGProps<SVGElement>>
+  >;
 } = {
   "🃁": Svg4ColorAd,
   "🃎": Svg4ColorKd,

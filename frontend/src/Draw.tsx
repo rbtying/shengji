@@ -8,6 +8,8 @@ import BeepButton from "./BeepButton";
 import BidArea from "./BidArea";
 import InlineCard from "./InlineCard";
 
+import type { JSX } from "react";
+
 interface IDrawProps {
   state: DrawPhase;
   playDrawCardSound: boolean;

@@ -2,6 +2,8 @@ import * as React from "react";
 import { WebsocketContext } from "./WebsocketProvider";
 import { GameState } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   state: GameState;
   name: string;

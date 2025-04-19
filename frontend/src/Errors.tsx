@@ -2,6 +2,8 @@ import * as React from "react";
 import { AppStateContext } from "./AppStateProvider";
 import Timeout from "./Timeout";
 
+import type { JSX } from "react";
+
 interface IProps {
   errors: string[];
 }

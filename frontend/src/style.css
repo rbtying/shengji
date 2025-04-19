@@ -77,8 +77,8 @@ button.normal {
   cursor: pointer;
   background: transparent;
   user-select: none;
-  font-family: "Apple Symbols", "Segoe UI Symbol", "Symbola", "DejaVu Sans",
-    system;
+  font-family:
+    "Apple Symbols", "Segoe UI Symbol", "Symbola", "DejaVu Sans", system;
   position: relative;
   margin-top: 20px;
 }

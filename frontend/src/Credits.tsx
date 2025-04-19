@@ -2,6 +2,8 @@ import * as React from "react";
 import ReactModal from "react-modal";
 import { AppStateContext } from "./AppStateProvider";
 
+import type { JSX } from "react";
+
 const contentStyle: React.CSSProperties = {
   position: "absolute",
   top: "50%",

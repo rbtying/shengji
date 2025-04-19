@@ -14,6 +14,8 @@ import DebugInfo from "./DebugInfo";
 import TitleHandler from "./TitleHandler";
 import ResetButton from "./ResetButton";
 
+import type { JSX } from "react";
+
 const Confetti = React.lazy(async () => await import("./Confetti"));
 
 const Root = (): JSX.Element => {

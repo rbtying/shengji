@@ -5,6 +5,8 @@ import { MovePlayerLeft, MovePlayerRight } from "./MovePlayerButton";
 import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 
+import type { JSX } from "react";
+
 interface IProps {
   players: Player[];
   observers: Player[];

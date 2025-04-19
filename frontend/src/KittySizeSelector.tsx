@@ -3,6 +3,8 @@ import { Deck } from "./gen-types";
 import ArrayUtils from "./util/array";
 import WasmContext from "./WasmContext";
 
+import type { JSX } from "react";
+
 interface IProps {
   numPlayers: number;
   decks: Deck[];

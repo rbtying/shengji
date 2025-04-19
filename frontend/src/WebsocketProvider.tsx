@@ -5,6 +5,8 @@ import { TimerContext } from "./TimerProvider";
 import memoize from "./memoize";
 import WasmContext from "./WasmContext";
 
+import type { JSX } from "react";
+
 interface Context {
   send: (value: any) => void;
 }
@@ -72,7 +74,9 @@ const getBlobArrayBuffer: () => IBlobToArrayBufferQueue = memoize(() => {
   };
 });
 
-const WebsocketProvider: React.FunctionComponent<IProps> = (props: IProps) => {
+const WebsocketProvider: React.FunctionComponent<
+  React.PropsWithChildren<IProps>
+> = (props: IProps) => {
   const { state, updateState } = React.useContext(AppStateContext);
   const { decodeWireFormat } = React.useContext(WasmContext);
   const { setTimeout, clearTimeout } = React.useContext(TimerContext);

@@ -3,6 +3,8 @@ import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 import ArrayUtils from "./util/array";
 
+import type { JSX } from "react";
+
 interface Props {
   players: Player[];
   children: string | JSX.Element | JSX.Element[];

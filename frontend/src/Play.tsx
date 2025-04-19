@@ -1,5 +1,5 @@
 import * as React from "react";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import ReactModal from "react-modal";
 import {
   PlayPhase,
@@ -25,6 +25,8 @@ import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
 import WasmContext from "./WasmContext";
 import InlineCard from "./InlineCard";
+
+import type { JSX } from "react";
 
 const contentStyle: React.CSSProperties = {
   position: "absolute",
@@ -552,12 +554,10 @@ const TrickFormatHelper = (props: {
 
   return (
     <>
-      <ReactTooltip id="helpTip" place="top" effect="solid">
-        Get help on what you can play
-      </ReactTooltip>
+      <Tooltip id="helpTip" place="top" />
       <button
-        data-tip
-        data-for="helpTip"
+        data-tooltip-id="helpTip"
+        data-tooltip-content="Get help on what you can play"
         className="big"
         onClick={(evt) => {
           evt.preventDefault();
@@ -566,12 +566,10 @@ const TrickFormatHelper = (props: {
       >
         ?
       </button>
-      <ReactTooltip id="suggestTip" place="top" effect="solid">
-        Suggest a play (not guaranteed to succeed)
-      </ReactTooltip>
+      <Tooltip id="suggestTip" place="top" />
       <button
-        data-tip
-        data-for="suggestTip"
+        data-tooltip-id="suggestTip"
+        data-tooltip-content="Suggest a play (not guaranteed to succeed)"
         className="big"
         onClick={(evt) => {
           evt.preventDefault();

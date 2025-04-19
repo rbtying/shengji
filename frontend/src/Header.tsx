@@ -4,6 +4,8 @@ import GameStatisticsButton from "./GameStatisticsButton";
 import SettingsButton from "./SettingsButton";
 import { GameModeSettings } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   gameMode: GameModeSettings;
   chatLink?: string | null;

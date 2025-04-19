@@ -2,6 +2,8 @@ import * as React from "react";
 import { Player } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 
+import type { JSX } from "react";
+
 interface Props {
   players: Player[];
   player: Player;
@@ -10,7 +12,7 @@ interface Props {
 function MovePlayerButton(
   relative: number,
   children: string,
-): React.FunctionComponent<Props> {
+): React.FunctionComponent<React.PropsWithChildren<Props>> {
   const component = (props: Props): JSX.Element => {
     const { players, player } = props;
     const { send } = React.useContext(WebsocketContext);

@@ -4,6 +4,8 @@ import { TimerContext } from "./TimerProvider";
 import LabeledPlay from "./LabeledPlay";
 import PublicRoomsPane from "./PublicRoomsPane";
 
+import type { JSX } from "react";
+
 interface IProps {
   name: string;
   room_name: string;

@@ -8,12 +8,16 @@ import {
 import { SettingsContext } from "./AppStateProvider";
 import { ISuitOverrides } from "./state/Settings";
 
+import type { JSX } from "react";
+
 const InlineCardBase = styled.span`
   padding-left: 0.1em;
   padding-right: 0.1em;
 `;
 
-function Suit(className: string): React.FunctionComponent<object> {
+function Suit(
+  className: string,
+): React.FunctionComponent<React.PropsWithChildren<object>> {
   const component = (props: object): JSX.Element => {
     const settings = React.useContext(SettingsContext);
     return (
@@ -39,7 +43,7 @@ const Unknown = Suit("🂠");
 
 const suitComponent = (
   suitCard: ISuitCard,
-): React.FunctionComponent<object> => {
+): React.FunctionComponent<React.PropsWithChildren<object>> => {
   switch (suitCard.suit) {
     case "diamonds":
       return Diamonds;

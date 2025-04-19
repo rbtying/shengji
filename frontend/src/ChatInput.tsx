@@ -3,6 +3,8 @@ import styled from "styled-components";
 import IconButton from "./IconButton";
 import PaperPlane from "./icons/PaperPlane";
 
+import type { JSX } from "react";
+
 const ChatBox = styled.div`
   border-radius: 25px;
   border: 0px;

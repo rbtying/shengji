@@ -9,6 +9,8 @@ import {
   numberLocalStorageState,
 } from "./localStorageState";
 
+import type { JSX } from "react";
+
 export interface AppState {
   settings: Settings;
   gameStatistics: GameStatistics;
