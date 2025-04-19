@@ -2,6 +2,8 @@ import * as React from "react";
 import ArrayUtils from "./util/array";
 import styled from "styled-components";
 
+import type { JSX } from "react";
+
 const Container = styled.div`
   position: relative;
 `;
@@ -22,7 +24,9 @@ interface IProps {
   style?: React.CSSProperties;
   children: JSX.Element[];
 }
-const EllipseLayout: React.FunctionComponent<IProps> = (props: IProps) => {
+const EllipseLayout: React.FunctionComponent<
+  React.PropsWithChildren<IProps>
+> = (props: IProps) => {
   const childrenCount = React.Children.count(props.children);
   const step = (2 * Math.PI) / childrenCount;
   const angles = ArrayUtils.range(childrenCount, (i) => i * step);

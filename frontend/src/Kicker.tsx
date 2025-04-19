@@ -1,6 +1,8 @@
 import * as React from "react";
 import { Player } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   onKick: (playerId: number) => void;
   players: Player[];

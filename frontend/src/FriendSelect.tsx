@@ -7,6 +7,8 @@ import preloadedCards from "./preloadedCards";
 import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 
+import type { JSX } from "react";
+
 interface FriendSelection {
   card: string;
   initial_skip: number;

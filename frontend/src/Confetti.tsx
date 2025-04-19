@@ -2,6 +2,8 @@ import * as React from "react";
 import Timeout from "./Timeout";
 import * as confetti from "canvas-confetti";
 
+import type { JSX } from "react";
+
 interface IProps {
   confetti: string;
   clearConfetti: () => void;
@@ -9,7 +11,7 @@ interface IProps {
 
 const Confetti = (props: IProps): JSX.Element => {
   const duration = 30000;
-  const canvasRef = React.useCallback((canvas) => {
+  const canvasRef = React.useCallback((canvas: any) => {
     if (canvas !== null) {
       const c = confetti.create(canvas, {
         resize: true,

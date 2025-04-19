@@ -1,5 +1,5 @@
 import * as React from "react";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import ReactModal from "react-modal";
 import { EmojiStyle } from "emoji-picker-react";
 import ReadyCheck from "./ReadyCheck";
@@ -22,6 +22,8 @@ import { WebsocketContext } from "./WebsocketProvider";
 import Header from "./Header";
 import Players from "./Players";
 import { GameScoringSettings } from "./ScoringSettings";
+
+import type { JSX } from "react";
 
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
@@ -1406,37 +1408,32 @@ const Initialize = (props: IProps): JSX.Element => {
             Setting Management:
             <button
               className="normal"
-              data-tip
-              data-for="saveTip"
+              data-tooltip-id="saveTip"
+              data-tooltip-content="Save game settings"
               onClick={saveGameSettings}
             >
               Save
             </button>
-            <ReactTooltip id="saveTip" place="top" effect="solid">
-              Save game settings
-            </ReactTooltip>
+            <Tooltip id="saveTip" place="top" />
             <button
               className="normal"
-              data-tip
-              data-for="loadTip"
+              data-tooltip-id="loadTip"
+              data-tooltip-content={"Load saved game settings"}
               onClick={loadGameSettings}
             >
               Load
             </button>
-            <ReactTooltip id="loadTip" place="top" effect="solid">
-              Load saved game settings
-            </ReactTooltip>
+            <Tooltip id="loadTip" place="top" />
             <button
               className="normal"
-              data-tip
-              data-for="resetTip"
+              data-tooltip-id="resetTip"
+              data-tooltip-content="Reset game settings to defaults"
+              data-ti="resetTip"
               onClick={resetGameSettings}
             >
               Reset
             </button>
-            <ReactTooltip id="resetTip" place="top" effect="solid">
-              Reset game settings to defaults
-            </ReactTooltip>
+            <Tooltip id="resetTip" place="top" />
           </label>
         </div>
       </div>

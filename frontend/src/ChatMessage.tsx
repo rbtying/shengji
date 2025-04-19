@@ -4,6 +4,8 @@ import classNames from "classnames";
 import ArrayUtil from "./util/array";
 import { BroadcastMessage } from "./gen-types";
 
+import type { JSX } from "react";
+
 export interface Message {
   from: string;
   message: string;

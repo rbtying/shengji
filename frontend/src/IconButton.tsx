@@ -1,6 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
 
+import type { JSX } from "react";
+
 const Button = styled.button`
   outline: none;
   padding: 0;

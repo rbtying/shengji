@@ -4,6 +4,8 @@ import ChatMessage, { Message } from "./ChatMessage";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
 
+import type { JSX } from "react";
+
 interface IProps {
   messages: Message[];
 }

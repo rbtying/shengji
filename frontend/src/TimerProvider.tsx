@@ -5,6 +5,8 @@
 
 import * as React from "react";
 
+import type { JSX } from "react";
+
 interface Context {
   setTimeout: (fn: () => void, delay: number) => number;
   clearTimeout: (id: number) => void;
@@ -23,7 +25,9 @@ interface IProps {
   children: JSX.Element[] | JSX.Element;
 }
 
-const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
+const _TimerProvider: React.FunctionComponent<
+  React.PropsWithChildren<IProps>
+> = (props: IProps) => {
   const [worker, setWorker] = React.useState<Worker | null>(null);
   const timeoutId = React.useRef(0);
   const callbacks = React.useRef<Map<number, () => void>>(new Map());
@@ -98,8 +102,8 @@ const _TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => {
   );
 };
 
-const TimerProvider: React.FunctionComponent<IProps> = (props: IProps) => (
-  <_TimerProvider>{props.children}</_TimerProvider>
-);
+const TimerProvider: React.FunctionComponent<
+  React.PropsWithChildren<IProps>
+> = (props: IProps) => <_TimerProvider>{props.children}</_TimerProvider>;
 
 export default TimerProvider;

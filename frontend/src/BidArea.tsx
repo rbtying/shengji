@@ -13,6 +13,8 @@ import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
 import WasmContext from "./WasmContext";
 
+import type { JSX } from "react";
+
 interface IBidAreaProps {
   bids: Bid[];
   autobid: Bid | null;

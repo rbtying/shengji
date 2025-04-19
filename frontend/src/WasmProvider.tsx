@@ -3,6 +3,8 @@ import * as Shengji from "../shengji-wasm/pkg/shengji-core.js";
 import WasmContext from "./WasmContext";
 import { Trump, TractorRequirements } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   children: React.ReactNode;
 }

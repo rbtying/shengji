@@ -140,7 +140,7 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
                 .into_iter()
                 .flat_map(|u| {
                     u.into_iter()
-                        .flat_map(|(card, count)| std::iter::repeat(card.card).take(count))
+                        .flat_map(|(card, count)| std::iter::repeat_n(card.card, count))
                         .collect::<Vec<_>>()
                 })
                 .collect()

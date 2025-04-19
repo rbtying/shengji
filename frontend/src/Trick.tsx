@@ -1,11 +1,13 @@
 import * as React from "react";
 
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import classNames from "classnames";
 
 import LabeledPlay from "./LabeledPlay";
 import { PlayedCards, Player, Trick } from "./gen-types";
 import ArrayUtils from "./util/array";
+
+import type { JSX } from "react";
 
 interface IProps {
   players: Player[];
@@ -83,20 +85,22 @@ const TrickE = (props: IProps): JSX.Element => {
         const suffix = winning ? (
           <>
             {" "}
-            <ReactTooltip id="winningTip" place="bottom" effect="solid">
-              Current winner of trick
-            </ReactTooltip>
-            <span data-tip data-for="winningTip">
+            <Tooltip id="winningTip" place="bottom" />
+            <span
+              data-tooltip-id="winningTip"
+              data-tooltip-content="Current winner of trick"
+            >
               (<code>!</code>)
             </span>
           </>
         ) : better ? (
           <>
             {" "}
-            <ReactTooltip id="betterTip" place="bottom" effect="solid">
-              First player who can prevent the attempted throw
-            </ReactTooltip>
-            <span data-tip data-for="betterTip">
+            <Tooltip id="betterTip" place="bottom" />
+            <span
+              data-tooltip-id="betterTip"
+              data-tooltip-content="First player who can prevent the attempted throw"
+            >
               (<code>-</code>)
             </span>
           </>

@@ -4,6 +4,8 @@ import classNames from "classnames";
 import Card from "./Card";
 import { Trump } from "./gen-types";
 
+import type { JSX } from "react";
+
 interface IProps {
   id?: number | null;
   className?: string;

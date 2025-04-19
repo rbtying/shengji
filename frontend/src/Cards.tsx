@@ -6,6 +6,8 @@ import ArrayUtils from "./util/array";
 import WasmContext from "./WasmContext";
 import { SettingsContext } from "./AppStateProvider";
 
+import type { JSX } from "react";
+
 interface IProps {
   hands: Hands;
   trump: Trump;

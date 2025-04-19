@@ -3,6 +3,8 @@ import { GameScoringParameters, Deck, ScoreSegment } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 import { WasmContext } from "./WasmContext";
 
+import type { JSX } from "react";
+
 interface IProps {
   params: GameScoringParameters;
   decks: Deck[];

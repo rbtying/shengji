@@ -1,6 +1,8 @@
 import * as React from "react";
 import { SettingsContext } from "./AppStateProvider";
 
+import type { JSX } from "react";
+
 const DEFAULT_TITLE = "Play 升级 / Tractor / 找朋友 / Finding Friends online!";
 
 const TitleHandler = (props: { playerName?: string }): JSX.Element => {

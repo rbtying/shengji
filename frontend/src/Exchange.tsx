@@ -13,6 +13,8 @@ import LabeledPlay from "./LabeledPlay";
 import { ExchangePhase, Friend } from "./gen-types";
 import Cards from "./Cards";
 
+import type { JSX } from "react";
+
 interface IExchangeProps {
   state: ExchangePhase;
   name: string;

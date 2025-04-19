@@ -8,6 +8,8 @@ import {
 import { CompactPicker } from "react-color";
 import styled from "styled-components";
 
+import type { JSX } from "react";
+
 const Picker = React.lazy(async () => await import("emoji-picker-react"));
 
 const Row = styled.div`

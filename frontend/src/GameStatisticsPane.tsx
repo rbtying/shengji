@@ -2,6 +2,8 @@ import * as React from "react";
 import { GameStatistics } from "./state/GameStatistics";
 import styled from "styled-components";
 
+import type { JSX } from "react";
+
 const Row = styled.div`
   display: table-row;
   line-height: 23px;

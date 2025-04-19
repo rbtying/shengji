@@ -9,6 +9,8 @@ import { ISuitOverrides } from "./state/Settings";
 import { Trump } from "./gen-types";
 import WasmContext from "./WasmContext";
 
+import type { JSX } from "react";
+
 const SvgCard = React.lazy(async () => await import("./SvgCard"));
 
 interface IProps {
