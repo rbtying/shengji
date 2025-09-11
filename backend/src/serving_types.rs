@@ -42,6 +42,8 @@ impl State for VersionedGame {
 pub struct JoinRoom {
     pub(crate) room_name: String,
     pub(crate) name: String,
+    #[serde(default)]
+    pub(crate) disable_compression: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

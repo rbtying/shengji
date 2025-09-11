@@ -30,11 +30,24 @@ async fn send_to_user(
     tx: &'_ mpsc::UnboundedSender<Vec<u8>>,
     msg: &GameMessage,
 ) -> Result<(), anyhow::Error> {
+    send_to_user_with_compression(tx, msg, false).await
+}
+
+async fn send_to_user_with_compression(
+    tx: &'_ mpsc::UnboundedSender<Vec<u8>>,
+    msg: &GameMessage,
+    disable_compression: bool,
+) -> Result<(), anyhow::Error> {
     if let Ok(j) = serde_json::to_vec(&msg) {
-        if let Ok(s) = ZSTD_COMPRESSOR.lock().unwrap().compress(&j) {
-            if tx.send(s).is_ok() {
-                return Ok(());
-            }
+        let data = if disable_compression {
+            j
+        } else {
+            ZSTD_COMPRESSOR.lock().unwrap().compress(&j)
+                .map_err(|_| anyhow::anyhow!("Unable to compress message"))?
+        };
+
+        if tx.send(data).is_ok() {
+            return Ok(());
         }
     }
     Err(anyhow::anyhow!("Unable to send message to user {:?}", msg))
@@ -48,11 +61,11 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
     backend_storage: S,
     stats: Arc<Mutex<InMemoryStats>>,
 ) -> Result<(), anyhow::Error> {
-    let (room, name) = loop {
+    let (room, name, disable_compression) = loop {
         if let Some(msg) = rx.recv().await {
             let err = match serde_json::from_slice(&msg) {
-                Ok(JoinRoom { room_name, name }) if room_name.len() == 16 && name.len() < 32 => {
-                    break (room_name, name);
+                Ok(JoinRoom { room_name, name, disable_compression }) if room_name.len() == 16 && name.len() < 32 => {
+                    break (room_name, name, disable_compression);
                 }
                 Ok(_) => GameMessage::Error("invalid room or name".to_string()),
                 Err(err) => GameMessage::Error(format!("couldn't deserialize message {err:?}")),
@@ -91,6 +104,7 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
         tx.clone(),
         subscribe_player_id_rx,
         subscription,
+        disable_compression,
     ));
 
     let (player_id, join_span) = register_user(
@@ -131,6 +145,7 @@ async fn player_subscribe_task(
     tx: mpsc::UnboundedSender<Vec<u8>>,
     subscribe_player_id_rx: oneshot::Receiver<PlayerID>,
     mut subscription: mpsc::UnboundedReceiver<GameMessage>,
+    disable_compression: bool,
 ) {
     debug!(logger_, "Subscribed to messages");
     if let Ok(player_id) = subscribe_player_id_rx.await {
@@ -160,7 +175,7 @@ async fn player_subscribe_task(
             };
 
             if let Some(v) = v {
-                if send_to_user(&tx, &v).await.is_err() {
+                if send_to_user_with_compression(&tx, &v, disable_compression).await.is_err() {
                     break;
                 }
             }
