@@ -10,7 +10,7 @@ import WebsocketProvider from "./WebsocketProvider";
 import TimerProvider from "./TimerProvider";
 import Root from "./Root";
 
-const WasmProvider = React.lazy(async () => await import("./WasmProvider"));
+const WasmProvider = React.lazy(async () => await import("./WasmOrRpcProvider"));
 
 const bootstrap = (): void => {
   Sentry.init({
