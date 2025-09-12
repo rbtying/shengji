@@ -196,4 +196,5 @@ pub enum WasmRpcResponse {
     ComputeScore(ComputeScoreResponse),
     ComputeDeckLen(ComputeDeckLenResponse),
     GetCardInfo(CardInfo),
+    Error(String),
 }

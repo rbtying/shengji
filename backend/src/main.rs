@@ -9,7 +9,7 @@ use std::sync::{
 use axum::{
     extract::ws::{Message, WebSocketUpgrade},
     response::{IntoResponse, Redirect},
-    routing::get,
+    routing::{get, post},
     Extension, Json, Router,
 };
 use futures::{SinkExt, StreamExt};
@@ -37,6 +37,7 @@ mod serving_types;
 mod shengji_handler;
 mod state_dump;
 mod utils;
+mod wasm_rpc_handler;
 
 use serving_types::{CardsBlob, VersionedGame};
 use state_dump::InMemoryStats;
@@ -118,6 +119,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let app = Router::new()
         .route("/api", get(handle_websocket))
+        .route("/api/rpc", post(wasm_rpc_handler::handle_wasm_rpc))
         .route(
             "/default_settings.json",
             get(|| async { Json(settings::PropagatedState::default()) }),
