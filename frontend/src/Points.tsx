@@ -81,7 +81,9 @@ const Points = (props: IProps): JSX.Element => {
   const [scoreData, setScoreData] = React.useState<ComputeScoreResponse | null>(
     null,
   );
-  const [scoreTransitions, setScoreTransitions] = React.useState<ScoreSegment[]>([]);
+  const [scoreTransitions, setScoreTransitions] = React.useState<
+    ScoreSegment[]
+  >([]);
   const [totalPoints, setTotalPoints] = React.useState<number>(100);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
@@ -111,7 +113,9 @@ const Points = (props: IProps): JSX.Element => {
         );
         let scoringResult = explainScoringCache[scoringKey];
 
-        const promises: Promise<ComputeScoreResponse | ExplainScoringResponse>[] = [
+        const promises: Promise<
+          ComputeScoreResponse | ExplainScoringResponse
+        >[] = [
           engine.computeScore({
             params: props.gameScoringParameters,
             decks: props.decks,
@@ -246,7 +250,9 @@ const Points = (props: IProps): JSX.Element => {
 
 export const ProgressBarDisplay = (props: IProps): JSX.Element => {
   const engine = useEngine();
-  const [scoreTransitions, setScoreTransitions] = React.useState<ScoreSegment[]>([]);
+  const [scoreTransitions, setScoreTransitions] = React.useState<
+    ScoreSegment[]
+  >([]);
   const [totalPoints, setTotalPoints] = React.useState<number>(0);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 

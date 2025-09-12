@@ -45,7 +45,7 @@ type WasmRpcRequest =
   | ({ type: "ExplainScoring" } & ExplainScoringRequest)
   | ({ type: "ComputeScore" } & ComputeScoreRequest)
   | ({ type: "NextThresholdReachable" } & NextThresholdReachableRequest)
-  | ({ type: "ComputeDeckLen"; decks: Deck[] })
+  | { type: "ComputeDeckLen"; decks: Deck[] }
   | ({ type: "BatchGetCardInfo" } & BatchCardInfoRequest);
 
 // Helper to make RPC calls to the server

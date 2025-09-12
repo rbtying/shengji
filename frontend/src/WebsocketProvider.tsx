@@ -159,7 +159,7 @@ const WebsocketProvider: React.FunctionComponent<
         // Binary message (compressed)
         const f = (buf: ArrayBuffer): void => {
           const message = decodeWireFormat(new Uint8Array(buf)) as GameMessage;
-          if (message && typeof message === 'object' && "Kicked" in message) {
+          if (message && typeof message === "object" && "Kicked" in message) {
             ws.close();
           } else {
             updateStateRef.current({
