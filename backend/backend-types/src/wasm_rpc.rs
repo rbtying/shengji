@@ -159,6 +159,16 @@ pub struct CardInfoRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+pub struct BatchCardInfoRequest {
+    pub requests: Vec<CardInfoRequest>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct BatchCardInfoResponse {
+    pub results: Vec<CardInfo>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct ComputeDeckLenRequest {
     pub decks: Vec<Deck>,
 }
@@ -180,7 +190,7 @@ pub enum WasmRpcRequest {
     ExplainScoring(ExplainScoringRequest),
     ComputeScore(ComputeScoreRequest),
     ComputeDeckLen(ComputeDeckLenRequest),
-    GetCardInfo(CardInfoRequest),
+    BatchGetCardInfo(BatchCardInfoRequest),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -195,6 +205,6 @@ pub enum WasmRpcResponse {
     ExplainScoring(ExplainScoringResponse),
     ComputeScore(ComputeScoreResponse),
     ComputeDeckLen(ComputeDeckLenResponse),
-    GetCardInfo(CardInfo),
+    BatchGetCardInfo(BatchCardInfoResponse),
     Error(String),
 }

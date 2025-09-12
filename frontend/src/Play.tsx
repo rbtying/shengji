@@ -23,8 +23,12 @@ import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
-import { useAsyncWasm } from "./useAsyncWasm";
+import { useEngine } from "./useEngine";
 import InlineCard from "./InlineCard";
+import {
+  prefillCardInfoCache,
+  prefillExplainScoringCache,
+} from "./util/cachePrefill";
 
 import type { JSX } from "react";
 
@@ -49,13 +53,24 @@ const Play = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [grouping, setGrouping] = React.useState<FoundViablePlay[]>([]);
-  const asyncWasm = useAsyncWasm();
+  const engine = useEngine();
+  const [lastPrefillTrump, setLastPrefillTrump] = React.useState<string | null>(
+    null,
+  );
 
   // Helper function to update selection and grouping
-  const updateSelectionAndGrouping = async (newSelected: string[], trump: any, tractorRequirements: any) => {
+  const updateSelectionAndGrouping = async (
+    newSelected: string[],
+    trump: any,
+    tractorRequirements: any,
+  ) => {
     setSelected(newSelected);
     try {
-      const plays = await asyncWasm.findViablePlays(trump, tractorRequirements, newSelected);
+      const plays = await engine.findViablePlays(
+        trump,
+        tractorRequirements,
+        newSelected,
+      );
       setGrouping(plays);
     } catch (error) {
       console.error("Error finding viable plays:", error);
@@ -99,6 +114,39 @@ const Play = (props: IProps): JSX.Element => {
     };
   }
 
+  // Prefill caches when trump or game parameters change
+  React.useEffect(() => {
+    const trumpKey = JSON.stringify(playPhase.trump);
+
+    // Only prefill if trump has changed
+    if (trumpKey !== lastPrefillTrump) {
+      console.log("Trump changed, prefilling caches...");
+      setLastPrefillTrump(trumpKey);
+
+      // Prefill card info cache for all cards with the new trump
+      prefillCardInfoCache(engine, playPhase.trump).catch((error) => {
+        console.error("Failed to prefill card info cache:", error);
+      });
+
+      // Prefill explainScoring cache
+      if (playPhase.propagated.game_scoring_parameters && playPhase.decks) {
+        prefillExplainScoringCache(
+          engine,
+          playPhase.propagated.game_scoring_parameters,
+          playPhase.decks,
+        ).catch((error) => {
+          console.error("Failed to prefill explainScoring cache:", error);
+        });
+      }
+    }
+  }, [
+    playPhase.trump,
+    playPhase.propagated.game_scoring_parameters,
+    playPhase.decks,
+    engine,
+    lastPrefillTrump,
+  ]);
+
   React.useEffect(() => {
     // When the hands change, our `selected` cards may become invalid, since we
     // could have raced and selected cards that we just played.
@@ -126,7 +174,7 @@ const Play = (props: IProps): JSX.Element => {
       updateSelectionAndGrouping(
         newSelected,
         playPhase.trump,
-        playPhase.propagated.tractor_requirements!
+        playPhase.propagated.tractor_requirements!,
       );
     }
   }, [playPhase.hands.hands, currentPlayer.id, selected]);
@@ -139,23 +187,26 @@ const Play = (props: IProps): JSX.Element => {
 
   React.useEffect(() => {
     if (!isSpectator && selected.length > 0) {
-      asyncWasm.canPlayCards({
-        trick: playPhase.trick,
-        id: currentPlayer!.id,
-        hands: playPhase.hands,
-        cards: selected,
-        trick_draw_policy: playPhase.propagated.trick_draw_policy!,
-      }).then((playable) => {
-        // In order to play the first trick, the grouping must be disambiguated!
-        if (lastPlay === undefined) {
-          playable = playable && grouping.length === 1;
-        }
-        playable = playable && !playPhase.game_ended_early;
-        setCanPlay(playable);
-      }).catch((error) => {
-        console.error("Error checking if cards can be played:", error);
-        setCanPlay(false);
-      });
+      engine
+        .canPlayCards({
+          trick: playPhase.trick,
+          id: currentPlayer!.id,
+          hands: playPhase.hands,
+          cards: selected,
+          trick_draw_policy: playPhase.propagated.trick_draw_policy!,
+        })
+        .then((playable) => {
+          // In order to play the first trick, the grouping must be disambiguated!
+          if (lastPlay === undefined) {
+            playable = playable && grouping.length === 1;
+          }
+          playable = playable && !playPhase.game_ended_early;
+          setCanPlay(playable);
+        })
+        .catch((error) => {
+          console.error("Error checking if cards can be played:", error);
+          setCanPlay(false);
+        });
     } else {
       setCanPlay(false);
     }
@@ -169,7 +220,7 @@ const Play = (props: IProps): JSX.Element => {
     lastPlay,
     playPhase.game_ended_early,
     grouping,
-    asyncWasm,
+    engine,
   ]);
 
   const isCurrentPlayerTurn = currentPlayer.id === nextPlayer;
@@ -203,17 +254,23 @@ const Play = (props: IProps): JSX.Element => {
 
   React.useEffect(() => {
     if (!canFinish && playPhase.decks) {
-      asyncWasm.nextThresholdReachable({
-        decks: playPhase.decks,
-        params: playPhase.propagated.game_scoring_parameters!,
-        non_landlord_points: nonLandlordPointsWithPenalties,
-        observed_points: totalPointsPlayed,
-      }).then((reachable) => {
-        setCanEndGameEarly(!reachable);
-      }).catch((error) => {
-        console.error("Error checking if next threshold is reachable:", error);
-        setCanEndGameEarly(false);
-      });
+      engine
+        .nextThresholdReachable({
+          decks: playPhase.decks,
+          params: playPhase.propagated.game_scoring_parameters!,
+          non_landlord_points: nonLandlordPointsWithPenalties,
+          observed_points: totalPointsPlayed,
+        })
+        .then((reachable) => {
+          setCanEndGameEarly(!reachable);
+        })
+        .catch((error) => {
+          console.error(
+            "Error checking if next threshold is reachable:",
+            error,
+          );
+          setCanEndGameEarly(false);
+        });
     } else {
       setCanEndGameEarly(false);
     }
@@ -223,7 +280,7 @@ const Play = (props: IProps): JSX.Element => {
     playPhase.propagated.game_scoring_parameters,
     nonLandlordPointsWithPenalties,
     totalPointsPlayed,
-    asyncWasm,
+    engine,
   ]);
 
   const landlordSuffix =
@@ -255,10 +312,14 @@ const Play = (props: IProps): JSX.Element => {
         : [];
     // TODO: Make this async or cache the sorted results
     // For now, return all cards in a single group
-    return cardsInHand.length > 0 ? [{
-      suit: null as any, // Will be replaced when async is properly handled
-      cards: cardsInHand,
-    }] : [];
+    return cardsInHand.length > 0
+      ? [
+          {
+            suit: null as any, // Will be replaced when async is properly handled
+            cards: cardsInHand,
+          },
+        ]
+      : [];
   };
 
   return (
@@ -386,7 +447,7 @@ const Play = (props: IProps): JSX.Element => {
                 updateSelectionAndGrouping(
                   newSelected,
                   playPhase.trump,
-                  playPhase.propagated.tractor_requirements!
+                  playPhase.propagated.tractor_requirements!,
                 );
               }}
             />
@@ -423,7 +484,7 @@ const Play = (props: IProps): JSX.Element => {
               updateSelectionAndGrouping(
                 newSelected,
                 playPhase.trump,
-                playPhase.propagated.tractor_requirements!
+                playPhase.propagated.tractor_requirements!,
               );
             }}
             notifyEmpty={isCurrentPlayerTurn}
@@ -479,7 +540,7 @@ const HelperContents = (props: {
   trickDrawPolicy: TrickDrawPolicy;
   setSelected: (selected: string[]) => void;
 }): JSX.Element => {
-  const asyncWasm = useAsyncWasm();
+  const engine = useEngine();
   const [decomp, setDecomp] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
 
@@ -487,28 +548,37 @@ const HelperContents = (props: {
     let cancelled = false;
     setLoading(true);
 
-    asyncWasm.decomposeTrickFormat({
-      trick_format: props.format,
-      hands: props.hands,
-      player_id: props.playerId,
-      trick_draw_policy: props.trickDrawPolicy,
-    }).then((result) => {
-      if (!cancelled) {
-        setDecomp(result);
-        setLoading(false);
-      }
-    }).catch((error) => {
-      console.error("Error decomposing trick format:", error);
-      if (!cancelled) {
-        setDecomp([]);
-        setLoading(false);
-      }
-    });
+    engine
+      .decomposeTrickFormat({
+        trick_format: props.format,
+        hands: props.hands,
+        player_id: props.playerId,
+        trick_draw_policy: props.trickDrawPolicy,
+      })
+      .then((result) => {
+        if (!cancelled) {
+          setDecomp(result);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error decomposing trick format:", error);
+        if (!cancelled) {
+          setDecomp([]);
+          setLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [props.format, props.hands, props.playerId, props.trickDrawPolicy, asyncWasm]);
+  }, [
+    props.format,
+    props.hands,
+    props.playerId,
+    props.trickDrawPolicy,
+    engine,
+  ]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -601,7 +671,7 @@ const TrickFormatHelper = (props: {
   trickDrawPolicy: TrickDrawPolicy;
   setSelected: (selected: string[]) => void;
 }): JSX.Element => {
-  const asyncWasm = useAsyncWasm();
+  const engine = useEngine();
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [message, setMessage] = React.useState<string>("");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -634,7 +704,7 @@ const TrickFormatHelper = (props: {
           evt.preventDefault();
           setIsLoading(true);
           try {
-            const decomp = await asyncWasm.decomposeTrickFormat({
+            const decomp = await engine.decomposeTrickFormat({
               trick_format: props.format,
               hands: props.hands,
               player_id: props.playerId,

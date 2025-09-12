@@ -19,8 +19,8 @@ import {
   ComputeScoreRequest,
   ComputeScoreResponse,
   Deck,
-  CardInfoRequest,
-  CardInfo,
+  BatchCardInfoRequest,
+  BatchCardInfoResponse,
 } from "./gen-types";
 
 import type { JSX } from "react";
@@ -74,29 +74,43 @@ const createAsyncFunctions = (useWasm: boolean) => {
       findValidBids: async (req: FindValidBidsRequest): Promise<Bid[]> => {
         return Shengji.find_valid_bids(req).results;
       },
-      sortAndGroupCards: async (req: SortAndGroupCardsRequest): Promise<SuitGroup[]> => {
+      sortAndGroupCards: async (
+        req: SortAndGroupCardsRequest,
+      ): Promise<SuitGroup[]> => {
         return Shengji.sort_and_group_cards(req).results;
       },
-      decomposeTrickFormat: async (req: DecomposeTrickFormatRequest): Promise<DecomposedTrickFormat[]> => {
+      decomposeTrickFormat: async (
+        req: DecomposeTrickFormatRequest,
+      ): Promise<DecomposedTrickFormat[]> => {
         return Shengji.decompose_trick_format(req).results;
       },
       canPlayCards: async (req: CanPlayCardsRequest): Promise<boolean> => {
         return Shengji.can_play_cards(req).playable;
       },
-      explainScoring: async (req: ExplainScoringRequest): Promise<ExplainScoringResponse> => {
+      explainScoring: async (
+        req: ExplainScoringRequest,
+      ): Promise<ExplainScoringResponse> => {
         return Shengji.explain_scoring(req);
       },
-      nextThresholdReachable: async (req: NextThresholdReachableRequest): Promise<boolean> => {
+      nextThresholdReachable: async (
+        req: NextThresholdReachableRequest,
+      ): Promise<boolean> => {
         return Shengji.next_threshold_reachable(req);
       },
-      computeScore: async (req: ComputeScoreRequest): Promise<ComputeScoreResponse> => {
+      computeScore: async (
+        req: ComputeScoreRequest,
+      ): Promise<ComputeScoreResponse> => {
         return Shengji.compute_score(req);
       },
       computeDeckLen: async (decks: Deck[]): Promise<number> => {
         return Shengji.compute_deck_len({ decks });
       },
-      getCardInfo: async (req: CardInfoRequest): Promise<CardInfo> => {
-        return Shengji.get_card_info(req);
+      batchGetCardInfo: async (
+        req: BatchCardInfoRequest,
+      ): Promise<BatchCardInfoResponse> => {
+        // WASM doesn't have batch API, so call individually
+        const results = req.requests.map((r) => Shengji.get_card_info(r));
+        return { results };
       },
     };
   } else {
@@ -122,14 +136,18 @@ const createAsyncFunctions = (useWasm: boolean) => {
         });
         return response.results;
       },
-      sortAndGroupCards: async (req: SortAndGroupCardsRequest): Promise<SuitGroup[]> => {
+      sortAndGroupCards: async (
+        req: SortAndGroupCardsRequest,
+      ): Promise<SuitGroup[]> => {
         const response = await callRpc<any>({
           type: "SortAndGroupCards",
           ...req,
         });
         return response.results;
       },
-      decomposeTrickFormat: async (req: DecomposeTrickFormatRequest): Promise<DecomposedTrickFormat[]> => {
+      decomposeTrickFormat: async (
+        req: DecomposeTrickFormatRequest,
+      ): Promise<DecomposedTrickFormat[]> => {
         const response = await callRpc<any>({
           type: "DecomposeTrickFormat",
           ...req,
@@ -143,19 +161,25 @@ const createAsyncFunctions = (useWasm: boolean) => {
         });
         return response.playable;
       },
-      explainScoring: async (req: ExplainScoringRequest): Promise<ExplainScoringResponse> => {
+      explainScoring: async (
+        req: ExplainScoringRequest,
+      ): Promise<ExplainScoringResponse> => {
         return await callRpc<ExplainScoringResponse>({
           type: "ExplainScoring",
           ...req,
         });
       },
-      nextThresholdReachable: async (req: NextThresholdReachableRequest): Promise<boolean> => {
+      nextThresholdReachable: async (
+        req: NextThresholdReachableRequest,
+      ): Promise<boolean> => {
         return await callRpc<boolean>({
           type: "NextThresholdReachable",
           ...req,
         });
       },
-      computeScore: async (req: ComputeScoreRequest): Promise<ComputeScoreResponse> => {
+      computeScore: async (
+        req: ComputeScoreRequest,
+      ): Promise<ComputeScoreResponse> => {
         return await callRpc<ComputeScoreResponse>({
           type: "ComputeScore",
           ...req,
@@ -168,9 +192,11 @@ const createAsyncFunctions = (useWasm: boolean) => {
         });
         return response.length;
       },
-      getCardInfo: async (req: CardInfoRequest): Promise<CardInfo> => {
-        return await callRpc<CardInfo>({
-          type: "GetCardInfo",
+      batchGetCardInfo: async (
+        req: BatchCardInfoRequest,
+      ): Promise<BatchCardInfoResponse> => {
+        return await callRpc<BatchCardInfoResponse>({
+          type: "BatchGetCardInfo",
           ...req,
         });
       },
@@ -178,8 +204,8 @@ const createAsyncFunctions = (useWasm: boolean) => {
   }
 };
 
-// Create a new context for async functions
-interface AsyncContext {
+// Create a new context for game engine functions
+export interface EngineContext {
   findViablePlays: (
     trump: Trump,
     tractorRequirements: TractorRequirements,
@@ -191,82 +217,66 @@ interface AsyncContext {
     req: DecomposeTrickFormatRequest,
   ) => Promise<DecomposedTrickFormat[]>;
   canPlayCards: (req: CanPlayCardsRequest) => Promise<boolean>;
-  explainScoring: (req: ExplainScoringRequest) => Promise<ExplainScoringResponse>;
-  nextThresholdReachable: (req: NextThresholdReachableRequest) => Promise<boolean>;
+  explainScoring: (
+    req: ExplainScoringRequest,
+  ) => Promise<ExplainScoringResponse>;
+  nextThresholdReachable: (
+    req: NextThresholdReachableRequest,
+  ) => Promise<boolean>;
   computeScore: (req: ComputeScoreRequest) => Promise<ComputeScoreResponse>;
   computeDeckLen: (req: Deck[]) => Promise<number>;
-  getCardInfo: (req: CardInfoRequest) => Promise<CardInfo>;
+  batchGetCardInfo: (
+    req: BatchCardInfoRequest,
+  ) => Promise<BatchCardInfoResponse>;
   decodeWireFormat: (req: Uint8Array) => any;
   isUsingWasm: boolean;
 }
 
-export const AsyncWasmContext = React.createContext<AsyncContext | null>(null);
+export const EngineContext = React.createContext<EngineContext | null>(null);
 
 const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   const useWasm = isWasmAvailable();
-  const asyncFuncs = React.useMemo(() => createAsyncFunctions(useWasm), [useWasm]);
+  const engineFuncs = React.useMemo(
+    () => createAsyncFunctions(useWasm),
+    [useWasm],
+  );
 
-  // For backwards compatibility, also provide the synchronous context
-  // but wrap async functions to throw an error if called synchronously
-  const syncContextValue = React.useMemo(() => ({
-    findViablePlays: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    findValidBids: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    sortAndGroupCards: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    decomposeTrickFormat: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    canPlayCards: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    explainScoring: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    nextThresholdReachable: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    computeScore: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    computeDeckLen: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    getCardInfo: () => {
-      throw new Error("Use AsyncWasmContext for async functions");
-    },
-    decodeWireFormat: (req: Uint8Array) => {
-      if (useWasm) {
-        return JSON.parse(Shengji.zstd_decompress(req));
-      } else {
-        // When WASM is not available, messages should already be decompressed
-        // by the server, so we can just parse them directly
-        const text = new TextDecoder().decode(req);
-        return JSON.parse(text);
-      }
-    },
-  }), [useWasm]);
+  // Only provide decodeWireFormat in the synchronous context
+  const syncContextValue = React.useMemo(
+    () => ({
+      decodeWireFormat: (req: Uint8Array) => {
+        if (useWasm) {
+          return JSON.parse(Shengji.zstd_decompress(req));
+        } else {
+          // When WASM is not available, messages should already be decompressed
+          // by the server, so we can just parse them directly
+          const text = new TextDecoder().decode(req);
+          return JSON.parse(text);
+        }
+      },
+    }),
+    [useWasm],
+  );
 
-  const asyncContextValue: AsyncContext = React.useMemo(() => ({
-    ...asyncFuncs,
-    decodeWireFormat: syncContextValue.decodeWireFormat,
-    isUsingWasm: useWasm,
-  }), [asyncFuncs, syncContextValue, useWasm]);
+  const engineContextValue: EngineContext = React.useMemo(
+    () => ({
+      ...engineFuncs,
+      decodeWireFormat: syncContextValue.decodeWireFormat,
+      isUsingWasm: useWasm,
+    }),
+    [engineFuncs, syncContextValue, useWasm],
+  );
 
   if (useWasm) {
     (window as any).shengji = Shengji;
   }
 
   return (
-    <AsyncWasmContext.Provider value={asyncContextValue}>
+    <EngineContext.Provider value={engineContextValue}>
       <WasmContext.Provider value={syncContextValue}>
         {props.children}
       </WasmContext.Provider>
-    </AsyncWasmContext.Provider>
+    </EngineContext.Provider>
   );
 };
 

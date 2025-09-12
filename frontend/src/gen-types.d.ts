@@ -633,6 +633,8 @@ export type MessageVariant =
 
 export interface _Combined {
   action: Action;
+  batch_card_info_request: BatchCardInfoRequest;
+  batch_card_info_response: BatchCardInfoResponse;
   can_play_cards_request: CanPlayCardsRequest;
   can_play_cards_response: CanPlayCardsResponse;
   card_info: CardInfo;
@@ -710,6 +712,29 @@ export interface OrderedCard {
   trump: Trump;
   [k: string]: unknown;
 }
+export interface BatchCardInfoRequest {
+  requests: CardInfoRequest[];
+  [k: string]: unknown;
+}
+export interface CardInfoRequest {
+  card: Card;
+  trump: Trump;
+  [k: string]: unknown;
+}
+export interface BatchCardInfoResponse {
+  results: CardInfo[];
+  [k: string]: unknown;
+}
+export interface CardInfo {
+  display_value: string;
+  effective_suit: EffectiveSuit;
+  number?: string | null;
+  points: number;
+  suit?: Suit | null;
+  typ: string;
+  value: string;
+  [k: string]: unknown;
+}
 export interface CanPlayCardsRequest {
   cards: Card[];
   hands: Hands;
@@ -756,21 +781,6 @@ export interface TrickFormat {
 }
 export interface CanPlayCardsResponse {
   playable: boolean;
-  [k: string]: unknown;
-}
-export interface CardInfo {
-  display_value: string;
-  effective_suit: EffectiveSuit;
-  number?: string | null;
-  points: number;
-  suit?: Suit | null;
-  typ: string;
-  value: string;
-  [k: string]: unknown;
-}
-export interface CardInfoRequest {
-  card: Card;
-  trump: Trump;
   [k: string]: unknown;
 }
 export interface ComputeScoreRequest {

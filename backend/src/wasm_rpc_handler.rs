@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
-use shengji_types::wasm_rpc::{WasmRpcRequest, WasmRpcResponse};
+use shengji_types::wasm_rpc::{WasmRpcRequest, WasmRpcResponse, BatchCardInfoResponse};
 
 pub async fn handle_wasm_rpc(
     Json(request): Json<WasmRpcRequest>,
@@ -60,9 +60,12 @@ fn process_request(request: WasmRpcRequest) -> Result<WasmRpcResponse, String> {
                 wasm_rpc_impl::compute_deck_len(req),
             ))
         }
-        WasmRpcRequest::GetCardInfo(req) => {
-            Ok(WasmRpcResponse::GetCardInfo(
-                wasm_rpc_impl::get_card_info(req),
+        WasmRpcRequest::BatchGetCardInfo(req) => {
+            let results = req.requests.into_iter()
+                .map(|r| wasm_rpc_impl::get_card_info(r))
+                .collect();
+            Ok(WasmRpcResponse::BatchGetCardInfo(
+                BatchCardInfoResponse { results }
             ))
         }
     }
@@ -138,12 +141,30 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_card_info() {
+    async fn test_batch_get_card_info() {
         let server = test_app();
 
-        let request = WasmRpcRequest::GetCardInfo(CardInfoRequest {
-            card: Card::BigJoker,
-            trump: Trump::NoTrump { number: Some(Number::Two) },
+        let request = WasmRpcRequest::BatchGetCardInfo(BatchCardInfoRequest {
+            requests: vec![
+                CardInfoRequest {
+                    card: Card::BigJoker,
+                    trump: Trump::NoTrump { number: Some(Number::Two) },
+                },
+                CardInfoRequest {
+                    card: H_2,
+                    trump: Trump::Standard {
+                        suit: Suit::Hearts,
+                        number: Number::Two,
+                    },
+                },
+                CardInfoRequest {
+                    card: S_5,
+                    trump: Trump::Standard {
+                        suit: Suit::Hearts,
+                        number: Number::Two,
+                    },
+                },
+            ],
         });
 
         let response = server.post("/api/rpc")
@@ -155,13 +176,21 @@ mod tests {
         let result: WasmRpcResponse = response.json();
 
         match result {
-            WasmRpcResponse::GetCardInfo(info) => {
-                assert_eq!(info.suit, None);
-                assert_eq!(info.effective_suit, EffectiveSuit::Trump);
-                assert_eq!(info.points, 0);
-                assert_eq!(info.typ, '🃏');
+            WasmRpcResponse::BatchGetCardInfo(resp) => {
+                assert_eq!(resp.results.len(), 3);
+
+                // Check Big Joker
+                assert_eq!(resp.results[0].effective_suit, EffectiveSuit::Trump);
+                assert_eq!(resp.results[0].points, 0);
+
+                // Check H_2 (trump card)
+                assert_eq!(resp.results[1].effective_suit, EffectiveSuit::Trump);
+
+                // Check S_5 (non-trump)
+                assert_eq!(resp.results[2].effective_suit, EffectiveSuit::Spades);
+                assert_eq!(resp.results[2].points, 5);
             }
-            _ => panic!("Expected GetCardInfo response"),
+            _ => panic!("Expected BatchGetCardInfo response"),
         }
     }
 

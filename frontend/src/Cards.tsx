@@ -3,7 +3,7 @@ import classNames from "classnames";
 import Card from "./Card";
 import { Trump, Hands, SuitGroup } from "./gen-types";
 import ArrayUtils from "./util/array";
-import { useAsyncWasm } from "./useAsyncWasm";
+import { useEngine } from "./useEngine";
 import { SettingsContext } from "./AppStateProvider";
 
 import type { JSX } from "react";
@@ -22,12 +22,16 @@ const Cards = (props: IProps): JSX.Element => {
   const [highlightedSuit, setHighlightedSuit] = React.useState<string | null>(
     null,
   );
-  const [selectedCardGroups, setSelectedCardGroups] = React.useState<any[][]>([]);
-  const [unselectedCardGroups, setUnselectedCardGroups] = React.useState<any[][]>([]);
+  const [selectedCardGroups, setSelectedCardGroups] = React.useState<any[][]>(
+    [],
+  );
+  const [unselectedCardGroups, setUnselectedCardGroups] = React.useState<
+    any[][]
+  >([]);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const { hands, selectedCards, notifyEmpty } = props;
-  const asyncWasm = useAsyncWasm();
+  const engine = useEngine();
   const { separateCardsBySuit, disableSuitHighlights, reverseCardOrder } =
     React.useContext(SettingsContext);
   const handleSelect = (card: string) => () => {
@@ -68,8 +72,11 @@ const Cards = (props: IProps): JSX.Element => {
       try {
         // Load selected cards groups if needed
         let selectedGroups: any[][] = [];
-        if (props.selectedCards !== undefined && props.selectedCards.length > 0) {
-          const sorted = await asyncWasm.sortAndGroupCards({
+        if (
+          props.selectedCards !== undefined &&
+          props.selectedCards.length > 0
+        ) {
+          const sorted = await engine.sortAndGroupCards({
             cards: props.selectedCards,
             trump: props.trump,
           });
@@ -77,14 +84,14 @@ const Cards = (props: IProps): JSX.Element => {
             g.cards.map((c) => ({
               card: c,
               suit: g.suit,
-            }))
+            })),
           );
         }
 
         // Load unselected cards groups
         let unselectedGroups: any[][] = [];
         if (unselected.length > 0) {
-          const sorted = await asyncWasm.sortAndGroupCards({
+          const sorted = await engine.sortAndGroupCards({
             cards: unselected,
             trump: props.trump,
           });
@@ -92,14 +99,18 @@ const Cards = (props: IProps): JSX.Element => {
             g.cards.map((c) => ({
               card: c,
               suit: g.suit,
-            }))
+            })),
           );
         }
 
         // Apply grouping settings
         if (!separateCardsBySuit) {
-          selectedGroups = selectedGroups.length > 0 ? [selectedGroups.flatMap((g) => g)] : [];
-          unselectedGroups = unselectedGroups.length > 0 ? [unselectedGroups.flatMap((g) => g)] : [];
+          selectedGroups =
+            selectedGroups.length > 0 ? [selectedGroups.flatMap((g) => g)] : [];
+          unselectedGroups =
+            unselectedGroups.length > 0
+              ? [unselectedGroups.flatMap((g) => g)]
+              : [];
         }
 
         if (reverseCardOrder) {
@@ -114,9 +125,11 @@ const Cards = (props: IProps): JSX.Element => {
         console.error("Error sorting cards:", error);
         // Fallback to unsorted display
         const fallbackSelected = props.selectedCards
-          ? [props.selectedCards.map(c => ({ card: c, suit: null }))]
+          ? [props.selectedCards.map((c) => ({ card: c, suit: null }))]
           : [];
-        const fallbackUnselected = [unselected.map(c => ({ card: c, suit: null }))];
+        const fallbackUnselected = [
+          unselected.map((c) => ({ card: c, suit: null })),
+        ];
 
         setSelectedCardGroups(fallbackSelected);
         setUnselectedCardGroups(fallbackUnselected);
@@ -132,7 +145,7 @@ const Cards = (props: IProps): JSX.Element => {
     hands.hands,
     separateCardsBySuit,
     reverseCardOrder,
-    asyncWasm,
+    engine,
   ]);
 
   if (isLoading) {
