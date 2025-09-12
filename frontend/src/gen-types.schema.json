@@ -4,6 +4,8 @@
   "type": "object",
   "required": [
     "action",
+    "batch_card_info_request",
+    "batch_card_info_response",
     "can_play_cards_request",
     "can_play_cards_response",
     "card_info",
@@ -30,6 +32,12 @@
   "properties": {
     "action": {
       "$ref": "#/definitions/Action"
+    },
+    "batch_card_info_request": {
+      "$ref": "#/definitions/BatchCardInfoRequest"
+    },
+    "batch_card_info_response": {
+      "$ref": "#/definitions/BatchCardInfoResponse"
     },
     "can_play_cards_request": {
       "$ref": "#/definitions/CanPlayCardsRequest"
@@ -623,6 +631,30 @@
     "BackToTwoSetting": {
       "type": "string",
       "enum": ["Disabled", "SingleJack"]
+    },
+    "BatchCardInfoRequest": {
+      "type": "object",
+      "required": ["requests"],
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CardInfoRequest"
+          }
+        }
+      }
+    },
+    "BatchCardInfoResponse": {
+      "type": "object",
+      "required": ["results"],
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CardInfo"
+          }
+        }
+      }
     },
     "Bid": {
       "type": "object",

@@ -1,9 +1,9 @@
 import * as React from "react";
 import classNames from "classnames";
 import Card from "./Card";
-import { Trump, Hands } from "./gen-types";
+import { Trump, Hands, SuitGroup } from "./gen-types";
 import ArrayUtils from "./util/array";
-import WasmContext from "./WasmContext";
+import { useEngine } from "./useEngine";
 import { SettingsContext } from "./AppStateProvider";
 
 import type { JSX } from "react";
@@ -22,9 +22,16 @@ const Cards = (props: IProps): JSX.Element => {
   const [highlightedSuit, setHighlightedSuit] = React.useState<string | null>(
     null,
   );
+  const [selectedCardGroups, setSelectedCardGroups] = React.useState<any[][]>(
+    [],
+  );
+  const [unselectedCardGroups, setUnselectedCardGroups] = React.useState<
+    any[][]
+  >([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const { hands, selectedCards, notifyEmpty } = props;
-  const { sortAndGroupCards } = React.useContext(WasmContext);
+  const engine = useEngine();
   const { separateCardsBySuit, disableSuitHighlights, reverseCardOrder } =
     React.useContext(SettingsContext);
   const handleSelect = (card: string) => () => {
@@ -57,37 +64,96 @@ const Cards = (props: IProps): JSX.Element => {
       ? cardsInHand
       : ArrayUtils.minus(cardsInHand, selectedCards);
 
-  let selectedCardGroups =
-    props.selectedCards !== undefined
-      ? sortAndGroupCards({
-          cards: props.selectedCards,
-          trump: props.trump,
-        }).map((g) =>
-          g.cards.map((c) => ({
-            card: c,
-            suit: g.suit,
-          })),
-        )
-      : [];
+  // Load sorted cards when they change
+  React.useEffect(() => {
+    setIsLoading(true);
 
-  let unselectedCardGroups = sortAndGroupCards({
-    cards: unselected,
-    trump: props.trump,
-  }).map((g) =>
-    g.cards.map((c) => ({
-      card: c,
-      suit: g.suit,
-    })),
-  );
+    const loadSortedCards = async () => {
+      try {
+        // Load selected cards groups if needed
+        let selectedGroups: any[][] = [];
+        if (
+          props.selectedCards !== undefined &&
+          props.selectedCards.length > 0
+        ) {
+          const sorted = await engine.sortAndGroupCards({
+            cards: props.selectedCards,
+            trump: props.trump,
+          });
+          selectedGroups = sorted.map((g: SuitGroup) =>
+            g.cards.map((c) => ({
+              card: c,
+              suit: g.suit,
+            })),
+          );
+        }
 
-  if (!separateCardsBySuit) {
-    selectedCardGroups = [selectedCardGroups.flatMap((g) => g)];
-    unselectedCardGroups = [unselectedCardGroups.flatMap((g) => g)];
-  }
+        // Load unselected cards groups
+        let unselectedGroups: any[][] = [];
+        if (unselected.length > 0) {
+          const sorted = await engine.sortAndGroupCards({
+            cards: unselected,
+            trump: props.trump,
+          });
+          unselectedGroups = sorted.map((g: SuitGroup) =>
+            g.cards.map((c) => ({
+              card: c,
+              suit: g.suit,
+            })),
+          );
+        }
 
-  if (reverseCardOrder) {
-    unselectedCardGroups.reverse();
-    unselectedCardGroups.forEach((g) => g.reverse());
+        // Apply grouping settings
+        if (!separateCardsBySuit) {
+          selectedGroups =
+            selectedGroups.length > 0 ? [selectedGroups.flatMap((g) => g)] : [];
+          unselectedGroups =
+            unselectedGroups.length > 0
+              ? [unselectedGroups.flatMap((g) => g)]
+              : [];
+        }
+
+        if (reverseCardOrder) {
+          unselectedGroups.reverse();
+          unselectedGroups.forEach((g) => g.reverse());
+        }
+
+        setSelectedCardGroups(selectedGroups);
+        setUnselectedCardGroups(unselectedGroups);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error sorting cards:", error);
+        // Fallback to unsorted display
+        const fallbackSelected = props.selectedCards
+          ? [props.selectedCards.map((c) => ({ card: c, suit: null }))]
+          : [];
+        const fallbackUnselected = [
+          unselected.map((c) => ({ card: c, suit: null })),
+        ];
+
+        setSelectedCardGroups(fallbackSelected);
+        setUnselectedCardGroups(fallbackUnselected);
+        setIsLoading(false);
+      }
+    };
+
+    loadSortedCards();
+  }, [
+    props.selectedCards,
+    props.trump,
+    props.playerId,
+    hands.hands,
+    separateCardsBySuit,
+    reverseCardOrder,
+    engine,
+  ]);
+
+  if (isLoading) {
+    return (
+      <div className="hand">
+        <div>Loading cards...</div>
+      </div>
+    );
   }
 
   return (

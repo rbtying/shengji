@@ -2,6 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use shengji_core::{game_state, interactive};
 
+pub mod wasm_rpc;
+
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub enum GameMessage {

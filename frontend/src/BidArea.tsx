@@ -11,7 +11,7 @@ import {
 } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
 import LabeledPlay from "./LabeledPlay";
-import WasmContext from "./WasmContext";
+import { useEngine } from "./useEngine";
 
 import type { JSX } from "react";
 
@@ -36,7 +36,9 @@ interface IBidAreaProps {
 
 const BidArea = (props: IBidAreaProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
-  const { findValidBids } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [validBids, setValidBids] = React.useState<Bid[]>([]);
+  const [isLoadingBids, setIsLoadingBids] = React.useState<boolean>(false);
   const trump = props.trump == null ? { NoTrump: {} } : props.trump;
 
   const takeBackBid = (evt: React.SyntheticEvent): void => {
@@ -52,6 +54,61 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       playerId = p.id;
     }
   });
+
+  // Load valid bids when player is not a spectator
+  React.useEffect(() => {
+    if (playerId >= 0) {
+      setIsLoadingBids(true);
+      engine
+        .findValidBids({
+          id: playerId,
+          bids: props.bids,
+          hands: props.hands,
+          players: props.players,
+          landlord: props.landlord,
+          epoch: props.epoch,
+          bid_policy: props.bidPolicy,
+          bid_reinforcement_policy: props.bidReinforcementPolicy,
+          joker_bid_policy: props.jokerBidPolicy,
+          num_decks: props.numDecks,
+        })
+        .then((bids) => {
+          // Sort the bids
+          bids.sort((a, b) => {
+            if (a.card < b.card) {
+              return -1;
+            } else if (a.card > b.card) {
+              return 1;
+            } else if (a.count < b.count) {
+              return -1;
+            } else if (a.count > b.count) {
+              return 1;
+            } else {
+              return 0;
+            }
+          });
+          setValidBids(bids);
+          setIsLoadingBids(false);
+        })
+        .catch((error) => {
+          console.error("Error finding valid bids:", error);
+          setValidBids([]);
+          setIsLoadingBids(false);
+        });
+    }
+  }, [
+    playerId,
+    props.bids,
+    props.hands,
+    props.players,
+    props.landlord,
+    props.epoch,
+    props.bidPolicy,
+    props.bidReinforcementPolicy,
+    props.jokerBidPolicy,
+    props.numDecks,
+    engine,
+  ]);
 
   if (playerId === null || playerId < 0) {
     // Spectator mode
@@ -82,18 +139,6 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
       </div>
     );
   } else {
-    const validBids = findValidBids({
-      id: playerId,
-      bids: props.bids,
-      hands: props.hands,
-      players: props.players,
-      landlord: props.landlord,
-      epoch: props.epoch,
-      bid_policy: props.bidPolicy,
-      bid_reinforcement_policy: props.bidReinforcementPolicy,
-      joker_bid_policy: props.jokerBidPolicy,
-      num_decks: props.numDecks,
-    });
     const levelId =
       props.landlord !== null && props.landlord !== undefined
         ? props.landlord
@@ -108,20 +153,6 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
                 players[levelId].level !== "NT" ? players[levelId].level : null,
             },
           };
-
-    validBids.sort((a, b) => {
-      if (a.card < b.card) {
-        return -1;
-      } else if (a.card > b.card) {
-        return 1;
-      } else if (a.count < b.count) {
-        return -1;
-      } else if (a.count > b.count) {
-        return 1;
-      } else {
-        return 0;
-      }
-    });
 
     return (
       <div>
@@ -168,24 +199,27 @@ const BidArea = (props: IBidAreaProps): JSX.Element => {
           </button>
         ) : null}
         {props.suffixButtons}
-        {validBids.length > 0 ? (
+        {isLoadingBids ? (
+          <p>Loading bid options...</p>
+        ) : validBids.length > 0 ? (
           <p>Click a bid option to bid</p>
         ) : (
           <p>No available bids!</p>
         )}
-        {validBids.map((bid, idx) => {
-          return (
-            <LabeledPlay
-              trump={trump}
-              cards={Array(bid.count).fill(bid.card)}
-              key={idx}
-              label={`Bid option ${idx + 1}`}
-              onClick={() => {
-                send({ Action: { Bid: [bid.card, bid.count] } });
-              }}
-            />
-          );
-        })}
+        {!isLoadingBids &&
+          validBids.map((bid, idx) => {
+            return (
+              <LabeledPlay
+                trump={trump}
+                cards={Array(bid.count).fill(bid.card)}
+                key={idx}
+                label={`Bid option ${idx + 1}`}
+                onClick={() => {
+                  send({ Action: { Bid: [bid.card, bid.count] } });
+                }}
+              />
+            );
+          })}
         <Cards hands={props.hands} playerId={playerId} trump={trump} />
       </div>
     );

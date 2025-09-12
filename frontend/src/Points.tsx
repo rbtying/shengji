@@ -1,13 +1,22 @@
 import * as React from "react";
 import ProgressBar from "./ProgressBar";
-import { Player, GameScoringParameters, Deck, Trump } from "./gen-types";
+import {
+  Player,
+  GameScoringParameters,
+  Deck,
+  Trump,
+  ComputeScoreResponse,
+  ScoreSegment,
+  ExplainScoringResponse,
+} from "./gen-types";
 import ArrayUtils from "./util/array";
 import ObjectUtils from "./util/object";
 import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
-import WasmContext from "./WasmContext";
+import { useEngine } from "./useEngine";
 import { SettingsContext } from "./AppStateProvider";
+import { explainScoringCache, getExplainScoringKey } from "./util/cachePrefill";
 
 import type { JSX } from "react";
 
@@ -68,7 +77,16 @@ const Points = (props: IProps): JSX.Element => {
     ArrayUtils.sum(cards.map((card) => cardLookup[card].points)),
   );
   const settings = React.useContext(SettingsContext);
-  const { computeScore, explainScoring } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [scoreData, setScoreData] = React.useState<ComputeScoreResponse | null>(
+    null,
+  );
+  const [scoreTransitions, setScoreTransitions] = React.useState<
+    ScoreSegment[]
+  >([]);
+  const [totalPoints, setTotalPoints] = React.useState<number>(100);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
   const {
     totalPointsPlayed,
     nonLandlordPointsWithPenalties,
@@ -81,12 +99,85 @@ const Points = (props: IProps): JSX.Element => {
   );
   const penaltyDelta = nonLandlordPointsWithPenalties - nonLandlordPoints;
 
-  const { score, next_threshold: nextThreshold } = computeScore({
-    params: props.gameScoringParameters,
-    decks: props.decks,
-    smaller_landlord_team_size: props.smallerTeamSize,
-    non_landlord_points: nonLandlordPointsWithPenalties,
-  });
+  React.useEffect(() => {
+    setIsLoading(true);
+
+    // Load both computeScore and explainScoring in parallel
+    const loadData = async () => {
+      try {
+        // Check cache for explainScoring
+        const scoringKey = getExplainScoringKey(
+          props.gameScoringParameters,
+          props.smallerTeamSize,
+          props.decks,
+        );
+        let scoringResult = explainScoringCache[scoringKey];
+
+        const promises: Promise<
+          ComputeScoreResponse | ExplainScoringResponse
+        >[] = [
+          engine.computeScore({
+            params: props.gameScoringParameters,
+            decks: props.decks,
+            smaller_landlord_team_size: props.smallerTeamSize,
+            non_landlord_points: nonLandlordPointsWithPenalties,
+          }),
+        ];
+
+        if (!scoringResult) {
+          promises.push(
+            engine.explainScoring({
+              params: props.gameScoringParameters,
+              smaller_landlord_team_size: props.smallerTeamSize,
+              decks: props.decks,
+            }),
+          );
+        }
+
+        const results = await Promise.all(promises);
+        const scoreResult = results[0] as ComputeScoreResponse;
+
+        if (!scoringResult && results.length > 1) {
+          scoringResult = results[1] as ExplainScoringResponse;
+          explainScoringCache[scoringKey] = scoringResult;
+        }
+
+        setScoreData(scoreResult);
+        setScoreTransitions(scoringResult.results);
+        setTotalPoints(scoringResult.total_points);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error computing score:", error);
+        // Fallback to defaults
+        setScoreData({
+          score: {
+            landlord_won: false,
+            landlord_bonus: false,
+            landlord_delta: 0,
+            non_landlord_delta: 0,
+          },
+          next_threshold: 0,
+        });
+        setScoreTransitions([]);
+        setTotalPoints(100);
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [
+    props.gameScoringParameters,
+    props.decks,
+    props.smallerTeamSize,
+    nonLandlordPointsWithPenalties,
+    engine,
+  ]);
+
+  if (isLoading || !scoreData) {
+    return <div>Loading scores...</div>;
+  }
+
+  const { score, next_threshold: nextThreshold } = scoreData;
 
   const playerPointElements = props.players.map((player) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
@@ -131,13 +222,6 @@ const Points = (props: IProps): JSX.Element => {
 
   thresholdStr += ` (next threshold: ${nextThreshold}分)`;
 
-  const { results: scoreTransitions, total_points: totalPoints } =
-    explainScoring({
-      params: props.gameScoringParameters,
-      smaller_landlord_team_size: props.smallerTeamSize,
-      decks: props.decks,
-    });
-
   return (
     <div className="points">
       <h2>Points</h2>
@@ -165,7 +249,13 @@ const Points = (props: IProps): JSX.Element => {
 };
 
 export const ProgressBarDisplay = (props: IProps): JSX.Element => {
-  const { explainScoring } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [scoreTransitions, setScoreTransitions] = React.useState<
+    ScoreSegment[]
+  >([]);
+  const [totalPoints, setTotalPoints] = React.useState<number>(0);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
   const {
     totalPointsPlayed,
     nonLandlordPointsWithPenalties,
@@ -177,12 +267,46 @@ export const ProgressBarDisplay = (props: IProps): JSX.Element => {
     props.penalties,
   );
 
-  const { results: scoreTransitions, total_points: totalPoints } =
-    explainScoring({
-      params: props.gameScoringParameters,
-      smaller_landlord_team_size: props.smallerTeamSize,
-      decks: props.decks,
-    });
+  React.useEffect(() => {
+    setIsLoading(true);
+
+    const loadScoring = async () => {
+      try {
+        // Check cache first
+        const scoringKey = getExplainScoringKey(
+          props.gameScoringParameters,
+          props.smallerTeamSize,
+          props.decks,
+        );
+        let result = explainScoringCache[scoringKey];
+
+        if (!result) {
+          result = await engine.explainScoring({
+            params: props.gameScoringParameters,
+            smaller_landlord_team_size: props.smallerTeamSize,
+            decks: props.decks,
+          });
+          explainScoringCache[scoringKey] = result;
+        }
+
+        setScoreTransitions(result.results);
+        setTotalPoints(result.total_points);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error explaining scoring:", error);
+        setScoreTransitions([]);
+        setTotalPoints(100); // Default total
+        setIsLoading(false);
+      }
+    };
+
+    loadScoring();
+  }, [props.gameScoringParameters, props.smallerTeamSize, props.decks, engine]);
+
+  if (isLoading) {
+    return <div>Loading progress bar...</div>;
+  }
+
   return (
     <ProgressBar
       checkpoints={scoreTransitions

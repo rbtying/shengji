@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Deck } from "./gen-types";
 import ArrayUtils from "./util/array";
-import WasmContext from "./WasmContext";
+import { useEngine } from "./useEngine";
 
 import type { JSX } from "react";
 
@@ -13,13 +13,31 @@ interface IProps {
 }
 
 const KittySizeSelector = (props: IProps): JSX.Element => {
-  const { computeDeckLen } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [deckLen, setDeckLen] = React.useState<number>(0);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    setIsLoading(true);
+    engine
+      .computeDeckLen(props.decks)
+      .then((len) => {
+        setDeckLen(len);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error computing deck length:", error);
+        // Fallback: estimate based on number of decks
+        setDeckLen(props.decks.length * 54);
+        setIsLoading(false);
+      });
+  }, [props.decks, engine]);
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const newKittySize =
       e.target.value === "" ? null : parseInt(e.target.value, 10);
     props.onChange(newKittySize);
   };
-  const deckLen = computeDeckLen(props.decks);
   const kittyOffset = deckLen % props.numPlayers;
   const defaultOptions = [
     kittyOffset,
@@ -40,6 +58,10 @@ const KittySizeSelector = (props: IProps): JSX.Element => {
       // Note: this isn't quite right, but it seems fine for the common case of no short decks.
       (deckLen - v) % props.numPlayers <= props.decks.length * 4,
   );
+
+  if (isLoading) {
+    return <div>Loading kitty size options...</div>;
+  }
 
   return (
     <div>

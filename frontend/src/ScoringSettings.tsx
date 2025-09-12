@@ -1,7 +1,8 @@
 import * as React from "react";
 import { GameScoringParameters, Deck, ScoreSegment } from "./gen-types";
 import { WebsocketContext } from "./WebsocketProvider";
-import { WasmContext } from "./WasmContext";
+import { useEngine } from "./useEngine";
+import { explainScoringCache, getExplainScoringKey } from "./util/cachePrefill";
 
 import type { JSX } from "react";
 
@@ -12,8 +13,15 @@ interface IProps {
 
 export const GameScoringSettings = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
-  const { explainScoring } = React.useContext(WasmContext);
+  const engine = useEngine();
   const [highlighted, setHighlighted] = React.useState<number | null>(null);
+  const [scoreTransitions, setScoreTransitions] = React.useState<any[]>([]);
+  const [bonusScoreTransitions, setBonusScoreTransitions] = React.useState<
+    any[]
+  >([]);
+  const [stepSize, setStepSize] = React.useState<number>(10);
+  const [totalPoints, setTotalPoints] = React.useState<number>(100);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
   const updateSettings = (updates: Partial<GameScoringParameters>): void => {
     send({
@@ -26,23 +34,77 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   const bonusEnabled =
     props.params.bonus_level_policy === "BonusLevelForSmallerLandlordTeam";
 
-  const {
-    results: scoreTransitions,
-    step_size: stepSize,
-    total_points: totalPoints,
-  } = explainScoring({
-    params: props.params,
-    smaller_landlord_team_size: false,
-    decks: props.decks,
-  });
+  React.useEffect(() => {
+    setIsLoading(true);
 
-  const bonusScoreTransitions = bonusEnabled
-    ? explainScoring({
-        params: props.params,
-        smaller_landlord_team_size: true,
-        decks: props.decks,
-      }).results
-    : scoreTransitions;
+    // Load regular scoring
+    const loadScoring = async () => {
+      try {
+        // Check cache first for regular scoring
+        const regularKey = getExplainScoringKey(
+          props.params,
+          false,
+          props.decks,
+        );
+        let regular = explainScoringCache[regularKey];
+
+        if (!regular) {
+          regular = await engine.explainScoring({
+            params: props.params,
+            smaller_landlord_team_size: false,
+            decks: props.decks,
+          });
+          explainScoringCache[regularKey] = regular;
+        }
+
+        setScoreTransitions(regular.results);
+        setStepSize(regular.step_size);
+        setTotalPoints(regular.total_points);
+
+        // Load bonus scoring if enabled
+        if (bonusEnabled) {
+          const bonusKey = getExplainScoringKey(
+            props.params,
+            true,
+            props.decks,
+          );
+          let bonus = explainScoringCache[bonusKey];
+
+          if (!bonus) {
+            bonus = await engine.explainScoring({
+              params: props.params,
+              smaller_landlord_team_size: true,
+              decks: props.decks,
+            });
+            explainScoringCache[bonusKey] = bonus;
+          }
+          setBonusScoreTransitions(bonus.results);
+        } else {
+          setBonusScoreTransitions(regular.results);
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error explaining scoring:", error);
+        // Set defaults
+        setScoreTransitions([]);
+        setBonusScoreTransitions([]);
+        setStepSize(10);
+        setTotalPoints(100);
+        setIsLoading(false);
+      }
+    };
+
+    loadScoring();
+  }, [props.params, props.decks, bonusEnabled, engine]);
+
+  if (isLoading) {
+    return (
+      <>
+        <div>Loading scoring settings...</div>
+      </>
+    );
+  }
 
   const scoreSegments: Array<{
     span: number;
@@ -52,47 +114,54 @@ export const GameScoringSettings = (props: IProps): JSX.Element => {
   let maxPts = 0;
   let maxLandlordDelta = 0;
   let maxNonLandlordDelta = 0;
-  for (let i = 1; i < scoreTransitions.length; i++) {
-    const span = Math.max(
-      scoreTransitions[i].point_threshold -
-        scoreTransitions[i - 1].point_threshold,
-      10,
-    );
-    const segment = scoreTransitions[i - 1];
-    maxLandlordDelta = Math.max(
-      segment.results.landlord_delta,
-      maxLandlordDelta,
-    );
+
+  if (scoreTransitions.length > 0) {
+    for (let i = 1; i < scoreTransitions.length; i++) {
+      const span = Math.max(
+        scoreTransitions[i].point_threshold -
+          scoreTransitions[i - 1].point_threshold,
+        10,
+      );
+      const segment = scoreTransitions[i - 1];
+      maxLandlordDelta = Math.max(
+        segment.results.landlord_delta,
+        maxLandlordDelta,
+      );
+      maxNonLandlordDelta = Math.max(
+        segment.results.non_landlord_delta,
+        maxNonLandlordDelta,
+      );
+      scoreSegments.push({
+        span,
+        segment,
+        bonusSegment:
+          bonusScoreTransitions.length > i - 1 &&
+          bonusScoreTransitions[i - 1].results.landlord_bonus
+            ? bonusScoreTransitions[i - 1]
+            : null,
+      });
+      maxPts += span;
+    }
+    const last = scoreTransitions.length - 1;
+    scoreSegments.push({
+      span: 5 * props.decks.length,
+      segment: scoreTransitions[last],
+      bonusSegment:
+        bonusScoreTransitions.length > last &&
+        bonusScoreTransitions[last].results.landlord_bonus
+          ? bonusScoreTransitions[last]
+          : null,
+    });
+    maxPts += 5 * props.decks.length;
     maxNonLandlordDelta = Math.max(
-      segment.results.non_landlord_delta,
+      scoreTransitions[last].results.non_landlord_delta,
       maxNonLandlordDelta,
     );
-    scoreSegments.push({
-      span,
-      segment,
-      bonusSegment: bonusScoreTransitions[i - 1].results.landlord_bonus
-        ? bonusScoreTransitions[i - 1]
-        : null,
-    });
-    maxPts += span;
+    maxLandlordDelta = Math.max(
+      scoreTransitions[last].results.landlord_delta,
+      maxLandlordDelta,
+    );
   }
-  const last = scoreTransitions.length - 1;
-  scoreSegments.push({
-    span: 5 * props.decks.length,
-    segment: scoreTransitions[last],
-    bonusSegment: bonusScoreTransitions[last].results.landlord_bonus
-      ? bonusScoreTransitions[last]
-      : null,
-  });
-  maxPts += 5 * props.decks.length;
-  maxNonLandlordDelta = Math.max(
-    scoreTransitions[last].results.non_landlord_delta,
-    maxNonLandlordDelta,
-  );
-  maxLandlordDelta = Math.max(
-    scoreTransitions[last].results.landlord_delta,
-    maxLandlordDelta,
-  );
 
   const text = (idx: number): JSX.Element => {
     let txt = "Attacking team wins, but doesn't level up.";

@@ -6,8 +6,9 @@ import InlineCard from "./InlineCard";
 import { cardLookup } from "./util/cardHelpers";
 import { SettingsContext } from "./AppStateProvider";
 import { ISuitOverrides } from "./state/Settings";
-import { Trump } from "./gen-types";
-import WasmContext from "./WasmContext";
+import { Trump, CardInfo } from "./gen-types";
+import { useEngine } from "./useEngine";
+import { cardInfoCache, getTrumpKey } from "./util/cachePrefill";
 
 import type { JSX } from "react";
 
@@ -26,9 +27,59 @@ interface IProps {
 
 const Card = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
-  const { getCardInfo } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [cardInfo, setCardInfo] = React.useState<CardInfo | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const height = props.smaller ? 95 : 120;
   const bounds = getCardBounds(height);
+
+  // Create a cache key for the card info based on card and trump
+  const cacheKey = `${props.card}_${getTrumpKey(props.trump)}`;
+
+  React.useEffect(() => {
+    // Only load card info if the card is in the lookup
+    if (props.card in cardLookup) {
+      // Check cache first
+      if (cacheKey in cardInfoCache) {
+        setCardInfo(cardInfoCache[cacheKey]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      engine
+        .batchGetCardInfo({
+          requests: [
+            {
+              card: props.card,
+              trump: props.trump,
+            },
+          ],
+        })
+        .then((response) => {
+          const info = response.results[0];
+          // Cache the result with the trump-specific key
+          cardInfoCache[cacheKey] = info;
+          setCardInfo(info);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error getting card info:", error);
+          // Fallback to basic info from static lookup
+          const staticInfo = cardLookup[props.card];
+          setCardInfo({
+            suit: null,
+            effective_suit: "Unknown" as any,
+            value: staticInfo.value || props.card,
+            display_value: staticInfo.display_value || props.card,
+            typ: staticInfo.typ || props.card,
+            number: staticInfo.number || null,
+            points: staticInfo.points || 0,
+          });
+          setIsLoading(false);
+        });
+    }
+  }, [cacheKey, props.card, props.trump, engine]);
 
   if (!(props.card in cardLookup)) {
     const nonSVG = (
@@ -74,22 +125,35 @@ const Card = (props: IProps): JSX.Element => {
       return nonSVG;
     }
   } else {
-    const cardInfo = cardLookup[props.card];
-    const extraInfo = getCardInfo({ card: props.card, trump: props.trump });
-    const label = (offset: number): JSX.Element => (
-      <div className="card-label" style={{ bottom: `${offset}px` }}>
-        <InlineCard card={props.card} />
-      </div>
-    );
-    const icon = (offset: number): JSX.Element => (
-      <div className="card-icon" style={{ bottom: `${offset}px` }}>
-        {extraInfo.effective_suit === "Trump" && settings.trumpCardIcon}
-        {extraInfo.points > 0 && settings.pointCardIcon}
-      </div>
-    );
+    const staticCardInfo = cardLookup[props.card];
+
+    const label = (offset: number): JSX.Element | null => {
+      if (isLoading || !cardInfo) return null;
+      return (
+        <div className="card-label" style={{ bottom: `${offset}px` }}>
+          <InlineCard card={props.card} />
+        </div>
+      );
+    };
+
+    const icon = (offset: number): JSX.Element | null => {
+      if (isLoading || !cardInfo) return null;
+      return (
+        <div className="card-icon" style={{ bottom: `${offset}px` }}>
+          {cardInfo.effective_suit === "Trump" && settings.trumpCardIcon}
+          {cardInfo.points > 0 && settings.pointCardIcon}
+        </div>
+      );
+    };
+
     const nonSVG = (
       <div
-        className={classNames("card", cardInfo.typ, props.className)}
+        className={classNames(
+          "card",
+          staticCardInfo.typ,
+          props.className,
+          isLoading ? "loading" : null,
+        )}
         onClick={props.onClick}
         onMouseEnter={props.onMouseEnter}
         onMouseLeave={props.onMouseLeave}
@@ -100,15 +164,17 @@ const Card = (props: IProps): JSX.Element => {
         {label(bounds.height / 10)}
         {icon(bounds.height)}
         <CardCanvas
-          card={cardInfo.display_value}
+          card={staticCardInfo.display_value}
           height={height}
           suit={classNames(
-            cardInfo.typ,
+            staticCardInfo.typ,
             settings.fourColor ? "four-color" : null,
             settings.darkMode ? "dark-mode" : null,
           )}
           colorOverride={
-            settings.suitColorOverrides[cardInfo.typ as keyof ISuitOverrides]
+            settings.suitColorOverrides[
+              staticCardInfo.typ as keyof ISuitOverrides
+            ]
           }
           backgroundColor={settings.darkMode ? "#000" : "#fff"}
         />
@@ -119,7 +185,12 @@ const Card = (props: IProps): JSX.Element => {
       return (
         <React.Suspense fallback={nonSVG}>
           <div
-            className={classNames("card", "svg", cardInfo.typ, props.className)}
+            className={classNames(
+              "card",
+              "svg",
+              staticCardInfo.typ,
+              props.className,
+            )}
             onClick={props.onClick}
             onMouseEnter={props.onMouseEnter}
             onMouseLeave={props.onMouseLeave}

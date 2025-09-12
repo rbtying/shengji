@@ -26,6 +26,7 @@ shengji-core = { path = "../core" }
 shengji-mechanics = { path = "../mechanics" }
 shengji-types = { path = "./backend-types" }
 slog = "2.5"
+wasm-rpc-impl = { path = "../wasm-rpc-impl" }
 slog-async = "2.5"
 slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
@@ -40,3 +41,7 @@ tokio = { version = "1.28", features = [
 ] }
 tower-http = { version = "0.4", features = ["fs"], optional = true }
 zstd = "0.12"
+
+[dev-dependencies]
+axum-test = "13.0"
+tower = { version = "0.4", features = ["util"] }

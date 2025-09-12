@@ -4,6 +4,7 @@ import websocketHandler from "./websocketHandler";
 import { TimerContext } from "./TimerProvider";
 import memoize from "./memoize";
 import WasmContext from "./WasmContext";
+import { GameMessage } from "./gen-types";
 
 import type { JSX } from "react";
 
@@ -135,27 +136,49 @@ const WebsocketProvider: React.FunctionComponent<
       }
       setTimerRef.current(null);
 
-      const f = (buf: ArrayBuffer): void => {
-        const message = decodeWireFormat(new Uint8Array(buf));
-        if ("Kicked" in message) {
-          ws.close();
-        } else {
-          updateStateRef.current({
-            connected: true,
-            everConnected: true,
-            ...websocketHandler(stateRef.current, message, (msg) => {
-              ws.send(JSON.stringify(msg));
-            }),
-          });
+      // Check if the message is text (uncompressed JSON) or binary (compressed)
+      if (typeof event.data === "string") {
+        // Plain text JSON message (uncompressed)
+        try {
+          const message = JSON.parse(event.data);
+          if ("Kicked" in message) {
+            ws.close();
+          } else {
+            updateStateRef.current({
+              connected: true,
+              everConnected: true,
+              ...websocketHandler(stateRef.current, message, (msg) => {
+                ws.send(JSON.stringify(msg));
+              }),
+            });
+          }
+        } catch (e) {
+          console.error("Failed to parse JSON message:", e);
         }
-      };
-
-      if (event.data.arrayBuffer !== undefined) {
-        const b2a = getBlobArrayBuffer();
-        b2a.enqueue(event.data, f);
       } else {
-        const frs = getFileReader();
-        frs.enqueue(event.data, f);
+        // Binary message (compressed)
+        const f = (buf: ArrayBuffer): void => {
+          const message = decodeWireFormat(new Uint8Array(buf)) as GameMessage;
+          if (message && typeof message === "object" && "Kicked" in message) {
+            ws.close();
+          } else {
+            updateStateRef.current({
+              connected: true,
+              everConnected: true,
+              ...websocketHandler(stateRef.current, message, (msg) => {
+                ws.send(JSON.stringify(msg));
+              }),
+            });
+          }
+        };
+
+        if (event.data.arrayBuffer !== undefined) {
+          const b2a = getBlobArrayBuffer();
+          b2a.enqueue(event.data, f);
+        } else {
+          const frs = getFileReader();
+          frs.enqueue(event.data, f);
+        }
       }
     });
 

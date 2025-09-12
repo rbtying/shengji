@@ -23,8 +23,12 @@ import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
-import WasmContext from "./WasmContext";
+import { useEngine } from "./useEngine";
 import InlineCard from "./InlineCard";
+import {
+  prefillCardInfoCache,
+  prefillExplainScoringCache,
+} from "./util/cachePrefill";
 
 import type { JSX } from "react";
 
@@ -49,12 +53,30 @@ const Play = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [grouping, setGrouping] = React.useState<FoundViablePlay[]>([]);
-  const {
-    findViablePlays,
-    canPlayCards,
-    nextThresholdReachable,
-    sortAndGroupCards,
-  } = React.useContext(WasmContext);
+  const engine = useEngine();
+  const [lastPrefillTrump, setLastPrefillTrump] = React.useState<string | null>(
+    null,
+  );
+
+  // Helper function to update selection and grouping
+  const updateSelectionAndGrouping = async (
+    newSelected: string[],
+    trump: any,
+    tractorRequirements: any,
+  ) => {
+    setSelected(newSelected);
+    try {
+      const plays = await engine.findViablePlays(
+        trump,
+        tractorRequirements,
+        newSelected,
+      );
+      setGrouping(plays);
+    } catch (error) {
+      console.error("Error finding viable plays:", error);
+      setGrouping([]);
+    }
+  };
 
   const playCards = (): void => {
     send({ Action: { PlayCardsWithHint: [selected, grouping[0].grouping] } });
@@ -92,6 +114,39 @@ const Play = (props: IProps): JSX.Element => {
     };
   }
 
+  // Prefill caches when trump or game parameters change
+  React.useEffect(() => {
+    const trumpKey = JSON.stringify(playPhase.trump);
+
+    // Only prefill if trump has changed
+    if (trumpKey !== lastPrefillTrump) {
+      console.log("Trump changed, prefilling caches...");
+      setLastPrefillTrump(trumpKey);
+
+      // Prefill card info cache for all cards with the new trump
+      prefillCardInfoCache(engine, playPhase.trump).catch((error) => {
+        console.error("Failed to prefill card info cache:", error);
+      });
+
+      // Prefill explainScoring cache
+      if (playPhase.propagated.game_scoring_parameters && playPhase.decks) {
+        prefillExplainScoringCache(
+          engine,
+          playPhase.propagated.game_scoring_parameters,
+          playPhase.decks,
+        ).catch((error) => {
+          console.error("Failed to prefill explainScoring cache:", error);
+        });
+      }
+    }
+  }, [
+    playPhase.trump,
+    playPhase.propagated.game_scoring_parameters,
+    playPhase.decks,
+    engine,
+    lastPrefillTrump,
+  ]);
+
   React.useEffect(() => {
     // When the hands change, our `selected` cards may become invalid, since we
     // could have raced and selected cards that we just played.
@@ -116,13 +171,10 @@ const Play = (props: IProps): JSX.Element => {
     const newSelected = ArrayUtils.minus(selected, toRemove);
 
     if (toRemove.length > 0) {
-      setSelected(newSelected);
-      setGrouping(
-        findViablePlays(
-          playPhase.trump,
-          playPhase.propagated.tractor_requirements!,
-          newSelected,
-        ),
+      updateSelectionAndGrouping(
+        newSelected,
+        playPhase.trump,
+        playPhase.propagated.tractor_requirements!,
       );
     }
   }, [playPhase.hands.hands, currentPlayer.id, selected]);
@@ -131,21 +183,32 @@ const Play = (props: IProps): JSX.Element => {
   const lastPlay =
     playPhase.trick.played_cards[playPhase.trick.played_cards.length - 1];
 
-  const canPlay = React.useMemo(() => {
-    if (!isSpectator) {
-      let playable = canPlayCards({
-        trick: playPhase.trick,
-        id: currentPlayer!.id,
-        hands: playPhase.hands,
-        cards: selected,
-        trick_draw_policy: playPhase.propagated.trick_draw_policy!,
-      });
-      // In order to play the first trick, the grouping must be disambiguated!
-      if (lastPlay === undefined) {
-        playable = playable && grouping.length === 1;
-      }
-      playable = playable && !playPhase.game_ended_early;
-      return playable;
+  const [canPlay, setCanPlay] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isSpectator && selected.length > 0) {
+      engine
+        .canPlayCards({
+          trick: playPhase.trick,
+          id: currentPlayer!.id,
+          hands: playPhase.hands,
+          cards: selected,
+          trick_draw_policy: playPhase.propagated.trick_draw_policy!,
+        })
+        .then((playable) => {
+          // In order to play the first trick, the grouping must be disambiguated!
+          if (lastPlay === undefined) {
+            playable = playable && grouping.length === 1;
+          }
+          playable = playable && !playPhase.game_ended_early;
+          setCanPlay(playable);
+        })
+        .catch((error) => {
+          console.error("Error checking if cards can be played:", error);
+          setCanPlay(false);
+        });
+    } else {
+      setCanPlay(false);
     }
   }, [
     playPhase.trick,
@@ -157,6 +220,7 @@ const Play = (props: IProps): JSX.Element => {
     lastPlay,
     playPhase.game_ended_early,
     grouping,
+    engine,
   ]);
 
   const isCurrentPlayerTurn = currentPlayer.id === nextPlayer;
@@ -186,14 +250,38 @@ const Play = (props: IProps): JSX.Element => {
 
   const canFinish = noCardsLeft || playPhase.game_ended_early;
 
-  const canEndGameEarly =
-    !canFinish &&
-    !nextThresholdReachable({
-      decks: playPhase.decks!,
-      params: playPhase.propagated.game_scoring_parameters!,
-      non_landlord_points: nonLandlordPointsWithPenalties,
-      observed_points: totalPointsPlayed,
-    });
+  const [canEndGameEarly, setCanEndGameEarly] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!canFinish && playPhase.decks) {
+      engine
+        .nextThresholdReachable({
+          decks: playPhase.decks,
+          params: playPhase.propagated.game_scoring_parameters!,
+          non_landlord_points: nonLandlordPointsWithPenalties,
+          observed_points: totalPointsPlayed,
+        })
+        .then((reachable) => {
+          setCanEndGameEarly(!reachable);
+        })
+        .catch((error) => {
+          console.error(
+            "Error checking if next threshold is reachable:",
+            error,
+          );
+          setCanEndGameEarly(false);
+        });
+    } else {
+      setCanEndGameEarly(false);
+    }
+  }, [
+    canFinish,
+    playPhase.decks,
+    playPhase.propagated.game_scoring_parameters,
+    nonLandlordPointsWithPenalties,
+    totalPointsPlayed,
+    engine,
+  ]);
 
   const landlordSuffix =
     playPhase.propagated.landlord_emoji !== undefined &&
@@ -213,6 +301,8 @@ const Play = (props: IProps): JSX.Element => {
     smallerTeamSize = landlordTeamSize < configFriendTeamSize;
   }
 
+  // For now, return unsorted cards since sortAndGroupCards needs to be async
+  // This function is used in rendering and needs refactoring to handle async
   const getCardsFromHand = (pid: number): SuitGroup[] => {
     const cardsInHand =
       pid in playPhase.hands.hands
@@ -220,10 +310,16 @@ const Play = (props: IProps): JSX.Element => {
             Array(ct).fill(c),
           )
         : [];
-    return sortAndGroupCards({
-      cards: cardsInHand,
-      trump: props.playPhase.trump,
-    });
+    // TODO: Make this async or cache the sorted results
+    // For now, return all cards in a single group
+    return cardsInHand.length > 0
+      ? [
+          {
+            suit: null as any, // Will be replaced when async is properly handled
+            cards: cardsInHand,
+          },
+        ]
+      : [];
   };
 
   return (
@@ -348,13 +444,10 @@ const Play = (props: IProps): JSX.Element => {
               playerId={currentPlayer.id}
               trickDrawPolicy={playPhase.propagated.trick_draw_policy!}
               setSelected={(newSelected) => {
-                setSelected(newSelected);
-                setGrouping(
-                  findViablePlays(
-                    playPhase.trump,
-                    playPhase.propagated.tractor_requirements!,
-                    newSelected,
-                  ),
+                updateSelectionAndGrouping(
+                  newSelected,
+                  playPhase.trump,
+                  playPhase.propagated.tractor_requirements!,
                 );
               }}
             />
@@ -388,13 +481,10 @@ const Play = (props: IProps): JSX.Element => {
             trump={playPhase.trump}
             selectedCards={selected}
             onSelect={(newSelected) => {
-              setSelected(newSelected);
-              setGrouping(
-                findViablePlays(
-                  playPhase.trump,
-                  playPhase.propagated.tractor_requirements!,
-                  newSelected,
-                ),
+              updateSelectionAndGrouping(
+                newSelected,
+                playPhase.trump,
+                playPhase.propagated.tractor_requirements!,
               );
             }}
             notifyEmpty={isCurrentPlayerTurn}
@@ -450,17 +540,54 @@ const HelperContents = (props: {
   trickDrawPolicy: TrickDrawPolicy;
   setSelected: (selected: string[]) => void;
 }): JSX.Element => {
-  const { decomposeTrickFormat } = React.useContext(WasmContext);
-  const decomp = React.useMemo(
-    () =>
-      decomposeTrickFormat({
+  const engine = useEngine();
+  const [decomp, setDecomp] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    engine
+      .decomposeTrickFormat({
         trick_format: props.format,
         hands: props.hands,
         player_id: props.playerId,
         trick_draw_policy: props.trickDrawPolicy,
-      }),
-    [props.format, props.hands, props.playerId, props.trickDrawPolicy],
-  );
+      })
+      .then((result) => {
+        if (!cancelled) {
+          setDecomp(result);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error decomposing trick format:", error);
+        if (!cancelled) {
+          setDecomp([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    props.format,
+    props.hands,
+    props.playerId,
+    props.trickDrawPolicy,
+    engine,
+  ]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (decomp.length === 0) {
+    return <div>Unable to analyze format</div>;
+  }
+
   const trickSuit = props.format.suit;
   const bestMatch = decomp.findIndex((d) => d.playable.length > 0);
   const modalContents = (
@@ -475,7 +602,7 @@ const HelperContents = (props: {
             style={{ cursor: "pointer" }}
             onClick={() => props.setSelected(decomp[0].playable)}
           >
-            {decomp[0].playable.map((c, cidx) => (
+            {decomp[0].playable.map((c: string, cidx: number) => (
               <InlineCard key={cidx} card={c} />
             ))}
           </span>
@@ -505,7 +632,7 @@ const HelperContents = (props: {
                       onClick={() => props.setSelected(d.playable)}
                     >
                       (for example:{" "}
-                      {d.playable.map((c, cidx) => (
+                      {d.playable.map((c: string, cidx: number) => (
                         <InlineCard key={cidx} card={c} />
                       ))}
                       )
@@ -544,9 +671,10 @@ const TrickFormatHelper = (props: {
   trickDrawPolicy: TrickDrawPolicy;
   setSelected: (selected: string[]) => void;
 }): JSX.Element => {
-  const { decomposeTrickFormat } = React.useContext(WasmContext);
+  const engine = useEngine();
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [message, setMessage] = React.useState<string>("");
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     setMessage("");
@@ -571,26 +699,36 @@ const TrickFormatHelper = (props: {
         data-tooltip-id="suggestTip"
         data-tooltip-content="Suggest a play (not guaranteed to succeed)"
         className="big"
-        onClick={(evt) => {
+        disabled={isLoading}
+        onClick={async (evt) => {
           evt.preventDefault();
-          const decomp = decomposeTrickFormat({
-            trick_format: props.format,
-            hands: props.hands,
-            player_id: props.playerId,
-            trick_draw_policy: props.trickDrawPolicy,
-          });
-          const bestMatch = decomp.findIndex((d) => d.playable.length > 0);
-          if (bestMatch >= 0) {
-            props.setSelected(decomp[bestMatch].playable);
-            setMessage("success");
-            setTimeout(() => setMessage(""), 500);
-          } else {
-            setMessage("cannot suggest a play");
+          setIsLoading(true);
+          try {
+            const decomp = await engine.decomposeTrickFormat({
+              trick_format: props.format,
+              hands: props.hands,
+              player_id: props.playerId,
+              trick_draw_policy: props.trickDrawPolicy,
+            });
+            const bestMatch = decomp.findIndex((d) => d.playable.length > 0);
+            if (bestMatch >= 0) {
+              props.setSelected(decomp[bestMatch].playable);
+              setMessage("success");
+              setTimeout(() => setMessage(""), 500);
+            } else {
+              setMessage("cannot suggest a play");
+              setTimeout(() => setMessage(""), 2000);
+            }
+          } catch (error) {
+            console.error("Error getting play suggestion:", error);
+            setMessage("error suggesting play");
             setTimeout(() => setMessage(""), 2000);
+          } finally {
+            setIsLoading(false);
           }
         }}
       >
-        ✨
+        {isLoading ? "..." : "✨"}
       </button>
       <span style={{ color: "red" }} onClick={() => setMessage("")}>
         {message}
