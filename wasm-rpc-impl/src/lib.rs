@@ -8,11 +8,11 @@ use shengji_mechanics::{
 
 use shengji_types::wasm_rpc::{
     CanPlayCardsRequest, CanPlayCardsResponse, CardInfo, CardInfoRequest, ComputeDeckLenRequest,
-    ComputeDeckLenResponse, ComputeScoreRequest, ComputeScoreResponse,
-    DecomposeTrickFormatRequest, DecomposeTrickFormatResponse, DecomposedTrickFormat,
-    ExplainScoringRequest, ExplainScoringResponse, FindValidBidsRequest, FindValidBidsResult,
-    FindViablePlaysRequest, FindViablePlaysResult, FoundViablePlay, NextThresholdReachableRequest,
-    ScoreSegment, SortAndGroupCardsRequest, SortAndGroupCardsResponse, SuitGroup,
+    ComputeDeckLenResponse, ComputeScoreRequest, ComputeScoreResponse, DecomposeTrickFormatRequest,
+    DecomposeTrickFormatResponse, DecomposedTrickFormat, ExplainScoringRequest,
+    ExplainScoringResponse, FindValidBidsRequest, FindValidBidsResult, FindViablePlaysRequest,
+    FindViablePlaysResult, FoundViablePlay, NextThresholdReachableRequest, ScoreSegment,
+    SortAndGroupCardsRequest, SortAndGroupCardsResponse, SuitGroup,
 };
 
 pub fn find_viable_plays(req: FindViablePlaysRequest) -> FindViablePlaysResult {
@@ -33,12 +33,12 @@ pub fn decompose_trick_format(
     req: DecomposeTrickFormatRequest,
 ) -> Result<DecomposeTrickFormatResponse, String> {
     let hand = req.hands.get(req.player_id).map_err(|e| e.to_string())?;
-    let available_cards = Card::cards(
-        hand.iter()
-            .filter(|(c, _)| req.trick_format.trump().effective_suit(**c) == req.trick_format.suit()),
-    )
-    .copied()
-    .collect::<Vec<_>>();
+    let available_cards =
+        Card::cards(hand.iter().filter(|(c, _)| {
+            req.trick_format.trump().effective_suit(**c) == req.trick_format.suit()
+        }))
+        .copied()
+        .collect::<Vec<_>>();
 
     let mut results: Vec<_> = req
         .trick_format
@@ -131,9 +131,7 @@ pub fn sort_and_group_cards(mut req: SortAndGroupCardsRequest) -> SortAndGroupCa
     SortAndGroupCardsResponse { results }
 }
 
-pub fn next_threshold_reachable(
-    req: NextThresholdReachableRequest,
-) -> Result<bool, String> {
+pub fn next_threshold_reachable(req: NextThresholdReachableRequest) -> Result<bool, String> {
     scoring::next_threshold_reachable(
         &req.params,
         &req.decks,
@@ -143,9 +141,7 @@ pub fn next_threshold_reachable(
     .map_err(|_| "Failed to determine if next threshold is reachable".to_string())
 }
 
-pub fn explain_scoring(
-    req: ExplainScoringRequest,
-) -> Result<ExplainScoringResponse, String> {
+pub fn explain_scoring(req: ExplainScoringRequest) -> Result<ExplainScoringResponse, String> {
     let deltas = explain_level_deltas(&req.params, &req.decks, req.smaller_landlord_team_size)
         .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
 

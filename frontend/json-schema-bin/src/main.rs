@@ -2,16 +2,15 @@ use std::env;
 
 use schemars::{schema_for, JsonSchema};
 use shengji_core::interactive::Action;
-use shengji_types::GameMessage;
 use shengji_types::wasm_rpc::{
     BatchCardInfoRequest, BatchCardInfoResponse, CanPlayCardsRequest, CanPlayCardsResponse,
     CardInfo, CardInfoRequest, ComputeScoreRequest, ComputeScoreResponse,
     DecomposeTrickFormatRequest, DecomposeTrickFormatResponse, DecomposedTrickFormat,
     ExplainScoringRequest, ExplainScoringResponse, FindValidBidsRequest, FindValidBidsResult,
-    FindViablePlaysRequest, FindViablePlaysResult, FoundViablePlay,
-    NextThresholdReachableRequest, ScoreSegment, SortAndGroupCardsRequest,
-    SortAndGroupCardsResponse, SuitGroup,
+    FindViablePlaysRequest, FindViablePlaysResult, FoundViablePlay, NextThresholdReachableRequest,
+    ScoreSegment, SortAndGroupCardsRequest, SortAndGroupCardsResponse, SuitGroup,
 };
+use shengji_types::GameMessage;
 use tempdir::TempDir;
 
 #[derive(JsonSchema)]

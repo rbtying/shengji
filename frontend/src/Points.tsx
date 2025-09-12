@@ -293,12 +293,7 @@ export const ProgressBarDisplay = (props: IProps): JSX.Element => {
     };
 
     loadScoring();
-  }, [
-    props.gameScoringParameters,
-    props.smallerTeamSize,
-    props.decks,
-    engine,
-  ]);
+  }, [props.gameScoringParameters, props.smallerTeamSize, props.decks, engine]);
 
   if (isLoading) {
     return <div>Loading progress bar...</div>;

@@ -7,7 +7,7 @@ use shengji_mechanics::{
     player::Player,
     scoring::{GameScoreResult, GameScoringParameters},
     trick::{TractorRequirements, Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
-    types::{Card, EffectiveSuit, PlayerID, Trump, Suit},
+    types::{Card, EffectiveSuit, PlayerID, Suit, Trump},
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

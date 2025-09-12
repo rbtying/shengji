@@ -6,10 +6,9 @@ use ruzstd::decoding::dictionary::Dictionary;
 use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
 use shengji_types::wasm_rpc::{
-    CanPlayCardsRequest, CardInfoRequest, ComputeDeckLenRequest,
-    ComputeScoreRequest, DecomposeTrickFormatRequest, ExplainScoringRequest,
-    FindValidBidsRequest, FindViablePlaysRequest, NextThresholdReachableRequest,
-    SortAndGroupCardsRequest,
+    CanPlayCardsRequest, CardInfoRequest, ComputeDeckLenRequest, ComputeScoreRequest,
+    DecomposeTrickFormatRequest, ExplainScoringRequest, FindValidBidsRequest,
+    FindViablePlaysRequest, NextThresholdReachableRequest, SortAndGroupCardsRequest,
 };
 use shengji_types::ZSTD_ZSTD_DICT;
 use wasm_bindgen::prelude::*;

@@ -42,7 +42,10 @@ async fn send_to_user_with_compression(
         let data = if disable_compression {
             j
         } else {
-            ZSTD_COMPRESSOR.lock().unwrap().compress(&j)
+            ZSTD_COMPRESSOR
+                .lock()
+                .unwrap()
+                .compress(&j)
                 .map_err(|_| anyhow::anyhow!("Unable to compress message"))?
         };
 
@@ -64,7 +67,11 @@ async fn handle_user_connected<S: Storage<VersionedGame, E>, E: std::fmt::Debug 
     let (room, name, disable_compression) = loop {
         if let Some(msg) = rx.recv().await {
             let err = match serde_json::from_slice(&msg) {
-                Ok(JoinRoom { room_name, name, disable_compression }) if room_name.len() == 16 && name.len() < 32 => {
+                Ok(JoinRoom {
+                    room_name,
+                    name,
+                    disable_compression,
+                }) if room_name.len() == 16 && name.len() < 32 => {
                     break (room_name, name, disable_compression);
                 }
                 Ok(_) => GameMessage::Error("invalid room or name".to_string()),
@@ -175,7 +182,10 @@ async fn player_subscribe_task(
             };
 
             if let Some(v) = v {
-                if send_to_user_with_compression(&tx, &v, disable_compression).await.is_err() {
+                if send_to_user_with_compression(&tx, &v, disable_compression)
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }

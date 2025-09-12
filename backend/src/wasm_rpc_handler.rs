@@ -1,9 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
-use shengji_types::wasm_rpc::{WasmRpcRequest, WasmRpcResponse, BatchCardInfoResponse};
+use shengji_types::wasm_rpc::{BatchCardInfoResponse, WasmRpcRequest, WasmRpcResponse};
 
-pub async fn handle_wasm_rpc(
-    Json(request): Json<WasmRpcRequest>,
-) -> impl IntoResponse {
+pub async fn handle_wasm_rpc(Json(request): Json<WasmRpcRequest>) -> impl IntoResponse {
     match process_request(request) {
         Ok(response) => (StatusCode::OK, Json(response)),
         Err(err) => (
@@ -15,58 +13,42 @@ pub async fn handle_wasm_rpc(
 
 fn process_request(request: WasmRpcRequest) -> Result<WasmRpcResponse, String> {
     match request {
-        WasmRpcRequest::FindViablePlays(req) => {
-            Ok(WasmRpcResponse::FindViablePlays(
-                wasm_rpc_impl::find_viable_plays(req),
-            ))
-        }
-        WasmRpcRequest::DecomposeTrickFormat(req) => {
-            Ok(WasmRpcResponse::DecomposeTrickFormat(
-                wasm_rpc_impl::decompose_trick_format(req)?,
-            ))
-        }
-        WasmRpcRequest::CanPlayCards(req) => {
-            Ok(WasmRpcResponse::CanPlayCards(
-                wasm_rpc_impl::can_play_cards(req),
-            ))
-        }
-        WasmRpcRequest::FindValidBids(req) => {
-            Ok(WasmRpcResponse::FindValidBids(
-                wasm_rpc_impl::find_valid_bids(req),
-            ))
-        }
-        WasmRpcRequest::SortAndGroupCards(req) => {
-            Ok(WasmRpcResponse::SortAndGroupCards(
-                wasm_rpc_impl::sort_and_group_cards(req),
-            ))
-        }
-        WasmRpcRequest::NextThresholdReachable(req) => {
-            Ok(WasmRpcResponse::NextThresholdReachable(
-                wasm_rpc_impl::next_threshold_reachable(req)?,
-            ))
-        }
-        WasmRpcRequest::ExplainScoring(req) => {
-            Ok(WasmRpcResponse::ExplainScoring(
-                wasm_rpc_impl::explain_scoring(req)?,
-            ))
-        }
-        WasmRpcRequest::ComputeScore(req) => {
-            Ok(WasmRpcResponse::ComputeScore(
-                wasm_rpc_impl::compute_score(req)?,
-            ))
-        }
-        WasmRpcRequest::ComputeDeckLen(req) => {
-            Ok(WasmRpcResponse::ComputeDeckLen(
-                wasm_rpc_impl::compute_deck_len(req),
-            ))
-        }
+        WasmRpcRequest::FindViablePlays(req) => Ok(WasmRpcResponse::FindViablePlays(
+            wasm_rpc_impl::find_viable_plays(req),
+        )),
+        WasmRpcRequest::DecomposeTrickFormat(req) => Ok(WasmRpcResponse::DecomposeTrickFormat(
+            wasm_rpc_impl::decompose_trick_format(req)?,
+        )),
+        WasmRpcRequest::CanPlayCards(req) => Ok(WasmRpcResponse::CanPlayCards(
+            wasm_rpc_impl::can_play_cards(req),
+        )),
+        WasmRpcRequest::FindValidBids(req) => Ok(WasmRpcResponse::FindValidBids(
+            wasm_rpc_impl::find_valid_bids(req),
+        )),
+        WasmRpcRequest::SortAndGroupCards(req) => Ok(WasmRpcResponse::SortAndGroupCards(
+            wasm_rpc_impl::sort_and_group_cards(req),
+        )),
+        WasmRpcRequest::NextThresholdReachable(req) => Ok(WasmRpcResponse::NextThresholdReachable(
+            wasm_rpc_impl::next_threshold_reachable(req)?,
+        )),
+        WasmRpcRequest::ExplainScoring(req) => Ok(WasmRpcResponse::ExplainScoring(
+            wasm_rpc_impl::explain_scoring(req)?,
+        )),
+        WasmRpcRequest::ComputeScore(req) => Ok(WasmRpcResponse::ComputeScore(
+            wasm_rpc_impl::compute_score(req)?,
+        )),
+        WasmRpcRequest::ComputeDeckLen(req) => Ok(WasmRpcResponse::ComputeDeckLen(
+            wasm_rpc_impl::compute_deck_len(req),
+        )),
         WasmRpcRequest::BatchGetCardInfo(req) => {
-            let results = req.requests.into_iter()
+            let results = req
+                .requests
+                .into_iter()
                 .map(|r| wasm_rpc_impl::get_card_info(r))
                 .collect();
-            Ok(WasmRpcResponse::BatchGetCardInfo(
-                BatchCardInfoResponse { results }
-            ))
+            Ok(WasmRpcResponse::BatchGetCardInfo(BatchCardInfoResponse {
+                results,
+            }))
         }
     }
 }
@@ -98,15 +80,13 @@ mod tests {
             },
             cards: vec![
                 S_2, S_3, S_4, S_5, // Spades
-                H_2, H_3, H_4,      // Hearts
+                H_2, H_3, H_4, // Hearts
                 C_2, C_3, C_4, C_5, // Clubs (C_4 is trump)
-                D_2, D_3,           // Diamonds
+                D_2, D_3, // Diamonds
             ],
         });
 
-        let response = server.post("/api/rpc")
-            .json(&request)
-            .await;
+        let response = server.post("/api/rpc").json(&request).await;
 
         response.assert_status_ok();
 
@@ -124,16 +104,32 @@ mod tests {
                 assert!(suits.contains(&EffectiveSuit::Trump));
 
                 // Find each suit group and check card count
-                let trump_group = resp.results.iter().find(|r| r.suit == EffectiveSuit::Trump).unwrap();
+                let trump_group = resp
+                    .results
+                    .iter()
+                    .find(|r| r.suit == EffectiveSuit::Trump)
+                    .unwrap();
                 assert_eq!(trump_group.cards.len(), 6); // C_2,3,4,5 + S_4 + H_4
 
-                let spades_group = resp.results.iter().find(|r| r.suit == EffectiveSuit::Spades).unwrap();
+                let spades_group = resp
+                    .results
+                    .iter()
+                    .find(|r| r.suit == EffectiveSuit::Spades)
+                    .unwrap();
                 assert_eq!(spades_group.cards.len(), 3); // S_2,3,5 (S_4 is trump)
 
-                let hearts_group = resp.results.iter().find(|r| r.suit == EffectiveSuit::Hearts).unwrap();
+                let hearts_group = resp
+                    .results
+                    .iter()
+                    .find(|r| r.suit == EffectiveSuit::Hearts)
+                    .unwrap();
                 assert_eq!(hearts_group.cards.len(), 2); // H_2,3 (H_4 is trump)
 
-                let diamonds_group = resp.results.iter().find(|r| r.suit == EffectiveSuit::Diamonds).unwrap();
+                let diamonds_group = resp
+                    .results
+                    .iter()
+                    .find(|r| r.suit == EffectiveSuit::Diamonds)
+                    .unwrap();
                 assert_eq!(diamonds_group.cards.len(), 2); // D_2,3
             }
             _ => panic!("Expected SortAndGroupCards response"),
@@ -148,7 +144,9 @@ mod tests {
             requests: vec![
                 CardInfoRequest {
                     card: Card::BigJoker,
-                    trump: Trump::NoTrump { number: Some(Number::Two) },
+                    trump: Trump::NoTrump {
+                        number: Some(Number::Two),
+                    },
                 },
                 CardInfoRequest {
                     card: H_2,
@@ -167,9 +165,7 @@ mod tests {
             ],
         });
 
-        let response = server.post("/api/rpc")
-            .json(&request)
-            .await;
+        let response = server.post("/api/rpc").json(&request).await;
 
         response.assert_status_ok();
 
@@ -206,9 +202,7 @@ mod tests {
             decks: vec![deck1, deck2],
         });
 
-        let response = server.post("/api/rpc")
-            .json(&request)
-            .await;
+        let response = server.post("/api/rpc").json(&request).await;
 
         response.assert_status_ok();
 
@@ -234,14 +228,12 @@ mod tests {
             tractor_requirements: TractorRequirements::default(),
             cards: vec![
                 S_3, S_3, S_4, S_4, // Pair of 3s and 4s (tractor)
-                S_5, S_6,           // Singles
-                H_2, H_2,           // Trump pair
+                S_5, S_6, // Singles
+                H_2, H_2, // Trump pair
             ],
         });
 
-        let response = server.post("/api/rpc")
-            .json(&request)
-            .await;
+        let response = server.post("/api/rpc").json(&request).await;
 
         response.assert_status_ok();
 
