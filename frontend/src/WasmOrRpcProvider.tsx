@@ -93,7 +93,7 @@ const createAsyncFunctions = (useWasm: boolean) => {
         return Shengji.compute_score(req);
       },
       computeDeckLen: async (decks: Deck[]): Promise<number> => {
-        return Shengji.compute_deck_len({ decks }).length;
+        return Shengji.compute_deck_len({ decks });
       },
       getCardInfo: async (req: CardInfoRequest): Promise<CardInfo> => {
         return Shengji.get_card_info(req);

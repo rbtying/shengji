@@ -23,7 +23,6 @@ import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
-import WasmContext from "./WasmContext";
 import { useAsyncWasm } from "./useAsyncWasm";
 import InlineCard from "./InlineCard";
 
@@ -245,6 +244,8 @@ const Play = (props: IProps): JSX.Element => {
     smallerTeamSize = landlordTeamSize < configFriendTeamSize;
   }
 
+  // For now, return unsorted cards since sortAndGroupCards needs to be async
+  // This function is used in rendering and needs refactoring to handle async
   const getCardsFromHand = (pid: number): SuitGroup[] => {
     const cardsInHand =
       pid in playPhase.hands.hands
@@ -252,10 +253,12 @@ const Play = (props: IProps): JSX.Element => {
             Array(ct).fill(c),
           )
         : [];
-    return sortAndGroupCards({
+    // TODO: Make this async or cache the sorted results
+    // For now, return all cards in a single group
+    return cardsInHand.length > 0 ? [{
+      suit: null as any, // Will be replaced when async is properly handled
       cards: cardsInHand,
-      trump: props.playPhase.trump,
-    });
+    }] : [];
   };
 
   return (
@@ -529,7 +532,7 @@ const HelperContents = (props: {
             style={{ cursor: "pointer" }}
             onClick={() => props.setSelected(decomp[0].playable)}
           >
-            {decomp[0].playable.map((c, cidx) => (
+            {decomp[0].playable.map((c: string, cidx: number) => (
               <InlineCard key={cidx} card={c} />
             ))}
           </span>
@@ -559,7 +562,7 @@ const HelperContents = (props: {
                       onClick={() => props.setSelected(d.playable)}
                     >
                       (for example:{" "}
-                      {d.playable.map((c, cidx) => (
+                      {d.playable.map((c: string, cidx: number) => (
                         <InlineCard key={cidx} card={c} />
                       ))}
                       )
