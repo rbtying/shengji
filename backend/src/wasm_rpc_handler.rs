@@ -44,7 +44,7 @@ fn process_request(request: WasmRpcRequest) -> Result<WasmRpcResponse, String> {
             let results = req
                 .requests
                 .into_iter()
-                .map(|r| wasm_rpc_impl::get_card_info(r))
+                .map(wasm_rpc_impl::get_card_info)
                 .collect();
             Ok(WasmRpcResponse::BatchGetCardInfo(BatchCardInfoResponse {
                 results,

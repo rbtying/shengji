@@ -1159,7 +1159,7 @@ mod tests {
         hand.sort_by(|a, b| trump.compare(*a, *b));
         assert_eq!(
             hand.iter().fold(String::new(), |mut o, c| {
-                let _ = write!(o, "{:?}", c);
+                let _ = write!(o, "{c:?}");
                 o
             }),
             "4♡5♡6♡4♧3♢3♤2♡2♤LJHJ"

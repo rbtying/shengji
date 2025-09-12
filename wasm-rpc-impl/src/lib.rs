@@ -143,7 +143,7 @@ pub fn next_threshold_reachable(req: NextThresholdReachableRequest) -> Result<bo
 
 pub fn explain_scoring(req: ExplainScoringRequest) -> Result<ExplainScoringResponse, String> {
     let deltas = explain_level_deltas(&req.params, &req.decks, req.smaller_landlord_team_size)
-        .map_err(|e| format!("Failed to explain scores: {:?}", e))?;
+        .map_err(|e| format!("Failed to explain scores: {e:?}"))?;
 
     Ok(ExplainScoringResponse {
         results: deltas
@@ -156,7 +156,7 @@ pub fn explain_scoring(req: ExplainScoringRequest) -> Result<ExplainScoringRespo
         step_size: req
             .params
             .step_size(&req.decks)
-            .map_err(|e| format!("Failed to compute step size: {:?}", e))?,
+            .map_err(|e| format!("Failed to compute step size: {e:?}"))?,
         total_points: req.decks.iter().map(|d| d.points() as isize).sum::<isize>(),
     })
 }

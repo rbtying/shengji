@@ -21,7 +21,7 @@ thread_local! {
         let mut dict = Vec::new();
         decoder
             .read_to_end(&mut dict)
-            .map_err(|e| format!("Failed to decode data {:?}", e)).unwrap();
+            .map_err(|e| format!("Failed to decode data {e:?}")).unwrap();
 
         let mut fd = FrameDecoder::new();
         fd.add_dict(Dictionary::decode_dict(&dict).unwrap()).unwrap();
@@ -110,7 +110,7 @@ pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
         let mut v = Vec::new();
         decoder
             .read_to_end(&mut v)
-            .map_err(|e| format!("Failed to decode data {:?}", e))?;
+            .map_err(|e| format!("Failed to decode data {e:?}"))?;
         *(frame_decoder.borrow_mut()) = Some(decoder.inner());
 
         Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
