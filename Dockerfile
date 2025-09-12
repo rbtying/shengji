@@ -35,6 +35,7 @@ COPY frontend ./frontend
 COPY backend/Cargo.toml ./backend/Cargo.toml
 COPY backend/src/main.rs ./backend/src/main.rs
 COPY storage ./storage
+COPY wasm-rpc-impl ./wasm-rpc-impl
 WORKDIR /app/frontend
 RUN yarn build
 
@@ -76,6 +77,7 @@ COPY mechanics ./mechanics
 COPY frontend ./frontend
 COPY backend/ ./backend
 COPY storage ./storage
+COPY wasm-rpc-impl ./wasm-rpc-impl
 COPY favicon ./favicon
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist/
 RUN case "$TARGETPLATFORM" in \
@@ -111,6 +113,7 @@ COPY mechanics ./mechanics
 COPY frontend ./frontend
 COPY backend/ ./backend
 COPY storage ./storage
+COPY wasm-rpc-impl ./wasm-rpc-impl
 COPY favicon ./favicon
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist/
 RUN case "$TARGETPLATFORM" in \
