@@ -4,6 +4,7 @@ import websocketHandler from "./websocketHandler";
 import { TimerContext } from "./TimerProvider";
 import memoize from "./memoize";
 import WasmContext from "./WasmContext";
+import { GameMessage } from "./gen-types";
 
 import type { JSX } from "react";
 
@@ -157,8 +158,8 @@ const WebsocketProvider: React.FunctionComponent<
       } else {
         // Binary message (compressed)
         const f = (buf: ArrayBuffer): void => {
-          const message = decodeWireFormat(new Uint8Array(buf));
-          if ("Kicked" in message) {
+          const message = decodeWireFormat(new Uint8Array(buf)) as GameMessage;
+          if (message && typeof message === 'object' && "Kicked" in message) {
             ws.close();
           } else {
             updateStateRef.current({

@@ -134,7 +134,7 @@ export const prefillExplainScoringCache = async (
       .then((result: ExplainScoringResponse) => {
         explainScoringCache[cacheKey] = result;
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         console.error(`Error prefilling explainScoring cache:`, error);
         // Fallback to empty result
         explainScoringCache[cacheKey] = {

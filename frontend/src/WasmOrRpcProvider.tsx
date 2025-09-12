@@ -21,6 +21,12 @@ import {
   Deck,
   BatchCardInfoRequest,
   BatchCardInfoResponse,
+  FindValidBidsResult,
+  SortAndGroupCardsResponse,
+  DecomposeTrickFormatResponse,
+  CanPlayCardsResponse,
+  FindViablePlaysRequest,
+  FindViablePlaysResult,
 } from "./gen-types";
 
 import type { JSX } from "react";
@@ -29,8 +35,21 @@ interface IProps {
   children: React.ReactNode;
 }
 
+// Define the RPC request types
+type WasmRpcRequest =
+  | ({ type: "FindViablePlays" } & FindViablePlaysRequest)
+  | ({ type: "FindValidBids" } & FindValidBidsRequest)
+  | ({ type: "SortAndGroupCards" } & SortAndGroupCardsRequest)
+  | ({ type: "DecomposeTrickFormat" } & DecomposeTrickFormatRequest)
+  | ({ type: "CanPlayCards" } & CanPlayCardsRequest)
+  | ({ type: "ExplainScoring" } & ExplainScoringRequest)
+  | ({ type: "ComputeScore" } & ComputeScoreRequest)
+  | ({ type: "NextThresholdReachable" } & NextThresholdReachableRequest)
+  | ({ type: "ComputeDeckLen"; decks: Deck[] })
+  | ({ type: "BatchGetCardInfo" } & BatchCardInfoRequest);
+
 // Helper to make RPC calls to the server
-async function callRpc<T>(request: any): Promise<T> {
+async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
   const response = await fetch("/api/rpc", {
     method: "POST",
     headers: {
@@ -121,7 +140,7 @@ const createAsyncFunctions = (useWasm: boolean) => {
         tractorRequirements: TractorRequirements,
         cards: string[],
       ): Promise<FoundViablePlay[]> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<FindViablePlaysResult>({
           type: "FindViablePlays",
           trump,
           tractor_requirements: tractorRequirements,
@@ -130,7 +149,7 @@ const createAsyncFunctions = (useWasm: boolean) => {
         return response.results;
       },
       findValidBids: async (req: FindValidBidsRequest): Promise<Bid[]> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<FindValidBidsResult>({
           type: "FindValidBids",
           ...req,
         });
@@ -139,7 +158,7 @@ const createAsyncFunctions = (useWasm: boolean) => {
       sortAndGroupCards: async (
         req: SortAndGroupCardsRequest,
       ): Promise<SuitGroup[]> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<SortAndGroupCardsResponse>({
           type: "SortAndGroupCards",
           ...req,
         });
@@ -148,14 +167,14 @@ const createAsyncFunctions = (useWasm: boolean) => {
       decomposeTrickFormat: async (
         req: DecomposeTrickFormatRequest,
       ): Promise<DecomposedTrickFormat[]> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<DecomposeTrickFormatResponse>({
           type: "DecomposeTrickFormat",
           ...req,
         });
         return response.results;
       },
       canPlayCards: async (req: CanPlayCardsRequest): Promise<boolean> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<CanPlayCardsResponse>({
           type: "CanPlayCards",
           ...req,
         });
@@ -186,7 +205,7 @@ const createAsyncFunctions = (useWasm: boolean) => {
         });
       },
       computeDeckLen: async (decks: Deck[]): Promise<number> => {
-        const response = await callRpc<any>({
+        const response = await callRpc<{ length: number }>({
           type: "ComputeDeckLen",
           decks,
         });
@@ -228,7 +247,7 @@ export interface EngineContext {
   batchGetCardInfo: (
     req: BatchCardInfoRequest,
   ) => Promise<BatchCardInfoResponse>;
-  decodeWireFormat: (req: Uint8Array) => any;
+  decodeWireFormat: (req: Uint8Array) => unknown;
   isUsingWasm: boolean;
 }
 
@@ -268,7 +287,7 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   );
 
   if (useWasm) {
-    (window as any).shengji = Shengji;
+    (window as Window & { shengji?: typeof Shengji }).shengji = Shengji;
   }
 
   return (
