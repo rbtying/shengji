@@ -3,7 +3,7 @@ use std::env;
 use schemars::{schema_for, JsonSchema};
 use shengji_core::interactive::Action;
 use shengji_types::GameMessage;
-use shengji_wasm::{
+use shengji_types::wasm_rpc::{
     CanPlayCardsRequest, CanPlayCardsResponse, CardInfo, CardInfoRequest, ComputeScoreRequest,
     ComputeScoreResponse, DecomposeTrickFormatRequest, DecomposeTrickFormatResponse,
     DecomposedTrickFormat, ExplainScoringRequest, ExplainScoringResponse, FindValidBidsRequest,

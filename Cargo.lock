@@ -1384,6 +1384,7 @@ dependencies = [
  "shengji-mechanics",
  "shengji-types",
  "wasm-bindgen",
+ "wasm-rpc-impl",
 ]
 
 [[package]]
@@ -1973,6 +1974,14 @@ name = "wasm-bindgen-shared"
 version = "0.2.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ee99da9c5ba11bd675621338ef6fa52296b76b83305e9b6e5c77d4c286d6d49"
+
+[[package]]
+name = "wasm-rpc-impl"
+version = "0.1.0"
+dependencies = [
+ "shengji-mechanics",
+ "shengji-types",
+]
 
 [[package]]
 name = "web-sys"

@@ -23,3 +23,4 @@ serde = { version = "1.0", features = ["derive"] }
 shengji-mechanics = { path = "../../mechanics" }
 shengji-types = { path = "../../backend/backend-types" }
 wasm-bindgen = { version = "0.2.74" }
+wasm-rpc-impl = { path = "../../wasm-rpc-impl" }

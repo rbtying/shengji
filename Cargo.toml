@@ -2,7 +2,8 @@
 members = [
   "backend",
   "frontend/json-schema-bin",
-  "frontend/shengji-wasm"
+  "frontend/shengji-wasm",
+  "wasm-rpc-impl"
 ]
 resolver = "2"
 

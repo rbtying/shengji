@@ -1,0 +1,10 @@
+[package]
+name = "wasm-rpc-impl"
+version = "0.1.0"
+authors = ["Robert Ying <rbtying@aeturnalus.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+shengji-types = { path = "../backend/backend-types" }
+shengji-mechanics = { path = "../mechanics" }

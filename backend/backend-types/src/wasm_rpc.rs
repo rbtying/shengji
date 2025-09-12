@@ -10,25 +10,25 @@ use shengji_mechanics::{
     types::{Card, EffectiveSuit, PlayerID, Trump, Suit},
 };
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct FindViablePlaysRequest {
     pub trump: Trump,
     pub tractor_requirements: TractorRequirements,
     pub cards: Vec<Card>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct FindViablePlaysResult {
     pub results: Vec<FoundViablePlay>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct FoundViablePlay {
     pub grouping: Vec<TrickUnit>,
     pub description: String,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct DecomposeTrickFormatRequest {
     pub trick_format: TrickFormat,
     pub hands: Hands,
@@ -36,12 +36,12 @@ pub struct DecomposeTrickFormatRequest {
     pub trick_draw_policy: TrickDrawPolicy,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct DecomposeTrickFormatResponse {
     pub results: Vec<DecomposedTrickFormat>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct DecomposedTrickFormat {
     pub format: Vec<UnitLike>,
     pub description: String,
@@ -49,7 +49,7 @@ pub struct DecomposedTrickFormat {
     pub more_than_one: bool,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct CanPlayCardsRequest {
     pub trick: Trick,
     pub id: PlayerID,
@@ -58,12 +58,12 @@ pub struct CanPlayCardsRequest {
     pub trick_draw_policy: TrickDrawPolicy,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct CanPlayCardsResponse {
     pub playable: bool,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct FindValidBidsRequest {
     pub id: PlayerID,
     pub bids: Vec<Bid>,
@@ -77,29 +77,29 @@ pub struct FindValidBidsRequest {
     pub num_decks: usize,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct FindValidBidsResult {
     pub results: Vec<Bid>,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct SortAndGroupCardsRequest {
     pub trump: Trump,
     pub cards: Vec<Card>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct SortAndGroupCardsResponse {
     pub results: Vec<SuitGroup>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct SuitGroup {
     pub suit: EffectiveSuit,
     pub cards: Vec<Card>,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct NextThresholdReachableRequest {
     pub decks: Vec<Deck>,
     pub params: GameScoringParameters,
@@ -107,27 +107,27 @@ pub struct NextThresholdReachableRequest {
     pub observed_points: isize,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct ExplainScoringRequest {
     pub decks: Vec<Deck>,
     pub params: GameScoringParameters,
     pub smaller_landlord_team_size: bool,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ExplainScoringResponse {
     pub results: Vec<ScoreSegment>,
     pub total_points: isize,
     pub step_size: usize,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ScoreSegment {
     pub point_threshold: isize,
     pub results: GameScoreResult,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct ComputeScoreRequest {
     pub decks: Vec<Deck>,
     pub params: GameScoringParameters,
@@ -135,13 +135,13 @@ pub struct ComputeScoreRequest {
     pub non_landlord_points: isize,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ComputeScoreResponse {
     pub score: GameScoreResult,
     pub next_threshold: isize,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct CardInfo {
     pub suit: Option<Suit>,
     pub effective_suit: EffectiveSuit,
@@ -152,23 +152,23 @@ pub struct CardInfo {
     pub points: usize,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct CardInfoRequest {
     pub card: Card,
     pub trump: Trump,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct ComputeDeckLenRequest {
     pub decks: Vec<Deck>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ComputeDeckLenResponse {
     pub length: usize,
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum WasmRpcRequest {
     FindViablePlays(FindViablePlaysRequest),
@@ -183,7 +183,7 @@ pub enum WasmRpcRequest {
     GetCardInfo(CardInfoRequest),
 }
 
-#[derive(Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum WasmRpcResponse {
     FindViablePlays(FindViablePlaysResult),
