@@ -3,6 +3,7 @@ import { WebsocketContext } from "./WebsocketProvider";
 import { TimerContext } from "./TimerProvider";
 import LabeledPlay from "./LabeledPlay";
 import PublicRoomsPane from "./PublicRoomsPane";
+import { isWasmAvailable } from "./detectWasm";
 
 import type { JSX } from "react";
 
@@ -33,6 +34,7 @@ const JoinRoom = (props: IProps): JSX.Element => {
       send({
         room_name: props.room_name,
         name: props.name,
+        disable_compression: !isWasmAvailable(),
       });
     }
   };
