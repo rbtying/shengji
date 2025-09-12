@@ -27,6 +27,16 @@ interface IProps {
 // Cache for card info to avoid repeated async calls
 const cardInfoCache: { [key: string]: CardInfo } = {};
 
+// Helper to create a stable cache key from trump
+const getTrumpKey = (trump: Trump): string => {
+  if ('Standard' in trump) {
+    return `std_${trump.Standard.suit}_${trump.Standard.number}`;
+  } else if ('NoTrump' in trump) {
+    return `nt_${trump.NoTrump.number || 'none'}`;
+  }
+  return 'unknown';
+};
+
 const Card = (props: IProps): JSX.Element => {
   const settings = React.useContext(SettingsContext);
   const asyncWasm = useAsyncWasm();
@@ -35,8 +45,8 @@ const Card = (props: IProps): JSX.Element => {
   const height = props.smaller ? 95 : 120;
   const bounds = getCardBounds(height);
 
-  // Create a cache key for the card info
-  const cacheKey = `${props.card}_${JSON.stringify(props.trump)}`;
+  // Create a cache key for the card info based on card and trump
+  const cacheKey = `${props.card}_${getTrumpKey(props.trump)}`;
 
   React.useEffect(() => {
     // Only load card info if the card is in the lookup
@@ -44,6 +54,7 @@ const Card = (props: IProps): JSX.Element => {
       // Check cache first
       if (cacheKey in cardInfoCache) {
         setCardInfo(cardInfoCache[cacheKey]);
+        setIsLoading(false);
         return;
       }
 
@@ -52,26 +63,27 @@ const Card = (props: IProps): JSX.Element => {
         card: props.card,
         trump: props.trump
       }).then((info) => {
-        // Cache the result
+        // Cache the result with the trump-specific key
         cardInfoCache[cacheKey] = info;
         setCardInfo(info);
         setIsLoading(false);
       }).catch((error) => {
         console.error("Error getting card info:", error);
-        // Fallback to basic info
+        // Fallback to basic info from static lookup
+        const staticInfo = cardLookup[props.card];
         setCardInfo({
           suit: null,
           effective_suit: "Unknown" as any,
-          value: props.card,
-          display_value: props.card,
-          typ: props.card,
-          number: null,
-          points: 0,
+          value: staticInfo.value || props.card,
+          display_value: staticInfo.display_value || props.card,
+          typ: staticInfo.typ || props.card,
+          number: staticInfo.number || null,
+          points: staticInfo.points || 0,
         });
         setIsLoading(false);
       });
     }
-  }, [props.card, props.trump, cacheKey, asyncWasm]);
+  }, [cacheKey, props.card, props.trump, asyncWasm]);
 
   if (!(props.card in cardLookup)) {
     const nonSVG = (
@@ -119,47 +131,33 @@ const Card = (props: IProps): JSX.Element => {
   } else {
     const staticCardInfo = cardLookup[props.card];
 
-    // Show loading state or use loaded card info
-    if (isLoading || !cardInfo) {
-      // Show a basic card while loading
+    const label = (offset: number): JSX.Element | null => {
+      if (isLoading || !cardInfo) return null;
       return (
-        <div
-          className={classNames("card", staticCardInfo.typ, props.className, "loading")}
-          style={{
-            marginRight: props.collapseRight ? `-${bounds.width * 0.6}px` : "0",
-          }}
-        >
-          <CardCanvas
-            card={staticCardInfo.display_value}
-            height={height}
-            suit={classNames(
-              staticCardInfo.typ,
-              settings.fourColor ? "four-color" : null,
-              settings.darkMode ? "dark-mode" : null,
-            )}
-            colorOverride={
-              settings.suitColorOverrides[staticCardInfo.typ as keyof ISuitOverrides]
-            }
-            backgroundColor={settings.darkMode ? "#000" : "#fff"}
-          />
+        <div className="card-label" style={{ bottom: `${offset}px` }}>
+          <InlineCard card={props.card} />
         </div>
       );
-    }
+    };
 
-    const label = (offset: number): JSX.Element => (
-      <div className="card-label" style={{ bottom: `${offset}px` }}>
-        <InlineCard card={props.card} />
-      </div>
-    );
-    const icon = (offset: number): JSX.Element => (
-      <div className="card-icon" style={{ bottom: `${offset}px` }}>
-        {cardInfo.effective_suit === "Trump" && settings.trumpCardIcon}
-        {cardInfo.points > 0 && settings.pointCardIcon}
-      </div>
-    );
+    const icon = (offset: number): JSX.Element | null => {
+      if (isLoading || !cardInfo) return null;
+      return (
+        <div className="card-icon" style={{ bottom: `${offset}px` }}>
+          {cardInfo.effective_suit === "Trump" && settings.trumpCardIcon}
+          {cardInfo.points > 0 && settings.pointCardIcon}
+        </div>
+      );
+    };
+
     const nonSVG = (
       <div
-        className={classNames("card", staticCardInfo.typ, props.className)}
+        className={classNames(
+          "card",
+          staticCardInfo.typ,
+          props.className,
+          isLoading ? "loading" : null
+        )}
         onClick={props.onClick}
         onMouseEnter={props.onMouseEnter}
         onMouseLeave={props.onMouseLeave}

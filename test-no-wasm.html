@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Shengji without WASM</title>
+</head>
+<body>
+    <h1>Testing Shengji RPC without WASM</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testRPC() {
+            const results = document.getElementById('results');
+
+            try {
+                // Test getCardInfo
+                console.log('Testing getCardInfo...');
+                const cardInfoReq = {
+                    type: "GetCardInfo",
+                    card: "🃊",
+                    trump: { "Standard": { "suit": "Hearts", "number": "Two" } }
+                };
+
+                const cardInfoRes = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cardInfoReq)
+                });
+
+                const cardInfo = await cardInfoRes.json();
+                results.innerHTML += `<p>✅ getCardInfo: ${JSON.stringify(cardInfo)}</p>`;
+
+                // Test sortAndGroupCards
+                console.log('Testing sortAndGroupCards...');
+                const sortReq = {
+                    type: "SortAndGroupCards",
+                    cards: ["🃊", "🃋", "🂡", "🂢", "🃁"],
+                    trump: { "Standard": { "suit": "Hearts", "number": "Two" } }
+                };
+
+                const sortRes = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sortReq)
+                });
+
+                const sorted = await sortRes.json();
+                results.innerHTML += `<p>✅ sortAndGroupCards: ${sorted.SortAndGroupCards.results.length} groups</p>`;
+
+                // Test computeDeckLen
+                console.log('Testing computeDeckLen...');
+                const deckLenReq = {
+                    type: "ComputeDeckLen",
+                    decks: [
+                        { exclude_small_joker: false, exclude_big_joker: false, min: "Two" },
+                        { exclude_small_joker: false, exclude_big_joker: false, min: "Two" }
+                    ]
+                };
+
+                const deckLenRes = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(deckLenReq)
+                });
+
+                const deckLen = await deckLenRes.json();
+                results.innerHTML += `<p>✅ computeDeckLen: ${deckLen.ComputeDeckLen.length} cards total</p>`;
+
+                console.log('All tests passed!');
+                results.innerHTML += `<h2>✅ All RPC tests passed!</h2>`;
+
+            } catch (error) {
+                console.error('Test failed:', error);
+                results.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Run tests when page loads
+        testRPC();
+    </script>
+</body>
+</html>
