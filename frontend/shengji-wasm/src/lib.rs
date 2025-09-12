@@ -5,20 +5,20 @@ use gloo_utils::format::JsValueSerdeExt;
 use ruzstd::decoding::dictionary::Dictionary;
 use ruzstd::frame_decoder::FrameDecoder;
 use ruzstd::streaming_decoder::StreamingDecoder;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use shengji_mechanics::types::Suit;
 use shengji_mechanics::{
-    bidding::{Bid, BidPolicy, BidReinforcementPolicy, JokerBidPolicy},
-    deck::Deck,
-    hands::Hands,
+    bidding::Bid,
     ordered_card::OrderedCard,
-    player::Player,
-    scoring::{
-        self, compute_level_deltas, explain_level_deltas, GameScoreResult, GameScoringParameters,
-    },
-    trick::{TractorRequirements, Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
-    types::{Card, EffectiveSuit, PlayerID, Trump},
+    scoring::{self, compute_level_deltas, explain_level_deltas},
+    trick::{TrickUnit, UnitLike},
+    types::Card,
+};
+use shengji_types::wasm_rpc::{
+    CanPlayCardsRequest, CanPlayCardsResponse, CardInfo, CardInfoRequest, ComputeDeckLenRequest,
+    ComputeScoreRequest, ComputeScoreResponse, DecomposeTrickFormatRequest,
+    DecomposeTrickFormatResponse, DecomposedTrickFormat, ExplainScoringRequest,
+    ExplainScoringResponse, FindValidBidsRequest, FindValidBidsResult, FindViablePlaysRequest,
+    FindViablePlaysResult, FoundViablePlay, NextThresholdReachableRequest, ScoreSegment,
+    SortAndGroupCardsRequest, SortAndGroupCardsResponse, SuitGroup,
 };
 use shengji_types::ZSTD_ZSTD_DICT;
 use wasm_bindgen::prelude::*;
@@ -39,24 +39,6 @@ thread_local! {
     };
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub struct FindViablePlaysRequest {
-    trump: Trump,
-    tractor_requirements: TractorRequirements,
-    cards: Vec<Card>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct FindViablePlaysResult {
-    results: Vec<FoundViablePlay>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct FoundViablePlay {
-    grouping: Vec<TrickUnit>,
-    description: String,
-}
-
 #[wasm_bindgen]
 pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
     let FindViablePlaysRequest {
@@ -75,27 +57,6 @@ pub fn find_viable_plays(req: JsValue) -> Result<JsValue, JsValue> {
         })
         .collect::<Vec<_>>();
     Ok(JsValue::from_serde(&FindViablePlaysResult { results }).map_err(|e| e.to_string())?)
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct DecomposeTrickFormatRequest {
-    trick_format: TrickFormat,
-    hands: Hands,
-    player_id: PlayerID,
-    trick_draw_policy: TrickDrawPolicy,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct DecomposeTrickFormatResponse {
-    results: Vec<DecomposedTrickFormat>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct DecomposedTrickFormat {
-    format: Vec<UnitLike>,
-    description: String,
-    playable: Vec<Card>,
-    more_than_one: bool,
 }
 
 #[wasm_bindgen]
@@ -161,20 +122,6 @@ pub fn decompose_trick_format(req: JsValue) -> Result<JsValue, JsValue> {
     )
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub struct CanPlayCardsRequest {
-    trick: Trick,
-    id: PlayerID,
-    hands: Hands,
-    cards: Vec<Card>,
-    trick_draw_policy: TrickDrawPolicy,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct CanPlayCardsResponse {
-    playable: bool,
-}
-
 #[wasm_bindgen]
 pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
     let CanPlayCardsRequest {
@@ -190,25 +137,6 @@ pub fn can_play_cards(req: JsValue) -> Result<JsValue, JsValue> {
             .is_ok(),
     })
     .map_err(|e| e.to_string())?)
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct FindValidBidsRequest {
-    id: PlayerID,
-    bids: Vec<Bid>,
-    hands: Hands,
-    players: Vec<Player>,
-    landlord: Option<PlayerID>,
-    epoch: usize,
-    bid_policy: BidPolicy,
-    bid_reinforcement_policy: BidReinforcementPolicy,
-    joker_bid_policy: JokerBidPolicy,
-    num_decks: usize,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct FindValidBidsResult {
-    results: Vec<Bid>,
 }
 
 #[wasm_bindgen]
@@ -232,23 +160,6 @@ pub fn find_valid_bids(req: JsValue) -> Result<JsValue, JsValue> {
         .unwrap_or_default(),
     })
     .map_err(|e| e.to_string())?)
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct SortAndGroupCardsRequest {
-    trump: Trump,
-    cards: Vec<Card>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct SortAndGroupCardsResponse {
-    results: Vec<SuitGroup>,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct SuitGroup {
-    suit: EffectiveSuit,
-    cards: Vec<Card>,
 }
 
 #[wasm_bindgen]
@@ -276,14 +187,6 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
     Ok(JsValue::from_serde(&SortAndGroupCardsResponse { results }).map_err(|e| e.to_string())?)
 }
 
-#[derive(Deserialize, JsonSchema)]
-pub struct NextThresholdReachableRequest {
-    decks: Vec<Deck>,
-    params: GameScoringParameters,
-    non_landlord_points: isize,
-    observed_points: isize,
-}
-
 #[wasm_bindgen]
 pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
     let NextThresholdReachableRequest {
@@ -296,26 +199,6 @@ pub fn next_threshold_reachable(req: JsValue) -> Result<bool, JsValue> {
         scoring::next_threshold_reachable(&params, &decks, non_landlord_points, observed_points)
             .map_err(|_| "Failed to determine if next threshold is reachable")?,
     )
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ExplainScoringRequest {
-    decks: Vec<Deck>,
-    params: GameScoringParameters,
-    smaller_landlord_team_size: bool,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct ExplainScoringResponse {
-    results: Vec<ScoreSegment>,
-    total_points: isize,
-    step_size: usize,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct ScoreSegment {
-    point_threshold: isize,
-    results: GameScoreResult,
 }
 
 #[wasm_bindgen]
@@ -346,23 +229,9 @@ pub fn explain_scoring(req: JsValue) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn compute_deck_len(req: JsValue) -> Result<usize, JsValue> {
-    let decks: Vec<Deck> = req.into_serde().map_err(|e| e.to_string())?;
+    let ComputeDeckLenRequest { decks } = req.into_serde().map_err(|e| e.to_string())?;
 
     Ok(decks.iter().map(|d| d.len()).sum::<usize>())
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct ComputeScoreRequest {
-    decks: Vec<Deck>,
-    params: GameScoringParameters,
-    smaller_landlord_team_size: bool,
-    non_landlord_points: isize,
-}
-
-#[derive(Serialize, JsonSchema)]
-pub struct ComputeScoreResponse {
-    score: GameScoreResult,
-    next_threshold: isize,
 }
 
 #[wasm_bindgen]
@@ -393,23 +262,6 @@ pub fn compute_score(req: JsValue) -> Result<JsValue, JsValue> {
     .map_err(|e| e.to_string())?)
 }
 
-#[derive(Serialize, JsonSchema)]
-pub struct CardInfo {
-    suit: Option<Suit>,
-    effective_suit: EffectiveSuit,
-    value: char,
-    display_value: char,
-    typ: char,
-    number: Option<&'static str>,
-    points: usize,
-}
-
-#[derive(Deserialize, JsonSchema)]
-pub struct CardInfoRequest {
-    card: Card,
-    trump: Trump,
-}
-
 #[wasm_bindgen]
 pub fn get_card_info(req: JsValue) -> Result<JsValue, JsValue> {
     let CardInfoRequest { card, trump } = req.into_serde().map_err(|e| e.to_string())?;
@@ -422,7 +274,7 @@ pub fn get_card_info(req: JsValue) -> Result<JsValue, JsValue> {
         value: info.value,
         display_value: info.display_value,
         typ: info.typ,
-        number: info.number,
+        number: info.number.map(|s| s.to_string()),
         points: info.points,
         effective_suit,
     })

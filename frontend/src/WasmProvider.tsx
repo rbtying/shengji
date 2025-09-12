@@ -46,7 +46,7 @@ const ShengjiProvider = (props: IProps): JSX.Element => {
           return Shengji.compute_score(req);
         },
         computeDeckLen: (req) => {
-          return Shengji.compute_deck_len(req);
+          return Shengji.compute_deck_len({ decks: req });
         },
         getCardInfo: (req) => {
           return Shengji.get_card_info(req);

@@ -1368,6 +1368,7 @@ dependencies = [
  "schemars",
  "serde",
  "shengji-core",
+ "shengji-mechanics",
 ]
 
 [[package]]
