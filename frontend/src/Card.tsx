@@ -12,7 +12,7 @@ import {
   cardInfoCache,
   getTrumpKey,
   prefillCardInfoCache,
-  getPrefillPromise
+  getPrefillPromise,
 } from "./util/cachePrefill";
 
 import type { JSX } from "react";
@@ -59,31 +59,37 @@ const Card = (props: IProps): JSX.Element => {
     // Check if a prefill is already in progress for this trump
     const existingPrefillPromise = getPrefillPromise(props.trump);
     if (existingPrefillPromise) {
-      console.log(`Waiting for existing prefill for trump ${getTrumpKey(props.trump)}...`);
-      existingPrefillPromise.then(() => {
-        // Check if our card is now cached
-        if (cacheKey in cardInfoCache) {
-          setCardInfo(cardInfoCache[cacheKey]);
+      console.log(
+        `Waiting for existing prefill for trump ${getTrumpKey(props.trump)}...`,
+      );
+      existingPrefillPromise
+        .then(() => {
+          // Check if our card is now cached
+          if (cacheKey in cardInfoCache) {
+            setCardInfo(cardInfoCache[cacheKey]);
+            setIsLoading(false);
+          } else {
+            // If still not cached after prefill, something went wrong
+            console.error(
+              `Card ${props.card} not in cache after prefill completed`,
+            );
+            const staticInfo = cardLookup[props.card];
+            setCardInfo({
+              suit: null,
+              effective_suit: "Unknown" as any,
+              value: staticInfo.value || props.card,
+              display_value: staticInfo.display_value || props.card,
+              typ: staticInfo.typ || props.card,
+              number: staticInfo.number || null,
+              points: staticInfo.points || 0,
+            });
+            setIsLoading(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to wait for prefill:", error);
           setIsLoading(false);
-        } else {
-          // If still not cached after prefill, something went wrong
-          console.error(`Card ${props.card} not in cache after prefill completed`);
-          const staticInfo = cardLookup[props.card];
-          setCardInfo({
-            suit: null,
-            effective_suit: "Unknown" as any,
-            value: staticInfo.value || props.card,
-            display_value: staticInfo.display_value || props.card,
-            typ: staticInfo.typ || props.card,
-            number: staticInfo.number || null,
-            points: staticInfo.points || 0,
-          });
-          setIsLoading(false);
-        }
-      }).catch(error => {
-        console.error("Failed to wait for prefill:", error);
-        setIsLoading(false);
-      });
+        });
       return;
     }
 
@@ -91,22 +97,41 @@ const Card = (props: IProps): JSX.Element => {
     const trumpKey = getTrumpKey(props.trump);
 
     // Count how many cards are cached for this trump
-    const cachedCount = Object.keys(cardInfoCache).filter(key =>
-      key.endsWith(`_${trumpKey}`)
+    const cachedCount = Object.keys(cardInfoCache).filter((key) =>
+      key.endsWith(`_${trumpKey}`),
     ).length;
 
     // If we have very few cached cards for this trump, prefill everything
     if (cachedCount < 5) {
-      console.log(`Detected uncached trump ${trumpKey}, triggering full prefill...`);
+      console.log(
+        `Detected uncached trump ${trumpKey}, triggering full prefill...`,
+      );
 
       // Start the prefill and wait for it
-      prefillCardInfoCache(engine, props.trump).then(() => {
-        // Check if our card is now cached
-        if (cacheKey in cardInfoCache) {
-          setCardInfo(cardInfoCache[cacheKey]);
-          setIsLoading(false);
-        } else {
-          // Fallback if card still not in cache
+      prefillCardInfoCache(engine, props.trump)
+        .then(() => {
+          // Check if our card is now cached
+          if (cacheKey in cardInfoCache) {
+            setCardInfo(cardInfoCache[cacheKey]);
+            setIsLoading(false);
+          } else {
+            // Fallback if card still not in cache
+            const staticInfo = cardLookup[props.card];
+            setCardInfo({
+              suit: null,
+              effective_suit: "Unknown" as any,
+              value: staticInfo.value || props.card,
+              display_value: staticInfo.display_value || props.card,
+              typ: staticInfo.typ || props.card,
+              number: staticInfo.number || null,
+              points: staticInfo.points || 0,
+            });
+            setIsLoading(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to prefill cache:", error);
+          // Fallback on error
           const staticInfo = cardLookup[props.card];
           setCardInfo({
             suit: null,
@@ -118,27 +143,14 @@ const Card = (props: IProps): JSX.Element => {
             points: staticInfo.points || 0,
           });
           setIsLoading(false);
-        }
-      }).catch(error => {
-        console.error("Failed to prefill cache:", error);
-        // Fallback on error
-        const staticInfo = cardLookup[props.card];
-        setCardInfo({
-          suit: null,
-          effective_suit: "Unknown" as any,
-          value: staticInfo.value || props.card,
-          display_value: staticInfo.display_value || props.card,
-          typ: staticInfo.typ || props.card,
-          number: staticInfo.number || null,
-          points: staticInfo.points || 0,
         });
-        setIsLoading(false);
-      });
       return;
     }
 
     // Only make individual request if no prefill is needed
-    console.log(`Making individual request for card ${props.card} with trump ${trumpKey}`);
+    console.log(
+      `Making individual request for card ${props.card} with trump ${trumpKey}`,
+    );
     engine
       .batchGetCardInfo({
         requests: [

@@ -79,7 +79,9 @@ async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
     result = JSON.parse(responseText);
   } catch (e) {
     console.error("Failed to parse JSON response:", responseText);
-    throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
+    throw new Error(
+      `Invalid JSON response from server: ${responseText.substring(0, 100)}`,
+    );
   }
 
   // Check if it's an error response
@@ -148,7 +150,8 @@ const createAsyncFunctions = (
       nextThresholdReachable: async (
         req: NextThresholdReachableRequest,
       ): Promise<boolean> => {
-        return wasmModule.next_threshold_reachable(req);
+        const response = wasmModule.next_threshold_reachable(req);
+        return response.reachable;
       },
       computeScore: async (
         req: ComputeScoreRequest,
@@ -239,10 +242,11 @@ const createAsyncFunctions = (
       nextThresholdReachable: async (
         req: NextThresholdReachableRequest,
       ): Promise<boolean> => {
-        return await callRpc<boolean>({
+        const response = await callRpc<{ reachable: boolean }>({
           type: "NextThresholdReachable",
           ...req,
         });
+        return response.reachable;
       },
       computeScore: async (
         req: ComputeScoreRequest,
@@ -370,7 +374,9 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   // Eagerly prefill cache for common trump configurations when engine is ready
   React.useEffect(() => {
     if (!isLoading && engineContextValue && !isPrefillComplete) {
-      console.log("Engine ready, eagerly prefilling card cache for common trumps...");
+      console.log(
+        "Engine ready, eagerly prefilling card cache for common trumps...",
+      );
 
       // Create an array of prefill promises
       const prefillPromises: Promise<void>[] = [];
@@ -380,7 +386,9 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
       prefillPromises.push(
         prefillCardInfoCache(engineContextValue, noTrumpBasic)
           .then(() => console.log("✅ Prefilled cache for NoTrump (no rank)"))
-          .catch((error) => console.error("Failed to prefill NoTrump cache:", error))
+          .catch((error) =>
+            console.error("Failed to prefill NoTrump cache:", error),
+          ),
       );
 
       // Also prefill for NoTrump with rank 2 (most common starting rank)
@@ -388,7 +396,9 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
       prefillPromises.push(
         prefillCardInfoCache(engineContextValue, noTrump2)
           .then(() => console.log("✅ Prefilled cache for NoTrump rank 2"))
-          .catch((error) => console.error("Failed to prefill NoTrump rank 2 cache:", error))
+          .catch((error) =>
+            console.error("Failed to prefill NoTrump rank 2 cache:", error),
+          ),
       );
 
       // Wait for all prefills to complete before marking as done

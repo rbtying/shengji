@@ -20,7 +20,10 @@ const prefillInProgressMap: { [trumpKey: string]: Promise<void> | null } = {};
 
 export function isPrefillInProgress(trump: Trump): boolean {
   const trumpKey = getTrumpKey(trump);
-  return prefillInProgressMap[trumpKey] !== undefined && prefillInProgressMap[trumpKey] !== null;
+  return (
+    prefillInProgressMap[trumpKey] !== undefined &&
+    prefillInProgressMap[trumpKey] !== null
+  );
 }
 
 export function markPrefillStarted(trump: Trump, promise: Promise<void>): void {
@@ -58,7 +61,9 @@ export const prefillCardInfoCache = async (
   // Check if a prefill is already in progress for this trump
   const existingPromise = getPrefillPromise(trump);
   if (existingPromise) {
-    console.log(`Prefill already in progress for trump ${trumpKey}, waiting...`);
+    console.log(
+      `Prefill already in progress for trump ${trumpKey}, waiting...`,
+    );
     return existingPromise;
   }
 
@@ -91,7 +96,9 @@ export const prefillCardInfoCache = async (
     }
 
     try {
-      console.log(`Attempting to batch fetch ${requestsToMake.length} cards for trump ${trumpKey}`);
+      console.log(
+        `Attempting to batch fetch ${requestsToMake.length} cards for trump ${trumpKey}`,
+      );
 
       // Use batch API to fetch all card info at once
       const batchResponse = await engine.batchGetCardInfo({
@@ -104,12 +111,20 @@ export const prefillCardInfoCache = async (
       console.log("Batch response received:", batchResponse);
 
       // Validate response structure
-      if (!batchResponse || !batchResponse.results || !Array.isArray(batchResponse.results)) {
-        throw new Error(`Invalid batch response structure: ${JSON.stringify(batchResponse)}`);
+      if (
+        !batchResponse ||
+        !batchResponse.results ||
+        !Array.isArray(batchResponse.results)
+      ) {
+        throw new Error(
+          `Invalid batch response structure: ${JSON.stringify(batchResponse)}`,
+        );
       }
 
       if (batchResponse.results.length !== requestsToMake.length) {
-        console.warn(`Response length mismatch: expected ${requestsToMake.length}, got ${batchResponse.results.length}`);
+        console.warn(
+          `Response length mismatch: expected ${requestsToMake.length}, got ${batchResponse.results.length}`,
+        );
       }
 
       // Store results in cache
@@ -127,7 +142,10 @@ export const prefillCardInfoCache = async (
       );
     } catch (error) {
       console.error("❌ Error batch fetching card info:", error);
-      console.error("Error details:", error instanceof Error ? error.stack : error);
+      console.error(
+        "Error details:",
+        error instanceof Error ? error.stack : error,
+      );
 
       // Fallback to individual requests or static data
       for (const { card, cacheKey } of requestsToMake) {

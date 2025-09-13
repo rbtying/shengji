@@ -194,6 +194,11 @@ pub enum WasmRpcRequest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+pub struct NextThresholdReachableResponse {
+    pub reachable: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(tag = "type")]
 pub enum WasmRpcResponse {
     FindViablePlays(FindViablePlaysResult),
@@ -201,7 +206,7 @@ pub enum WasmRpcResponse {
     CanPlayCards(CanPlayCardsResponse),
     FindValidBids(FindValidBidsResult),
     SortAndGroupCards(SortAndGroupCardsResponse),
-    NextThresholdReachable(bool),
+    NextThresholdReachable(NextThresholdReachableResponse),
     ExplainScoring(ExplainScoringResponse),
     ComputeScore(ComputeScoreResponse),
     ComputeDeckLen(ComputeDeckLenResponse),

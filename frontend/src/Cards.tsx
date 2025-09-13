@@ -156,7 +156,7 @@ const Cards = (props: IProps): JSX.Element => {
     props.selectedCards,
     props.trump,
     props.playerId,
-    handKey,  // Use the stable key instead of hands.hands
+    handKey, // Use the stable key instead of hands.hands
     separateCardsBySuit,
     reverseCardOrder,
     engine,
