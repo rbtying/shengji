@@ -30,13 +30,11 @@ fn process_request(request: WasmRpcRequest) -> Result<WasmRpcResponse, String> {
         WasmRpcRequest::SortAndGroupCards(req) => Ok(WasmRpcResponse::SortAndGroupCards(
             wasm_rpc_impl::sort_and_group_cards(req),
         )),
-        WasmRpcRequest::NextThresholdReachable(req) => {
-            Ok(WasmRpcResponse::NextThresholdReachable(
-                NextThresholdReachableResponse {
-                    reachable: wasm_rpc_impl::next_threshold_reachable(req)?,
-                },
-            ))
-        }
+        WasmRpcRequest::NextThresholdReachable(req) => Ok(WasmRpcResponse::NextThresholdReachable(
+            NextThresholdReachableResponse {
+                reachable: wasm_rpc_impl::next_threshold_reachable(req)?,
+            },
+        )),
         WasmRpcRequest::ExplainScoring(req) => Ok(WasmRpcResponse::ExplainScoring(
             wasm_rpc_impl::explain_scoring(req)?,
         )),

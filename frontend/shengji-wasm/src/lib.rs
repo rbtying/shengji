@@ -68,9 +68,13 @@ pub fn sort_and_group_cards(req: JsValue) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn next_threshold_reachable(req: JsValue) -> Result<JsValue, JsValue> {
     let request: NextThresholdReachableRequest = req.into_serde().map_err(|e| e.to_string())?;
-    let reachable = wasm_rpc_impl::next_threshold_reachable(request).map_err(|e| JsValue::from_str(&e))?;
+    let reachable =
+        wasm_rpc_impl::next_threshold_reachable(request).map_err(|e| JsValue::from_str(&e))?;
     // Return the same structure as the RPC version: { reachable: bool }
-    Ok(JsValue::from_serde(&NextThresholdReachableResponse { reachable }).map_err(|e| e.to_string())?)
+    Ok(
+        JsValue::from_serde(&NextThresholdReachableResponse { reachable })
+            .map_err(|e| e.to_string())?,
+    )
 }
 
 #[wasm_bindgen]

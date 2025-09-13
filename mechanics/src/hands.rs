@@ -33,8 +33,8 @@ impl<'de> Deserialize<'de> for Hands {
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de;
         use crate::types::PlayerID;
+        use serde::de;
         use std::str::FromStr;
 
         #[derive(Deserialize)]
@@ -51,8 +51,8 @@ impl<'de> Deserialize<'de> for Hands {
             for (key, value) in obj {
                 let player_id = PlayerID::from_str(&key)
                     .map_err(|_| de::Error::custom(format!("invalid PlayerID: {}", key)))?;
-                let card_map: HashMap<Card, usize> = serde_json::from_value(value)
-                    .map_err(de::Error::custom)?;
+                let card_map: HashMap<Card, usize> =
+                    serde_json::from_value(value).map_err(de::Error::custom)?;
                 hands_map.insert(player_id, card_map);
             }
         } else {
