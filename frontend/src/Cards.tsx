@@ -64,6 +64,20 @@ const Cards = (props: IProps): JSX.Element => {
       ? cardsInHand
       : ArrayUtils.minus(cardsInHand, selectedCards);
 
+  // Create stable string representation of the player's hand for dependency checking
+  // This prevents re-running the effect when hands.hands object reference changes
+  // but the actual cards remain the same
+  const handKey = React.useMemo(() => {
+    if (!(props.playerId in hands.hands)) {
+      return "";
+    }
+    // Create a stable key from the hand object (card -> count mapping)
+    return Object.entries(hands.hands[props.playerId])
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([card, count]) => `${card}:${count}`)
+      .join(",");
+  }, [hands.hands, props.playerId]);
+
   // Load sorted cards when they change
   React.useEffect(() => {
     setIsLoading(true);
@@ -142,7 +156,7 @@ const Cards = (props: IProps): JSX.Element => {
     props.selectedCards,
     props.trump,
     props.playerId,
-    hands.hands,
+    handKey, // Use the stable key instead of hands.hands
     separateCardsBySuit,
     reverseCardOrder,
     engine,

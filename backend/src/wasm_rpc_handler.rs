@@ -1,5 +1,7 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
-use shengji_types::wasm_rpc::{BatchCardInfoResponse, WasmRpcRequest, WasmRpcResponse};
+use shengji_types::wasm_rpc::{
+    BatchCardInfoResponse, NextThresholdReachableResponse, WasmRpcRequest, WasmRpcResponse,
+};
 
 pub async fn handle_wasm_rpc(Json(request): Json<WasmRpcRequest>) -> impl IntoResponse {
     match process_request(request) {
@@ -29,7 +31,9 @@ fn process_request(request: WasmRpcRequest) -> Result<WasmRpcResponse, String> {
             wasm_rpc_impl::sort_and_group_cards(req),
         )),
         WasmRpcRequest::NextThresholdReachable(req) => Ok(WasmRpcResponse::NextThresholdReachable(
-            wasm_rpc_impl::next_threshold_reachable(req)?,
+            NextThresholdReachableResponse {
+                reachable: wasm_rpc_impl::next_threshold_reachable(req)?,
+            },
         )),
         WasmRpcRequest::ExplainScoring(req) => Ok(WasmRpcResponse::ExplainScoring(
             wasm_rpc_impl::explain_scoring(req)?,

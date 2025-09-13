@@ -1,4 +1,11 @@
 export function isWasmAvailable(): boolean {
+  // Check for URL parameter to force no-WASM mode
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("no-wasm") === "true") {
+    console.log("No-WASM mode enabled via URL parameter");
+    return false;
+  }
+
   try {
     if (
       typeof WebAssembly === "object" &&

@@ -21,10 +21,49 @@ pub enum HandError {
     TrumpNotSet,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Serialize, JsonSchema)]
 pub struct Hands {
     hands: HashMap<PlayerID, HashMap<Card, usize>>,
     trump: Option<Trump>,
+}
+
+// Custom Deserialize implementation to handle string keys for PlayerID
+impl<'de> Deserialize<'de> for Hands {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use crate::types::PlayerID;
+        use serde::de;
+        use std::str::FromStr;
+
+        #[derive(Deserialize)]
+        struct HandsHelper {
+            hands: serde_json::Value,
+            trump: Option<Trump>,
+        }
+
+        let helper = HandsHelper::deserialize(deserializer)?;
+
+        // Parse the hands field manually
+        let mut hands_map = HashMap::new();
+        if let serde_json::Value::Object(obj) = helper.hands {
+            for (key, value) in obj {
+                let player_id = PlayerID::from_str(&key)
+                    .map_err(|_| de::Error::custom(format!("invalid PlayerID: {}", key)))?;
+                let card_map: HashMap<Card, usize> =
+                    serde_json::from_value(value).map_err(de::Error::custom)?;
+                hands_map.insert(player_id, card_map);
+            }
+        } else {
+            return Err(de::Error::custom("hands must be an object"));
+        }
+
+        Ok(Hands {
+            hands: hands_map,
+            trump: helper.trump,
+        })
+    }
 }
 
 impl Hands {

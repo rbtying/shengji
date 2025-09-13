@@ -10,9 +10,23 @@ use schemars::{
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, JsonSchema, Hash, Eq, PartialEq)]
 #[serde(transparent)]
 pub struct PlayerID(pub usize);
+
+impl fmt::Display for PlayerID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::str::FromStr for PlayerID {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(PlayerID(s.parse()?))
+    }
+}
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, JsonSchema, Hash, Eq, PartialEq)]
 pub enum Trump {

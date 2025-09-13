@@ -1,6 +1,7 @@
 import * as React from "react";
 import WasmContext from "./WasmContext";
 import { isWasmAvailable } from "./detectWasm";
+import { prefillCardInfoCache } from "./util/cachePrefill";
 import {
   Trump,
   TractorRequirements,
@@ -52,28 +53,56 @@ type WasmRpcRequest =
 
 // Helper to make RPC calls to the server
 async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
+  const bodyString = JSON.stringify(request);
+
   const response = await fetch("/api/rpc", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(request),
+    body: bodyString,
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`RPC call failed with status ${response.status}:`, errorText);
+    console.error("Failed request was:", bodyString);
     throw new Error(`RPC call failed: ${response.statusText}`);
   }
 
-  const result = await response.json();
+  const responseText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch {
+    console.error("Failed to parse JSON response:", responseText);
+    throw new Error(
+      `Invalid JSON response from server: ${responseText.substring(0, 100)}`,
+    );
+  }
 
   // Check if it's an error response
   if (result.type === "Error") {
     throw new Error(result.Error || "Unknown error");
   }
 
-  // Extract the inner response based on the type
-  const responseType = Object.keys(result)[0];
-  return result[responseType];
+  // Since the response uses serde tag="type", the structure is { type: "ResponseType", ...data }
+  // We need to return the whole result minus the type field for most responses
+  // or extract based on the actual response structure
+
+  if (!result.type) {
+    console.error("Invalid RPC response - missing type field:", result);
+    throw new Error("Invalid RPC response structure");
+  }
+
+  // For tagged enums, the data is directly in the result object
+  // Remove the type field and return the rest
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { type, ...responseData } = result;
+
+  // Some responses might be wrapped, others might have the data directly
+  // BatchGetCardInfo should have results directly in responseData
+  return responseData as T;
 }
 
 // Create async versions of each function that can fallback to RPC
@@ -119,7 +148,8 @@ const createAsyncFunctions = (
       nextThresholdReachable: async (
         req: NextThresholdReachableRequest,
       ): Promise<boolean> => {
-        return wasmModule.next_threshold_reachable(req);
+        const response = wasmModule.next_threshold_reachable(req);
+        return response.reachable;
       },
       computeScore: async (
         req: ComputeScoreRequest,
@@ -196,10 +226,11 @@ const createAsyncFunctions = (
       nextThresholdReachable: async (
         req: NextThresholdReachableRequest,
       ): Promise<boolean> => {
-        return await callRpc<boolean>({
+        const response = await callRpc<{ reachable: boolean }>({
           type: "NextThresholdReachable",
           ...req,
         });
+        return response.reachable;
       },
       computeScore: async (
         req: ComputeScoreRequest,
@@ -219,10 +250,11 @@ const createAsyncFunctions = (
       batchGetCardInfo: async (
         req: BatchCardInfoRequest,
       ): Promise<BatchCardInfoResponse> => {
-        return await callRpc<BatchCardInfoResponse>({
+        const response = await callRpc<BatchCardInfoResponse>({
           type: "BatchGetCardInfo",
           ...req,
         });
+        return response;
       },
     };
   }
@@ -268,11 +300,13 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   // Load WASM module dynamically if available
   React.useEffect(() => {
     if (useWasm) {
+      // Load WASM module dynamically
       import("../shengji-wasm/pkg/shengji-core.js")
         .then((module) => {
           setWasmModule(module);
           // Set module on window for debugging
           (window as Window & { shengji?: ShengjiModule }).shengji = module;
+          // WASM module loaded successfully
           setIsLoading(false);
         })
         .catch((error) => {
@@ -280,6 +314,7 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
           setIsLoading(false);
         });
     } else {
+      // Using server-side RPC fallback (no-WASM mode)
       setIsLoading(false);
     }
   }, [useWasm]);
@@ -315,9 +350,58 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
     [engineFuncs, syncContextValue, useWasm, wasmModule],
   );
 
-  // Show loading indicator while WASM is being loaded
+  // Track if initial prefill is complete
+  const [isPrefillComplete, setIsPrefillComplete] = React.useState(false);
+
+  // Eagerly prefill cache for common trump configurations when engine is ready
+  React.useEffect(() => {
+    if (!isLoading && engineContextValue && !isPrefillComplete) {
+      // Engine ready, eagerly prefill card cache for common trumps
+
+      // Create an array of prefill promises
+      const prefillPromises: Promise<void>[] = [];
+
+      // Prefill for NoTrump (used in JoinRoom for the joker cards display)
+      const noTrumpBasic: Trump = { NoTrump: {} };
+      prefillPromises.push(
+        prefillCardInfoCache(engineContextValue, noTrumpBasic)
+          .then(() => {
+            /* Prefilled cache for NoTrump (no rank) */
+          })
+          .catch((error) =>
+            console.error("Failed to prefill NoTrump cache:", error),
+          ),
+      );
+
+      // Also prefill for NoTrump with rank 2 (most common starting rank)
+      const noTrump2: Trump = { NoTrump: { number: "2" } };
+      prefillPromises.push(
+        prefillCardInfoCache(engineContextValue, noTrump2)
+          .then(() => {
+            /* Prefilled cache for NoTrump rank 2 */
+          })
+          .catch((error) =>
+            console.error("Failed to prefill NoTrump rank 2 cache:", error),
+          ),
+      );
+
+      // Wait for all prefills to complete before marking as done
+      Promise.all(prefillPromises).then(() => {
+        setIsPrefillComplete(true);
+        // All initial prefills complete
+      });
+    }
+  }, [isLoading, engineContextValue, isPrefillComplete]);
+
+  // Show loading indicator while WASM is being loaded or initial cache is being prefilled
   if (isLoading) {
     return <div>Loading game engine...</div>;
+  }
+
+  // Optionally wait for prefill to complete before rendering children
+  // This prevents the initial cards from making individual requests
+  if (!isPrefillComplete) {
+    return <div>Initializing game data...</div>;
   }
 
   return (

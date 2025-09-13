@@ -120,7 +120,7 @@ const Play = (props: IProps): JSX.Element => {
 
     // Only prefill if trump has changed
     if (trumpKey !== lastPrefillTrump) {
-      console.log("Trump changed, prefilling caches...");
+      // Trump changed, prefill caches
       setLastPrefillTrump(trumpKey);
 
       // Prefill card info cache for all cards with the new trump
