@@ -61,9 +61,7 @@ export const prefillCardInfoCache = async (
   // Check if a prefill is already in progress for this trump
   const existingPromise = getPrefillPromise(trump);
   if (existingPromise) {
-    console.log(
-      `Prefill already in progress for trump ${trumpKey}, waiting...`,
-    );
+    // Prefill already in progress for this trump, return existing promise
     return existingPromise;
   }
 
@@ -91,14 +89,12 @@ export const prefillCardInfoCache = async (
 
     // If nothing to fetch, return early
     if (requestsToMake.length === 0) {
-      console.log(`Card info cache already filled for trump ${trumpKey}`);
+      // Card info cache already filled for this trump
       return;
     }
 
     try {
-      console.log(
-        `Attempting to batch fetch ${requestsToMake.length} cards for trump ${trumpKey}`,
-      );
+      // Batch fetch all cards for this trump
 
       // Use batch API to fetch all card info at once
       const batchResponse = await engine.batchGetCardInfo({
@@ -108,7 +104,7 @@ export const prefillCardInfoCache = async (
         })),
       });
 
-      console.log("Batch response received:", batchResponse);
+      // Process batch response
 
       // Validate response structure
       if (
@@ -137,9 +133,7 @@ export const prefillCardInfoCache = async (
         cardInfoCache[cacheKey] = info;
       });
 
-      console.log(
-        `✅ Successfully prefilled card info cache for ${requestsToMake.length} cards with trump ${trumpKey} (single batch request)`,
-      );
+      // Successfully prefilled card info cache
     } catch (error) {
       console.error("❌ Error batch fetching card info:", error);
       console.error(
@@ -228,5 +222,5 @@ export const prefillExplainScoringCache = async (
   }
 
   await Promise.all(promises);
-  console.log(`Prefilled explainScoring cache with ${promises.length} entries`);
+  // Prefilled explainScoring cache
 };

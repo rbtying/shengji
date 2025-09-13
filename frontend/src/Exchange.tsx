@@ -28,7 +28,7 @@ function ExchangeWrapper(props: IExchangeProps) {
 
   React.useEffect(() => {
     if (props.state.trump && engine) {
-      console.log("Exchange: Prefilling cache for trump", props.state.trump);
+      // Prefill cache for trump in Exchange component
       prefillCardInfoCache(engine, props.state.trump);
     }
   }, [props.state.trump, engine]);

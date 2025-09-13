@@ -59,9 +59,7 @@ const Card = (props: IProps): JSX.Element => {
     // Check if a prefill is already in progress for this trump
     const existingPrefillPromise = getPrefillPromise(props.trump);
     if (existingPrefillPromise) {
-      console.log(
-        `Waiting for existing prefill for trump ${getTrumpKey(props.trump)}...`,
-      );
+      // Wait for existing prefill
       existingPrefillPromise
         .then(() => {
           // Check if our card is now cached
@@ -103,9 +101,7 @@ const Card = (props: IProps): JSX.Element => {
 
     // If we have very few cached cards for this trump, prefill everything
     if (cachedCount < 5) {
-      console.log(
-        `Detected uncached trump ${trumpKey}, triggering full prefill...`,
-      );
+      // Trigger full prefill for uncached trump
 
       // Start the prefill and wait for it
       prefillCardInfoCache(engine, props.trump)
@@ -148,9 +144,6 @@ const Card = (props: IProps): JSX.Element => {
     }
 
     // Only make individual request if no prefill is needed
-    console.log(
-      `Making individual request for card ${props.card} with trump ${trumpKey}`,
-    );
     engine
       .batchGetCardInfo({
         requests: [

@@ -53,10 +53,7 @@ type WasmRpcRequest =
 
 // Helper to make RPC calls to the server
 async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
-  console.log("RPC Request object:", request);
-
   const bodyString = JSON.stringify(request);
-  console.log("RPC Request JSON string:", bodyString);
 
   const response = await fetch("/api/rpc", {
     method: "POST",
@@ -77,7 +74,7 @@ async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
   let result;
   try {
     result = JSON.parse(responseText);
-  } catch (e) {
+  } catch {
     console.error("Failed to parse JSON response:", responseText);
     throw new Error(
       `Invalid JSON response from server: ${responseText.substring(0, 100)}`,
@@ -100,6 +97,7 @@ async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
 
   // For tagged enums, the data is directly in the result object
   // Remove the type field and return the rest
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { type, ...responseData } = result;
 
   // Some responses might be wrapped, others might have the data directly
@@ -186,20 +184,6 @@ const createAsyncFunctions = (
         return response.results;
       },
       findValidBids: async (req: FindValidBidsRequest): Promise<Bid[]> => {
-        console.log("FindValidBids input request:", req);
-
-        // The issue is that JavaScript objects with numeric-looking keys
-        // get serialized as strings ("0", "1", etc.) in JSON.
-        // But Rust's serde_json expects actual numbers for HashMap<PlayerID, _>
-        // where PlayerID wraps usize.
-        //
-        // WASM works because serde_wasm_bindgen handles this automatically,
-        // but serde_json does not. This is a known limitation.
-        //
-        // We need to send the request in a format that serde_json can handle.
-        // The backend would need to be updated to handle this properly,
-        // or we need a workaround.
-
         const response = await callRpc<FindValidBidsResult>({
           type: "FindValidBids",
           ...req,
@@ -270,8 +254,6 @@ const createAsyncFunctions = (
           type: "BatchGetCardInfo",
           ...req,
         });
-        // Log the response for debugging
-        console.log("BatchGetCardInfo RPC response:", response);
         return response;
       },
     };
@@ -318,13 +300,13 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   // Load WASM module dynamically if available
   React.useEffect(() => {
     if (useWasm) {
-      console.log("Loading WASM module...");
+      // Load WASM module dynamically
       import("../shengji-wasm/pkg/shengji-core.js")
         .then((module) => {
           setWasmModule(module);
           // Set module on window for debugging
           (window as Window & { shengji?: ShengjiModule }).shengji = module;
-          console.log("✅ WASM module loaded successfully");
+          // WASM module loaded successfully
           setIsLoading(false);
         })
         .catch((error) => {
@@ -332,7 +314,7 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
           setIsLoading(false);
         });
     } else {
-      console.log("🔄 Using server-side RPC fallback (no-WASM mode)");
+      // Using server-side RPC fallback (no-WASM mode)
       setIsLoading(false);
     }
   }, [useWasm]);
@@ -374,9 +356,7 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   // Eagerly prefill cache for common trump configurations when engine is ready
   React.useEffect(() => {
     if (!isLoading && engineContextValue && !isPrefillComplete) {
-      console.log(
-        "Engine ready, eagerly prefilling card cache for common trumps...",
-      );
+      // Engine ready, eagerly prefill card cache for common trumps
 
       // Create an array of prefill promises
       const prefillPromises: Promise<void>[] = [];
@@ -385,7 +365,9 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
       const noTrumpBasic: Trump = { NoTrump: {} };
       prefillPromises.push(
         prefillCardInfoCache(engineContextValue, noTrumpBasic)
-          .then(() => console.log("✅ Prefilled cache for NoTrump (no rank)"))
+          .then(() => {
+            /* Prefilled cache for NoTrump (no rank) */
+          })
           .catch((error) =>
             console.error("Failed to prefill NoTrump cache:", error),
           ),
@@ -395,7 +377,9 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
       const noTrump2: Trump = { NoTrump: { number: "2" } };
       prefillPromises.push(
         prefillCardInfoCache(engineContextValue, noTrump2)
-          .then(() => console.log("✅ Prefilled cache for NoTrump rank 2"))
+          .then(() => {
+            /* Prefilled cache for NoTrump rank 2 */
+          })
           .catch((error) =>
             console.error("Failed to prefill NoTrump rank 2 cache:", error),
           ),
@@ -404,7 +388,7 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
       // Wait for all prefills to complete before marking as done
       Promise.all(prefillPromises).then(() => {
         setIsPrefillComplete(true);
-        console.log("✅ All initial prefills complete");
+        // All initial prefills complete
       });
     }
   }, [isLoading, engineContextValue, isPrefillComplete]);
