@@ -73,7 +73,14 @@ async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
     throw new Error(`RPC call failed: ${response.statusText}`);
   }
 
-  const result = await response.json();
+  const responseText = await response.text();
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch (e) {
+    console.error("Failed to parse JSON response:", responseText);
+    throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
+  }
 
   // Check if it's an error response
   if (result.type === "Error") {
