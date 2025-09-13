@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as Shengji from "../shengji-wasm/pkg/shengji-core.js";
 import WasmContext from "./WasmContext";
 import { isWasmAvailable } from "./detectWasm";
 import {
@@ -34,6 +33,9 @@ import type { JSX } from "react";
 interface IProps {
   children: React.ReactNode;
 }
+
+// Type for the dynamically imported WASM module
+type ShengjiModule = typeof import("../shengji-wasm/pkg/shengji-core.js");
 
 // Define the RPC request types
 type WasmRpcRequest =
@@ -75,60 +77,63 @@ async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
 }
 
 // Create async versions of each function that can fallback to RPC
-const createAsyncFunctions = (useWasm: boolean) => {
-  if (useWasm) {
-    // WASM is available, use synchronous WASM functions wrapped in promises
+const createAsyncFunctions = (
+  useWasm: boolean,
+  wasmModule: ShengjiModule | null,
+) => {
+  if (useWasm && wasmModule) {
+    // WASM is available and loaded, use synchronous WASM functions wrapped in promises
     return {
       findViablePlays: async (
         trump: Trump,
         tractorRequirements: TractorRequirements,
         cards: string[],
       ): Promise<FoundViablePlay[]> => {
-        return Shengji.find_viable_plays({
+        return wasmModule.find_viable_plays({
           trump,
           cards,
           tractor_requirements: tractorRequirements,
         }).results;
       },
       findValidBids: async (req: FindValidBidsRequest): Promise<Bid[]> => {
-        return Shengji.find_valid_bids(req).results;
+        return wasmModule.find_valid_bids(req).results;
       },
       sortAndGroupCards: async (
         req: SortAndGroupCardsRequest,
       ): Promise<SuitGroup[]> => {
-        return Shengji.sort_and_group_cards(req).results;
+        return wasmModule.sort_and_group_cards(req).results;
       },
       decomposeTrickFormat: async (
         req: DecomposeTrickFormatRequest,
       ): Promise<DecomposedTrickFormat[]> => {
-        return Shengji.decompose_trick_format(req).results;
+        return wasmModule.decompose_trick_format(req).results;
       },
       canPlayCards: async (req: CanPlayCardsRequest): Promise<boolean> => {
-        return Shengji.can_play_cards(req).playable;
+        return wasmModule.can_play_cards(req).playable;
       },
       explainScoring: async (
         req: ExplainScoringRequest,
       ): Promise<ExplainScoringResponse> => {
-        return Shengji.explain_scoring(req);
+        return wasmModule.explain_scoring(req);
       },
       nextThresholdReachable: async (
         req: NextThresholdReachableRequest,
       ): Promise<boolean> => {
-        return Shengji.next_threshold_reachable(req);
+        return wasmModule.next_threshold_reachable(req);
       },
       computeScore: async (
         req: ComputeScoreRequest,
       ): Promise<ComputeScoreResponse> => {
-        return Shengji.compute_score(req);
+        return wasmModule.compute_score(req);
       },
       computeDeckLen: async (decks: Deck[]): Promise<number> => {
-        return Shengji.compute_deck_len({ decks });
+        return wasmModule.compute_deck_len({ decks });
       },
       batchGetCardInfo: async (
         req: BatchCardInfoRequest,
       ): Promise<BatchCardInfoResponse> => {
         // WASM doesn't have batch API, so call individually
-        const results = req.requests.map((r) => Shengji.get_card_info(r));
+        const results = req.requests.map((r) => wasmModule.get_card_info(r));
         return { results };
       },
     };
@@ -255,17 +260,41 @@ export const EngineContext = React.createContext<EngineContext | null>(null);
 
 const WasmOrRpcProvider = (props: IProps): JSX.Element => {
   const useWasm = isWasmAvailable();
+  const [wasmModule, setWasmModule] = React.useState<ShengjiModule | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = React.useState(useWasm);
+
+  // Load WASM module dynamically if available
+  React.useEffect(() => {
+    if (useWasm) {
+      import("../shengji-wasm/pkg/shengji-core.js")
+        .then((module) => {
+          setWasmModule(module);
+          // Set module on window for debugging
+          (window as Window & { shengji?: ShengjiModule }).shengji = module;
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to load WASM module:", error);
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
+  }, [useWasm]);
+
   const engineFuncs = React.useMemo(
-    () => createAsyncFunctions(useWasm),
-    [useWasm],
+    () => createAsyncFunctions(useWasm, wasmModule),
+    [useWasm, wasmModule],
   );
 
   // Only provide decodeWireFormat in the synchronous context
   const syncContextValue = React.useMemo(
     () => ({
       decodeWireFormat: (req: Uint8Array) => {
-        if (useWasm) {
-          return JSON.parse(Shengji.zstd_decompress(req));
+        if (useWasm && wasmModule) {
+          return JSON.parse(wasmModule.zstd_decompress(req));
         } else {
           // When WASM is not available, messages should already be decompressed
           // by the server, so we can just parse them directly
@@ -274,20 +303,21 @@ const WasmOrRpcProvider = (props: IProps): JSX.Element => {
         }
       },
     }),
-    [useWasm],
+    [useWasm, wasmModule],
   );
 
   const engineContextValue: EngineContext = React.useMemo(
     () => ({
       ...engineFuncs,
       decodeWireFormat: syncContextValue.decodeWireFormat,
-      isUsingWasm: useWasm,
+      isUsingWasm: useWasm && wasmModule !== null,
     }),
-    [engineFuncs, syncContextValue, useWasm],
+    [engineFuncs, syncContextValue, useWasm, wasmModule],
   );
 
-  if (useWasm) {
-    (window as Window & { shengji?: typeof Shengji }).shengji = Shengji;
+  // Show loading indicator while WASM is being loaded
+  if (isLoading) {
+    return <div>Loading game engine...</div>;
   }
 
   return (
