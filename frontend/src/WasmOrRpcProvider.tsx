@@ -55,7 +55,28 @@ type WasmRpcRequest =
 async function callRpc<T>(request: WasmRpcRequest): Promise<T> {
   const bodyString = JSON.stringify(request);
 
-  const response = await fetch("/api/rpc", {
+  // Respect WEBSOCKET_HOST for RPC calls when set
+  const runtimeWebsocketHost = (window as any)._WEBSOCKET_HOST;
+  let rpcUrl = "/api/rpc";
+
+  if (runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null) {
+    // Convert WebSocket URL to HTTP URL for RPC calls
+    // Replace wss:// with https:// and ws:// with http://
+    const httpUrl = runtimeWebsocketHost
+      .replace(/^wss:\/\//, "https://")
+      .replace(/^ws:\/\//, "http://");
+
+    // Ensure the URL ends with /api/rpc
+    if (httpUrl.endsWith("/")) {
+      rpcUrl = httpUrl + "api/rpc";
+    } else if (httpUrl.endsWith("/api")) {
+      rpcUrl = httpUrl + "/rpc";
+    } else {
+      rpcUrl = httpUrl + "/api/rpc";
+    }
+  }
+
+  const response = await fetch(rpcUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
