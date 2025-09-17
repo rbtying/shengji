@@ -25,6 +25,8 @@ use axum::{
     extract::Path,
     response::Response,
 };
+use http::{HeaderValue, Method};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 #[cfg(feature = "dynamic")]
 use tower_http::services::ServeDir;
 
@@ -146,7 +148,52 @@ async fn main() -> Result<(), anyhow::Error> {
         )
         .route("/*path", get(serve_static_routes));
 
+    // Configure CORS based on environment variables
+    // CORS_ALLOWED_ORIGINS: comma-separated list of allowed origins (e.g., "http://localhost:3000,https://example.com")
+    // Set to "*" to allow any origin (not recommended for production)
+    // If not set, defaults to allowing localhost origins in development
+    let cors = {
+        let allowed_origins = std::env::var("CORS_ALLOWED_ORIGINS")
+            .unwrap_or_else(|_| {
+                // Default to common development origins if not specified
+                "http://localhost:3000,http://localhost:3030,http://127.0.0.1:3000,http://127.0.0.1:3030".to_string()
+            });
+
+        if allowed_origins.trim() == "*" {
+            // Allow any origin (use with caution)
+            info!(
+                ROOT_LOGGER,
+                "CORS configured to allow ANY origin - not recommended for production"
+            );
+            CorsLayer::new()
+                .allow_origin(tower_http::cors::Any)
+                .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+                .allow_headers(tower_http::cors::Any)
+        } else {
+            let origins: Vec<HeaderValue> = allowed_origins
+                .split(',')
+                .filter_map(|origin| origin.trim().parse::<HeaderValue>().ok())
+                .collect();
+
+            if origins.is_empty() {
+                // If no valid origins, fall back to same-origin only
+                info!(
+                    ROOT_LOGGER,
+                    "No valid CORS origins configured, using same-origin policy"
+                );
+                CorsLayer::new()
+            } else {
+                info!(ROOT_LOGGER, "CORS origins configured: {:?}", origins);
+                CorsLayer::new()
+                    .allow_origin(AllowOrigin::list(origins))
+                    .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+                    .allow_headers(tower_http::cors::Any)
+            }
+        }
+    };
+
     let app = app
+        .layer(cors)
         .layer(Extension(backend_storage))
         .layer(Extension(stats));
 
