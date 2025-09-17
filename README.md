@@ -16,6 +16,10 @@ listens on 127.0.0.1:3030, and should only be exposed to an external network
 behind a proxy that supports both HTTP and WebSocket protocols (only tested
 with `nginx`).
 
+## Environment Variables
+
+- `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins for CORS requests to the `/api/rpc` endpoint (e.g., `"https://example.com,https://app.example.com"`). Set to `"*"` to allow any origin (not recommended for production). If not set, defaults to allowing common localhost origins for development (`http://localhost:3000,http://localhost:3030,http://127.0.0.1:3000,http://127.0.0.1:3030`).
+
 # Development
 
 ```

@@ -50,7 +50,7 @@ impl<'de> Deserialize<'de> for Hands {
         if let serde_json::Value::Object(obj) = helper.hands {
             for (key, value) in obj {
                 let player_id = PlayerID::from_str(&key)
-                    .map_err(|_| de::Error::custom(format!("invalid PlayerID: {}", key)))?;
+                    .map_err(|_| de::Error::custom(format!("invalid PlayerID: {key}")))?;
                 let card_map: HashMap<Card, usize> =
                     serde_json::from_value(value).map_err(de::Error::custom)?;
                 hands_map.insert(player_id, card_map);
