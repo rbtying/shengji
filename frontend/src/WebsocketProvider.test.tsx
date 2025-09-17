@@ -13,7 +13,8 @@ describe("WebsocketProvider URL construction", () => {
   });
 
   it("should use WEBSOCKET_HOST when provided", () => {
-    (global as any).window._WEBSOCKET_HOST = "wss://custom.server.com/websocket";
+    (global as any).window._WEBSOCKET_HOST =
+      "wss://custom.server.com/websocket";
 
     // Simulate the URL construction logic from WebsocketProvider
     const runtimeWebsocketHost = (global as any).window._WEBSOCKET_HOST;
@@ -36,7 +37,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -53,7 +56,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -75,7 +80,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -96,7 +103,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -112,7 +121,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -128,7 +139,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");
@@ -149,7 +162,9 @@ describe("WebsocketProvider URL construction", () => {
     const uri =
       runtimeWebsocketHost !== undefined && runtimeWebsocketHost !== null
         ? runtimeWebsocketHost
-        : ((global as any).location.protocol === "https:" ? "wss://" : "ws://") +
+        : ((global as any).location.protocol === "https:"
+            ? "wss://"
+            : "ws://") +
           (global as any).location.host +
           (global as any).location.pathname +
           ((global as any).location.pathname.endsWith("/") ? "api" : "/api");

@@ -20,7 +20,7 @@ describe("WasmOrRpcProvider RPC calls", () => {
 
       // Test case 1: No WEBSOCKET_HOST
       (global as any).window._WEBSOCKET_HOST = undefined;
-      let rpcUrl = "/api/rpc";
+      const rpcUrl = "/api/rpc";
       expect(rpcUrl).toBe("/api/rpc");
     });
 
