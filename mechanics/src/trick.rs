@@ -267,31 +267,25 @@ impl TrickFormat {
             return false;
         }
 
+        let num_correct_suit_in_hand = || -> usize {
+            hand.iter()
+                .filter_map(|(c, ct)| (self.trump.effective_suit(*c) == self.suit).then_some(*ct))
+                .sum()
+        };
+
         // Check if this is a valid bomb play (all identical cards, count >= 4)
-        if bomb_policy.bombs_enabled() && is_bomb(proposed, self.trump) {
+        if bomb_policy.bombs_enabled() && is_bomb(proposed) {
             match bomb_policy {
                 BombPolicy::AllowBombs => return true,
                 BombPolicy::AllowBombsSuitFollowing => {
                     let bomb_suit = self.trump.effective_suit(proposed[0]);
                     if bomb_suit == self.suit || bomb_suit == EffectiveSuit::Trump {
-                        // Bomb is in the led suit or is a trump bomb
                         return true;
                     }
-                    // Otherwise, only allowed if the player is void in the led suit
-                    let num_correct_suit: usize = hand
-                        .iter()
-                        .flat_map(|(c, ct)| {
-                            if self.trump.effective_suit(*c) == self.suit {
-                                Some(*ct)
-                            } else {
-                                None
-                            }
-                        })
-                        .sum();
-                    if num_correct_suit == 0 {
+                    // Off-suit bomb only allowed if the player is void in the led suit
+                    if num_correct_suit_in_hand() == 0 {
                         return true;
                     }
-                    // Player has cards in the led suit, so this off-suit bomb is not allowed
                 }
                 BombPolicy::NoBombs => {}
             }
@@ -303,16 +297,7 @@ impl TrickFormat {
             .count();
 
         if num_proposed_correct_suit < required {
-            let num_correct_suit = hand
-                .iter()
-                .flat_map(|(c, ct)| {
-                    if self.trump.effective_suit(*c) == self.suit {
-                        Some(*ct)
-                    } else {
-                        None
-                    }
-                })
-                .sum::<usize>();
+            let num_correct_suit = num_correct_suit_in_hand();
             // If this is all of the correct suit that is available, it's fine
             // Otherwise, this is an invalid play.
             num_correct_suit == num_proposed_correct_suit
@@ -720,7 +705,7 @@ impl Trick {
 
         debug_assert!(self.trick_format.is_some());
         // Check if this play is a bomb (all identical cards, count >= 4)
-        let is_bomb_play = bomb_policy.bombs_enabled() && is_bomb(&cards, self.trump);
+        let is_bomb_play = self.bomb_policy.bombs_enabled() && is_bomb(&cards);
 
         let card_mapping = if is_bomb_play {
             // For bombs, create a single Repeated unit
@@ -751,14 +736,7 @@ impl Trick {
             },
         });
 
-        self.current_winner = Self::winner(
-            self.trick_format.as_ref(),
-            &self.played_cards,
-            &self.played_card_mappings,
-            throw_eval_policy,
-            bomb_policy,
-            self.trump,
-        );
+        self.current_winner = self.compute_winner(throw_eval_policy);
 
         Ok(msgs)
     }
@@ -781,14 +759,7 @@ impl Trick {
             if self.played_cards.is_empty() {
                 self.trick_format = None;
             }
-            self.current_winner = Self::winner(
-                self.trick_format.as_ref(),
-                &self.played_cards,
-                &self.played_card_mappings,
-                throw_eval_policy,
-                self.bomb_policy,
-                self.trump,
-            );
+            self.current_winner = self.compute_winner(throw_eval_policy);
             Ok(())
         } else {
             Err(TrickError::OutOfOrder)
@@ -870,74 +841,40 @@ impl Trick {
         }
     }
 
-    fn winner(
-        trick_format: Option<&'_ TrickFormat>,
-        played_cards: &'_ [PlayedCards],
-        played_card_mappings: &'_ [Option<Units>],
-        throw_eval_policy: ThrowEvaluationPolicy,
-        bomb_policy: BombPolicy,
-        trump: Trump,
-    ) -> Option<PlayerID> {
-        match trick_format {
-            Some(tf) => {
-                let mut winner = (0, tf.units.to_vec());
-                let mut winner_is_bomb = false;
+    fn compute_winner(&self, throw_eval_policy: ThrowEvaluationPolicy) -> Option<PlayerID> {
+        let tf = self.trick_format.as_ref()?;
+        let mut winner = (0, tf.units.to_vec());
+        let mut winner_is_bomb = false;
 
-                for (idx, pc) in played_cards.iter().enumerate().skip(1) {
-                    let this_is_bomb = bomb_policy.bombs_enabled() && is_bomb(&pc.cards, trump);
+        for (idx, _pc) in self.played_cards.iter().enumerate().skip(1) {
+            let mapping = self.played_card_mappings.get(idx).and_then(|m| m.as_ref());
+            let this_is_bomb = mapping.is_some_and(|m| m.len() == 1 && m[0].is_bomb());
 
-                    if this_is_bomb {
-                        if winner_is_bomb {
-                            // Both are bombs: compare by card rank
-                            // Use played_card_mappings to get the bomb unit
-                            if let Some(Some(mapping)) = played_card_mappings.get(idx) {
-                                if mapping.len() == 1 {
-                                    let bomb_card = mapping[0].first_card();
-                                    let winner_card = winner.1[0].first_card();
-                                    // A trump bomb beats a non-trump bomb;
-                                    // otherwise compare by effective rank
-                                    let bomb_suit = trump.effective_suit(bomb_card.card);
-                                    let winner_suit = trump.effective_suit(winner_card.card);
-                                    let beats = if bomb_suit == EffectiveSuit::Trump
-                                        && winner_suit != EffectiveSuit::Trump
-                                    {
-                                        true
-                                    } else if bomb_suit != EffectiveSuit::Trump
-                                        && winner_suit == EffectiveSuit::Trump
-                                    {
-                                        false
-                                    } else {
-                                        bomb_card.cmp_effective(winner_card) == Ordering::Greater
-                                    };
-                                    if beats {
-                                        winner = (idx, mapping.clone());
-                                        winner_is_bomb = true;
-                                    }
-                                }
-                            }
-                        } else {
-                            // Bomb beats non-bomb
-                            if let Some(Some(mapping)) = played_card_mappings.get(idx) {
-                                winner = (idx, mapping.clone());
-                                winner_is_bomb = true;
-                            }
-                        }
-                    } else if !winner_is_bomb {
-                        // Normal comparison (no bombs involved)
-                        if let Ok(mut mm) = tf.matches(&pc.cards) {
-                            let greater =
-                                mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
-                            if let Some(m) = greater {
-                                winner = (idx, m);
-                            }
-                        }
-                    }
-                    // If winner is a bomb and this is not, the bomb keeps winning
+            if this_is_bomb {
+                let mapping = mapping.unwrap();
+                let dominated = if winner_is_bomb {
+                    // Both are bombs: higher rank wins (cmp_effective handles trump > non-trump)
+                    mapping[0]
+                        .first_card()
+                        .cmp_effective(winner.1[0].first_card())
+                        == Ordering::Greater
+                } else {
+                    true // Bomb always beats non-bomb
+                };
+                if dominated {
+                    winner = (idx, mapping.clone());
+                    winner_is_bomb = true;
                 }
-                Some(played_cards[winner.0].id)
+            } else if !winner_is_bomb {
+                if let Ok(mut mm) = tf.matches(&self.played_cards[idx].cards) {
+                    let greater = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
+                    if let Some(m) = greater {
+                        winner = (idx, m);
+                    }
+                }
             }
-            None => None,
         }
+        Some(self.played_cards[winner.0].id)
     }
 }
 
@@ -1091,18 +1028,8 @@ impl<'a> From<&'a MatchingCards> for UnitLike {
 type Units = Vec<TrickUnit>;
 
 /// Checks if a set of cards constitutes a bomb: all identical cards with count >= 4.
-fn is_bomb(cards: &[Card], trump: Trump) -> bool {
-    if cards.len() < 4 {
-        return false;
-    }
-    // All cards must be the same (comparing via OrderedCard to handle trump equivalence)
-    let first = OrderedCard {
-        card: cards[0],
-        trump,
-    };
-    cards[1..]
-        .iter()
-        .all(|c| OrderedCard { card: *c, trump } == first)
+fn is_bomb(cards: &[Card]) -> bool {
+    cards.len() >= 4 && cards[1..].iter().all(|c| *c == cards[0])
 }
 
 fn without_trick_unit<T>(
