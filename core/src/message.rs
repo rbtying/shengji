@@ -9,7 +9,9 @@ use shengji_mechanics::bidding::{
 };
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::scoring::GameScoringParameters;
-use shengji_mechanics::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
+use shengji_mechanics::trick::{
+    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
+};
 use shengji_mechanics::types::{Card, PlayerID, Rank};
 
 use crate::game_state::play_phase::PlayerGameFinishedResult;
@@ -191,6 +193,9 @@ pub enum MessageVariant {
     },
     TractorRequirementsChanged {
         tractor_requirements: TractorRequirements,
+    },
+    BombPolicySet {
+        bomb_policy: BombPolicy,
     },
 }
 
@@ -385,6 +390,8 @@ impl MessageVariant {
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),
             GameVisibilitySet { visibility: GameVisibility::Unlisted} => format!("{} unlisted the game", n?),
+            BombPolicySet { bomb_policy: BombPolicy::AllowBombs } => format!("{} enabled bomb cards", n?),
+            BombPolicySet { bomb_policy: BombPolicy::NoBombs } => format!("{} disabled bomb cards", n?),
         })
     }
 }

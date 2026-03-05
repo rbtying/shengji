@@ -13,7 +13,9 @@ use shengji_mechanics::bidding::{
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::player::Player;
 use shengji_mechanics::scoring::GameScoringParameters;
-use shengji_mechanics::trick::{ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy};
+use shengji_mechanics::trick::{
+    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
+};
 use shengji_mechanics::types::{Card, Number, PlayerID, Rank};
 
 use crate::message::MessageVariant;
@@ -312,6 +314,8 @@ pub struct PropagatedState {
     pub(crate) jack_variation: BackToTwoSetting,
     #[serde(default)]
     pub(crate) tractor_requirements: TractorRequirements,
+    #[serde(default)]
+    pub(crate) bomb_policy: BombPolicy,
     #[serde(default)]
     pub(crate) max_rank: MaxRank,
     #[serde(default)]
@@ -908,6 +912,18 @@ impl PropagatedState {
             Ok(vec![MessageVariant::TractorRequirementsChanged {
                 tractor_requirements,
             }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_bomb_policy(
+        &mut self,
+        bomb_policy: BombPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if self.bomb_policy != bomb_policy {
+            self.bomb_policy = bomb_policy;
+            Ok(vec![MessageVariant::BombPolicySet { bomb_policy }])
         } else {
             Ok(vec![])
         }

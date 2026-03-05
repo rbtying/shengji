@@ -9,7 +9,7 @@ use shengji_mechanics::bidding::{
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::scoring::GameScoringParameters;
 use shengji_mechanics::trick::{
-    ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit,
+    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit,
 };
 use shengji_mechanics::types::{Card, PlayerID, Rank};
 
@@ -290,6 +290,10 @@ impl InteractiveGame {
                 info!(logger, "Setting tractor requirements"; "tractor_requirements" => requirements);
                 state.set_tractor_requirements(requirements)?
             }
+            (Action::SetBombPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting bomb policy"; "bomb_policy" => policy);
+                state.set_bomb_policy(policy)?
+            }
             (Action::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -460,6 +464,7 @@ pub enum Action {
     SetHideThrowHaltingPlayer(bool),
     SetJackVariation(BackToTwoSetting),
     SetTractorRequirements(TractorRequirements),
+    SetBombPolicy(BombPolicy),
     SetGameVisibility(GameVisibility),
     StartGame,
     DrawCard,

@@ -69,6 +69,15 @@ pub enum ThrowEvaluationPolicy {
 
 crate::impl_slog_value!(ThrowEvaluationPolicy);
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
+pub enum BombPolicy {
+    #[default]
+    NoBombs,
+    AllowBombs,
+}
+
+crate::impl_slog_value!(BombPolicy);
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TractorRequirements {
     /// The minimum number of cards in each unit of the tractor
@@ -108,6 +117,14 @@ impl TrickUnit {
         match self {
             TrickUnit::Tractor { .. } => false,
             TrickUnit::Repeated { .. } => true,
+        }
+    }
+
+    /// Returns true if this unit is a bomb (a single repeated card with count >= 4)
+    pub fn is_bomb(&self) -> bool {
+        match self {
+            TrickUnit::Repeated { count, .. } => *count >= 4,
+            TrickUnit::Tractor { .. } => false,
         }
     }
 
@@ -230,10 +247,16 @@ impl TrickFormat {
         hand: &HashMap<Card, usize>,
         proposed: &'_ [Card],
         trick_draw_policy: TrickDrawPolicy,
+        bomb_policy: BombPolicy,
     ) -> bool {
         let required = self.units.iter().map(|c| c.size()).sum::<usize>();
         if proposed.len() != required {
             return false;
+        }
+
+        // Check if this is a valid bomb play (all identical cards, count >= 4)
+        if bomb_policy == BombPolicy::AllowBombs && is_bomb(proposed, self.trump) {
+            return true;
         }
 
         let num_proposed_correct_suit = proposed
@@ -417,6 +440,7 @@ pub struct PlayCards<'a, 'b, 'c> {
     pub format_hint: Option<&'c [TrickUnit]>,
     pub hide_throw_halting_player: bool,
     pub tractor_requirements: TractorRequirements,
+    pub bomb_policy: BombPolicy,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -432,10 +456,16 @@ pub struct Trick {
     current_winner: Option<PlayerID>,
     trick_format: Option<TrickFormat>,
     trump: Trump,
+    #[serde(default)]
+    bomb_policy: BombPolicy,
 }
 
 impl Trick {
-    pub fn new(trump: Trump, players: impl IntoIterator<Item = PlayerID>) -> Self {
+    pub fn new(
+        trump: Trump,
+        players: impl IntoIterator<Item = PlayerID>,
+        bomb_policy: BombPolicy,
+    ) -> Self {
         let player_queue = players.into_iter().collect::<VecDeque<_>>();
         Trick {
             played_cards: Vec::with_capacity(player_queue.len()),
@@ -444,6 +474,7 @@ impl Trick {
             trick_format: None,
             player_queue,
             trump,
+            bomb_policy,
         }
     }
 
@@ -483,7 +514,7 @@ impl Trick {
         hands.contains(id, cards.iter().cloned())?;
         match self.trick_format.as_ref() {
             Some(tf) => {
-                if tf.is_legal_play(hands.get(id)?, cards, trick_draw_policy) {
+                if tf.is_legal_play(hands.get(id)?, cards, trick_draw_policy, self.bomb_policy) {
                     Ok(())
                 } else {
                     Err(TrickError::IllegalPlay)
@@ -522,7 +553,10 @@ impl Trick {
             format_hint,
             hide_throw_halting_player,
             tractor_requirements,
+            bomb_policy,
         } = args;
+
+        self.bomb_policy = bomb_policy;
 
         if self.player_queue.front().cloned() != Some(id) {
             return Err(TrickError::OutOfOrder);
@@ -647,12 +681,26 @@ impl Trick {
         self.player_queue.pop_front();
 
         debug_assert!(self.trick_format.is_some());
-        self.played_card_mappings.push(
+        // Check if this play is a bomb (all identical cards, count >= 4)
+        let is_bomb_play = bomb_policy == BombPolicy::AllowBombs && is_bomb(&cards, self.trump);
+
+        let card_mapping = if is_bomb_play {
+            // For bombs, create a single Repeated unit
+            let ordered = OrderedCard {
+                card: cards[0],
+                trump: self.trump,
+            };
+            Some(vec![TrickUnit::Repeated {
+                count: cards.len(),
+                card: ordered,
+            }])
+        } else {
             self.trick_format
                 .as_ref()
                 .and_then(|tf| tf.matches(&cards).ok())
-                .and_then(|mut f| f.next()),
-        );
+                .and_then(|mut f| f.next())
+        };
+        self.played_card_mappings.push(card_mapping);
 
         self.played_cards.push(PlayedCards {
             id,
@@ -668,7 +716,10 @@ impl Trick {
         self.current_winner = Self::winner(
             self.trick_format.as_ref(),
             &self.played_cards,
+            &self.played_card_mappings,
             throw_eval_policy,
+            bomb_policy,
+            self.trump,
         );
 
         Ok(msgs)
@@ -695,7 +746,10 @@ impl Trick {
             self.current_winner = Self::winner(
                 self.trick_format.as_ref(),
                 &self.played_cards,
+                &self.played_card_mappings,
                 throw_eval_policy,
+                self.bomb_policy,
+                self.trump,
             );
             Ok(())
         } else {
@@ -781,19 +835,67 @@ impl Trick {
     fn winner(
         trick_format: Option<&'_ TrickFormat>,
         played_cards: &'_ [PlayedCards],
+        played_card_mappings: &'_ [Option<Units>],
         throw_eval_policy: ThrowEvaluationPolicy,
+        bomb_policy: BombPolicy,
+        trump: Trump,
     ) -> Option<PlayerID> {
         match trick_format {
             Some(tf) => {
                 let mut winner = (0, tf.units.to_vec());
+                let mut winner_is_bomb = false;
 
                 for (idx, pc) in played_cards.iter().enumerate().skip(1) {
-                    if let Ok(mut mm) = tf.matches(&pc.cards) {
-                        let greater = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
-                        if let Some(m) = greater {
-                            winner = (idx, m);
+                    let this_is_bomb =
+                        bomb_policy == BombPolicy::AllowBombs && is_bomb(&pc.cards, trump);
+
+                    if this_is_bomb {
+                        if winner_is_bomb {
+                            // Both are bombs: compare by card rank
+                            // Use played_card_mappings to get the bomb unit
+                            if let Some(Some(mapping)) = played_card_mappings.get(idx) {
+                                if mapping.len() == 1 {
+                                    let bomb_card = mapping[0].first_card();
+                                    let winner_card = winner.1[0].first_card();
+                                    // A trump bomb beats a non-trump bomb;
+                                    // otherwise compare by effective rank
+                                    let bomb_suit = trump.effective_suit(bomb_card.card);
+                                    let winner_suit = trump.effective_suit(winner_card.card);
+                                    let beats = if bomb_suit == EffectiveSuit::Trump
+                                        && winner_suit != EffectiveSuit::Trump
+                                    {
+                                        true
+                                    } else if bomb_suit != EffectiveSuit::Trump
+                                        && winner_suit == EffectiveSuit::Trump
+                                    {
+                                        false
+                                    } else {
+                                        bomb_card.cmp_effective(winner_card) == Ordering::Greater
+                                    };
+                                    if beats {
+                                        winner = (idx, mapping.clone());
+                                        winner_is_bomb = true;
+                                    }
+                                }
+                            }
+                        } else {
+                            // Bomb beats non-bomb
+                            if let Some(Some(mapping)) = played_card_mappings.get(idx) {
+                                winner = (idx, mapping.clone());
+                                winner_is_bomb = true;
+                            }
+                        }
+                    } else if !winner_is_bomb {
+                        // Normal comparison (no bombs involved)
+                        if let Ok(mut mm) = tf.matches(&pc.cards) {
+                            let greater =
+                                mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
+                            if let Some(m) = greater {
+                                winner = (idx, m);
+                            }
                         }
                     }
+                    // If winner is a bomb and this is not, the bomb keeps winning
                 }
                 Some(played_cards[winner.0].id)
             }
@@ -950,6 +1052,21 @@ impl<'a> From<&'a MatchingCards> for UnitLike {
 }
 
 type Units = Vec<TrickUnit>;
+
+/// Checks if a set of cards constitutes a bomb: all identical cards with count >= 4.
+fn is_bomb(cards: &[Card], trump: Trump) -> bool {
+    if cards.len() < 4 {
+        return false;
+    }
+    // All cards must be the same (comparing via OrderedCard to handle trump equivalence)
+    let first = OrderedCard {
+        card: cards[0],
+        trump,
+    };
+    cards[1..]
+        .iter()
+        .all(|c| OrderedCard { card: *c, trump } == first)
+}
 
 fn without_trick_unit<T>(
     counts: &mut BTreeMap<OrderedCard, usize>,
@@ -1114,8 +1231,8 @@ mod tests {
     use crate::types::{cards::*, Card, EffectiveSuit, Number, PlayerID, Suit, Trump};
 
     use super::{
-        OrderedCard, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
-        TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike,
+        BombPolicy, OrderedCard, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick,
+        TrickDrawPolicy, TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike,
     };
 
     const TRUMP: Trump = Trump::Standard {
@@ -1153,6 +1270,7 @@ mod tests {
                 format_hint: $fmt,
                 hide_throw_halting_player: $h,
                 tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::NoBombs,
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tdp:expr, $tep:expr) => {
@@ -1165,6 +1283,7 @@ mod tests {
                 format_hint: None,
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::NoBombs,
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tep:expr) => {
@@ -1177,6 +1296,7 @@ mod tests {
                 format_hint: None,
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::NoBombs,
             }
         };
         ($id:expr, $hands:expr, $cards:expr) => {
@@ -1189,6 +1309,7 @@ mod tests {
                 format_hint: None,
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::NoBombs,
             }
         };
     }
@@ -1259,7 +1380,7 @@ mod tests {
             hands.add(P2, vec![S_2, S_3, S_5]).unwrap();
             hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
             hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
-            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick.play_cards(pc!(P1, &mut hands, &[S_2], tep)).unwrap();
             trick.play_cards(pc!(P2, &mut hands, &[S_5], tep)).unwrap();
@@ -1288,7 +1409,7 @@ mod tests {
             hands.add(P2, vec![H_2, H_3, S_4]).unwrap();
             hands.add(P3, vec![S_2, S_3, S_5]).unwrap();
             hands.add(P4, vec![S_2, S_3, S_5]).unwrap();
-            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick.play_cards(pc!(P1, &mut hands, &[S_2], tep)).unwrap();
             trick.play_cards(pc!(P2, &mut hands, &[S_4], tep)).unwrap();
@@ -1317,7 +1438,7 @@ mod tests {
             hands.add(P2, vec![H_2, S_3, S_4]).unwrap();
             hands.add(P3, vec![S_5, S_5, S_5]).unwrap();
             hands.add(P4, vec![S_3, S_4, S_5]).unwrap();
-            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick
                 .play_cards(pc!(P1, &mut hands, &[S_2, S_2], tep))
@@ -1354,7 +1475,7 @@ mod tests {
             hands.add(P2, vec![S_6, S_6, S_7, S_7, S_4]).unwrap();
             hands.add(P3, vec![S_2, S_5, S_5, S_5, S_4]).unwrap();
             hands.add(P4, vec![S_6, S_6, S_6, S_6, S_4]).unwrap();
-            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick
                 .play_cards(pc!(P1, &mut hands, &[S_2, S_2, S_3, S_3], tep))
@@ -1390,7 +1511,7 @@ mod tests {
         hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
         hands.add(P4, vec![S_4, S_4, S_4, S_4]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick
             .play_cards(pc!(P1, &mut hands, &[H_8, H_8, H_7, H_2]))
             .unwrap();
@@ -1436,6 +1557,7 @@ mod tests {
                     number: Number::Eight,
                 },
                 vec![P1, P2, P3, P4],
+                BombPolicy::NoBombs,
             );
             trick
                 .play_cards(pc!(P1, &mut hands, &p1_cards, tep))
@@ -1463,7 +1585,7 @@ mod tests {
         hands.add(P2, vec![H_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_2, S_2, S_3, S_4]).unwrap();
         hands.add(P4, vec![S_4, S_4, S_4, H_3]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick
             .play_cards(pc!(P1, &mut hands, &[H_8, H_8, H_7, H_2]))
             .unwrap();
@@ -1490,7 +1612,7 @@ mod tests {
         hands.add(P2, vec![S_2, S_3, S_3, S_5, H_3]).unwrap();
         hands.add(P3, vec![S_A, S_A, H_3, H_3, H_3]).unwrap();
         hands.add(P4, vec![H_3, H_3, H_3, H_3, H_3]).unwrap();
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick
             .play_cards(pc!(P1, &mut hands, &[S_Q, S_Q, S_K, S_K, S_A]))
             .unwrap();
@@ -1671,18 +1793,63 @@ mod tests {
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2], TrickDrawPolicy::NoFormatBasedDraw));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_3], TrickDrawPolicy::NoFormatBasedDraw));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_3], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_3],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_3, S_3],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_3],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_3, S_3],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
 
         // Check that we don't break longer tuples if that's not required
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::LongerTuplesProtected));
-        assert!(tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::NoFormatBasedDraw));
-        assert!(!tf.is_legal_play(&hand, &[S_3, S_5], TrickDrawPolicy::NoProtections));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_5],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_3, S_5],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1694,11 +1861,36 @@ mod tests {
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_3, S_5], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_3, S_5],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_3, S_5],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_3, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
 
         let tf = TrickFormat {
             suit: EffectiveSuit::Trump,
@@ -1711,34 +1903,40 @@ mod tests {
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3, S_5],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3, S_5],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3, S_5],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5]);
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2, S_5],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2, S_5],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2, S_5],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
 
         let tf = TrickFormat {
@@ -1749,93 +1947,139 @@ mod tests {
                 members: vec![oc!(S_2), oc!(S_3)],
             }],
         };
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_3, S_3], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_3, S_3, S_5, S_5], TrickDrawPolicy::NoProtections));
         assert!(!tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_3, S_5, S_5],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(!tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_3, S_5, S_5],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_3, S_3],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_3, S_3, S_5, S_5],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_3, S_3],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_3, S_5, S_5],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
 
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_5], TrickDrawPolicy::NoProtections));
-        assert!(!tf.is_legal_play(&hand, &[S_2, S_2, S_5, S_3], TrickDrawPolicy::NoProtections));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5, S_5],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_3],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2, S_2],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5, S_5],
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5, S_3],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5, S_5],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5, S_5],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
         // This play is tenuously legal, since the 2222 is protected by the 355 is not, and the
         // trick-format is 2233. Normally we would expect that the 2233 is required, but the player
@@ -1843,7 +2087,8 @@ mod tests {
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5, S_3],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
 
         let tf = TrickFormat {
@@ -1861,29 +2106,53 @@ mod tests {
             ],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_2], TrickDrawPolicy::NoFormatBasedDraw));
-        assert!(tf.is_legal_play(&hand, &[S_2, S_2, S_5], TrickDrawPolicy::NoFormatBasedDraw));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_2],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_2, S_2, S_5],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_2],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_2, S_2, S_5],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
     }
 
@@ -1898,30 +2167,54 @@ mod tests {
             }],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_6, S_7, S_8]);
-        assert!(!tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_6, S_7, S_8], TrickDrawPolicy::NoFormatBasedDraw));
+        assert!(!tf.is_legal_play(
+            &hand,
+            &[S_6, S_7, S_8],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
+        ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_6, S_7, S_8],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_5, S_6, S_7, S_8]);
-        assert!(!tf.is_legal_play(&hand, &[S_5, S_5, S_6], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(&hand, &[S_5, S_5, S_6], TrickDrawPolicy::NoFormatBasedDraw));
-        assert!(tf.is_legal_play(
+        assert!(!tf.is_legal_play(
             &hand,
             &[S_5, S_5, S_6],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_5, S_6],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_5, S_6],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_5, S_6],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
         assert!(!tf.is_legal_play(
             &hand,
             &[S_6, S_7, S_8],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
     }
 
@@ -1936,26 +2229,35 @@ mod tests {
             }],
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
-        assert!(!tf.is_legal_play(&hand, &[S_5, S_6, S_7, S_8], TrickDrawPolicy::NoProtections));
-        assert!(tf.is_legal_play(
+        assert!(!tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_5, S_6, S_7, S_8],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(!tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
-            TrickDrawPolicy::OnlyDrawTractorOnTractor
+            TrickDrawPolicy::OnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_5, S_6, S_7, S_8],
-            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
         ));
     }
 
@@ -1983,32 +2285,38 @@ mod tests {
         assert!(!tf.is_legal_play(
             &hand,
             &[S_3, S_5, S_10, S_J, S_Q],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_5, S_10, S_J, S_Q],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_5, S_10, S_J, S_Q],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_6, S_8, S_8, S_8],
-            TrickDrawPolicy::NoProtections
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_6, S_8, S_8, S_8],
-            TrickDrawPolicy::NoFormatBasedDraw
+            TrickDrawPolicy::NoFormatBasedDraw,
+            BombPolicy::NoBombs
         ));
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_6, S_8, S_8, S_8],
-            TrickDrawPolicy::LongerTuplesProtected
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
         ));
     }
 
@@ -2029,7 +2337,7 @@ mod tests {
         hands.add(P2, p2_hand.clone()).unwrap();
         hands.add(P3, p3_hand.clone()).unwrap();
         hands.add(P4, p4_hand.clone()).unwrap();
-        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick.play_cards(pc!(P1, &mut hands, &p1_hand)).unwrap();
         trick.play_cards(pc!(P2, &mut hands, &p2_hand)).unwrap();
         trick.play_cards(pc!(P3, &mut hands, &p3_hand)).unwrap();
@@ -2073,7 +2381,7 @@ mod tests {
             hands.add(P3, p3_hand.clone()).unwrap();
             hands.add(P4, p4_hand.clone()).unwrap();
 
-            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick
                 .play_cards(pc!(
@@ -2164,7 +2472,7 @@ mod tests {
             hands.add(P3, p3_hand.clone()).unwrap();
             hands.add(P4, p4_hand.clone()).unwrap();
 
-            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick
                 .play_cards(pc!(P1, &mut hands, &p1_hand, policy))
@@ -2210,7 +2518,7 @@ mod tests {
             hands.add(P3, p3_hand.clone()).unwrap();
             hands.add(P4, p4_hand.clone()).unwrap();
 
-            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
 
             trick
                 .play_cards(pc!(P1, &mut hands, &p1_hand, policy))
@@ -2245,7 +2553,7 @@ mod tests {
         hands.add(P3, vec![S_3, S_3]).unwrap();
         hands.add(P4, vec![S_3, S_3]).unwrap();
 
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick.play_cards(pc!(P1, &mut hands, &[H_4, S_4])).unwrap();
         trick.play_cards(pc!(P2, &mut hands, &[D_4, S_2])).unwrap();
         trick.play_cards(pc!(P3, &mut hands, &[S_3, S_3])).unwrap();
@@ -2275,7 +2583,7 @@ mod tests {
             hands.add(P3, vec![Card::SmallJoker, S_5]).unwrap();
             hands.add(P4, vec![S_Q, D_A]).unwrap();
 
-            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
             trick
                 .play_cards(pc!(P1, &mut hands, &[C_A, C_K], tep))
                 .unwrap();
@@ -2314,7 +2622,7 @@ mod tests {
             hands.add(P3, vec![S_3, S_3, C_7, C_8]).unwrap();
             hands.add(P4, vec![C_6, C_6, C_2, C_2]).unwrap();
 
-            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4]);
+            let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
             trick
                 .play_cards(pc!(P1, &mut hands, &[D_8, D_8, D_J, D_Q], tep))
                 .unwrap();
@@ -2341,5 +2649,407 @@ mod tests {
 
         let TrickEnded { winner, .. } = f(ThrowEvaluationPolicy::TrickUnitLength);
         assert_eq!(winner, P4);
+    }
+
+    #[test]
+    fn test_bomb_beats_tractor() {
+        // 4-card bomb (2222) beats a 4-card tractor (8899)
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
+        hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
+        hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
+
+        // P1 leads with a tractor 8899
+        trick
+            .play_cards(PlayCards {
+                id: P1,
+                hands: &mut hands,
+                cards: &[S_8, S_8, S_9, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P2 plays a bomb of four 2s
+        trick
+            .play_cards(PlayCards {
+                id: P2,
+                hands: &mut hands,
+                cards: &[S_2, S_2, S_2, S_2],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P3, P4 play random cards
+        trick
+            .play_cards(PlayCards {
+                id: P3,
+                hands: &mut hands,
+                cards: &[S_3, S_5, S_6, S_7],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+        trick
+            .play_cards(PlayCards {
+                id: P4,
+                hands: &mut hands,
+                cards: &[S_3, S_5, S_6, S_7],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        assert_eq!(winner, P2);
+    }
+
+    #[test]
+    fn test_higher_bomb_beats_lower_bomb() {
+        // Two bombs: higher rank wins
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
+        hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_3, S_3, S_3, S_3]).unwrap();
+        hands.add(P4, vec![S_5, S_6, S_7, S_10]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
+
+        trick
+            .play_cards(PlayCards {
+                id: P1,
+                hands: &mut hands,
+                cards: &[S_8, S_8, S_9, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P2 plays bomb of 2s
+        trick
+            .play_cards(PlayCards {
+                id: P2,
+                hands: &mut hands,
+                cards: &[S_2, S_2, S_2, S_2],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P3 plays bomb of 3s (higher, should win)
+        trick
+            .play_cards(PlayCards {
+                id: P3,
+                hands: &mut hands,
+                cards: &[S_3, S_3, S_3, S_3],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P4,
+                hands: &mut hands,
+                cards: &[S_5, S_6, S_7, S_10],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        assert_eq!(winner, P3);
+    }
+
+    #[test]
+    fn test_bomb_not_allowed_when_policy_disabled() {
+        // When BombPolicy::NoBombs, a 4-of-a-kind should NOT beat a tractor
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
+        hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
+        hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
+
+        trick
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2, S_2]))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6, S_7]))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]))
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        // With NoBombs, P1's tractor should still win since P2's 2222 doesn't match the format
+        assert_eq!(winner, P1);
+    }
+
+    #[test]
+    fn test_bomb_six_cards_beats_six_card_tractor() {
+        // 6-card bomb (333333) beats a 6-card tractor (AAKKQQ)
+        let trump = Trump::Standard {
+            number: Number::Four,
+            suit: Suit::Hearts,
+        };
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_A, S_A, S_K, S_K, S_Q, S_Q]).unwrap();
+        hands.add(P2, vec![S_3, S_3, S_3, S_3, S_3, S_3]).unwrap();
+        hands.add(P3, vec![S_2, S_5, S_6, S_7, S_8, S_9]).unwrap();
+        hands.add(P4, vec![S_2, S_5, S_6, S_7, S_8, S_9]).unwrap();
+
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
+
+        trick
+            .play_cards(PlayCards {
+                id: P1,
+                hands: &mut hands,
+                cards: &[S_A, S_A, S_K, S_K, S_Q, S_Q],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P2 plays 6-card bomb
+        trick
+            .play_cards(PlayCards {
+                id: P2,
+                hands: &mut hands,
+                cards: &[S_3, S_3, S_3, S_3, S_3, S_3],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P3,
+                hands: &mut hands,
+                cards: &[S_2, S_5, S_6, S_7, S_8, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P4,
+                hands: &mut hands,
+                cards: &[S_2, S_5, S_6, S_7, S_8, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        assert_eq!(winner, P2);
+    }
+
+    #[test]
+    fn test_trump_bomb_beats_non_trump_bomb() {
+        // A trump-suit bomb should beat a non-trump bomb
+        let trump = Trump::Standard {
+            number: Number::Four,
+            suit: Suit::Hearts,
+        };
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
+        hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
+        // P3 has trump bombs (hearts, which are trump)
+        hands.add(P3, vec![H_3, H_3, H_3, H_3]).unwrap();
+        hands.add(P4, vec![S_5, S_6, S_7, S_10]).unwrap();
+
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
+
+        trick
+            .play_cards(PlayCards {
+                id: P1,
+                hands: &mut hands,
+                cards: &[S_8, S_8, S_9, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P2 plays non-trump bomb
+        trick
+            .play_cards(PlayCards {
+                id: P2,
+                hands: &mut hands,
+                cards: &[S_2, S_2, S_2, S_2],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P3 plays trump bomb (hearts are trump)
+        trick
+            .play_cards(PlayCards {
+                id: P3,
+                hands: &mut hands,
+                cards: &[H_3, H_3, H_3, H_3],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P4,
+                hands: &mut hands,
+                cards: &[S_5, S_6, S_7, S_10],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        assert_eq!(winner, P3);
+    }
+
+    #[test]
+    fn test_three_identical_cards_not_a_bomb() {
+        // Three identical cards should not be treated as a bomb
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![S_8, S_8, S_9]).unwrap();
+        hands.add(P2, vec![S_2, S_2, S_2]).unwrap();
+        hands.add(P3, vec![S_3, S_5, S_6]).unwrap();
+        hands.add(P4, vec![S_3, S_5, S_6]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
+
+        trick
+            .play_cards(PlayCards {
+                id: P1,
+                hands: &mut hands,
+                cards: &[S_8, S_8, S_9],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        // P2 plays 3 identical cards (not a bomb since < 4)
+        trick
+            .play_cards(PlayCards {
+                id: P2,
+                hands: &mut hands,
+                cards: &[S_2, S_2, S_2],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P3,
+                hands: &mut hands,
+                cards: &[S_3, S_5, S_6],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        trick
+            .play_cards(PlayCards {
+                id: P4,
+                hands: &mut hands,
+                cards: &[S_3, S_5, S_6],
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::AllowBombs,
+            })
+            .unwrap();
+
+        let TrickEnded { winner, .. } = trick.complete().unwrap();
+        // P1 should still win since 222 is not a bomb
+        assert_eq!(winner, P1);
     }
 }

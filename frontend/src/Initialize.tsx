@@ -445,6 +445,7 @@ interface IUncommonSettings {
   setJackVariation: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setHideThrowHaltingPlayer: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setTractorRequirements: (v: TractorRequirements) => void;
+  setBombPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
@@ -577,6 +578,20 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
         numDecks={props.numDecksEffective}
         onChange={(req) => props.setTractorRequirements(req)}
       />
+      {props.numDecksEffective >= 4 && (
+        <div>
+          <label>
+            Bomb cards (4+ identical cards beat any play of the same size):{" "}
+            <select
+              value={props.state.propagated.bomb_policy ?? "NoBombs"}
+              onChange={props.setBombPolicy}
+            >
+              <option value="NoBombs">Disabled</option>
+              <option value="AllowBombs">Enabled</option>
+            </select>
+          </label>
+        </div>
+      )}
       <div>
         <label>
           Should reveal kitty at end of game:{" "}
@@ -787,6 +802,7 @@ const Initialize = (props: IProps): JSX.Element => {
       });
     }
   };
+  const setBombPolicy = onSelectString("SetBombPolicy");
 
   const setKittyPenalty = onSelectStringDefault("SetKittyPenalty", null);
   const setAdvancementPolicy = onSelectStringDefault(
@@ -1323,6 +1339,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setTractorRequirements={(requirements) =>
             send({ Action: { SetTractorRequirements: requirements } })
           }
+          setBombPolicy={setBombPolicy}
         />
         <DifficultySettings
           state={props.state}

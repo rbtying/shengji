@@ -205,7 +205,7 @@ mod tests {
 
     use shengji_mechanics::hands::Hands;
     use shengji_mechanics::trick::{
-        PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
+        BombPolicy, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
     };
 
     const R2: Rank = Rank::Number(Number::Two);
@@ -239,6 +239,7 @@ mod tests {
                 format_hint: None,
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
+                bomb_policy: BombPolicy::NoBombs,
             }
         };
     }
@@ -663,7 +664,7 @@ mod tests {
         hands.add(P2, vec![S_J]).unwrap();
         hands.add(P3, vec![S_2]).unwrap();
         hands.add(P4, vec![S_3]).unwrap();
-        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
@@ -699,7 +700,7 @@ mod tests {
         hands.add(P2, vec![S_J]).unwrap();
         hands.add(P3, vec![S_2]).unwrap();
         hands.add(P4, vec![S_3]).unwrap();
-        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();
@@ -739,7 +740,7 @@ mod tests {
         hands.add(P2, vec![S_J]).unwrap();
         hands.add(P3, vec![S_2]).unwrap();
         hands.add(P4, vec![S_3]).unwrap();
-        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4]);
+        let mut trick = Trick::new(JACK_TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
         trick.play_cards(pc!(P1, &mut hands, &[S_2])).unwrap();
         trick.play_cards(pc!(P2, &mut hands, &[S_J])).unwrap();
         trick.play_cards(pc!(P3, &mut hands, &[S_2])).unwrap();

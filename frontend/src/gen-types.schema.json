@@ -520,6 +520,16 @@
         },
         {
           "type": "object",
+          "required": ["SetBombPolicy"],
+          "properties": {
+            "SetBombPolicy": {
+              "$ref": "#/definitions/BombPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetGameVisibility"],
           "properties": {
             "SetGameVisibility": {
@@ -707,6 +717,10 @@
     "BidTakebackPolicy": {
       "type": "string",
       "enum": ["AllowBidTakeback", "NoBidTakeback"]
+    },
+    "BombPolicy": {
+      "type": "string",
+      "enum": ["NoBombs", "AllowBombs"]
     },
     "BonusLevelPolicy": {
       "type": "string",
@@ -2563,6 +2577,19 @@
               "enum": ["TractorRequirementsChanged"]
             }
           }
+        },
+        {
+          "type": "object",
+          "required": ["bomb_policy", "type"],
+          "properties": {
+            "bomb_policy": {
+              "$ref": "#/definitions/BombPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["BombPolicySet"]
+            }
+          }
         }
       ]
     },
@@ -2842,6 +2869,14 @@
           "allOf": [
             {
               "$ref": "#/definitions/BidTakebackPolicy"
+            }
+          ]
+        },
+        "bomb_policy": {
+          "default": "NoBombs",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BombPolicy"
             }
           ]
         },
@@ -3163,6 +3198,14 @@
       "type": "object",
       "required": ["played_cards", "player_queue", "trump"],
       "properties": {
+        "bomb_policy": {
+          "default": "NoBombs",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BombPolicy"
+            }
+          ]
+        },
         "current_winner": {
           "type": ["integer", "null"],
           "format": "uint",
