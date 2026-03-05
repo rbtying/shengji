@@ -1276,6 +1276,19 @@ mod tests {
                 bomb_policy: BombPolicy::NoBombs,
             }
         };
+        ($id:expr, $hands:expr, $cards:expr; $bp:expr) => {
+            PlayCards {
+                id: $id,
+                hands: $hands,
+                cards: $cards,
+                trick_draw_policy: TrickDrawPolicy::NoProtections,
+                throw_eval_policy: ThrowEvaluationPolicy::All,
+                format_hint: None,
+                hide_throw_halting_player: false,
+                tractor_requirements: TractorRequirements::default(),
+                bomb_policy: $bp,
+            }
+        };
     }
 
     #[allow(clippy::cognitive_complexity)]
@@ -2617,153 +2630,58 @@ mod tests {
 
     #[test]
     fn test_bomb_beats_tractor() {
-        // 4-card bomb (2222) beats a 4-card tractor (8899)
+        let bp = BombPolicy::AllowBombs;
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
         hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
         hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
 
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
-
-        // P1 leads with a tractor 8899
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        // P2 plays a bomb of four 2s
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_2, S_2, S_2, S_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        // P3, P4 play random cards
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
             .unwrap();
         trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2, S_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P2);
+        assert_eq!(trick.complete().unwrap().winner, P2);
     }
 
     #[test]
     fn test_higher_bomb_beats_lower_bomb() {
-        // Two bombs: higher rank wins
+        let bp = BombPolicy::AllowBombs;
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
         hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_3, S_3, S_3, S_3]).unwrap();
         hands.add(P4, vec![S_5, S_6, S_7, S_10]).unwrap();
 
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
-
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2, S_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_3, S_3, S_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_5, S_6, S_7, S_10]; bp))
             .unwrap();
 
-        // P2 plays bomb of 2s
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_2, S_2, S_2, S_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        // P3 plays bomb of 3s (higher, should win)
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_3, S_3, S_3],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_5, S_6, S_7, S_10],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P3);
+        assert_eq!(trick.complete().unwrap().winner, P3);
     }
 
     #[test]
     fn test_bomb_not_allowed_when_policy_disabled() {
-        // When BombPolicy::NoBombs, a 4-of-a-kind should NOT beat a tractor
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
         hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
@@ -2771,7 +2689,6 @@ mod tests {
         hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
 
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::NoBombs);
-
         trick
             .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]))
             .unwrap();
@@ -2785,14 +2702,13 @@ mod tests {
             .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]))
             .unwrap();
 
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        // With NoBombs, P1's tractor should still win since P2's 2222 doesn't match the format
-        assert_eq!(winner, P1);
+        // With NoBombs, P1's tractor should still win
+        assert_eq!(trick.complete().unwrap().winner, P1);
     }
 
     #[test]
     fn test_bomb_six_cards_beats_six_card_tractor() {
-        // 6-card bomb (333333) beats a 6-card tractor (AAKKQQ)
+        let bp = BombPolicy::AllowBombs;
         let trump = Trump::Standard {
             number: Number::Four,
             suit: Suit::Hearts,
@@ -2803,72 +2719,26 @@ mod tests {
         hands.add(P3, vec![S_2, S_5, S_6, S_7, S_8, S_9]).unwrap();
         hands.add(P4, vec![S_2, S_5, S_6, S_7, S_8, S_9]).unwrap();
 
-        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
-
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_A, S_A, S_K, S_K, S_Q, S_Q],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_A, S_A, S_K, S_K, S_Q, S_Q]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_3, S_3, S_3, S_3, S_3, S_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_2, S_5, S_6, S_7, S_8, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_2, S_5, S_6, S_7, S_8, S_9]; bp))
             .unwrap();
 
-        // P2 plays 6-card bomb
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_3, S_3, S_3, S_3, S_3, S_3],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_2, S_5, S_6, S_7, S_8, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_2, S_5, S_6, S_7, S_8, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P2);
+        assert_eq!(trick.complete().unwrap().winner, P2);
     }
 
     #[test]
     fn test_trump_bomb_beats_non_trump_bomb() {
-        // A trump-suit bomb should beat a non-trump bomb
+        let bp = BombPolicy::AllowBombs;
         let trump = Trump::Standard {
             number: Number::Four,
             suit: Suit::Hearts,
@@ -2876,228 +2746,81 @@ mod tests {
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
         hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
-        // P3 has trump bombs (hearts, which are trump)
         hands.add(P3, vec![H_3, H_3, H_3, H_3]).unwrap();
         hands.add(P4, vec![S_5, S_6, S_7, S_10]).unwrap();
 
-        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
-
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2, S_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[H_3, H_3, H_3, H_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_5, S_6, S_7, S_10]; bp))
             .unwrap();
 
-        // P2 plays non-trump bomb
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_2, S_2, S_2, S_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        // P3 plays trump bomb (hearts are trump)
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[H_3, H_3, H_3, H_3],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_5, S_6, S_7, S_10],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P3);
+        assert_eq!(trick.complete().unwrap().winner, P3);
     }
 
     #[test]
     fn test_three_identical_cards_not_a_bomb() {
-        // Three identical cards should not be treated as a bomb
+        let bp = BombPolicy::AllowBombs;
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9]).unwrap();
         hands.add(P2, vec![S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_3, S_5, S_6]).unwrap();
         hands.add(P4, vec![S_3, S_5, S_6]).unwrap();
 
-        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], BombPolicy::AllowBombs);
-
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6]; bp))
             .unwrap();
 
-        // P2 plays 3 identical cards (not a bomb since < 4)
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_2, S_2, S_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombs,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        // P1 should still win since 222 is not a bomb
-        assert_eq!(winner, P1);
+        // P1 should still win since 222 is not a bomb (< 4 cards)
+        assert_eq!(trick.complete().unwrap().winner, P1);
     }
 
     #[test]
     fn test_bomb_suit_following_same_suit_allowed() {
-        // With AllowBombsSuitFollowing, a bomb in the led suit is allowed
+        let bp = BombPolicy::AllowBombsSuitFollowing;
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
-        // P2 has a bomb in the led suit (spades)
         hands.add(P2, vec![S_2, S_2, S_2, S_2]).unwrap();
         hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
         hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
 
-        let mut trick = Trick::new(
-            TRUMP,
-            vec![P1, P2, P3, P4],
-            BombPolicy::AllowBombsSuitFollowing,
-        );
-
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[S_2, S_2, S_2, S_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
-        // P2 plays a same-suit bomb — should be allowed and should win
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[S_2, S_2, S_2, S_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P2);
+        assert_eq!(trick.complete().unwrap().winner, P2);
     }
 
     #[test]
     fn test_bomb_suit_following_off_suit_rejected_when_has_led_suit() {
-        // With AllowBombsSuitFollowing, an off-suit bomb is rejected if
-        // the player still has cards of the led suit.
         let trump = Trump::Standard {
             number: Number::Four,
             suit: Suit::Hearts,
@@ -3117,7 +2840,6 @@ mod tests {
 
         let hand = hands.get(PlayerID(2)).unwrap().clone();
 
-        // Off-suit bomb should be rejected: player still has spades
         assert!(!trick_format.is_legal_play(
             &hand,
             &[D_2, D_2, D_2, D_2],
@@ -3128,91 +2850,37 @@ mod tests {
 
     #[test]
     fn test_bomb_suit_following_off_suit_allowed_when_void() {
-        // With AllowBombsSuitFollowing, an off-suit bomb is allowed if
-        // the player is void in the led suit.
+        let bp = BombPolicy::AllowBombsSuitFollowing;
         let trump = Trump::Standard {
             number: Number::Four,
             suit: Suit::Hearts,
         };
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![S_8, S_8, S_9, S_9]).unwrap();
-        // P2 has NO spades, only a diamond bomb
         hands.add(P2, vec![D_2, D_2, D_2, D_2]).unwrap();
         hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
         hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
 
-        let mut trick = Trick::new(
-            trump,
-            vec![P1, P2, P3, P4],
-            BombPolicy::AllowBombsSuitFollowing,
-        );
-
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[D_2, D_2, D_2, D_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
-        // P2 is void in spades, so the off-suit bomb should be allowed
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[D_2, D_2, D_2, D_2],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        // P2's off-suit bomb should still win (it's a bomb vs non-bomb)
-        assert_eq!(winner, P2);
+        assert_eq!(trick.complete().unwrap().winner, P2);
     }
 
     #[test]
     fn test_bomb_suit_following_trump_bomb_allowed() {
-        // With AllowBombsSuitFollowing, a trump bomb is always allowed
-        // (trump can always override when following)
+        let bp = BombPolicy::AllowBombsSuitFollowing;
         let trump = Trump::Standard {
             number: Number::Four,
             suit: Suit::Hearts,
@@ -3224,71 +2892,21 @@ mod tests {
         hands.add(P3, vec![S_3, S_5, S_6, S_7]).unwrap();
         hands.add(P4, vec![S_3, S_5, S_6, S_7]).unwrap();
 
-        let mut trick = Trick::new(
-            trump,
-            vec![P1, P2, P3, P4],
-            BombPolicy::AllowBombsSuitFollowing,
-        );
-
+        let mut trick = Trick::new(trump, vec![P1, P2, P3, P4], bp);
         trick
-            .play_cards(PlayCards {
-                id: P1,
-                hands: &mut hands,
-                cards: &[S_8, S_8, S_9, S_9],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
+            .play_cards(pc!(P1, &mut hands, &[S_8, S_8, S_9, S_9]; bp))
+            .unwrap();
+        // Trump bomb allowed even though P2 has spades
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_3, H_3, H_3, H_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
-        // P2 plays trump bomb even though they have spades — should be allowed
-        // because trump bombs can always override
-        trick
-            .play_cards(PlayCards {
-                id: P2,
-                hands: &mut hands,
-                cards: &[H_3, H_3, H_3, H_3],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P3,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        trick
-            .play_cards(PlayCards {
-                id: P4,
-                hands: &mut hands,
-                cards: &[S_3, S_5, S_6, S_7],
-                trick_draw_policy: TrickDrawPolicy::NoProtections,
-                throw_eval_policy: ThrowEvaluationPolicy::All,
-                format_hint: None,
-                hide_throw_halting_player: false,
-                tractor_requirements: TractorRequirements::default(),
-                bomb_policy: BombPolicy::AllowBombsSuitFollowing,
-            })
-            .unwrap();
-
-        let TrickEnded { winner, .. } = trick.complete().unwrap();
-        assert_eq!(winner, P2);
+        assert_eq!(trick.complete().unwrap().winner, P2);
     }
 }
