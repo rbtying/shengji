@@ -587,7 +587,12 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
               onChange={props.setBombPolicy}
             >
               <option value="NoBombs">Disabled</option>
-              <option value="AllowBombs">Enabled</option>
+              <option value="AllowBombs">
+                Enabled (any suit, no suit-following required)
+              </option>
+              <option value="AllowBombsSuitFollowing">
+                Enabled (must follow suit)
+              </option>
             </select>
           </label>
         </div>

@@ -390,7 +390,8 @@ impl MessageVariant {
                 format!("{} required tractors to be at least {} cards wide by {} tuples long", n?, tractor_requirements.min_count, tractor_requirements.min_length),
             GameVisibilitySet { visibility: GameVisibility::Public} => format!("{} listed the game publicly", n?),
             GameVisibilitySet { visibility: GameVisibility::Unlisted} => format!("{} unlisted the game", n?),
-            BombPolicySet { bomb_policy: BombPolicy::AllowBombs } => format!("{} enabled bomb cards", n?),
+            BombPolicySet { bomb_policy: BombPolicy::AllowBombs } => format!("{} enabled bomb cards (any suit)", n?),
+            BombPolicySet { bomb_policy: BombPolicy::AllowBombsSuitFollowing } => format!("{} enabled bomb cards (must follow suit)", n?),
             BombPolicySet { bomb_policy: BombPolicy::NoBombs } => format!("{} disabled bomb cards", n?),
         })
     }
