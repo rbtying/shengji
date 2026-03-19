@@ -127,3 +127,9 @@ The project maintains type safety between Rust and TypeScript by:
 - Integration test API endpoints in `backend/`
 - Component testing for React UI elements
 - Manual testing for WebSocket interactions and gameplay flow
+
+### Before committing frontend changes:
+Always run lints and formatting before committing any frontend (`.tsx`/`.ts`) changes:
+```bash
+cd frontend && yarn lint --fix && yarn prettier --write
+```

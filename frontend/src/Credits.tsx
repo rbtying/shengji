@@ -64,10 +64,10 @@ const ChangeLog = (): JSX.Element => {
         <p>3/18/2026:</p>
         <ul>
           <li>
-            Added bomb card support for games with 4+ decks. A bomb is 4 or
-            more identical cards played together, which beats any other play of
-            the same size. Can be configured to require suit-following or allow
-            any suit. Disabled by default; enable under &ldquo;more game
+            Added bomb card support for games with 4+ decks. A bomb is 4 or more
+            identical cards played together, which beats any other play of the
+            same size. Can be configured to require suit-following or allow any
+            suit. Disabled by default; enable under &ldquo;more game
             settings&rdquo;.
           </li>
         </ul>
