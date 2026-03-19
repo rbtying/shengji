@@ -11,7 +11,7 @@ const contentStyle: React.CSSProperties = {
   transform: "translate(-50%, -50%)",
 };
 
-const changeLogVersion: number = 23;
+const changeLogVersion: number = 24;
 
 const ChangeLog = (): JSX.Element => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
@@ -61,6 +61,16 @@ const ChangeLog = (): JSX.Element => {
           you&apos;re in the game.
         </p>
         <h2>Change Log</h2>
+        <p>3/18/2026:</p>
+        <ul>
+          <li>
+            Added bomb card support for games with 4+ decks. A bomb is 4 or
+            more identical cards played together, which beats any other play of
+            the same size. Can be configured to require suit-following or allow
+            any suit. Disabled by default; enable under &ldquo;more game
+            settings&rdquo;.
+          </li>
+        </ul>
         <p>7/10/2023:</p>
         <ul>
           <li>
