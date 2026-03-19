@@ -59,7 +59,7 @@ impl InitializePhase {
                 num_friends: (self.propagated.players.len() / 2) - 1,
                 friends: vec![],
             },
-            GameModeSettings::Tractor if self.propagated.players.len() % 2 == 0 => {
+            GameModeSettings::Tractor if self.propagated.players.len().is_multiple_of(2) => {
                 GameMode::Tractor
             }
             GameModeSettings::Tractor => {

@@ -86,6 +86,7 @@ impl PlayPhase {
                     let idx = (landlord_idx + offset) % propagated.players.len();
                     propagated.players[idx].id
                 }),
+                propagated.bomb_policy,
             ),
             points: propagated
                 .players
@@ -182,6 +183,7 @@ impl PlayPhase {
             format_hint,
             hide_throw_halting_player: self.propagated.hide_throw_halting_player,
             tractor_requirements: self.propagated.tractor_requirements,
+            bomb_policy: self.propagated.bomb_policy,
         })?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {
@@ -346,6 +348,7 @@ impl PlayPhase {
                 let idx = (winner_idx + offset) % self.propagated.players.len();
                 self.propagated.players[idx].id
             }),
+            self.propagated.bomb_policy,
         );
         self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
 

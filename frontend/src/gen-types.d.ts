@@ -133,6 +133,9 @@ export type Action =
       SetTractorRequirements: TractorRequirements;
     }
   | {
+      SetBombPolicy: BombPolicy;
+    }
+  | {
       SetGameVisibility: GameVisibility;
     }
   | {
@@ -213,6 +216,7 @@ export type KittyTheftPolicy = "AllowKittyTheft" | "NoKittyTheft";
 export type GameShadowingPolicy = "AllowMultipleSessions" | "SingleSessionOnly";
 export type GameStartPolicy = "AllowAnyPlayer" | "AllowLandlordOnly";
 export type BackToTwoSetting = "Disabled" | "SingleJack";
+export type BombPolicy = "NoBombs" | "AllowBombs" | "AllowBombsSuitFollowing";
 export type GameVisibility = "Public" | "Unlisted";
 export type Card = string;
 export type TrickUnit =
@@ -628,6 +632,11 @@ export type MessageVariant =
       tractor_requirements: TractorRequirements;
       type: "TractorRequirementsChanged";
       [k: string]: unknown;
+    }
+  | {
+      bomb_policy: BombPolicy;
+      type: "BombPolicySet";
+      [k: string]: unknown;
     };
 
 export interface _Combined {
@@ -752,6 +761,7 @@ export interface Hands {
   [k: string]: unknown;
 }
 export interface Trick {
+  bomb_policy?: BombPolicy & string;
   current_winner?: number | null;
   /**
    * A parallel array to `played_cards` which contains the units corresponding to played cards that match the `trick_format`, or `None` if they don't match.
@@ -895,6 +905,7 @@ export interface PropagatedState {
   bid_policy?: BidPolicy & string;
   bid_reinforcement_policy?: BidReinforcementPolicy & string;
   bid_takeback_policy?: BidTakebackPolicy & string;
+  bomb_policy?: BombPolicy & string;
   chat_link?: string | null;
   first_landlord_selection_policy?: FirstLandlordSelectionPolicy & string;
   friend_selection_policy?: FriendSelectionPolicy & string;
