@@ -29,9 +29,22 @@ pub fn find_viable_plays(req: FindViablePlaysRequest) -> FindViablePlaysResult {
     FindViablePlaysResult { results }
 }
 
+/// Maximum total cards allowed in a trick format for decomposition.
+/// A trick format's total size is the sum of all unit sizes. In practice,
+/// even large throws rarely exceed ~10 cards. This prevents algorithmic
+/// complexity attacks via large `count` values in TrickUnit.
+const MAX_TRICK_FORMAT_SIZE: usize = 32;
+
 pub fn decompose_trick_format(
     req: DecomposeTrickFormatRequest,
 ) -> Result<DecomposeTrickFormatResponse, String> {
+    if req.trick_format.size() > MAX_TRICK_FORMAT_SIZE {
+        return Err(format!(
+            "trick format size {} exceeds maximum allowed size {}",
+            req.trick_format.size(),
+            MAX_TRICK_FORMAT_SIZE
+        ));
+    }
     let hand = req.hands.get(req.player_id).map_err(|e| e.to_string())?;
     let available_cards =
         Card::cards(hand.iter().filter(|(c, _)| {
