@@ -29,10 +29,11 @@ pub fn find_viable_plays(req: FindViablePlaysRequest) -> FindViablePlaysResult {
     FindViablePlaysResult { results }
 }
 
-/// Maximum number of cards allowed in a single trick format for decomposition.
-/// A standard deck has 54 cards; this is a generous upper bound that prevents
-/// algorithmic complexity attacks via large `count` values.
-const MAX_TRICK_FORMAT_SIZE: usize = 54;
+/// Maximum total cards allowed in a trick format for decomposition.
+/// A trick format's total size is the sum of all unit sizes. In practice,
+/// even large throws rarely exceed ~10 cards. This prevents algorithmic
+/// complexity attacks via large `count` values in TrickUnit.
+const MAX_TRICK_FORMAT_SIZE: usize = 20;
 
 pub fn decompose_trick_format(
     req: DecomposeTrickFormatRequest,
