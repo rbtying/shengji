@@ -1352,7 +1352,7 @@ checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "shengji"
-version = "0.1.5-beta.24"
+version = "0.1.5-beta.25"
 dependencies = [
  "anyhow",
  "axum",
