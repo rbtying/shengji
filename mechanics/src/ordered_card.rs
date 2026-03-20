@@ -13,6 +13,12 @@ pub type MatchingCardsRef = [(OrderedCard, usize)];
 pub type AdjacentTupleSizes = Vec<usize>;
 pub type PlayRequirements = Vec<AdjacentTupleSizes>;
 
+/// Maximum number of cards allowed in a single trick unit computation.
+/// A standard deck has 54 cards; even with many decks, a single suit/trick
+/// unit should never exceed this. This bound prevents algorithmic complexity
+/// attacks via the integer partition computation.
+const MAX_DECOMPOSITION_SIZE: usize = 54;
+
 /// A wrapper around a card with a given trump, which provides ordering characteristics.
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct OrderedCard {
@@ -173,8 +179,16 @@ pub fn subsequent_decomposition_ordering(
 pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
     assert!(num_cards >= 1);
 
+    if num_cards > MAX_DECOMPOSITION_SIZE {
+        // Return the trivial decomposition (all singles) for unreasonably large inputs
+        // to prevent exponential computation in find_tuple_partitions.
+        return vec![vec![vec![1]; num_cards]];
+    }
+
     {
-        let m = FULL_DECOMPOSITION_CACHE.lock().unwrap();
+        let m = FULL_DECOMPOSITION_CACHE
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(v) = m.get(&num_cards) {
             return v.clone();
         }
@@ -202,7 +216,9 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
     }
     let full_decomp: Vec<_> = full_decomp.into_iter().unique().collect();
 
-    let mut m = FULL_DECOMPOSITION_CACHE.lock().unwrap();
+    let mut m = FULL_DECOMPOSITION_CACHE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     m.insert(num_cards, full_decomp.clone());
 
     full_decomp
@@ -218,7 +234,7 @@ pub fn full_decomposition_ordering(num_cards: usize) -> Vec<PlayRequirements> {
 fn find_tuple_partitions(num: usize) -> Vec<AdjacentTupleSizes> {
     assert!(num >= 1);
     {
-        let m = GROUP_CACHE.lock().unwrap();
+        let m = GROUP_CACHE.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(v) = m.get(&num) {
             return v.clone();
         }
@@ -258,7 +274,7 @@ fn find_tuple_partitions(num: usize) -> Vec<AdjacentTupleSizes> {
     groupings.sort_by(|a, b| b.cmp(a));
     groupings.dedup();
 
-    let mut m = GROUP_CACHE.lock().unwrap();
+    let mut m = GROUP_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     m.insert(num, groupings.clone());
 
     groupings
@@ -315,7 +331,9 @@ fn compute_adjacent_assignments(length: usize) -> Vec<Vec<Usizes>> {
     }
 
     {
-        let m = SEQUENTIAL_ASSIGNMENT_CACHE.lock().unwrap();
+        let m = SEQUENTIAL_ASSIGNMENT_CACHE
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if let Some(seq) = m.get(&length).as_ref() {
             return seq.to_vec();
         }
@@ -346,7 +364,9 @@ fn compute_adjacent_assignments(length: usize) -> Vec<Vec<Usizes>> {
     });
     assignments.dedup();
 
-    let mut m = SEQUENTIAL_ASSIGNMENT_CACHE.lock().unwrap();
+    let mut m = SEQUENTIAL_ASSIGNMENT_CACHE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     m.insert(length, assignments.clone());
     assignments
 }
