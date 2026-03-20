@@ -244,7 +244,12 @@ impl PlayPhase {
 
         let kitty_multipler = match self.propagated.kitty_penalty {
             KittyPenalty::Times => 2 * largest_trick_unit_size,
-            KittyPenalty::Power => 2usize.pow(largest_trick_unit_size as u32),
+            KittyPenalty::Power => {
+                // Cap the exponent to prevent unbounded memory allocation.
+                // With 10 as the max exponent, the multiplier is at most 1024.
+                let exponent = std::cmp::min(largest_trick_unit_size as u32, 10);
+                2usize.pow(exponent)
+            }
         };
 
         if failed_throw_size > 0 {
