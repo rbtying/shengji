@@ -15,10 +15,9 @@ pub type PlayRequirements = Vec<AdjacentTupleSizes>;
 
 /// Maximum number of cards allowed in a single trick unit for partition
 /// computation. The `count` in TrickUnit::Repeated is bounded by num_decks
-/// (at most players*2, practically ≤20). This caps the input to
-/// find_tuple_partitions, preventing super-exponential blowup (p(20)=627
-/// vs p(50)≈204K vs p(100)≈190M).
-const MAX_DECOMPOSITION_SIZE: usize = 20;
+/// (at most players*2). This caps the input to find_tuple_partitions,
+/// preventing super-exponential blowup (p(32)=8349 vs p(100)≈190M).
+const MAX_DECOMPOSITION_SIZE: usize = 32;
 
 /// A wrapper around a card with a given trump, which provides ordering characteristics.
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
