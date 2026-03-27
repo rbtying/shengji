@@ -313,37 +313,35 @@ impl TrickFormat {
             // We achieve this by excluding bomb cards from the available-cards set used
             // for the "can the hand do better?" check, and using NoProtections for the
             // remaining cards so the check is not artificially suppressed.
-            let (available_cards, hand_check_policy): (Vec<Card>, TrickDrawPolicy) =
-                if bomb_policy.bombs_enabled()
-                    && matches!(
-                        trick_draw_policy,
-                        TrickDrawPolicy::LongerTuplesProtected
-                            | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
-                    )
-                {
-                    let bomb_free = Card::cards(
-                        hand.iter().filter(|(c, ct)| {
-                            self.trump.effective_suit(**c) == self.suit && **ct < 4
-                        }),
-                    )
-                    .copied()
-                    .collect::<Vec<_>>();
-                    let policy = match trick_draw_policy {
-                        TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => {
-                            TrickDrawPolicy::OnlyDrawTractorOnTractor
-                        }
-                        _ => TrickDrawPolicy::NoProtections,
-                    };
-                    (bomb_free, policy)
-                } else {
-                    let cards = Card::cards(
-                        hand.iter()
-                            .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
-                    )
-                    .copied()
-                    .collect::<Vec<_>>();
-                    (cards, trick_draw_policy)
+            let (available_cards, hand_check_policy): (Vec<Card>, TrickDrawPolicy) = if bomb_policy
+                .bombs_enabled()
+                && matches!(
+                    trick_draw_policy,
+                    TrickDrawPolicy::LongerTuplesProtected
+                        | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+                ) {
+                let bomb_free = Card::cards(
+                    hand.iter()
+                        .filter(|(c, ct)| self.trump.effective_suit(**c) == self.suit && **ct < 4),
+                )
+                .copied()
+                .collect::<Vec<_>>();
+                let policy = match trick_draw_policy {
+                    TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => {
+                        TrickDrawPolicy::OnlyDrawTractorOnTractor
+                    }
+                    _ => TrickDrawPolicy::NoProtections,
                 };
+                (bomb_free, policy)
+            } else {
+                let cards = Card::cards(
+                    hand.iter()
+                        .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
+                )
+                .copied()
+                .collect::<Vec<_>>();
+                (cards, trick_draw_policy)
+            };
 
             for requirement in self.decomposition(trick_draw_policy) {
                 // If it's a match, we're good!
@@ -830,6 +828,29 @@ impl Trick {
     }
 
     fn _defeats(m: &Units, winner: &Units, throw_eval_policy: ThrowEvaluationPolicy) -> bool {
+        let m_is_bomb = m.len() == 1 && m[0].is_bomb();
+        let w_is_bomb = winner.len() == 1 && winner[0].is_bomb();
+
+        if m_is_bomb || w_is_bomb {
+            if !m_is_bomb {
+                return false; // non-bomb never beats a bomb
+            }
+            if !w_is_bomb {
+                return true; // bomb always beats a non-bomb
+            }
+            // Both are bombs: more cards wins; equal size: higher rank wins
+            // (cmp_effective handles trump > non-trump).
+            let m_size = m[0].size();
+            let w_size = winner[0].size();
+            return match m_size.cmp(&w_size) {
+                Ordering::Greater => true,
+                Ordering::Less => false,
+                Ordering::Equal => {
+                    m[0].first_card().cmp_effective(winner[0].first_card()) == Ordering::Greater
+                }
+            };
+        }
+
         match throw_eval_policy {
             ThrowEvaluationPolicy::All => m
                 .iter()
@@ -876,11 +897,7 @@ impl Trick {
 
     fn compute_winner(&self, throw_eval_policy: ThrowEvaluationPolicy) -> Option<PlayerID> {
         let tf = self.trick_format.as_ref()?;
-        let mut winner = (0, tf.units.to_vec());
-        // The leader's play is a bomb when the trick format is a single bomb unit.
-        // We must track this so that a subsequent lower bomb does not incorrectly
-        // win via the "bomb beats non-bomb" branch.
-        let mut winner_is_bomb = tf.units.len() == 1 && tf.units[0].is_bomb();
+        let mut winner = (0usize, tf.units.to_vec());
 
         for (idx, _pc) in self.played_cards.iter().enumerate().skip(1) {
             let mapping = self.played_card_mappings.get(idx).and_then(|m| m.as_ref());
@@ -888,34 +905,12 @@ impl Trick {
 
             if this_is_bomb {
                 let mapping = mapping.unwrap();
-                let dominated = if winner_is_bomb {
-                    // Both are bombs: more cards wins; equal size: higher rank wins
-                    // (cmp_effective handles trump > non-trump).
-                    let cur_size = mapping[0].size();
-                    let win_size = winner.1[0].size();
-                    match cur_size.cmp(&win_size) {
-                        Ordering::Greater => true,
-                        Ordering::Less => false,
-                        Ordering::Equal => {
-                            mapping[0]
-                                .first_card()
-                                .cmp_effective(winner.1[0].first_card())
-                                == Ordering::Greater
-                        }
-                    }
-                } else {
-                    true // Bomb always beats non-bomb
-                };
-                if dominated {
+                if Self::_defeats(mapping, &winner.1, throw_eval_policy) {
                     winner = (idx, mapping.clone());
-                    winner_is_bomb = true;
                 }
-            } else if !winner_is_bomb {
-                if let Ok(mut mm) = tf.matches(&self.played_cards[idx].cards) {
-                    let greater = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
-                    if let Some(m) = greater {
-                        winner = (idx, m);
-                    }
+            } else if let Ok(mut mm) = tf.matches(&self.played_cards[idx].cards) {
+                if let Some(m) = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy)) {
+                    winner = (idx, m);
                 }
             }
         }
@@ -3075,17 +3070,11 @@ mod tests {
         let bp = BombPolicy::AllowBombs;
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         // P1 leads with a 6-card bomb (6 heart 2s)
-        hands
-            .add(P1, vec![H_2, H_2, H_2, H_2, H_2, H_2])
-            .unwrap();
+        hands.add(P1, vec![H_2, H_2, H_2, H_2, H_2, H_2]).unwrap();
         // P2 plays a 6-card bomb of higher rank (6 heart jacks)
-        hands
-            .add(P2, vec![H_J, H_J, H_J, H_J, H_J, H_J])
-            .unwrap();
+        hands.add(P2, vec![H_J, H_J, H_J, H_J, H_J, H_J]).unwrap();
         // P3 plays a lower-rank 6-card bomb (6 heart 3s) after P2's win
-        hands
-            .add(P3, vec![H_3, H_3, H_3, H_3, H_3, H_3])
-            .unwrap();
+        hands.add(P3, vec![H_3, H_3, H_3, H_3, H_3, H_3]).unwrap();
         hands.add(P4, vec![C_5, C_6, C_7, C_8, C_9, C_10]).unwrap();
 
         let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
