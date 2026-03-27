@@ -313,46 +313,47 @@ impl TrickFormat {
             .copied()
             .collect::<Vec<_>>();
 
-            // When bombs are enabled and LongerTuplesProtected is active we need
-            // an extra guard. The play_matches check below uses NoProtections, which
-            // lets a triple played intact (e.g. H_2×3) satisfy a pair slot (as
-            // pair+single). This short-circuits before hand_can_play runs, so a
-            // genuine pair like KK can be silently bypassed.
+            // With LongerTuplesProtected, play_matches uses NoProtections, so a
+            // longer tuple in the play (e.g. a triple) can satisfy a shorter slot
+            // (e.g. a pair) by decomposing — short-circuiting before hand_can_play
+            // detects that a genuine shorter tuple was available in the hand.
             //
-            // Guard: if the play contains any card with count ≥ 3 (a triple played
-            // as three cards) AND the hand contains a genuine pair (count == 2) of a
-            // same-suit card that is NOT present in the play, the play is illegal —
-            // the genuine pair must be included. Bombs (count ≥ 4) are already
-            // excluded from pair-matching by LongerTuplesProtected in hand_can_play,
-            // so only triples (count == 3) need this check.
-            let triple_blocks_genuine_pair = if bomb_policy.bombs_enabled()
+            // Guard (bombs-enabled only): if the hand contains a genuine N-tuple
+            // (N >= 2) of a same-suit card that is underrepresented in the play,
+            // AND the play contains some card with count > N (a longer tuple that
+            // could be filling the N-slot), the play is illegal — the genuine
+            // shorter tuple must be used instead.
+            //
+            // The bombs-enabled restriction matters: without it, a NoBombs quad
+            // (count=4) used for two pair slots would incorrectly fire the guard
+            // even when it legitimately fills both slots. When bombs are active,
+            // a quad is a bomb (separate mechanic), so count=3 (triple) is the
+            // longest non-bomb tuple and the guard applies correctly.
+            let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
+            let longer_tuple_bypasses_genuine_tuple = bomb_policy.bombs_enabled()
                 && matches!(
                     trick_draw_policy,
                     TrickDrawPolicy::LongerTuplesProtected
                         | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
-                ) {
-                let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
-                play_counts.values().any(|&ct| ct >= 3)
-                    && hand.iter().any(|(c, &hand_ct)| {
-                        hand_ct == 2
-                            && self.trump.effective_suit(*c) == self.suit
-                            && play_counts
-                                .get(&OrderedCard {
-                                    card: *c,
-                                    trump: self.trump,
-                                })
-                                .map(|&ct| ct < 2)
-                                .unwrap_or(true)
-                    })
-            } else {
-                false
-            };
+                )
+                && hand.iter().any(|(c, &hand_ct)| {
+                    hand_ct >= 2
+                        && self.trump.effective_suit(*c) == self.suit
+                        && play_counts
+                            .get(&OrderedCard {
+                                card: *c,
+                                trump: self.trump,
+                            })
+                            .map(|&ct| ct < hand_ct)
+                            .unwrap_or(true)
+                        && play_counts.values().any(|&play_ct| play_ct > hand_ct)
+                });
 
             for requirement in self.decomposition(trick_draw_policy) {
-                // If it's a match, we're good — unless the play contains a triple
-                // that is substituting for a genuine pair that was left unplayed.
+                // If it's a match, we're good — unless the play is using a longer
+                // tuple to fill a slot that a genuine shorter tuple in hand could fill.
                 let play_matches = UnitLike::check_play(
-                    OrderedCard::make_map(proposed.iter().copied(), self.trump),
+                    play_counts.clone(),
                     requirement.iter().cloned(),
                     TrickDrawPolicy::NoProtections,
                 )
@@ -360,7 +361,7 @@ impl TrickFormat {
                 .is_some();
 
                 if play_matches {
-                    if triple_blocks_genuine_pair {
+                    if longer_tuple_bypasses_genuine_tuple {
                         return false;
                     }
                     return true;
