@@ -306,45 +306,51 @@ impl TrickFormat {
                 return true;
             }
 
-            // When bombs are enabled and LongerTuplesProtected is active, only actual
-            // bombs (count >= 4) should be shielded from format-following obligations.
-            // Non-bomb tuples like 3-of-a-kind are not bombs and must contribute to
-            // satisfying the format (e.g., a triple must yield a pair when one is needed).
-            // We achieve this by excluding bomb cards from the available-cards set used
-            // for the "can the hand do better?" check, and using NoProtections for the
-            // remaining cards so the check is not artificially suppressed.
-            let (available_cards, hand_check_policy): (Vec<Card>, TrickDrawPolicy) = if bomb_policy
-                .bombs_enabled()
+            let available_cards = Card::cards(
+                hand.iter()
+                    .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
+            )
+            .copied()
+            .collect::<Vec<_>>();
+
+            // When bombs are enabled and LongerTuplesProtected is active we need
+            // an extra guard. The play_matches check below uses NoProtections, which
+            // lets a triple played intact (e.g. H_2×3) satisfy a pair slot (as
+            // pair+single). This short-circuits before hand_can_play runs, so a
+            // genuine pair like KK can be silently bypassed.
+            //
+            // Guard: if the play contains any card with count ≥ 3 (a triple played
+            // as three cards) AND the hand contains a genuine pair (count == 2) of a
+            // same-suit card that is NOT present in the play, the play is illegal —
+            // the genuine pair must be included. Bombs (count ≥ 4) are already
+            // excluded from pair-matching by LongerTuplesProtected in hand_can_play,
+            // so only triples (count == 3) need this check.
+            let triple_blocks_genuine_pair = if bomb_policy.bombs_enabled()
                 && matches!(
                     trick_draw_policy,
                     TrickDrawPolicy::LongerTuplesProtected
                         | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
                 ) {
-                let bomb_free = Card::cards(
-                    hand.iter()
-                        .filter(|(c, ct)| self.trump.effective_suit(**c) == self.suit && **ct < 4),
-                )
-                .copied()
-                .collect::<Vec<_>>();
-                let policy = match trick_draw_policy {
-                    TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => {
-                        TrickDrawPolicy::OnlyDrawTractorOnTractor
-                    }
-                    _ => TrickDrawPolicy::NoProtections,
-                };
-                (bomb_free, policy)
+                let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
+                play_counts.values().any(|&ct| ct >= 3)
+                    && hand.iter().any(|(c, &hand_ct)| {
+                        hand_ct == 2
+                            && self.trump.effective_suit(*c) == self.suit
+                            && play_counts
+                                .get(&OrderedCard {
+                                    card: *c,
+                                    trump: self.trump,
+                                })
+                                .map(|&ct| ct < 2)
+                                .unwrap_or(true)
+                    })
             } else {
-                let cards = Card::cards(
-                    hand.iter()
-                        .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
-                )
-                .copied()
-                .collect::<Vec<_>>();
-                (cards, trick_draw_policy)
+                false
             };
 
             for requirement in self.decomposition(trick_draw_policy) {
-                // If it's a match, we're good!
+                // If it's a match, we're good — unless the play contains a triple
+                // that is substituting for a genuine pair that was left unplayed.
                 let play_matches = UnitLike::check_play(
                     OrderedCard::make_map(proposed.iter().copied(), self.trump),
                     requirement.iter().cloned(),
@@ -354,13 +360,16 @@ impl TrickFormat {
                 .is_some();
 
                 if play_matches {
+                    if triple_blocks_genuine_pair {
+                        return false;
+                    }
                     return true;
                 }
                 // Otherwise, if it could match in the player's hand, it's not OK.
                 let hand_can_play = UnitLike::check_play(
                     OrderedCard::make_map(available_cards.iter().copied(), self.trump),
                     requirement.iter().cloned(),
-                    hand_check_policy,
+                    trick_draw_policy,
                 )
                 .next()
                 .is_some();
@@ -2952,11 +2961,21 @@ mod tests {
 
     // ---- Bug regression tests ----
 
-    /// Bug: with LongerTuplesProtected and 4-of-a-kind bombs enabled, a 3-of-a-kind
-    /// was incorrectly treated as a protected tuple. A triple is not a bomb and
-    /// should be splittable into a pair when following a pairs-based format.
+    /// Bug: with LongerTuplesProtected and 4-of-a-kind bombs enabled, playing a triple
+    /// (count=3) as three card slots was incorrectly accepted when a genuine pair was
+    /// available in the hand.
+    ///
+    /// LongerTuplesProtected correctly protects a triple in the *hand* from being forced
+    /// to contribute a pair. However, the play-matches check was using NoProtections, so
+    /// playing three identical cards could "satisfy" a pair requirement (as pair+single),
+    /// short-circuiting before the hand check ran. This allowed the player to bypass a
+    /// genuine pair (e.g. KK) by sinking the triple into the play as three singles.
+    ///
+    /// The fix: when bombs are enabled + LongerTuplesProtected, also apply
+    /// LongerTuplesProtected to the play-matches check. A triple *in the play* (count=3)
+    /// cannot satisfy a pair requirement; two genuine copies in the play (count=2) can.
     #[test]
-    fn test_longer_tuples_protected_does_not_protect_non_bomb_triple() {
+    fn test_triple_in_play_does_not_satisfy_pair_when_genuine_pair_available() {
         let bp = BombPolicy::AllowBombs;
 
         // Trick format: 3-pair tractor in hearts (H_10-H_10-H_J-H_J-H_Q-H_Q)
@@ -2968,16 +2987,16 @@ mod tests {
         )
         .unwrap();
 
-        // Player has H_K×2 (pair), H_2×3 (triple, NOT a bomb), H_5/H_6/H_7/H_8 (singles)
+        // Player has H_K×2 (genuine pair) and H_2×3 (triple, protected by LongerTuplesProtected)
         let mut hands = Hands::new(vec![P2]);
         hands
             .add(P2, vec![H_K, H_K, H_2, H_2, H_2, H_5, H_6, H_7, H_8])
             .unwrap();
         let hand = hands.get(P2).unwrap().clone();
 
-        // Playing H_2×3 + H_5+H_6+H_7 (= "222 + 3 singles") should be ILLEGAL.
-        // The player has KK (pair) and can form 22 (pair from triple), so they must
-        // play at least 2 pairs (e.g., 22KK + 2 singles).
+        // Playing H_2×3 + H_5+H_6+H_7 (triple + 3 singles, no KK) should be ILLEGAL.
+        // The triple in the play cannot satisfy the pair requirement (count=3>2 is
+        // protected). KK is a genuine pair and hand_can_play detects it → illegal.
         assert!(
             !trick_format.is_legal_play(
                 &hand,
@@ -2985,10 +3004,11 @@ mod tests {
                 TrickDrawPolicy::LongerTuplesProtected,
                 bp,
             ),
-            "playing 3-of-a-kind + singles should be illegal when 2 pairs are available"
+            "playing triple + singles should be illegal when a genuine pair (KK) is available"
         );
 
-        // Playing H_2×2 + H_K×2 + H_5+H_6 (= "22KK56", 2 pairs + 2 singles) should be LEGAL.
+        // Playing H_2×2 + H_K×2 + H_5+H_6 (2 pairs + 2 singles) should be LEGAL.
+        // H_22 has count=2 in the play (not protected), so play_matches accepts it.
         assert!(
             trick_format.is_legal_play(
                 &hand,
@@ -2997,6 +3017,24 @@ mod tests {
                 bp,
             ),
             "playing 2 pairs + 2 singles should be legal"
+        );
+
+        // With ONLY a triple (no genuine pair), playing 222+singles is LEGAL.
+        // The triple is protected: hand_can_play returns false for pair requirements,
+        // and the play is trivially legal.
+        let mut hands2 = Hands::new(vec![P2]);
+        hands2
+            .add(P2, vec![H_2, H_2, H_2, H_5, H_6, H_7, H_8, H_9, H_J])
+            .unwrap();
+        let hand2 = hands2.get(P2).unwrap().clone();
+        assert!(
+            trick_format.is_legal_play(
+                &hand2,
+                &[H_2, H_2, H_2, H_5, H_6, H_7],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing triple + singles should be legal when no genuine pair is available"
         );
     }
 
