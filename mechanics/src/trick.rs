@@ -305,12 +305,45 @@ impl TrickFormat {
             if let TrickDrawPolicy::NoFormatBasedDraw = trick_draw_policy {
                 return true;
             }
-            let available_cards = Card::cards(
-                hand.iter()
-                    .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
-            )
-            .copied()
-            .collect::<Vec<_>>();
+
+            // When bombs are enabled and LongerTuplesProtected is active, only actual
+            // bombs (count >= 4) should be shielded from format-following obligations.
+            // Non-bomb tuples like 3-of-a-kind are not bombs and must contribute to
+            // satisfying the format (e.g., a triple must yield a pair when one is needed).
+            // We achieve this by excluding bomb cards from the available-cards set used
+            // for the "can the hand do better?" check, and using NoProtections for the
+            // remaining cards so the check is not artificially suppressed.
+            let (available_cards, hand_check_policy): (Vec<Card>, TrickDrawPolicy) =
+                if bomb_policy.bombs_enabled()
+                    && matches!(
+                        trick_draw_policy,
+                        TrickDrawPolicy::LongerTuplesProtected
+                            | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+                    )
+                {
+                    let bomb_free = Card::cards(
+                        hand.iter().filter(|(c, ct)| {
+                            self.trump.effective_suit(**c) == self.suit && **ct < 4
+                        }),
+                    )
+                    .copied()
+                    .collect::<Vec<_>>();
+                    let policy = match trick_draw_policy {
+                        TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor => {
+                            TrickDrawPolicy::OnlyDrawTractorOnTractor
+                        }
+                        _ => TrickDrawPolicy::NoProtections,
+                    };
+                    (bomb_free, policy)
+                } else {
+                    let cards = Card::cards(
+                        hand.iter()
+                            .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
+                    )
+                    .copied()
+                    .collect::<Vec<_>>();
+                    (cards, trick_draw_policy)
+                };
 
             for requirement in self.decomposition(trick_draw_policy) {
                 // If it's a match, we're good!
@@ -329,7 +362,7 @@ impl TrickFormat {
                 let hand_can_play = UnitLike::check_play(
                     OrderedCard::make_map(available_cards.iter().copied(), self.trump),
                     requirement.iter().cloned(),
-                    trick_draw_policy,
+                    hand_check_policy,
                 )
                 .next()
                 .is_some();
@@ -844,7 +877,10 @@ impl Trick {
     fn compute_winner(&self, throw_eval_policy: ThrowEvaluationPolicy) -> Option<PlayerID> {
         let tf = self.trick_format.as_ref()?;
         let mut winner = (0, tf.units.to_vec());
-        let mut winner_is_bomb = false;
+        // The leader's play is a bomb when the trick format is a single bomb unit.
+        // We must track this so that a subsequent lower bomb does not incorrectly
+        // win via the "bomb beats non-bomb" branch.
+        let mut winner_is_bomb = tf.units.len() == 1 && tf.units[0].is_bomb();
 
         for (idx, _pc) in self.played_cards.iter().enumerate().skip(1) {
             let mapping = self.played_card_mappings.get(idx).and_then(|m| m.as_ref());
@@ -853,11 +889,20 @@ impl Trick {
             if this_is_bomb {
                 let mapping = mapping.unwrap();
                 let dominated = if winner_is_bomb {
-                    // Both are bombs: higher rank wins (cmp_effective handles trump > non-trump)
-                    mapping[0]
-                        .first_card()
-                        .cmp_effective(winner.1[0].first_card())
-                        == Ordering::Greater
+                    // Both are bombs: more cards wins; equal size: higher rank wins
+                    // (cmp_effective handles trump > non-trump).
+                    let cur_size = mapping[0].size();
+                    let win_size = winner.1[0].size();
+                    match cur_size.cmp(&win_size) {
+                        Ordering::Greater => true,
+                        Ordering::Less => false,
+                        Ordering::Equal => {
+                            mapping[0]
+                                .first_card()
+                                .cmp_effective(winner.1[0].first_card())
+                                == Ordering::Greater
+                        }
+                    }
                 } else {
                     true // Bomb always beats non-bomb
                 };
@@ -2907,6 +2952,157 @@ mod tests {
             .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
+        assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    // ---- Bug regression tests ----
+
+    /// Bug: with LongerTuplesProtected and 4-of-a-kind bombs enabled, a 3-of-a-kind
+    /// was incorrectly treated as a protected tuple. A triple is not a bomb and
+    /// should be splittable into a pair when following a pairs-based format.
+    #[test]
+    fn test_longer_tuples_protected_does_not_protect_non_bomb_triple() {
+        let bp = BombPolicy::AllowBombs;
+
+        // Trick format: 3-pair tractor in hearts (H_10-H_10-H_J-H_J-H_Q-H_Q)
+        let trick_format = TrickFormat::from_cards(
+            TRUMP,
+            TractorRequirements::default(),
+            &[H_10, H_10, H_J, H_J, H_Q, H_Q],
+            None,
+        )
+        .unwrap();
+
+        // Player has H_K×2 (pair), H_2×3 (triple, NOT a bomb), H_5/H_6/H_7/H_8 (singles)
+        let mut hands = Hands::new(vec![P2]);
+        hands
+            .add(P2, vec![H_K, H_K, H_2, H_2, H_2, H_5, H_6, H_7, H_8])
+            .unwrap();
+        let hand = hands.get(P2).unwrap().clone();
+
+        // Playing H_2×3 + H_5+H_6+H_7 (= "222 + 3 singles") should be ILLEGAL.
+        // The player has KK (pair) and can form 22 (pair from triple), so they must
+        // play at least 2 pairs (e.g., 22KK + 2 singles).
+        assert!(
+            !trick_format.is_legal_play(
+                &hand,
+                &[H_2, H_2, H_2, H_5, H_6, H_7],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing 3-of-a-kind + singles should be illegal when 2 pairs are available"
+        );
+
+        // Playing H_2×2 + H_K×2 + H_5+H_6 (= "22KK56", 2 pairs + 2 singles) should be LEGAL.
+        assert!(
+            trick_format.is_legal_play(
+                &hand,
+                &[H_2, H_2, H_K, H_K, H_5, H_6],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing 2 pairs + 2 singles should be legal"
+        );
+    }
+
+    /// Bug: when the leader plays a bomb, compute_winner didn't track it as a bomb
+    /// (winner_is_bomb started as false). This caused any subsequent bomb, even a
+    /// lower one, to incorrectly win by triggering the "bomb beats non-bomb" branch.
+    #[test]
+    fn test_leader_bomb_not_beaten_by_lower_bomb() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a bomb (4 heart jacks)
+        hands.add(P1, vec![H_J, H_J, H_J, H_J]).unwrap();
+        // P2 plays a lower bomb (4 heart 2s)
+        hands.add(P2, vec![H_2, H_2, H_2, H_2]).unwrap();
+        // P3 and P4 are void in hearts; they play clubs filler
+        hands.add(P3, vec![C_5, C_6, C_7, C_8]).unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+
+        // P1 should win: their bomb (4 jacks) outranks P2's bomb (4 twos)
+        assert_eq!(trick.complete().unwrap().winner, P1);
+    }
+
+    /// Complementary check: a higher bomb played after the leader's bomb should win.
+    #[test]
+    fn test_higher_bomb_beats_leader_bomb() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a lower bomb (4 heart 2s)
+        hands.add(P1, vec![H_2, H_2, H_2, H_2]).unwrap();
+        // P2 plays a higher bomb (4 heart jacks)
+        hands.add(P2, vec![H_J, H_J, H_J, H_J]).unwrap();
+        // P3 and P4 play clubs filler (void in hearts)
+        hands.add(P3, vec![C_5, C_6, C_7, C_8]).unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+
+        // P2 wins: their bomb (4 jacks) outranks P1's bomb (4 twos)
+        assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    /// When the leader plays a larger bomb, a smaller same-suit bomb should not win.
+    #[test]
+    fn test_larger_bomb_beats_smaller_bomb_regardless_of_order() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a 6-card bomb (6 heart 2s)
+        hands
+            .add(P1, vec![H_2, H_2, H_2, H_2, H_2, H_2])
+            .unwrap();
+        // P2 plays a 6-card bomb of higher rank (6 heart jacks)
+        hands
+            .add(P2, vec![H_J, H_J, H_J, H_J, H_J, H_J])
+            .unwrap();
+        // P3 plays a lower-rank 6-card bomb (6 heart 3s) after P2's win
+        hands
+            .add(P3, vec![H_3, H_3, H_3, H_3, H_3, H_3])
+            .unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8, C_9, C_10]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_2, H_2, H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_J, H_J, H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[H_3, H_3, H_3, H_3, H_3, H_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8, C_9, C_10]; bp))
+            .unwrap();
+
+        // P2 wins: their bomb (6 jacks) outranks both P1's (6 twos) and P3's (6 threes)
         assert_eq!(trick.complete().unwrap().winner, P2);
     }
 }
