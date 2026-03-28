@@ -321,12 +321,13 @@ impl TrickFormat {
             // For each requirement, after play_matches fires, for each simple N-slot
             // (N >= 2) we compute how many such slots are NOT already covered by
             // play cards with play_ct == N. We then ask: can the hand satisfy those
-            // remaining N-slots under the protection policy? If yes, the play is
-            // illegally using longer tuples where genuine shorter tuples were available.
+            // remaining N-slots under the protection policy? If yes, the player
+            // had genuine shorter tuples available and is not required to break a
+            // longer tuple to fill those slots — so the play must use them instead.
             //
             // Using check_play on the remaining slots (rather than counting hand_ct==N
-            // cards manually) means the same protection semantics apply: a triple in
-            // hand can't be forced into a pair slot, so it won't count.
+            // cards manually) means the same protection semantics apply: a longer
+            // tuple in hand can't be forced into a shorter slot, so it won't count.
             let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
 
             for requirement in self.decomposition(trick_draw_policy) {
