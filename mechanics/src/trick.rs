@@ -318,16 +318,15 @@ impl TrickFormat {
             // (e.g. a pair) by decomposing — short-circuiting before hand_can_play
             // detects that a genuine shorter tuple was available in the hand.
             //
-            // For each requirement, after play_matches fires, we check whether the
-            // hand has enough genuine N-tuples (hand_ct == N, not in play) to fill
-            // ALL N-slots in that requirement. If so, and the play contains a card
-            // with count > N, the play is illegal — the genuine shorter tuples must
-            // be used for those slots.
+            // For each requirement, after play_matches fires, for each simple N-slot
+            // (N >= 2) we compute how many such slots are NOT already covered by
+            // play cards with play_ct == N. We then ask: can the hand satisfy those
+            // remaining N-slots under the protection policy? If yes, the play is
+            // illegally using longer tuples where genuine shorter tuples were available.
             //
-            // Counting against n_slots_needed (not just "any genuine tuple") avoids
-            // a false positive when the hand has fewer genuine tuples than slots: e.g.
-            // hand=[S_2×4, S_5×2] playing S_2×4 for [2 pair slots] — only 1 genuine
-            // pair exists but 2 are needed, so the quad legitimately fills both.
+            // Using check_play on the remaining slots (rather than counting hand_ct==N
+            // cards manually) means the same protection semantics apply: a triple in
+            // hand can't be forced into a pair slot, so it won't count.
             let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
 
             for requirement in self.decomposition(trick_draw_policy) {
@@ -340,9 +339,6 @@ impl TrickFormat {
                 .is_some();
 
                 if play_matches {
-                    // Guard: for each distinct simple N-tuple slot (N >= 2) in this
-                    // requirement, check if the hand has enough genuine N-tuples to
-                    // fill all such slots while the play uses a longer tuple instead.
                     let longer_tuple_bypasses_genuine = matches!(
                         trick_draw_policy,
                         TrickDrawPolicy::LongerTuplesProtected
@@ -355,28 +351,39 @@ impl TrickFormat {
                             if n < 2 {
                                 return false;
                             }
-                            let n_slots_needed = requirement
+                            // N-slots in this requirement
+                            let n_slots = requirement
                                 .iter()
                                 .filter(|u2| {
                                     u2.adjacent_tuples.len() == 1 && u2.adjacent_tuples[0] == n
                                 })
                                 .count();
-                            let genuine_in_hand = hand
+                            // N-slots already covered by play cards with play_ct == n
+                            // (these cards are legitimately filling the N-slot)
+                            let covered_by_play = play_counts
                                 .iter()
-                                .filter(|(c, &hand_ct)| {
-                                    hand_ct == n
-                                        && self.trump.effective_suit(**c) == self.suit
-                                        && play_counts
-                                            .get(&OrderedCard {
-                                                card: **c,
-                                                trump: self.trump,
-                                            })
-                                            .map(|&ct| ct < n)
-                                            .unwrap_or(true)
+                                .filter(|(oc, &pct)| {
+                                    pct == n && self.trump.effective_suit(oc.card) == self.suit
                                 })
                                 .count();
-                            genuine_in_hand >= n_slots_needed
-                                && play_counts.values().any(|&play_ct| play_ct > n)
+                            let remaining = n_slots.saturating_sub(covered_by_play);
+                            if remaining == 0 {
+                                return false;
+                            }
+                            // Can the hand fill the remaining N-slots?
+                            let remaining_units: Vec<UnitLike> =
+                                std::iter::repeat_with(|| UnitLike {
+                                    adjacent_tuples: vec![n],
+                                })
+                                .take(remaining)
+                                .collect();
+                            UnitLike::check_play(
+                                OrderedCard::make_map(available_cards.iter().copied(), self.trump),
+                                remaining_units.into_iter(),
+                                trick_draw_policy,
+                            )
+                            .next()
+                            .is_some()
                         });
                     if longer_tuple_bypasses_genuine {
                         return false;
