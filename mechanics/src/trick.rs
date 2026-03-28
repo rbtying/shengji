@@ -318,40 +318,19 @@ impl TrickFormat {
             // (e.g. a pair) by decomposing — short-circuiting before hand_can_play
             // detects that a genuine shorter tuple was available in the hand.
             //
-            // Guard (bombs-enabled only): if the hand contains a genuine N-tuple
-            // (N >= 2) of a same-suit card that is underrepresented in the play,
-            // AND the play contains some card with count > N (a longer tuple that
-            // could be filling the N-slot), the play is illegal — the genuine
-            // shorter tuple must be used instead.
+            // For each requirement, after play_matches fires, we check whether the
+            // hand has enough genuine N-tuples (hand_ct == N, not in play) to fill
+            // ALL N-slots in that requirement. If so, and the play contains a card
+            // with count > N, the play is illegal — the genuine shorter tuples must
+            // be used for those slots.
             //
-            // The bombs-enabled restriction matters: without it, a NoBombs quad
-            // (count=4) used for two pair slots would incorrectly fire the guard
-            // even when it legitimately fills both slots. When bombs are active,
-            // a quad is a bomb (separate mechanic), so count=3 (triple) is the
-            // longest non-bomb tuple and the guard applies correctly.
+            // Counting against n_slots_needed (not just "any genuine tuple") avoids
+            // a false positive when the hand has fewer genuine tuples than slots: e.g.
+            // hand=[S_2×4, S_5×2] playing S_2×4 for [2 pair slots] — only 1 genuine
+            // pair exists but 2 are needed, so the quad legitimately fills both.
             let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
-            let longer_tuple_bypasses_genuine_tuple = bomb_policy.bombs_enabled()
-                && matches!(
-                    trick_draw_policy,
-                    TrickDrawPolicy::LongerTuplesProtected
-                        | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
-                )
-                && hand.iter().any(|(c, &hand_ct)| {
-                    hand_ct >= 2
-                        && self.trump.effective_suit(*c) == self.suit
-                        && play_counts
-                            .get(&OrderedCard {
-                                card: *c,
-                                trump: self.trump,
-                            })
-                            .map(|&ct| ct < hand_ct)
-                            .unwrap_or(true)
-                        && play_counts.values().any(|&play_ct| play_ct > hand_ct)
-                });
 
             for requirement in self.decomposition(trick_draw_policy) {
-                // If it's a match, we're good — unless the play is using a longer
-                // tuple to fill a slot that a genuine shorter tuple in hand could fill.
                 let play_matches = UnitLike::check_play(
                     play_counts.clone(),
                     requirement.iter().cloned(),
@@ -361,7 +340,45 @@ impl TrickFormat {
                 .is_some();
 
                 if play_matches {
-                    if longer_tuple_bypasses_genuine_tuple {
+                    // Guard: for each distinct simple N-tuple slot (N >= 2) in this
+                    // requirement, check if the hand has enough genuine N-tuples to
+                    // fill all such slots while the play uses a longer tuple instead.
+                    let longer_tuple_bypasses_genuine = matches!(
+                        trick_draw_policy,
+                        TrickDrawPolicy::LongerTuplesProtected
+                            | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+                    ) && requirement
+                        .iter()
+                        .filter(|u| u.adjacent_tuples.len() == 1)
+                        .any(|u| {
+                            let n = u.adjacent_tuples[0];
+                            if n < 2 {
+                                return false;
+                            }
+                            let n_slots_needed = requirement
+                                .iter()
+                                .filter(|u2| {
+                                    u2.adjacent_tuples.len() == 1 && u2.adjacent_tuples[0] == n
+                                })
+                                .count();
+                            let genuine_in_hand = hand
+                                .iter()
+                                .filter(|(c, &hand_ct)| {
+                                    hand_ct == n
+                                        && self.trump.effective_suit(**c) == self.suit
+                                        && play_counts
+                                            .get(&OrderedCard {
+                                                card: **c,
+                                                trump: self.trump,
+                                            })
+                                            .map(|&ct| ct < n)
+                                            .unwrap_or(true)
+                                })
+                                .count();
+                            genuine_in_hand >= n_slots_needed
+                                && play_counts.values().any(|&play_ct| play_ct > n)
+                        });
+                    if longer_tuple_bypasses_genuine {
                         return false;
                     }
                     return true;
@@ -3037,6 +3054,98 @@ mod tests {
             ),
             "playing triple + singles should be legal when no genuine pair is available"
         );
+    }
+
+    /// The longer-tuple guard must count how many N-slots the current requirement has and
+    /// compare that to how many genuine N-tuples (hand_ct == N) the hand can provide.
+    /// Only fire when genuine_in_hand >= n_slots_needed.
+    ///
+    /// Example: [2 pair slots] with only 1 genuine pair in hand → quad filling both slots
+    /// is LEGAL (not enough genuine pairs for both slots).
+    ///
+    /// Example: [1 pair + 1 single] (decomposition) with 1 genuine pair in hand → playing
+    /// the full triple (3 copies, filling pair+single) is ILLEGAL; the genuine pair must
+    /// fill the pair slot.
+    #[test]
+    fn test_longer_tuple_guard_requires_enough_genuine_tuples() {
+        // Tractor format (2 pair slots, 4 cards).
+        let tf_tractor = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: vec![TrickUnit::Tractor {
+                count: 2,
+                members: vec![oc!(S_2), oc!(S_3)],
+            }],
+        };
+        // [1 pair + 1 single] format (3 cards).
+        let tf_pair_single = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: vec![
+                TrickUnit::Repeated {
+                    count: 2,
+                    card: oc!(S_3),
+                },
+                TrickUnit::Repeated {
+                    count: 1,
+                    card: oc!(S_5),
+                },
+            ],
+        };
+
+        for bp in [BombPolicy::NoBombs, BombPolicy::AllowBombs] {
+            // === Tractor (2 pair slots) ===
+            // Only 1 genuine pair (S_5×2) in hand; 2 pair slots needed.
+            // S_2×4 legitimately fills both → LEGAL (guard should not fire).
+            let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
+            assert!(
+                tf_tractor.is_legal_play(
+                    &hand,
+                    &[S_2, S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "quad filling 2-slot tractor is legal when only 1 genuine pair exists (bp={bp:?})"
+            );
+
+            // === [1 pair + 1 single] decomposition ===
+            // Hand has S_2×3 (triple) + S_5×2 (genuine pair). Playing the full triple
+            // ([S_2,S_2,S_2] → pair+single via NoProtections) should be ILLEGAL:
+            // 1 genuine pair is available for the 1 pair slot.
+            let hand_with_pair = Card::count(vec![S_2, S_2, S_2, S_5, S_5, S_6]);
+            assert!(
+                !tf_pair_single.is_legal_play(
+                    &hand_with_pair,
+                    &[S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "triple filling pair+single when genuine pair available should be ILLEGAL (bp={bp:?})"
+            );
+
+            // Playing [S_5,S_5,S_2] (genuine pair + single) is LEGAL.
+            assert!(
+                tf_pair_single.is_legal_play(
+                    &hand_with_pair,
+                    &[S_5, S_5, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "genuine pair + single is LEGAL (bp={bp:?})"
+            );
+
+            // With no genuine pair (only triple), [S_2,S_2,S_2] is LEGAL.
+            let hand_no_pair = Card::count(vec![S_2, S_2, S_2, S_6, S_7, S_8]);
+            assert!(
+                tf_pair_single.is_legal_play(
+                    &hand_no_pair,
+                    &[S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "triple filling pair+single is LEGAL when no genuine pair exists (bp={bp:?})"
+            );
+        }
     }
 
     /// Bug: when the leader plays a bomb, compute_winner didn't track it as a bomb
