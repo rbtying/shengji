@@ -584,6 +584,26 @@ const HelperContents = (props: {
     return <div>Loading...</div>;
   }
 
+  if (props.format.is_rainbow) {
+    return (
+      <>
+        <p>
+          <strong>🌈 Rainbow trick!</strong> The leader played cards all of the
+          same rank spanning at least 4 suits.
+        </p>
+        <p>
+          If you have a <em>rainbow bomb</em> (enough cards all of the same
+          rank), you <strong>must</strong> play it.
+        </p>
+        <p>
+          The highest-rank rainbow bomb wins. If nobody plays a rainbow bomb,
+          the leader wins.
+        </p>
+        <p>If you have no rainbow bomb, you may play any cards.</p>
+      </>
+    );
+  }
+
   if (decomp.length === 0) {
     return <div>Unable to analyze format</div>;
   }

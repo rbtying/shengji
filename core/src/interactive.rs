@@ -9,7 +9,8 @@ use shengji_mechanics::bidding::{
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::scoring::GameScoringParameters;
 use shengji_mechanics::trick::{
-    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy, TrickUnit,
+    BombPolicy, CompoundFormats, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
+    TrickUnit,
 };
 use shengji_mechanics::types::{Card, PlayerID, Rank};
 
@@ -294,6 +295,10 @@ impl InteractiveGame {
                 info!(logger, "Setting bomb policy"; "bomb_policy" => policy);
                 state.set_bomb_policy(policy)?
             }
+            (Action::SetCompoundFormats(ref formats), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting compound formats"; "compound_formats" => formats);
+                state.set_compound_formats(formats.clone())?
+            }
             (Action::DrawCard, GameState::Draw(ref mut state)) => {
                 debug!(logger, "Drawing card");
                 state.draw_card(id)?;
@@ -465,6 +470,7 @@ pub enum Action {
     SetJackVariation(BackToTwoSetting),
     SetTractorRequirements(TractorRequirements),
     SetBombPolicy(BombPolicy),
+    SetCompoundFormats(CompoundFormats),
     SetGameVisibility(GameVisibility),
     StartGame,
     DrawCard,

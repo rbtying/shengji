@@ -6,7 +6,10 @@ use shengji_mechanics::{
     hands::Hands,
     player::Player,
     scoring::{GameScoreResult, GameScoringParameters},
-    trick::{TractorRequirements, Trick, TrickDrawPolicy, TrickFormat, TrickUnit, UnitLike},
+    trick::{
+        CompoundFormats, TractorRequirements, Trick, TrickDrawPolicy, TrickFormat, TrickUnit,
+        UnitLike,
+    },
     types::{Card, EffectiveSuit, PlayerID, Suit, Trump},
 };
 
@@ -56,6 +59,8 @@ pub struct CanPlayCardsRequest {
     pub hands: Hands,
     pub cards: Vec<Card>,
     pub trick_draw_policy: TrickDrawPolicy,
+    #[serde(default)]
+    pub compound_formats: CompoundFormats,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

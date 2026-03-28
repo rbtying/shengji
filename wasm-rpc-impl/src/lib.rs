@@ -87,7 +87,13 @@ pub fn decompose_trick_format(
 pub fn can_play_cards(req: CanPlayCardsRequest) -> CanPlayCardsResponse {
     let playable = req
         .trick
-        .can_play_cards(req.id, &req.hands, &req.cards, req.trick_draw_policy)
+        .can_play_cards(
+            req.id,
+            &req.hands,
+            &req.cards,
+            req.trick_draw_policy,
+            req.compound_formats,
+        )
         .is_ok();
     CanPlayCardsResponse { playable }
 }

@@ -10,7 +10,7 @@ use crate::ordered_card::{
     subsequent_decomposition_ordering, AdjacentTupleSizes, MatchingCards, MatchingCardsRef,
     OrderedCard,
 };
-use crate::types::{Card, EffectiveSuit, PlayerID, Trump};
+use crate::types::{Card, EffectiveSuit, Number, PlayerID, Trump};
 
 pub enum PlayCardsMessage {
     ThrowFailed {
@@ -90,6 +90,18 @@ impl BombPolicy {
 }
 
 crate::impl_slog_value!(BombPolicy);
+
+/// Configuration for compound/exotic trick formats.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Default)]
+pub struct CompoundFormats {
+    /// `None` means rainbows are disabled. `Some(n)` enables rainbows and
+    /// requires the lead to contain at least `n` cards (all the same number,
+    /// spanning at least 4 distinct effective suits).
+    #[serde(default)]
+    pub rainbows: Option<usize>,
+}
+
+crate::impl_slog_value!(CompoundFormats);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct TractorRequirements {
@@ -206,6 +218,9 @@ pub struct TrickFormat {
     suit: EffectiveSuit,
     trump: Trump,
     units: Units,
+    /// True when this trick was led as a rainbow (same rank across ≥ 4 suits).
+    #[serde(default)]
+    is_rainbow: bool,
 }
 
 impl TrickFormat {
@@ -219,6 +234,10 @@ impl TrickFormat {
 
     pub fn suit(&self) -> EffectiveSuit {
         self.suit
+    }
+
+    pub fn is_rainbow(&self) -> bool {
+        self.is_rainbow
     }
 
     pub fn decomposition(
@@ -265,6 +284,16 @@ impl TrickFormat {
         let required = self.units.iter().map(|c| c.size()).sum::<usize>();
         if proposed.len() != required {
             return false;
+        }
+
+        // Rainbow trick: must play a same-number set of the right size if able.
+        if self.is_rainbow {
+            if rainbow_number(proposed).is_some() {
+                // Playing a valid rainbow bomb is always legal.
+                return true;
+            }
+            // Not a rainbow bomb: only legal if the player has no rainbow bomb.
+            return !hand_has_rainbow_bomb(hand, required);
         }
 
         let num_correct_suit_in_hand = || -> usize {
@@ -460,7 +489,15 @@ impl TrickFormat {
         tractor_requirements: TractorRequirements,
         cards: &'_ [Card],
         proposed: Option<&'_ [TrickUnit]>,
+        compound_formats: CompoundFormats,
     ) -> Result<TrickFormat, TrickError> {
+        // Check for rainbow lead before the single-suit requirement.
+        if let Some(min_cards) = compound_formats.rainbows {
+            if let Some(tf) = try_rainbow_format(trump, cards, min_cards) {
+                return Ok(tf);
+            }
+        }
+
         if cards.is_empty() {
             return Err(TrickError::WrongNumberOfSuits);
         }
@@ -493,6 +530,7 @@ impl TrickFormat {
                             suit,
                             units: proposed,
                             trump,
+                            is_rainbow: false,
                         });
                     }
                 }
@@ -506,6 +544,7 @@ impl TrickFormat {
                     suit,
                     units: sort(units),
                     trump,
+                    is_rainbow: false,
                 })
             }
         }
@@ -530,6 +569,7 @@ pub struct PlayCards<'a, 'b, 'c> {
     pub hide_throw_halting_player: bool,
     pub tractor_requirements: TractorRequirements,
     pub bomb_policy: BombPolicy,
+    pub compound_formats: CompoundFormats,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
@@ -599,6 +639,7 @@ impl Trick {
         hands: &Hands,
         cards: &[Card],
         trick_draw_policy: TrickDrawPolicy,
+        compound_formats: CompoundFormats,
     ) -> Result<(), TrickError> {
         hands.contains(id, cards.iter().cloned())?;
         match self.trick_format.as_ref() {
@@ -617,6 +658,13 @@ impl Trick {
                     .len();
                 if num_suits == 1 {
                     Ok(())
+                } else if let Some(min_cards) = compound_formats.rainbows {
+                    // Allow a rainbow lead when the format is enabled.
+                    if try_rainbow_format(self.trump, cards, min_cards).is_some() {
+                        Ok(())
+                    } else {
+                        Err(TrickError::WrongNumberOfSuits)
+                    }
                 } else {
                     Err(TrickError::WrongNumberOfSuits)
                 }
@@ -643,6 +691,7 @@ impl Trick {
             hide_throw_halting_player,
             tractor_requirements,
             bomb_policy,
+            compound_formats,
         } = args;
 
         self.bomb_policy = bomb_policy;
@@ -650,14 +699,25 @@ impl Trick {
         if self.player_queue.front().cloned() != Some(id) {
             return Err(TrickError::OutOfOrder);
         }
-        self.can_play_cards(id, hands, cards, trick_draw_policy)?;
+        self.can_play_cards(
+            id,
+            hands,
+            cards,
+            trick_draw_policy,
+            compound_formats.clone(),
+        )?;
         let mut msgs = vec![];
         let mut cards = cards.to_vec();
         cards.sort_by(|a, b| self.trump.compare(*a, *b));
 
         let (cards, bad_throw_cards, better_player) = if self.trick_format.is_none() {
-            let mut tf =
-                TrickFormat::from_cards(self.trump, tractor_requirements, &cards, format_hint)?;
+            let mut tf = TrickFormat::from_cards(
+                self.trump,
+                tractor_requirements,
+                &cards,
+                format_hint,
+                compound_formats,
+            )?;
             let mut invalid = None;
             if tf.units.len() > 1 {
                 // This is a throw, let's see if any of the units can be strictly defeated by any
@@ -932,6 +992,12 @@ impl Trick {
 
     fn compute_winner(&self, throw_eval_policy: ThrowEvaluationPolicy) -> Option<PlayerID> {
         let tf = self.trick_format.as_ref()?;
+
+        // Rainbow trick: highest same-number set wins.
+        if tf.is_rainbow {
+            return self.compute_rainbow_winner();
+        }
+
         let mut winner = (0usize, tf.units.to_vec());
 
         for (idx, _pc) in self.played_cards.iter().enumerate().skip(1) {
@@ -950,6 +1016,28 @@ impl Trick {
             }
         }
         Some(self.played_cards[winner.0].id)
+    }
+
+    /// Winner of a rainbow trick: whoever played the highest-number rainbow
+    /// bomb (all cards sharing one `Number`) of the required size. The leader
+    /// is always considered a valid rainbow bomb by construction.
+    fn compute_rainbow_winner(&self) -> Option<PlayerID> {
+        let required = self.trick_format.as_ref()?.size();
+        let mut winner_idx = 0;
+        let mut winner_number = rainbow_number(&self.played_cards[0].cards)?;
+
+        for (idx, pc) in self.played_cards.iter().enumerate().skip(1) {
+            if pc.cards.len() == required {
+                if let Some(number) = rainbow_number(&pc.cards) {
+                    if number > winner_number {
+                        winner_idx = idx;
+                        winner_number = number;
+                    }
+                }
+            }
+        }
+
+        Some(self.played_cards[winner_idx].id)
     }
 }
 
@@ -1105,6 +1193,62 @@ type Units = Vec<TrickUnit>;
 /// Checks if a set of cards constitutes a bomb: all identical cards with count >= 4.
 fn is_bomb(cards: &[Card]) -> bool {
     cards.len() >= 4 && cards[1..].iter().all(|c| *c == cards[0])
+}
+
+/// Returns the shared `Number` if every card in `cards` has the same number,
+/// or `None` if cards is empty, contains a joker, or has mixed numbers.
+fn rainbow_number(cards: &[Card]) -> Option<Number> {
+    if cards.is_empty() {
+        return None;
+    }
+    let first = cards[0].number()?;
+    if cards[1..].iter().all(|c| c.number() == Some(first)) {
+        Some(first)
+    } else {
+        None
+    }
+}
+
+/// Returns `true` if the player's hand contains at least `required` cards that
+/// all share the same `Number` (i.e. a rainbow bomb of the required size).
+fn hand_has_rainbow_bomb(hand: &HashMap<Card, usize>, required: usize) -> bool {
+    let mut by_number: HashMap<Number, usize> = HashMap::new();
+    for (card, ct) in hand {
+        if let Some(n) = card.number() {
+            *by_number.entry(n).or_insert(0) += ct;
+        }
+    }
+    by_number.values().any(|&ct| ct >= required)
+}
+
+/// Attempts to build a rainbow `TrickFormat` from `cards`. Returns `Some` only
+/// when all cards share the same `Number`, span at least 4 distinct effective
+/// suits, and the total count is at least `min_cards`.
+fn try_rainbow_format(trump: Trump, cards: &[Card], min_cards: usize) -> Option<TrickFormat> {
+    if cards.len() < min_cards {
+        return None;
+    }
+    let number = rainbow_number(cards)?;
+    let suits: HashSet<EffectiveSuit> = cards.iter().map(|c| trump.effective_suit(*c)).collect();
+    if suits.len() < 4 {
+        return None;
+    }
+    // Use the first card as a representative to encode the required count.
+    // The actual number is recoverable from the played cards at winner-computation time.
+    let _ = number; // validated above; winner logic re-derives from played cards
+    let representative = OrderedCard {
+        card: cards[0],
+        trump,
+    };
+    Some(TrickFormat {
+        suit: EffectiveSuit::Unknown,
+        trump,
+        units: vec![TrickUnit::Repeated {
+            count: cards.len(),
+            card: representative,
+        }],
+        is_rainbow: true,
+    })
 }
 
 fn without_trick_unit<T>(
@@ -1270,8 +1414,9 @@ mod tests {
     use crate::types::{cards::*, Card, EffectiveSuit, Number, PlayerID, Suit, Trump};
 
     use super::{
-        BombPolicy, OrderedCard, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick,
-        TrickDrawPolicy, TrickEnded, TrickError, TrickFormat, TrickUnit, UnitLike,
+        BombPolicy, CompoundFormats, OrderedCard, PlayCards, ThrowEvaluationPolicy,
+        TractorRequirements, Trick, TrickDrawPolicy, TrickEnded, TrickError, TrickFormat,
+        TrickUnit, UnitLike,
     };
 
     const TRUMP: Trump = Trump::Standard {
@@ -1310,6 +1455,7 @@ mod tests {
                 hide_throw_halting_player: $h,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: BombPolicy::NoBombs,
+                compound_formats: CompoundFormats::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tdp:expr, $tep:expr) => {
@@ -1323,6 +1469,7 @@ mod tests {
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: BombPolicy::NoBombs,
+                compound_formats: CompoundFormats::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr, $tep:expr) => {
@@ -1336,6 +1483,7 @@ mod tests {
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: BombPolicy::NoBombs,
+                compound_formats: CompoundFormats::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr) => {
@@ -1349,6 +1497,7 @@ mod tests {
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: BombPolicy::NoBombs,
+                compound_formats: CompoundFormats::default(),
             }
         };
         ($id:expr, $hands:expr, $cards:expr; $bp:expr) => {
@@ -1362,6 +1511,7 @@ mod tests {
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: $bp,
+                compound_formats: CompoundFormats::default(),
             }
         };
     }
@@ -1702,6 +1852,7 @@ mod tests {
                 count: 3,
                 card: oc!(S_2),
             }],
+            is_rainbow: false,
         };
 
         assert_eq!(
@@ -1709,7 +1860,8 @@ mod tests {
                 TRUMP,
                 TractorRequirements::default(),
                 &[S_2, S_2, S_2],
-                None
+                None,
+                CompoundFormats::default(),
             )
             .unwrap(),
             expected_tf
@@ -1728,6 +1880,7 @@ mod tests {
                 count: 3,
                 members: vec![oc!(S_2), oc!(S_3), oc!(S_5)],
             }],
+            is_rainbow: false,
         };
 
         assert_eq!(
@@ -1735,7 +1888,8 @@ mod tests {
                 TRUMP,
                 TractorRequirements::default(),
                 &[S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_5, S_5],
-                None
+                None,
+                CompoundFormats::default(),
             )
             .unwrap(),
             expected_tf,
@@ -1766,6 +1920,7 @@ mod tests {
                     card: oc!(S_2),
                 },
             ],
+            is_rainbow: false,
         };
 
         assert_eq!(
@@ -1773,7 +1928,8 @@ mod tests {
                 TRUMP,
                 TractorRequirements::default(),
                 &[S_2, S_2, S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5],
-                None
+                None,
+                CompoundFormats::default(),
             )
             .unwrap(),
             expected_tf
@@ -1789,7 +1945,8 @@ mod tests {
             TRUMP,
             TractorRequirements::default(),
             &[S_2, S_2, S_3, S_3, S_5, S_5, S_8, S_8, S_8],
-            None
+            None,
+            CompoundFormats::default(),
         )
         .unwrap()
         .matches(&[S_2, S_2, S_2, S_2, S_2, S_3, S_3, S_5, S_5])
@@ -1815,6 +1972,7 @@ mod tests {
                     card: oc!(S_5),
                 },
             ],
+            is_rainbow: false,
         };
 
         assert_eq!(
@@ -1822,7 +1980,8 @@ mod tests {
                 TRUMP,
                 TractorRequirements::default(),
                 &[S_2, S_2, S_2, S_3, S_5, S_5, S_5],
-                None
+                None,
+                CompoundFormats::default(),
             )
             .unwrap(),
             expected_tf
@@ -1842,6 +2001,7 @@ mod tests {
                 count: 2,
                 card: oc!(S_3),
             }],
+            is_rainbow: false,
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
@@ -1910,6 +2070,7 @@ mod tests {
                 count: 3,
                 card: oc!(S_3),
             }],
+            is_rainbow: false,
         };
 
         let hand = Card::count(vec![S_2, S_2, S_3, S_3, S_5, S_5]);
@@ -1951,6 +2112,7 @@ mod tests {
                 count: 5,
                 card: oc!(S_3),
             }],
+            is_rainbow: false,
         };
         assert!(tf.is_legal_play(
             &hand,
@@ -1998,6 +2160,7 @@ mod tests {
                 count: 2,
                 members: vec![oc!(S_2), oc!(S_3)],
             }],
+            is_rainbow: false,
         };
         assert!(!tf.is_legal_play(
             &hand,
@@ -2156,6 +2319,7 @@ mod tests {
                     card: oc!(S_3),
                 },
             ],
+            is_rainbow: false,
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_5]);
         assert!(tf.is_legal_play(
@@ -2217,6 +2381,7 @@ mod tests {
                 card: oc!(S_3),
                 count: 3,
             }],
+            is_rainbow: false,
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(
@@ -2279,6 +2444,7 @@ mod tests {
                 members: vec![oc!(S_6), oc!(S_7)],
                 count: 2,
             }],
+            is_rainbow: false,
         };
         let hand = Card::count(vec![S_2, S_2, S_2, S_3, S_3, S_3, S_5, S_6, S_7, S_8]);
         assert!(!tf.is_legal_play(
@@ -2332,6 +2498,7 @@ mod tests {
                     count: 1,
                 },
             ],
+            is_rainbow: false,
         };
         let hand = Card::count(vec![S_3, S_5, S_10, S_J, S_Q, S_6, S_8, S_8, S_8]);
         assert!(!tf.is_legal_play(
@@ -2910,6 +3077,7 @@ mod tests {
             TractorRequirements::default(),
             &[S_8, S_8, S_9, S_9],
             None,
+            CompoundFormats::default(),
         )
         .unwrap();
 
@@ -3010,6 +3178,7 @@ mod tests {
             TractorRequirements::default(),
             &[H_10, H_10, H_J, H_J, H_Q, H_Q],
             None,
+            CompoundFormats::default(),
         )
         .unwrap();
 
@@ -3084,6 +3253,7 @@ mod tests {
                 count: 2,
                 members: vec![oc!(S_2), oc!(S_3)],
             }],
+            is_rainbow: false,
         };
         // [1 pair + 1 single] format (3 cards).
         let tf_pair_single = TrickFormat {
@@ -3099,6 +3269,7 @@ mod tests {
                     card: oc!(S_5),
                 },
             ],
+            is_rainbow: false,
         };
 
         for bp in [BombPolicy::NoBombs, BombPolicy::AllowBombs] {
@@ -3249,5 +3420,289 @@ mod tests {
 
         // P2 wins: their bomb (6 jacks) outranks both P1's (6 twos) and P3's (6 threes)
         assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    // -----------------------------------------------------------------------
+    // Rainbow trick tests
+    // -----------------------------------------------------------------------
+
+    /// Standard trump: 4♠ is trump, so effective suits are Clubs, Diamonds,
+    /// Hearts, and Trump (which absorbs 4s and spades).
+    const FOUR_SPADE_TRUMP: Trump = Trump::Standard {
+        number: Number::Four,
+        suit: Suit::Spades,
+    };
+
+    fn rainbow_formats(min_cards: usize) -> CompoundFormats {
+        CompoundFormats {
+            rainbows: Some(min_cards),
+        }
+    }
+
+    fn rainbow_pc<'a, 'b>(
+        id: PlayerID,
+        hands: &'a mut crate::hands::Hands,
+        cards: &'b [Card],
+        compound_formats: CompoundFormats,
+    ) -> PlayCards<'a, 'b, 'static> {
+        PlayCards {
+            id,
+            hands,
+            cards,
+            trick_draw_policy: TrickDrawPolicy::NoProtections,
+            throw_eval_policy: ThrowEvaluationPolicy::All,
+            format_hint: None,
+            hide_throw_halting_player: false,
+            tractor_requirements: TractorRequirements::default(),
+            bomb_policy: BombPolicy::NoBombs,
+            compound_formats,
+        }
+    }
+
+    #[test]
+    fn test_rainbow_detection_valid() {
+        // 5♣, 5♦, 5♥, 5♠ — four suits, four cards.
+        // With FOUR_SPADE_TRUMP, 5♠ has effective suit Spades (not trump),
+        // so we have Clubs, Diamonds, Hearts, Spades → 4 distinct suits. ✓
+        let cards = [C_5, D_5, H_5, S_5];
+        let trump = FOUR_SPADE_TRUMP;
+        let tf = TrickFormat::from_cards(
+            trump,
+            TractorRequirements::default(),
+            &cards,
+            None,
+            rainbow_formats(4),
+        )
+        .unwrap();
+        assert!(tf.is_rainbow());
+        assert_eq!(tf.size(), 4);
+    }
+
+    #[test]
+    fn test_rainbow_detection_too_few_cards() {
+        // Only 3 cards — below min_cards of 4.
+        let cards = [C_5, D_5, H_5];
+        let tf = TrickFormat::from_cards(
+            FOUR_SPADE_TRUMP,
+            TractorRequirements::default(),
+            &cards,
+            None,
+            rainbow_formats(4),
+        );
+        // Falls back to normal single-suit logic, which fails because suits differ.
+        assert!(tf.is_err());
+    }
+
+    #[test]
+    fn test_rainbow_detection_too_few_suits() {
+        // 5♣ × 4 — all same suit; doesn't span 4 suits.
+        let cards = [C_5, C_5, C_5, C_5];
+        let tf = TrickFormat::from_cards(
+            FOUR_SPADE_TRUMP,
+            TractorRequirements::default(),
+            &cards,
+            None,
+            rainbow_formats(4),
+        )
+        .unwrap();
+        // Falls through to normal single-suit logic, resulting in a non-rainbow.
+        assert!(!tf.is_rainbow());
+    }
+
+    #[test]
+    fn test_rainbow_detection_mixed_numbers() {
+        // 5♣, 6♦, 5♥, 5♠ — mixed numbers, not a rainbow.
+        let cards = [C_5, D_6, H_5, S_5];
+        let tf = TrickFormat::from_cards(
+            FOUR_SPADE_TRUMP,
+            TractorRequirements::default(),
+            &cards,
+            None,
+            rainbow_formats(4),
+        );
+        // Multi-suit non-rainbow is illegal.
+        assert!(tf.is_err());
+    }
+
+    #[test]
+    fn test_rainbow_disabled_by_default() {
+        // Same cards that would form a rainbow, but compound_formats is default (disabled).
+        let cards = [C_5, D_5, H_5, S_5];
+        let tf = TrickFormat::from_cards(
+            FOUR_SPADE_TRUMP,
+            TractorRequirements::default(),
+            &cards,
+            None,
+            CompoundFormats::default(), // rainbows: None
+        );
+        // Multi-suit without rainbow enabled → error.
+        assert!(tf.is_err());
+    }
+
+    #[test]
+    fn test_rainbow_winner_higher_number_wins() {
+        // P1 leads 5s across 4 suits. P2 plays 6s (higher). P2 should win.
+        // Using NoTrump so all suits are distinct.
+        let trump = Trump::NoTrump { number: None };
+        let cf = rainbow_formats(4);
+
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![C_5, D_5, H_5, S_5]).unwrap();
+        hands.add(P2, vec![C_6, D_6, H_6, S_6]).unwrap();
+        hands.add(P3, vec![C_3, D_3, H_3, S_3]).unwrap();
+        hands.add(P4, vec![C_2, D_2, H_2, S_2]).unwrap();
+
+        let mut trick = Trick::new(trump, [P1, P2, P3, P4], BombPolicy::NoBombs);
+
+        trick
+            .play_cards(rainbow_pc(
+                P1,
+                &mut hands,
+                &[C_5, D_5, H_5, S_5],
+                cf.clone(),
+            ))
+            .unwrap();
+        trick
+            .play_cards(rainbow_pc(
+                P2,
+                &mut hands,
+                &[C_6, D_6, H_6, S_6],
+                cf.clone(),
+            ))
+            .unwrap();
+        trick
+            .play_cards(rainbow_pc(
+                P3,
+                &mut hands,
+                &[C_3, D_3, H_3, S_3],
+                cf.clone(),
+            ))
+            .unwrap();
+        trick
+            .play_cards(rainbow_pc(P4, &mut hands, &[C_2, D_2, H_2, S_2], cf))
+            .unwrap();
+
+        assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    #[test]
+    fn test_rainbow_winner_leader_wins_if_no_higher_bomb() {
+        let trump = Trump::NoTrump { number: None };
+        let cf = rainbow_formats(4);
+
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        hands.add(P1, vec![C_8, D_8, H_8, S_8]).unwrap();
+        // P2-P4 have no rainbow bombs (mixed numbers).
+        hands.add(P2, vec![C_3, D_4, H_5, S_6]).unwrap();
+        hands.add(P3, vec![C_3, D_4, H_5, S_6]).unwrap();
+        hands.add(P4, vec![C_3, D_4, H_5, S_6]).unwrap();
+
+        let mut trick = Trick::new(trump, [P1, P2, P3, P4], BombPolicy::NoBombs);
+
+        trick
+            .play_cards(rainbow_pc(
+                P1,
+                &mut hands,
+                &[C_8, D_8, H_8, S_8],
+                cf.clone(),
+            ))
+            .unwrap();
+        // P2 has no rainbow bomb, so anything of size 4 is legal.
+        trick
+            .play_cards(rainbow_pc(
+                P2,
+                &mut hands,
+                &[C_3, D_4, H_5, S_6],
+                cf.clone(),
+            ))
+            .unwrap();
+        trick
+            .play_cards(rainbow_pc(
+                P3,
+                &mut hands,
+                &[C_3, D_4, H_5, S_6],
+                cf.clone(),
+            ))
+            .unwrap();
+        trick
+            .play_cards(rainbow_pc(P4, &mut hands, &[C_3, D_4, H_5, S_6], cf))
+            .unwrap();
+
+        assert_eq!(trick.complete().unwrap().winner, P1);
+    }
+
+    #[test]
+    fn test_rainbow_must_play_bomb_if_available() {
+        // P2 has a rainbow bomb (four 6s) and tries to play non-bomb cards.
+        // That should be illegal.
+        let trump = Trump::NoTrump { number: None };
+        let cf = rainbow_formats(4);
+
+        let mut hands = Hands::new(vec![P1, P2]);
+        hands.add(P1, vec![C_5, D_5, H_5, S_5]).unwrap();
+        // P2 has a rainbow bomb (C_6, D_6, H_6, S_6) plus non-bomb extras (mixed ranks).
+        hands
+            .add(P2, vec![C_6, D_6, H_6, S_6, C_3, D_4, H_7, S_9])
+            .unwrap();
+
+        let mut trick = Trick::new(trump, [P1, P2], BombPolicy::NoBombs);
+        trick
+            .play_cards(rainbow_pc(
+                P1,
+                &mut hands,
+                &[C_5, D_5, H_5, S_5],
+                cf.clone(),
+            ))
+            .unwrap();
+
+        // Trying to play non-bomb cards (mixed ranks) when a rainbow bomb is available → error.
+        let hand_snapshot = hands.get(P2).unwrap().clone();
+        let result = trick.trick_format().unwrap().is_legal_play(
+            &hand_snapshot,
+            &[C_3, D_4, H_7, S_9],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs,
+        );
+        assert!(!result, "should be illegal when rainbow bomb is available");
+
+        // Playing the bomb IS legal.
+        let result2 = trick.trick_format().unwrap().is_legal_play(
+            &hand_snapshot,
+            &[C_6, D_6, H_6, S_6],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs,
+        );
+        assert!(result2, "rainbow bomb should always be legal");
+    }
+
+    #[test]
+    fn test_rainbow_no_bomb_available_anything_legal() {
+        // P2 has no rainbow bomb; any 4 cards is legal.
+        let trump = Trump::NoTrump { number: None };
+        let cf = rainbow_formats(4);
+
+        let mut hands = Hands::new(vec![P1, P2]);
+        hands.add(P1, vec![C_5, D_5, H_5, S_5]).unwrap();
+        hands.add(P2, vec![C_3, D_4, H_7, S_9]).unwrap();
+
+        let mut trick = Trick::new(trump, [P1, P2], BombPolicy::NoBombs);
+        trick
+            .play_cards(rainbow_pc(
+                P1,
+                &mut hands,
+                &[C_5, D_5, H_5, S_5],
+                cf.clone(),
+            ))
+            .unwrap();
+
+        let hand_snapshot = hands.get(P2).unwrap().clone();
+        let tf = trick.trick_format().unwrap();
+        let result = tf.is_legal_play(
+            &hand_snapshot,
+            &[C_3, D_4, H_7, S_9],
+            TrickDrawPolicy::NoProtections,
+            BombPolicy::NoBombs,
+        );
+        assert!(result, "any cards legal when no rainbow bomb available");
     }
 }

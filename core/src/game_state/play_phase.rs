@@ -151,9 +151,13 @@ impl PlayPhase {
         if self.game_ended_early {
             bail!("Game has already ended; cards can't be played");
         }
-        Ok(self
-            .trick
-            .can_play_cards(id, &self.hands, cards, self.propagated.trick_draw_policy)?)
+        Ok(self.trick.can_play_cards(
+            id,
+            &self.hands,
+            cards,
+            self.propagated.trick_draw_policy,
+            self.propagated.compound_formats.clone(),
+        )?)
     }
 
     pub fn play_cards(
@@ -184,6 +188,7 @@ impl PlayPhase {
             hide_throw_halting_player: self.propagated.hide_throw_halting_player,
             tractor_requirements: self.propagated.tractor_requirements,
             bomb_policy: self.propagated.bomb_policy,
+            compound_formats: self.propagated.compound_formats.clone(),
         })?;
         if self.propagated.hide_played_cards {
             for msg in &mut msgs {

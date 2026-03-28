@@ -76,8 +76,15 @@ const TrickE = (props: IProps): JSX.Element => {
     props.trick.player_queue.forEach((id) => playOrder.push(id));
   }
 
+  const isRainbow = props.trick.trick_format?.is_rainbow === true;
+
   return (
     <div className="trick">
+      {isRainbow && (
+        <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+          🌈 Rainbow trick — play same rank across suits to bomb
+        </div>
+      )}
       {playOrder.map((id) => {
         const winning = props.trick.current_winner === id;
         const better = betterPlayer === id;
