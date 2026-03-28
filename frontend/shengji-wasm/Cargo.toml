@@ -24,6 +24,3 @@ shengji-mechanics = { path = "../../mechanics" }
 shengji-types = { path = "../../backend/backend-types" }
 wasm-bindgen = { version = "0.2.74" }
 wasm-rpc-impl = { path = "../../wasm-rpc-impl" }
-
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = false
