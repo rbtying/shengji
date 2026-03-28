@@ -498,9 +498,6 @@ impl TrickFormat {
             if let Some(tf) = try_rainbow_format(trump, cards, min_cards) {
                 return Ok(tf);
             }
-            if let Some(tf) = try_multi_rainbow_format(trump, cards, min_cards) {
-                return Ok(tf);
-            }
         }
 
         if cards.is_empty() {
@@ -665,9 +662,7 @@ impl Trick {
                     Ok(())
                 } else if let Some(min_cards) = compound_formats.rainbows {
                     // Allow a rainbow lead when the format is enabled.
-                    if try_rainbow_format(self.trump, cards, min_cards).is_some()
-                        || try_multi_rainbow_format(self.trump, cards, min_cards).is_some()
-                    {
+                    if try_rainbow_format(self.trump, cards, min_cards).is_some() {
                         Ok(())
                     } else {
                         Err(TrickError::WrongNumberOfSuits)
@@ -1289,62 +1284,16 @@ fn rainbow_units_assignable(
     false
 }
 
-/// Returns the shared `Number` if every card in `cards` has the same number,
-/// or `None` if cards is empty, contains a joker, or has mixed numbers.
-fn rainbow_number(cards: &[Card]) -> Option<Number> {
-    if cards.is_empty() {
-        return None;
-    }
-    let first = cards[0].number()?;
-    if cards[1..].iter().all(|c| c.number() == Some(first)) {
-        Some(first)
-    } else {
-        None
-    }
-}
-
-/// Attempts to build a rainbow `TrickFormat` from `cards`. Returns `Some` only
-/// when all cards share the same `Number`, span at least 4 distinct effective
-/// suits, and the total count is at least `min_cards`.
+/// Attempts to build a rainbow `TrickFormat` from `cards`. Each distinct
+/// `Number` among the cards must independently span at least 4 effective suits
+/// and contain at least `min_cards` cards. Jokers disqualify the whole play.
+/// Returns a single-unit format when all cards share one number, or a
+/// multi-unit format (throw) when there are multiple qualifying rank groups.
 fn try_rainbow_format(trump: Trump, cards: &[Card], min_cards: usize) -> Option<TrickFormat> {
-    if cards.len() < min_cards {
-        return None;
-    }
-    let number = rainbow_number(cards)?;
-    let suits: HashSet<EffectiveSuit> = cards.iter().map(|c| trump.effective_suit(*c)).collect();
-    if suits.len() < 4 {
-        return None;
-    }
-    // Use the first card as a representative to encode the required count.
-    // The actual number is recoverable from the played cards at winner-computation time.
-    let _ = number; // validated above; winner logic re-derives from played cards
-    let representative = OrderedCard {
-        card: cards[0],
-        trump,
-    };
-    Some(TrickFormat {
-        suit: EffectiveSuit::Unknown,
-        trump,
-        units: vec![TrickUnit::Repeated {
-            count: cards.len(),
-            card: representative,
-        }],
-        is_rainbow: true,
-    })
-}
-
-/// Attempts to build a multi-unit rainbow throw from `cards`. Each distinct
-/// `Number` in the cards must independently form a valid rainbow (≥4 suits,
-/// ≥ `min_cards` cards). Returns `Some` only when there are ≥2 such groups.
-fn try_multi_rainbow_format(trump: Trump, cards: &[Card], min_cards: usize) -> Option<TrickFormat> {
-    // All cards must have a number (jokers disqualify).
     let mut by_number: BTreeMap<Number, Vec<Card>> = BTreeMap::new();
     for card in cards {
         let n = card.number()?;
         by_number.entry(n).or_default().push(*card);
-    }
-    if by_number.len() < 2 {
-        return None;
     }
     let mut units = Vec::new();
     for group in by_number.values() {
@@ -1359,14 +1308,16 @@ fn try_multi_rainbow_format(trump: Trump, cards: &[Card], min_cards: usize) -> O
         if distinct_suits < 4 {
             return None;
         }
-        let representative = OrderedCard {
-            card: group[0],
-            trump,
-        };
         units.push(TrickUnit::Repeated {
             count: group.len(),
-            card: representative,
+            card: OrderedCard {
+                card: group[0],
+                trump,
+            },
         });
+    }
+    if units.is_empty() {
+        return None;
     }
     Some(TrickFormat {
         suit: EffectiveSuit::Unknown,
