@@ -136,6 +136,9 @@ export type Action =
       SetBombPolicy: BombPolicy;
     }
   | {
+      SetCompoundFormats: CompoundFormats;
+    }
+  | {
       SetGameVisibility: GameVisibility;
     }
   | {
@@ -637,6 +640,11 @@ export type MessageVariant =
       bomb_policy: BombPolicy;
       type: "BombPolicySet";
       [k: string]: unknown;
+    }
+  | {
+      compound_formats: CompoundFormats;
+      type: "CompoundFormatsSet";
+      [k: string]: unknown;
     };
 
 export interface _Combined {
@@ -707,6 +715,16 @@ export interface TractorRequirements {
   min_length: number;
   [k: string]: unknown;
 }
+/**
+ * Configuration for compound/exotic trick formats.
+ */
+export interface CompoundFormats {
+  /**
+   * `None` means rainbows are disabled. `Some(n)` enables rainbows and requires the lead to contain at least `n` cards (all the same number, spanning at least 4 distinct effective suits).
+   */
+  rainbows?: number | null;
+  [k: string]: unknown;
+}
 export interface FriendSelection {
   card: Card;
   initial_skip: number;
@@ -745,6 +763,7 @@ export interface CardInfo {
 }
 export interface CanPlayCardsRequest {
   cards: Card[];
+  compound_formats?: CompoundFormats;
   hands: Hands;
   id: number;
   trick: Trick;
@@ -783,6 +802,10 @@ export interface PlayedCards {
   [k: string]: unknown;
 }
 export interface TrickFormat {
+  /**
+   * True when this trick was led as a rainbow (same rank across ≥ 4 suits).
+   */
+  is_rainbow?: boolean;
   suit: EffectiveSuit;
   trump: Trump;
   units: TrickUnit[];
@@ -907,6 +930,7 @@ export interface PropagatedState {
   bid_takeback_policy?: BidTakebackPolicy & string;
   bomb_policy?: BombPolicy & string;
   chat_link?: string | null;
+  compound_formats?: CompoundFormats;
   first_landlord_selection_policy?: FirstLandlordSelectionPolicy & string;
   friend_selection_policy?: FriendSelectionPolicy & string;
   game_mode: GameModeSettings;

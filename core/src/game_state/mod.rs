@@ -205,7 +205,8 @@ mod tests {
 
     use shengji_mechanics::hands::Hands;
     use shengji_mechanics::trick::{
-        BombPolicy, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick, TrickDrawPolicy,
+        BombPolicy, CompoundFormats, PlayCards, ThrowEvaluationPolicy, TractorRequirements, Trick,
+        TrickDrawPolicy,
     };
 
     const R2: Rank = Rank::Number(Number::Two);
@@ -240,6 +241,7 @@ mod tests {
                 hide_throw_halting_player: false,
                 tractor_requirements: TractorRequirements::default(),
                 bomb_policy: BombPolicy::NoBombs,
+                compound_formats: CompoundFormats::default(),
             }
         };
     }

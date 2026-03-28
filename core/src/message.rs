@@ -10,7 +10,7 @@ use shengji_mechanics::bidding::{
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::scoring::GameScoringParameters;
 use shengji_mechanics::trick::{
-    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
+    BombPolicy, CompoundFormats, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
 };
 use shengji_mechanics::types::{Card, PlayerID, Rank};
 
@@ -196,6 +196,9 @@ pub enum MessageVariant {
     },
     BombPolicySet {
         bomb_policy: BombPolicy,
+    },
+    CompoundFormatsSet {
+        compound_formats: CompoundFormats,
     },
 }
 
@@ -393,6 +396,10 @@ impl MessageVariant {
             BombPolicySet { bomb_policy: BombPolicy::AllowBombs } => format!("{} enabled bomb cards (any suit)", n?),
             BombPolicySet { bomb_policy: BombPolicy::AllowBombsSuitFollowing } => format!("{} enabled bomb cards (must follow suit)", n?),
             BombPolicySet { bomb_policy: BombPolicy::NoBombs } => format!("{} disabled bomb cards", n?),
+            CompoundFormatsSet { compound_formats: CompoundFormats { rainbows: Some(n_cards) } } =>
+                format!("{} enabled rainbow tricks (minimum {} cards)", n?, n_cards),
+            CompoundFormatsSet { compound_formats: CompoundFormats { rainbows: None } } =>
+                format!("{} disabled rainbow tricks", n?),
         })
     }
 }

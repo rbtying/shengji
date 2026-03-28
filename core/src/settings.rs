@@ -14,7 +14,7 @@ use shengji_mechanics::deck::Deck;
 use shengji_mechanics::player::Player;
 use shengji_mechanics::scoring::GameScoringParameters;
 use shengji_mechanics::trick::{
-    BombPolicy, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
+    BombPolicy, CompoundFormats, ThrowEvaluationPolicy, TractorRequirements, TrickDrawPolicy,
 };
 use shengji_mechanics::types::{Card, Number, PlayerID, Rank};
 
@@ -320,6 +320,8 @@ pub struct PropagatedState {
     pub(crate) max_rank: MaxRank,
     #[serde(default)]
     pub(crate) game_visibility: GameVisibility,
+    #[serde(default)]
+    pub(crate) compound_formats: CompoundFormats,
 }
 
 impl PropagatedState {
@@ -924,6 +926,20 @@ impl PropagatedState {
         if self.bomb_policy != bomb_policy {
             self.bomb_policy = bomb_policy;
             Ok(vec![MessageVariant::BombPolicySet { bomb_policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_compound_formats(
+        &mut self,
+        compound_formats: CompoundFormats,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if self.compound_formats != compound_formats {
+            self.compound_formats = compound_formats.clone();
+            Ok(vec![MessageVariant::CompoundFormatsSet {
+                compound_formats,
+            }])
         } else {
             Ok(vec![])
         }

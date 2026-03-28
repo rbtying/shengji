@@ -33,6 +33,39 @@ pub fn decompose_trick_format(
     req: DecomposeTrickFormatRequest,
 ) -> Result<DecomposeTrickFormatResponse, String> {
     let hand = req.hands.get(req.player_id).map_err(|e| e.to_string())?;
+
+    // Rainbow trick: find all same-rank groups in hand of the required size.
+    if req.trick_format.is_rainbow() {
+        let required = req.trick_format.size();
+        let mut by_number: std::collections::BTreeMap<
+            shengji_mechanics::types::Number,
+            Vec<shengji_mechanics::types::Card>,
+        > = Default::default();
+        for (card, &ct) in hand.iter() {
+            if let Some(n) = card.number() {
+                let entry = by_number.entry(n).or_default();
+                for _ in 0..ct {
+                    entry.push(*card);
+                }
+            }
+        }
+        let groups: Vec<_> = by_number
+            .into_values()
+            .filter(|cards| cards.len() >= required)
+            .collect();
+        let more_than_one = groups.len() > 1;
+        let results = groups
+            .into_iter()
+            .map(|cards| DecomposedTrickFormat {
+                format: vec![],
+                description: format!("{required} cards of same rank"),
+                playable: cards.into_iter().take(required).collect(),
+                more_than_one,
+            })
+            .collect();
+        return Ok(DecomposeTrickFormatResponse { results });
+    }
+
     let available_cards =
         Card::cards(hand.iter().filter(|(c, _)| {
             req.trick_format.trump().effective_suit(**c) == req.trick_format.suit()
@@ -87,7 +120,13 @@ pub fn decompose_trick_format(
 pub fn can_play_cards(req: CanPlayCardsRequest) -> CanPlayCardsResponse {
     let playable = req
         .trick
-        .can_play_cards(req.id, &req.hands, &req.cards, req.trick_draw_policy)
+        .can_play_cards(
+            req.id,
+            &req.hands,
+            &req.cards,
+            req.trick_draw_policy,
+            req.compound_formats,
+        )
         .is_ok();
     CanPlayCardsResponse { playable }
 }

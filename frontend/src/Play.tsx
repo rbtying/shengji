@@ -584,6 +584,47 @@ const HelperContents = (props: {
     return <div>Loading...</div>;
   }
 
+  if (props.format.is_rainbow) {
+    const rainbows = decomp.filter((d) => d.playable.length > 0);
+    return (
+      <>
+        <p>
+          <strong>🌈 Rainbow trick!</strong> The leader played cards all of the
+          same rank spanning at least 4 suits.
+        </p>
+        <p>
+          If you have a <em>rainbow</em> — the same number of cards as the
+          trick, all of the same rank — you <strong>must</strong> play one.
+        </p>
+        <p>
+          The highest-rank rainbow wins. If no follower plays a rainbow, the
+          leader wins.
+        </p>
+        {rainbows.length > 0 ? (
+          <>
+            <p>You can play:</p>
+            <ul>
+              {rainbows.map((r, idx) => (
+                <li key={idx}>
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => props.setSelected(r.playable)}
+                  >
+                    {r.playable.map((c: string, cidx: number) => (
+                      <InlineCard key={cidx} card={c} />
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>You have no rainbow — you may play any cards.</p>
+        )}
+      </>
+    );
+  }
+
   if (decomp.length === 0) {
     return <div>Unable to analyze format</div>;
   }

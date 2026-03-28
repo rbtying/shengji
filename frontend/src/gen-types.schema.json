@@ -530,6 +530,16 @@
         },
         {
           "type": "object",
+          "required": ["SetCompoundFormats"],
+          "properties": {
+            "SetCompoundFormats": {
+              "$ref": "#/definitions/CompoundFormats"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetGameVisibility"],
           "properties": {
             "SetGameVisibility": {
@@ -767,6 +777,16 @@
             "$ref": "#/definitions/Card"
           }
         },
+        "compound_formats": {
+          "default": {
+            "rainbows": null
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/CompoundFormats"
+            }
+          ]
+        },
         "hands": {
           "$ref": "#/definitions/Hands"
         },
@@ -846,6 +866,19 @@
         },
         "trump": {
           "$ref": "#/definitions/Trump"
+        }
+      }
+    },
+    "CompoundFormats": {
+      "description": "Configuration for compound/exotic trick formats.",
+      "type": "object",
+      "properties": {
+        "rainbows": {
+          "description": "`None` means rainbows are disabled. `Some(n)` enables rainbows and requires the lead to contain at least `n` cards (all the same number, spanning at least 4 distinct effective suits).",
+          "default": null,
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
         }
       }
     },
@@ -2604,6 +2637,19 @@
               "enum": ["BombPolicySet"]
             }
           }
+        },
+        {
+          "type": "object",
+          "required": ["compound_formats", "type"],
+          "properties": {
+            "compound_formats": {
+              "$ref": "#/definitions/CompoundFormats"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["CompoundFormatsSet"]
+            }
+          }
         }
       ]
     },
@@ -2896,6 +2942,16 @@
         },
         "chat_link": {
           "type": ["string", "null"]
+        },
+        "compound_formats": {
+          "default": {
+            "rainbows": null
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/CompoundFormats"
+            }
+          ]
         },
         "first_landlord_selection_policy": {
           "default": "ByWinningBid",
@@ -3292,6 +3348,11 @@
       "type": "object",
       "required": ["suit", "trump", "units"],
       "properties": {
+        "is_rainbow": {
+          "description": "True when this trick was led as a rainbow (same rank across ≥ 4 suits).",
+          "default": false,
+          "type": "boolean"
+        },
         "suit": {
           "$ref": "#/definitions/EffectiveSuit"
         },

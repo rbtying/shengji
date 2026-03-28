@@ -11,6 +11,7 @@ import Kicker from "./Kicker";
 import ArrayUtils from "./util/array";
 import { RandomizePlayersButton } from "./RandomizePlayersButton";
 import {
+  CompoundFormats,
   InitializePhase,
   Player,
   PropagatedState,
@@ -446,6 +447,7 @@ interface IUncommonSettings {
   setHideThrowHaltingPlayer: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setTractorRequirements: (v: TractorRequirements) => void;
   setBombPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
+  setCompoundFormats: (v: CompoundFormats) => void;
 }
 
 const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
@@ -597,6 +599,49 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
           </label>
         </div>
       )}
+      <div>
+        <label>
+          Rainbow tricks (same rank across ≥4 suits):{" "}
+          <select
+            value={
+              props.state.propagated.compound_formats?.rainbows != null
+                ? "enabled"
+                : "disabled"
+            }
+            onChange={(evt) => {
+              if (evt.target.value === "enabled") {
+                props.setCompoundFormats({
+                  rainbows:
+                    props.state.propagated.compound_formats?.rainbows ??
+                    (props.state.propagated.num_decks ?? 2) * 2 + 1,
+                });
+              } else {
+                props.setCompoundFormats({ rainbows: null });
+              }
+            }}
+          >
+            <option value="disabled">Disabled</option>
+            <option value="enabled">Enabled</option>
+          </select>
+        </label>
+        {props.state.propagated.compound_formats?.rainbows != null && (
+          <label>
+            {" "}
+            Minimum cards:{" "}
+            <input
+              type="number"
+              min={4}
+              value={props.state.propagated.compound_formats.rainbows}
+              onChange={(evt) => {
+                const n = parseInt(evt.target.value, 10);
+                if (!isNaN(n) && n >= 4) {
+                  props.setCompoundFormats({ rainbows: n });
+                }
+              }}
+            />
+          </label>
+        )}
+      </div>
       <div>
         <label>
           Should reveal kitty at end of game:{" "}
@@ -1118,6 +1163,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "compound_formats":
+            send({
+              Action: {
+                SetCompoundFormats: value,
+              },
+            });
+            break;
         }
       }
     }
@@ -1345,6 +1397,9 @@ const Initialize = (props: IProps): JSX.Element => {
             send({ Action: { SetTractorRequirements: requirements } })
           }
           setBombPolicy={setBombPolicy}
+          setCompoundFormats={(formats) =>
+            send({ Action: { SetCompoundFormats: formats } })
+          }
         />
         <DifficultySettings
           state={props.state}
