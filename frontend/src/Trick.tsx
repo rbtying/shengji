@@ -82,7 +82,7 @@ const TrickE = (props: IProps): JSX.Element => {
     <div className="trick">
       {isRainbow && (
         <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
-          🌈 Rainbow trick — play same rank across suits to bomb
+          🌈 Rainbow trick — play same rank across ≥4 suits to counter
         </div>
       )}
       {playOrder.map((id) => {

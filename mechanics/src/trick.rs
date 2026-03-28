@@ -289,11 +289,11 @@ impl TrickFormat {
         // Rainbow trick: must play a same-number set of the right size if able.
         if self.is_rainbow {
             if rainbow_number(proposed).is_some() {
-                // Playing a valid rainbow bomb is always legal.
+                // Playing a valid rainbow (same rank, right count) is always legal.
                 return true;
             }
-            // Not a rainbow bomb: only legal if the player has no rainbow bomb.
-            return !hand_has_rainbow_bomb(hand, required);
+            // Not a rainbow: only legal if the player has no rainbow to play.
+            return !hand_has_rainbow(hand, required);
         }
 
         let num_correct_suit_in_hand = || -> usize {
@@ -1018,9 +1018,9 @@ impl Trick {
         Some(self.played_cards[winner.0].id)
     }
 
-    /// Winner of a rainbow trick: whoever played the highest-number rainbow
-    /// bomb (all cards sharing one `Number`) of the required size. The leader
-    /// is always considered a valid rainbow bomb by construction.
+    /// Winner of a rainbow trick: whoever played the highest-rank rainbow
+    /// (all cards sharing one `Number`) of the required size. The leader's
+    /// play is always a valid rainbow by construction.
     fn compute_rainbow_winner(&self) -> Option<PlayerID> {
         let required = self.trick_format.as_ref()?.size();
         let mut winner_idx = 0;
@@ -1210,8 +1210,8 @@ fn rainbow_number(cards: &[Card]) -> Option<Number> {
 }
 
 /// Returns `true` if the player's hand contains at least `required` cards that
-/// all share the same `Number` (i.e. a rainbow bomb of the required size).
-fn hand_has_rainbow_bomb(hand: &HashMap<Card, usize>, required: usize) -> bool {
+/// all share the same `Number` (i.e. a playable rainbow of the required size).
+fn hand_has_rainbow(hand: &HashMap<Card, usize>, required: usize) -> bool {
     let mut by_number: HashMap<Number, usize> = HashMap::new();
     for (card, ct) in hand {
         if let Some(n) = card.number() {
@@ -3586,13 +3586,13 @@ mod tests {
     }
 
     #[test]
-    fn test_rainbow_winner_leader_wins_if_no_higher_bomb() {
+    fn test_rainbow_winner_leader_wins_if_no_higher_rainbow() {
         let trump = Trump::NoTrump { number: None };
         let cf = rainbow_formats(4);
 
         let mut hands = Hands::new(vec![P1, P2, P3, P4]);
         hands.add(P1, vec![C_8, D_8, H_8, S_8]).unwrap();
-        // P2-P4 have no rainbow bombs (mixed numbers).
+        // P2-P4 have no rainbows (mixed numbers).
         hands.add(P2, vec![C_3, D_4, H_5, S_6]).unwrap();
         hands.add(P3, vec![C_3, D_4, H_5, S_6]).unwrap();
         hands.add(P4, vec![C_3, D_4, H_5, S_6]).unwrap();
@@ -3607,7 +3607,7 @@ mod tests {
                 cf.clone(),
             ))
             .unwrap();
-        // P2 has no rainbow bomb, so anything of size 4 is legal.
+        // P2 has no rainbow, so anything of size 4 is legal.
         trick
             .play_cards(rainbow_pc(
                 P2,
@@ -3632,15 +3632,15 @@ mod tests {
     }
 
     #[test]
-    fn test_rainbow_must_play_bomb_if_available() {
-        // P2 has a rainbow bomb (four 6s) and tries to play non-bomb cards.
+    fn test_rainbow_must_play_rainbow_if_available() {
+        // P2 has a rainbow (four 6s) and tries to play non-rainbow cards.
         // That should be illegal.
         let trump = Trump::NoTrump { number: None };
         let cf = rainbow_formats(4);
 
         let mut hands = Hands::new(vec![P1, P2]);
         hands.add(P1, vec![C_5, D_5, H_5, S_5]).unwrap();
-        // P2 has a rainbow bomb (C_6, D_6, H_6, S_6) plus non-bomb extras (mixed ranks).
+        // P2 has a rainbow (C_6, D_6, H_6, S_6) plus non-rainbow extras (mixed ranks).
         hands
             .add(P2, vec![C_6, D_6, H_6, S_6, C_3, D_4, H_7, S_9])
             .unwrap();
@@ -3655,7 +3655,7 @@ mod tests {
             ))
             .unwrap();
 
-        // Trying to play non-bomb cards (mixed ranks) when a rainbow bomb is available → error.
+        // Trying to play non-rainbow cards (mixed ranks) when a rainbow is available → error.
         let hand_snapshot = hands.get(P2).unwrap().clone();
         let result = trick.trick_format().unwrap().is_legal_play(
             &hand_snapshot,
@@ -3663,7 +3663,7 @@ mod tests {
             TrickDrawPolicy::NoProtections,
             BombPolicy::NoBombs,
         );
-        assert!(!result, "should be illegal when rainbow bomb is available");
+        assert!(!result, "should be illegal when rainbow is available");
 
         // Playing the bomb IS legal.
         let result2 = trick.trick_format().unwrap().is_legal_play(
@@ -3672,12 +3672,12 @@ mod tests {
             TrickDrawPolicy::NoProtections,
             BombPolicy::NoBombs,
         );
-        assert!(result2, "rainbow bomb should always be legal");
+        assert!(result2, "rainbow should always be legal");
     }
 
     #[test]
-    fn test_rainbow_no_bomb_available_anything_legal() {
-        // P2 has no rainbow bomb; any 4 cards is legal.
+    fn test_rainbow_no_rainbow_available_anything_legal() {
+        // P2 has no rainbow; any 4 cards is legal.
         let trump = Trump::NoTrump { number: None };
         let cf = rainbow_formats(4);
 
@@ -3703,6 +3703,6 @@ mod tests {
             TrickDrawPolicy::NoProtections,
             BombPolicy::NoBombs,
         );
-        assert!(result, "any cards legal when no rainbow bomb available");
+        assert!(result, "any cards legal when no rainbow available");
     }
 }
