@@ -3633,8 +3633,8 @@ mod tests {
 
     #[test]
     fn test_rainbow_must_play_rainbow_if_available() {
-        // P2 has a rainbow (four 6s) and tries to play non-rainbow cards.
-        // That should be illegal.
+        // P2 has a rainbow (four 6s) — playing non-rainbow cards must be rejected
+        // by play_cards, and playing the rainbow must succeed.
         let trump = Trump::NoTrump { number: None };
         let cf = rainbow_formats(4);
 
@@ -3655,29 +3655,33 @@ mod tests {
             ))
             .unwrap();
 
-        // Trying to play non-rainbow cards (mixed ranks) when a rainbow is available → error.
-        let hand_snapshot = hands.get(P2).unwrap().clone();
-        let result = trick.trick_format().unwrap().is_legal_play(
-            &hand_snapshot,
-            &[C_3, D_4, H_7, S_9],
-            TrickDrawPolicy::NoProtections,
-            BombPolicy::NoBombs,
+        // Playing non-rainbow cards when a rainbow is available must be rejected.
+        assert!(
+            trick
+                .play_cards(rainbow_pc(
+                    P2,
+                    &mut hands,
+                    &[C_3, D_4, H_7, S_9],
+                    cf.clone()
+                ))
+                .is_err(),
+            "play_cards must reject non-rainbow when rainbow is available"
         );
-        assert!(!result, "should be illegal when rainbow is available");
 
-        // Playing the bomb IS legal.
-        let result2 = trick.trick_format().unwrap().is_legal_play(
-            &hand_snapshot,
-            &[C_6, D_6, H_6, S_6],
-            TrickDrawPolicy::NoProtections,
-            BombPolicy::NoBombs,
+        // Playing the rainbow must succeed and complete the trick.
+        trick
+            .play_cards(rainbow_pc(P2, &mut hands, &[C_6, D_6, H_6, S_6], cf))
+            .unwrap();
+        assert_eq!(
+            trick.complete().unwrap().winner,
+            P2,
+            "P2's higher rainbow (6s) beats P1's (5s)"
         );
-        assert!(result2, "rainbow should always be legal");
     }
 
     #[test]
     fn test_rainbow_no_rainbow_available_anything_legal() {
-        // P2 has no rainbow; any 4 cards is legal.
+        // P2 has no rainbow; any 4 cards must be accepted by play_cards.
         let trump = Trump::NoTrump { number: None };
         let cf = rainbow_formats(4);
 
@@ -3695,14 +3699,14 @@ mod tests {
             ))
             .unwrap();
 
-        let hand_snapshot = hands.get(P2).unwrap().clone();
-        let tf = trick.trick_format().unwrap();
-        let result = tf.is_legal_play(
-            &hand_snapshot,
-            &[C_3, D_4, H_7, S_9],
-            TrickDrawPolicy::NoProtections,
-            BombPolicy::NoBombs,
+        // Mixed-rank play must be accepted (no rainbow in hand) and P1 wins.
+        trick
+            .play_cards(rainbow_pc(P2, &mut hands, &[C_3, D_4, H_7, S_9], cf))
+            .unwrap();
+        assert_eq!(
+            trick.complete().unwrap().winner,
+            P1,
+            "leader wins when no follower plays a rainbow"
         );
-        assert!(result, "any cards legal when no rainbow available");
     }
 }
