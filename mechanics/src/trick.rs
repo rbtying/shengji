@@ -305,6 +305,7 @@ impl TrickFormat {
             if let TrickDrawPolicy::NoFormatBasedDraw = trick_draw_policy {
                 return true;
             }
+
             let available_cards = Card::cards(
                 hand.iter()
                     .filter(|(c, _)| self.trump.effective_suit(**c) == self.suit),
@@ -312,10 +313,26 @@ impl TrickFormat {
             .copied()
             .collect::<Vec<_>>();
 
+            // With LongerTuplesProtected, play_matches uses NoProtections, so a
+            // longer tuple in the play (e.g. a triple) can satisfy a shorter slot
+            // (e.g. a pair) by decomposing — short-circuiting before hand_can_play
+            // detects that a genuine shorter tuple was available in the hand.
+            //
+            // For each requirement, after play_matches fires, for each simple N-slot
+            // (N >= 2) we compute how many such slots are NOT already covered by
+            // play cards with play_ct == N. We then ask: can the hand satisfy those
+            // remaining N-slots under the protection policy? If yes, the player
+            // had genuine shorter tuples available and is not required to break a
+            // longer tuple to fill those slots — so the play must use them instead.
+            //
+            // Using check_play on the remaining slots (rather than counting hand_ct==N
+            // cards manually) means the same protection semantics apply: a longer
+            // tuple in hand can't be forced into a shorter slot, so it won't count.
+            let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
+
             for requirement in self.decomposition(trick_draw_policy) {
-                // If it's a match, we're good!
                 let play_matches = UnitLike::check_play(
-                    OrderedCard::make_map(proposed.iter().copied(), self.trump),
+                    play_counts.clone(),
                     requirement.iter().cloned(),
                     TrickDrawPolicy::NoProtections,
                 )
@@ -323,6 +340,55 @@ impl TrickFormat {
                 .is_some();
 
                 if play_matches {
+                    let longer_tuple_bypasses_genuine = matches!(
+                        trick_draw_policy,
+                        TrickDrawPolicy::LongerTuplesProtected
+                            | TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor
+                    ) && requirement
+                        .iter()
+                        .filter(|u| u.adjacent_tuples.len() == 1)
+                        .any(|u| {
+                            let n = u.adjacent_tuples[0];
+                            if n < 2 {
+                                return false;
+                            }
+                            // N-slots in this requirement
+                            let n_slots = requirement
+                                .iter()
+                                .filter(|u2| {
+                                    u2.adjacent_tuples.len() == 1 && u2.adjacent_tuples[0] == n
+                                })
+                                .count();
+                            // N-slots already covered by play cards with play_ct == n
+                            // (these cards are legitimately filling the N-slot)
+                            let covered_by_play = play_counts
+                                .iter()
+                                .filter(|(oc, &pct)| {
+                                    pct == n && self.trump.effective_suit(oc.card) == self.suit
+                                })
+                                .count();
+                            let remaining = n_slots.saturating_sub(covered_by_play);
+                            if remaining == 0 {
+                                return false;
+                            }
+                            // Can the hand fill the remaining N-slots?
+                            let remaining_units: Vec<UnitLike> =
+                                std::iter::repeat_with(|| UnitLike {
+                                    adjacent_tuples: vec![n],
+                                })
+                                .take(remaining)
+                                .collect();
+                            UnitLike::check_play(
+                                OrderedCard::make_map(available_cards.iter().copied(), self.trump),
+                                remaining_units.into_iter(),
+                                trick_draw_policy,
+                            )
+                            .next()
+                            .is_some()
+                        });
+                    if longer_tuple_bypasses_genuine {
+                        return false;
+                    }
                     return true;
                 }
                 // Otherwise, if it could match in the player's hand, it's not OK.
@@ -797,6 +863,29 @@ impl Trick {
     }
 
     fn _defeats(m: &Units, winner: &Units, throw_eval_policy: ThrowEvaluationPolicy) -> bool {
+        let m_is_bomb = m.len() == 1 && m[0].is_bomb();
+        let w_is_bomb = winner.len() == 1 && winner[0].is_bomb();
+
+        if m_is_bomb || w_is_bomb {
+            if !m_is_bomb {
+                return false; // non-bomb never beats a bomb
+            }
+            if !w_is_bomb {
+                return true; // bomb always beats a non-bomb
+            }
+            // Both are bombs: more cards wins; equal size: higher rank wins
+            // (cmp_effective handles trump > non-trump).
+            let m_size = m[0].size();
+            let w_size = winner[0].size();
+            return match m_size.cmp(&w_size) {
+                Ordering::Greater => true,
+                Ordering::Less => false,
+                Ordering::Equal => {
+                    m[0].first_card().cmp_effective(winner[0].first_card()) == Ordering::Greater
+                }
+            };
+        }
+
         match throw_eval_policy {
             ThrowEvaluationPolicy::All => m
                 .iter()
@@ -843,8 +932,7 @@ impl Trick {
 
     fn compute_winner(&self, throw_eval_policy: ThrowEvaluationPolicy) -> Option<PlayerID> {
         let tf = self.trick_format.as_ref()?;
-        let mut winner = (0, tf.units.to_vec());
-        let mut winner_is_bomb = false;
+        let mut winner = (0usize, tf.units.to_vec());
 
         for (idx, _pc) in self.played_cards.iter().enumerate().skip(1) {
             let mapping = self.played_card_mappings.get(idx).and_then(|m| m.as_ref());
@@ -852,25 +940,12 @@ impl Trick {
 
             if this_is_bomb {
                 let mapping = mapping.unwrap();
-                let dominated = if winner_is_bomb {
-                    // Both are bombs: higher rank wins (cmp_effective handles trump > non-trump)
-                    mapping[0]
-                        .first_card()
-                        .cmp_effective(winner.1[0].first_card())
-                        == Ordering::Greater
-                } else {
-                    true // Bomb always beats non-bomb
-                };
-                if dominated {
+                if Self::_defeats(mapping, &winner.1, throw_eval_policy) {
                     winner = (idx, mapping.clone());
-                    winner_is_bomb = true;
                 }
-            } else if !winner_is_bomb {
-                if let Ok(mut mm) = tf.matches(&self.played_cards[idx].cards) {
-                    let greater = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy));
-                    if let Some(m) = greater {
-                        winner = (idx, m);
-                    }
+            } else if let Ok(mut mm) = tf.matches(&self.played_cards[idx].cards) {
+                if let Some(m) = mm.find(|m| Self::_defeats(m, &winner.1, throw_eval_policy)) {
+                    winner = (idx, m);
                 }
             }
         }
@@ -2907,6 +2982,272 @@ mod tests {
             .play_cards(pc!(P4, &mut hands, &[S_3, S_5, S_6, S_7]; bp))
             .unwrap();
 
+        assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    // ---- Bug regression tests ----
+
+    /// Bug: with LongerTuplesProtected and 4-of-a-kind bombs enabled, playing a triple
+    /// (count=3) as three card slots was incorrectly accepted when a genuine pair was
+    /// available in the hand.
+    ///
+    /// LongerTuplesProtected correctly protects a triple in the *hand* from being forced
+    /// to contribute a pair. However, the play-matches check was using NoProtections, so
+    /// playing three identical cards could "satisfy" a pair requirement (as pair+single),
+    /// short-circuiting before the hand check ran. This allowed the player to bypass a
+    /// genuine pair (e.g. KK) by sinking the triple into the play as three singles.
+    ///
+    /// The fix: when bombs are enabled + LongerTuplesProtected, also apply
+    /// LongerTuplesProtected to the play-matches check. A triple *in the play* (count=3)
+    /// cannot satisfy a pair requirement; two genuine copies in the play (count=2) can.
+    #[test]
+    fn test_triple_in_play_does_not_satisfy_pair_when_genuine_pair_available() {
+        let bp = BombPolicy::AllowBombs;
+
+        // Trick format: 3-pair tractor in hearts (H_10-H_10-H_J-H_J-H_Q-H_Q)
+        let trick_format = TrickFormat::from_cards(
+            TRUMP,
+            TractorRequirements::default(),
+            &[H_10, H_10, H_J, H_J, H_Q, H_Q],
+            None,
+        )
+        .unwrap();
+
+        // Player has H_K×2 (genuine pair) and H_2×3 (triple, protected by LongerTuplesProtected)
+        let mut hands = Hands::new(vec![P2]);
+        hands
+            .add(P2, vec![H_K, H_K, H_2, H_2, H_2, H_5, H_6, H_7, H_8])
+            .unwrap();
+        let hand = hands.get(P2).unwrap().clone();
+
+        // Playing H_2×3 + H_5+H_6+H_7 (triple + 3 singles, no KK) should be ILLEGAL.
+        // The triple in the play cannot satisfy the pair requirement (count=3>2 is
+        // protected). KK is a genuine pair and hand_can_play detects it → illegal.
+        assert!(
+            !trick_format.is_legal_play(
+                &hand,
+                &[H_2, H_2, H_2, H_5, H_6, H_7],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing triple + singles should be illegal when a genuine pair (KK) is available"
+        );
+
+        // Playing H_2×2 + H_K×2 + H_5+H_6 (2 pairs + 2 singles) should be LEGAL.
+        // H_22 has count=2 in the play (not protected), so play_matches accepts it.
+        assert!(
+            trick_format.is_legal_play(
+                &hand,
+                &[H_2, H_2, H_K, H_K, H_5, H_6],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing 2 pairs + 2 singles should be legal"
+        );
+
+        // With ONLY a triple (no genuine pair), playing 222+singles is LEGAL.
+        // The triple is protected: hand_can_play returns false for pair requirements,
+        // and the play is trivially legal.
+        let mut hands2 = Hands::new(vec![P2]);
+        hands2
+            .add(P2, vec![H_2, H_2, H_2, H_5, H_6, H_7, H_8, H_9, H_J])
+            .unwrap();
+        let hand2 = hands2.get(P2).unwrap().clone();
+        assert!(
+            trick_format.is_legal_play(
+                &hand2,
+                &[H_2, H_2, H_2, H_5, H_6, H_7],
+                TrickDrawPolicy::LongerTuplesProtected,
+                bp,
+            ),
+            "playing triple + singles should be legal when no genuine pair is available"
+        );
+    }
+
+    /// The longer-tuple guard must count how many N-slots the current requirement has and
+    /// compare that to how many genuine N-tuples (hand_ct == N) the hand can provide.
+    /// Only fire when genuine_in_hand >= n_slots_needed.
+    ///
+    /// Example: [2 pair slots] with only 1 genuine pair in hand → quad filling both slots
+    /// is LEGAL (not enough genuine pairs for both slots).
+    ///
+    /// Example: [1 pair + 1 single] (decomposition) with 1 genuine pair in hand → playing
+    /// the full triple (3 copies, filling pair+single) is ILLEGAL; the genuine pair must
+    /// fill the pair slot.
+    #[test]
+    fn test_longer_tuple_guard_requires_enough_genuine_tuples() {
+        // Tractor format (2 pair slots, 4 cards).
+        let tf_tractor = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: vec![TrickUnit::Tractor {
+                count: 2,
+                members: vec![oc!(S_2), oc!(S_3)],
+            }],
+        };
+        // [1 pair + 1 single] format (3 cards).
+        let tf_pair_single = TrickFormat {
+            suit: EffectiveSuit::Trump,
+            trump: TRUMP,
+            units: vec![
+                TrickUnit::Repeated {
+                    count: 2,
+                    card: oc!(S_3),
+                },
+                TrickUnit::Repeated {
+                    count: 1,
+                    card: oc!(S_5),
+                },
+            ],
+        };
+
+        for bp in [BombPolicy::NoBombs, BombPolicy::AllowBombs] {
+            // === Tractor (2 pair slots) ===
+            // Only 1 genuine pair (S_5×2) in hand; 2 pair slots needed.
+            // S_2×4 legitimately fills both → LEGAL (guard should not fire).
+            let hand = Card::count(vec![S_2, S_2, S_2, S_2, S_3, S_5, S_5]);
+            assert!(
+                tf_tractor.is_legal_play(
+                    &hand,
+                    &[S_2, S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "quad filling 2-slot tractor is legal when only 1 genuine pair exists (bp={bp:?})"
+            );
+
+            // === [1 pair + 1 single] decomposition ===
+            // Hand has S_2×3 (triple) + S_5×2 (genuine pair). Playing the full triple
+            // ([S_2,S_2,S_2] → pair+single via NoProtections) should be ILLEGAL:
+            // 1 genuine pair is available for the 1 pair slot.
+            let hand_with_pair = Card::count(vec![S_2, S_2, S_2, S_5, S_5, S_6]);
+            assert!(
+                !tf_pair_single.is_legal_play(
+                    &hand_with_pair,
+                    &[S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "triple filling pair+single when genuine pair available should be ILLEGAL (bp={bp:?})"
+            );
+
+            // Playing [S_5,S_5,S_2] (genuine pair + single) is LEGAL.
+            assert!(
+                tf_pair_single.is_legal_play(
+                    &hand_with_pair,
+                    &[S_5, S_5, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "genuine pair + single is LEGAL (bp={bp:?})"
+            );
+
+            // With no genuine pair (only triple), [S_2,S_2,S_2] is LEGAL.
+            let hand_no_pair = Card::count(vec![S_2, S_2, S_2, S_6, S_7, S_8]);
+            assert!(
+                tf_pair_single.is_legal_play(
+                    &hand_no_pair,
+                    &[S_2, S_2, S_2],
+                    TrickDrawPolicy::LongerTuplesProtected,
+                    bp,
+                ),
+                "triple filling pair+single is LEGAL when no genuine pair exists (bp={bp:?})"
+            );
+        }
+    }
+
+    /// Bug: when the leader plays a bomb, compute_winner didn't track it as a bomb
+    /// (winner_is_bomb started as false). This caused any subsequent bomb, even a
+    /// lower one, to incorrectly win by triggering the "bomb beats non-bomb" branch.
+    #[test]
+    fn test_leader_bomb_not_beaten_by_lower_bomb() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a bomb (4 heart jacks)
+        hands.add(P1, vec![H_J, H_J, H_J, H_J]).unwrap();
+        // P2 plays a lower bomb (4 heart 2s)
+        hands.add(P2, vec![H_2, H_2, H_2, H_2]).unwrap();
+        // P3 and P4 are void in hearts; they play clubs filler
+        hands.add(P3, vec![C_5, C_6, C_7, C_8]).unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+
+        // P1 should win: their bomb (4 jacks) outranks P2's bomb (4 twos)
+        assert_eq!(trick.complete().unwrap().winner, P1);
+    }
+
+    /// Complementary check: a higher bomb played after the leader's bomb should win.
+    #[test]
+    fn test_higher_bomb_beats_leader_bomb() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a lower bomb (4 heart 2s)
+        hands.add(P1, vec![H_2, H_2, H_2, H_2]).unwrap();
+        // P2 plays a higher bomb (4 heart jacks)
+        hands.add(P2, vec![H_J, H_J, H_J, H_J]).unwrap();
+        // P3 and P4 play clubs filler (void in hearts)
+        hands.add(P3, vec![C_5, C_6, C_7, C_8]).unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8]; bp))
+            .unwrap();
+
+        // P2 wins: their bomb (4 jacks) outranks P1's bomb (4 twos)
+        assert_eq!(trick.complete().unwrap().winner, P2);
+    }
+
+    /// When the leader plays a larger bomb, a smaller same-suit bomb should not win.
+    #[test]
+    fn test_larger_bomb_beats_smaller_bomb_regardless_of_order() {
+        let bp = BombPolicy::AllowBombs;
+        let mut hands = Hands::new(vec![P1, P2, P3, P4]);
+        // P1 leads with a 6-card bomb (6 heart 2s)
+        hands.add(P1, vec![H_2, H_2, H_2, H_2, H_2, H_2]).unwrap();
+        // P2 plays a 6-card bomb of higher rank (6 heart jacks)
+        hands.add(P2, vec![H_J, H_J, H_J, H_J, H_J, H_J]).unwrap();
+        // P3 plays a lower-rank 6-card bomb (6 heart 3s) after P2's win
+        hands.add(P3, vec![H_3, H_3, H_3, H_3, H_3, H_3]).unwrap();
+        hands.add(P4, vec![C_5, C_6, C_7, C_8, C_9, C_10]).unwrap();
+
+        let mut trick = Trick::new(TRUMP, vec![P1, P2, P3, P4], bp);
+        trick
+            .play_cards(pc!(P1, &mut hands, &[H_2, H_2, H_2, H_2, H_2, H_2]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P2, &mut hands, &[H_J, H_J, H_J, H_J, H_J, H_J]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P3, &mut hands, &[H_3, H_3, H_3, H_3, H_3, H_3]; bp))
+            .unwrap();
+        trick
+            .play_cards(pc!(P4, &mut hands, &[C_5, C_6, C_7, C_8, C_9, C_10]; bp))
+            .unwrap();
+
+        // P2 wins: their bomb (6 jacks) outranks both P1's (6 twos) and P3's (6 threes)
         assert_eq!(trick.complete().unwrap().winner, P2);
     }
 }
