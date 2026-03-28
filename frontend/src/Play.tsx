@@ -585,6 +585,7 @@ const HelperContents = (props: {
   }
 
   if (props.format.is_rainbow) {
+    const rainbows = decomp.filter((d) => d.playable.length > 0);
     return (
       <>
         <p>
@@ -599,7 +600,27 @@ const HelperContents = (props: {
           The highest-rank rainbow wins. If no follower plays a rainbow, the
           leader wins.
         </p>
-        <p>If you have no rainbow, you may play any cards.</p>
+        {rainbows.length > 0 ? (
+          <>
+            <p>You can play:</p>
+            <ul>
+              {rainbows.map((r, idx) => (
+                <li key={idx}>
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => props.setSelected(r.playable)}
+                  >
+                    {r.playable.map((c: string, cidx: number) => (
+                      <InlineCard key={cidx} card={c} />
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>You have no rainbow — you may play any cards.</p>
+        )}
       </>
     );
   }
