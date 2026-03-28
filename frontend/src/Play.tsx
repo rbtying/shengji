@@ -592,12 +592,12 @@ const HelperContents = (props: {
           same rank spanning at least 4 suits.
         </p>
         <p>
-          If you have a <em>rainbow bomb</em> (enough cards all of the same
-          rank), you <strong>must</strong> play it.
+          If you have a <em>rainbow bomb</em> — the same number of cards as the
+          trick, all of the same rank — you <strong>must</strong> play one.
         </p>
         <p>
-          The highest-rank rainbow bomb wins. If nobody plays a rainbow bomb,
-          the leader wins.
+          The highest-rank rainbow bomb wins. If no follower plays a rainbow
+          bomb, the leader wins.
         </p>
         <p>If you have no rainbow bomb, you may play any cards.</p>
       </>
