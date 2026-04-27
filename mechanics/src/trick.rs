@@ -351,15 +351,30 @@ impl TrickFormat {
             //
             // For each requirement, after play_matches fires, for each simple N-slot
             // (N >= 2) we compute how many such slots are NOT already covered by
-            // play cards with play_ct == N. We then ask: can the hand satisfy those
-            // remaining N-slots under the protection policy? If yes, the player
-            // had genuine shorter tuples available and is not required to break a
-            // longer tuple to fill those slots — so the play must use them instead.
+            // play cards with play_ct == N. We then ask: can the REMAINING hand
+            // (available_cards minus the proposed play) satisfy those remaining
+            // N-slots under the protection policy? If yes, the player had genuine
+            // shorter tuples available but unplayed — so the play must use them.
             //
             // Using check_play on the remaining slots (rather than counting hand_ct==N
             // cards manually) means the same protection semantics apply: a longer
             // tuple in hand can't be forced into a shorter slot, so it won't count.
+            //
+            // Subtracting the proposed play from available_cards is critical: without
+            // it, a pair that IS already in the proposed play would be found by
+            // check_play and falsely trigger the guard, rejecting a valid play.
             let play_counts = OrderedCard::make_map(proposed.iter().copied(), self.trump);
+
+            // Cards in the led suit that are not part of the proposed play.
+            let available_minus_play: Vec<Card> = {
+                let mut counts = Card::count(available_cards.iter().copied());
+                for (oc, &pct) in &play_counts {
+                    if let Some(ct) = counts.get_mut(&oc.card) {
+                        *ct = ct.saturating_sub(pct);
+                    }
+                }
+                Card::cards(counts.iter()).copied().collect::<Vec<_>>()
+            };
 
             for requirement in self.decomposition(trick_draw_policy) {
                 let play_matches = UnitLike::check_play(
@@ -402,7 +417,7 @@ impl TrickFormat {
                             if remaining == 0 {
                                 return false;
                             }
-                            // Can the hand fill the remaining N-slots?
+                            // Can the remaining (unplayed) hand fill the remaining N-slots?
                             let remaining_units: Vec<UnitLike> =
                                 std::iter::repeat_with(|| UnitLike {
                                     adjacent_tuples: vec![n],
@@ -410,7 +425,10 @@ impl TrickFormat {
                                 .take(remaining)
                                 .collect();
                             UnitLike::check_play(
-                                OrderedCard::make_map(available_cards.iter().copied(), self.trump),
+                                OrderedCard::make_map(
+                                    available_minus_play.iter().copied(),
+                                    self.trump,
+                                ),
                                 remaining_units.into_iter(),
                                 trick_draw_policy,
                             )
@@ -2636,6 +2654,74 @@ mod tests {
         assert!(tf.is_legal_play(
             &hand,
             &[S_3, S_6, S_8, S_8, S_8],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+    }
+
+    #[test]
+    fn test_longer_tuple_bypasses_genuine_false_positive() {
+        // Regression test: when a player's entire in-suit hand is exactly a
+        // triple + pair (5 cards) and the format requires 5 cards (tractor +
+        // single), the play must be accepted. The bug was that available_cards
+        // (full hand) still contained the pair even though it was already in
+        // the proposed play, causing the check to incorrectly find it as an
+        // "unused genuine pair" and reject the play.
+        const HEART_TRUMP: Trump = Trump::Standard {
+            number: Number::Four,
+            suit: Suit::Hearts,
+        };
+        let tf = TrickFormat {
+            suit: EffectiveSuit::Spades,
+            trump: HEART_TRUMP,
+            units: vec![
+                TrickUnit::Tractor {
+                    members: vec![
+                        OrderedCard {
+                            card: S_6,
+                            trump: HEART_TRUMP,
+                        },
+                        OrderedCard {
+                            card: S_7,
+                            trump: HEART_TRUMP,
+                        },
+                    ],
+                    count: 2,
+                },
+                TrickUnit::Repeated {
+                    card: OrderedCard {
+                        card: S_5,
+                        trump: HEART_TRUMP,
+                    },
+                    count: 1,
+                },
+            ],
+            is_rainbow: false,
+        };
+        // Hand is exactly the 5 required cards: triple S_6 + pair S_8
+        // (non-adjacent ranks, so no tractor is possible at level 0).
+        // Playing all 5 is the only legal play. The pair S_8 covers one pair
+        // slot, and the triple S_6 covers the other pair slot + single.
+        let hand = Card::count(vec![S_6, S_6, S_6, S_8, S_8]);
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_6, S_6, S_6, S_8, S_8],
+            TrickDrawPolicy::LongerTuplesProtected,
+            BombPolicy::NoBombs
+        ));
+        assert!(tf.is_legal_play(
+            &hand,
+            &[S_6, S_6, S_6, S_8, S_8],
+            TrickDrawPolicy::LongerTuplesProtectedAndOnlyDrawTractorOnTractor,
+            BombPolicy::NoBombs
+        ));
+        // With an extra genuine pair S_J in hand (also non-adjacent to the
+        // played cards), playing triple+pair while ignoring S_J should be
+        // rejected: the player must use S_J as the second genuine pair slot.
+        let hand_extra = Card::count(vec![S_6, S_6, S_6, S_8, S_8, S_J, S_J]);
+        assert!(!tf.is_legal_play(
+            &hand_extra,
+            &[S_6, S_6, S_6, S_8, S_8],
             TrickDrawPolicy::LongerTuplesProtected,
             BombPolicy::NoBombs
         ));
