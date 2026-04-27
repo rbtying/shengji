@@ -1357,7 +1357,7 @@ fn rainbow_play_combo(cards: &[Card], unit_sizes: &[usize]) -> Option<Vec<Number
     }
     // Sort by rank descending so greedy takes the highest available.
     let mut available: Vec<(Number, usize)> = by_number.into_iter().collect();
-    available.sort_by(|a, b| b.0.cmp(&a.0));
+    available.sort_by_key(|a| std::cmp::Reverse(a.0));
     // Sort unit sizes descending to match largest groups to largest units first.
     let mut sorted_sizes = unit_sizes.to_vec();
     sorted_sizes.sort_unstable_by(|a, b| b.cmp(a));
