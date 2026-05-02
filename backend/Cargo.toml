@@ -31,7 +31,7 @@ slog-async = "2.5"
 slog-bunyan = "2.2"
 slog-term = { version = "2.5", optional = true }
 storage = { path = "../storage" }
-tokio = { version = "1.28", features = [
+tokio = { version = "1.43", features = [
     "macros",
     "rt-multi-thread",
     "fs",
