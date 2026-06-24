@@ -25,7 +25,7 @@ const NumDecksSelector = (props: IProps): JSX.Element => {
           onChange={handleChange}
         >
           <option value="">default</option>
-          {ArrayUtils.range(props.numPlayers, (idx) => {
+          {ArrayUtils.range(props.numPlayers * 2, (idx) => {
             const val = idx + 1;
             return (
               <option value={val} key={idx}>
