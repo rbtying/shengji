@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use shengji_mechanics::bidding::Bid;
 use shengji_mechanics::deck::Deck;
 use shengji_mechanics::hands::Hands;
-use shengji_mechanics::types::{Card, Number, PlayerID, Rank, Trump};
+use shengji_mechanics::types::{Card, EffectiveSuit, Number, PlayerID, Rank, Trump};
 
 use crate::message::MessageVariant;
 use crate::settings::{
@@ -23,6 +23,34 @@ macro_rules! bail_unwrap {
             None => return Err(anyhow!("option was none")),
         }
     };
+}
+
+const RIVER_CROSSING_CARD_COUNT: usize = 5;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub enum RiverCrossingStage {
+    Deciding,
+    SelectingCrossingCards,
+    SelectingReturnCards,
+    Complete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct RiverCrossingPlayerState {
+    player_id: PlayerID,
+    eligible: bool,
+    decision: Option<bool>,
+    crossing_cards: Vec<Card>,
+    crossing_cards_submitted: bool,
+    received_crossing_cards: Vec<Card>,
+    return_cards: Vec<Card>,
+    return_cards_submitted: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct RiverCrossingState {
+    stage: RiverCrossingStage,
+    players: Vec<RiverCrossingPlayerState>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -48,6 +76,8 @@ pub struct ExchangePhase {
     removed_cards: Vec<Card>,
     #[serde(default)]
     decks: Vec<Deck>,
+    #[serde(default)]
+    river_crossing: Option<RiverCrossingState>,
     player_requested_reset: Option<PlayerID>,
 }
 
@@ -80,6 +110,7 @@ impl ExchangePhase {
             autobid,
             removed_cards,
             decks,
+            river_crossing: None,
             finalized: false,
             epoch: 1,
             player_requested_reset: None,
@@ -95,6 +126,9 @@ impl ExchangePhase {
     }
 
     pub fn move_card_to_kitty(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("bottom-card exchange has already ended")
+        }
         if self.exchanger != id {
             bail!("not the exchanger")
         }
@@ -107,6 +141,9 @@ impl ExchangePhase {
     }
 
     pub fn move_card_to_hand(&mut self, id: PlayerID, card: Card) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("bottom-card exchange has already ended")
+        }
         if self.exchanger != id {
             bail!("not the exchanger")
         }
@@ -134,6 +171,9 @@ impl ExchangePhase {
         id: PlayerID,
         iter: impl IntoIterator<Item = FriendSelection>,
     ) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("friend selection has already ended")
+        }
         if self.landlord != id {
             bail!("not the landlord")
         }
@@ -214,6 +254,9 @@ impl ExchangePhase {
     }
 
     pub fn finalize(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("bottom-card exchange has already ended")
+        }
         if id != self.exchanger {
             bail!("only the exchanger can finalize their cards")
         }
@@ -228,6 +271,9 @@ impl ExchangePhase {
     }
 
     pub fn pick_up_cards(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("bottom-card exchange has already ended")
+        }
         if !self.finalized {
             bail!("Current exchanger is still exchanging cards!")
         }
@@ -262,7 +308,7 @@ impl ExchangePhase {
     }
 
     pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
-        if !self.finalized || self.autobid.is_some() {
+        if self.river_crossing.is_some() || !self.finalized || self.autobid.is_some() {
             return false;
         }
         Bid::bid(
@@ -283,6 +329,9 @@ impl ExchangePhase {
     }
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.river_crossing.is_some() {
+            bail!("bidding has already ended")
+        }
         if !self.finalized {
             bail!("Can't take back bid until exchanger is done swapping cards")
         }
@@ -318,6 +367,12 @@ impl ExchangePhase {
     }
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
+        if self.river_crossing.is_some() {
+            // River-crossing choices are simultaneous, so there is deliberately
+            // no public "next" player. Returning the landlord also avoids
+            // revealing which players are eligible or have already submitted.
+            return Ok(self.landlord);
+        }
         if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
             && self.autobid.is_none()
             && !self.finalized
@@ -350,6 +405,13 @@ impl ExchangePhase {
             && !self.finalized
         {
             bail!("must give other players a chance to over-bid and swap cards")
+        }
+
+        if self.river_crossing_is_applicable() {
+            match self.river_crossing.as_ref().map(|r| r.stage) {
+                Some(RiverCrossingStage::Complete) => (),
+                _ => bail!("must complete five-trump river crossing first"),
+            }
         }
 
         let landlord_position = bail_unwrap!(self
@@ -387,6 +449,303 @@ impl ExchangePhase {
             self.removed_cards.clone(),
             self.decks.clone(),
         )
+    }
+
+    fn river_crossing_is_applicable(&self) -> bool {
+        self.propagated.five_trump_river_crossing_enabled
+            && self.propagated.players.len() == 4
+            && matches!(self.game_mode, GameMode::Tractor)
+            && matches!(self.trump, Trump::Standard { .. })
+    }
+
+    fn partner_of(&self, player_id: PlayerID) -> Result<PlayerID, Error> {
+        let position = self
+            .propagated
+            .players
+            .iter()
+            .position(|p| p.id == player_id)
+            .ok_or_else(|| anyhow!("player not found"))?;
+        if self.propagated.players.len() != 4 {
+            bail!("five-trump river crossing requires exactly four players")
+        }
+        Ok(self.propagated.players[(position + 2) % 4].id)
+    }
+
+    fn partner_decision(&self, player_id: PlayerID) -> Option<bool> {
+        let partner = self.partner_of(player_id).ok()?;
+        self.river_crossing
+            .as_ref()?
+            .players
+            .iter()
+            .find(|p| p.player_id == partner)?
+            .decision
+    }
+
+    fn trump_count(&self, player_id: PlayerID) -> Result<usize, Error> {
+        Ok(self
+            .hands
+            .get(player_id)?
+            .iter()
+            .filter(|(card, _)| self.trump.effective_suit(**card) == EffectiveSuit::Trump)
+            .map(|(_, count)| *count)
+            .sum())
+    }
+
+    pub fn start_river_crossing(&mut self, id: PlayerID) -> Result<bool, Error> {
+        if id != self.landlord {
+            bail!("only the leader can advance the game")
+        }
+        if !self.river_crossing_is_applicable() {
+            return Ok(false);
+        }
+        if self.river_crossing.is_some() {
+            bail!("five-trump river crossing has already started")
+        }
+
+        // Reuse all pre-play checks, except the crossing-completion check.
+        if self.kitty.len() != self.kitty_size {
+            bail!("incorrect number of cards in the bottom")
+        }
+        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
+            && self.autobid.is_none()
+            && !self.finalized
+        {
+            bail!("must give other players a chance to over-bid and swap cards")
+        }
+
+        let mut players = Vec::with_capacity(4);
+        for player in &self.propagated.players {
+            let eligible = self.trump_count(player.id)? <= RIVER_CROSSING_CARD_COUNT;
+            players.push(RiverCrossingPlayerState {
+                player_id: player.id,
+                eligible,
+                decision: if eligible { None } else { Some(false) },
+                crossing_cards: vec![],
+                crossing_cards_submitted: false,
+                received_crossing_cards: vec![],
+                return_cards: vec![],
+                return_cards_submitted: false,
+            });
+        }
+        let stage = if players.iter().any(|p| p.eligible) {
+            RiverCrossingStage::Deciding
+        } else {
+            RiverCrossingStage::Complete
+        };
+        self.river_crossing = Some(RiverCrossingState { stage, players });
+        Ok(true)
+    }
+
+    pub fn decide_river_crossing(&mut self, id: PlayerID, cross: bool) -> Result<(), Error> {
+        let crossing = self
+            .river_crossing
+            .as_mut()
+            .ok_or_else(|| anyhow!("five-trump river crossing has not started"))?;
+        if crossing.stage != RiverCrossingStage::Deciding {
+            bail!("river-crossing decisions are already complete")
+        }
+        let player = crossing
+            .players
+            .iter_mut()
+            .find(|p| p.player_id == id)
+            .ok_or_else(|| anyhow!("player not found"))?;
+        if !player.eligible {
+            bail!("player has more than five trump cards")
+        }
+        if player.decision.is_some() {
+            bail!("player has already decided")
+        }
+        player.decision = Some(cross);
+
+        if crossing.players.iter().all(|p| p.decision.is_some()) {
+            crossing.stage = if crossing.players.iter().any(|p| p.decision == Some(true)) {
+                RiverCrossingStage::SelectingCrossingCards
+            } else {
+                RiverCrossingStage::Complete
+            };
+        }
+        Ok(())
+    }
+
+    fn validate_crossing_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
+        if cards.len() != RIVER_CROSSING_CARD_COUNT {
+            bail!("must select exactly five cards")
+        }
+        self.hands.contains(id, cards.iter().copied())?;
+        let selected_trumps = cards
+            .iter()
+            .filter(|card| self.trump.effective_suit(**card) == EffectiveSuit::Trump)
+            .count();
+        if selected_trumps != self.trump_count(id)? {
+            bail!("the five crossing cards must include every trump card in the hand")
+        }
+        Ok(())
+    }
+
+    pub fn submit_river_crossing_cards(
+        &mut self,
+        id: PlayerID,
+        cards: Vec<Card>,
+    ) -> Result<(), Error> {
+        let stage = self
+            .river_crossing
+            .as_ref()
+            .map(|r| r.stage)
+            .ok_or_else(|| anyhow!("five-trump river crossing has not started"))?;
+        if stage != RiverCrossingStage::SelectingCrossingCards {
+            bail!("not selecting river-crossing cards")
+        }
+        self.validate_crossing_cards(id, &cards)?;
+        {
+            let player = self
+                .river_crossing
+                .as_mut()
+                .unwrap()
+                .players
+                .iter_mut()
+                .find(|p| p.player_id == id)
+                .ok_or_else(|| anyhow!("player not found"))?;
+            if player.decision != Some(true) {
+                bail!("player did not choose to cross the river")
+            }
+            if player.crossing_cards_submitted {
+                bail!("crossing cards already submitted")
+            }
+            player.crossing_cards = cards;
+            player.crossing_cards_submitted = true;
+        }
+
+        let all_submitted = self
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .all(|p| p.decision != Some(true) || p.crossing_cards_submitted);
+        if all_submitted {
+            self.apply_crossing_cards()?;
+        }
+        Ok(())
+    }
+
+    fn apply_crossing_cards(&mut self) -> Result<(), Error> {
+        let transfers = self
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .filter(|p| p.decision == Some(true))
+            .map(|p| {
+                Ok((
+                    p.player_id,
+                    self.partner_of(p.player_id)?,
+                    p.crossing_cards.clone(),
+                ))
+            })
+            .collect::<Result<Vec<_>, Error>>()?;
+
+        for (from, _, cards) in &transfers {
+            self.hands.remove(*from, cards.iter().copied())?;
+        }
+        for (_, to, cards) in &transfers {
+            self.hands.add(*to, cards.iter().copied())?;
+            let recipient = self
+                .river_crossing
+                .as_mut()
+                .unwrap()
+                .players
+                .iter_mut()
+                .find(|p| p.player_id == *to)
+                .unwrap();
+            recipient.received_crossing_cards = cards.clone();
+        }
+        self.river_crossing.as_mut().unwrap().stage = RiverCrossingStage::SelectingReturnCards;
+        Ok(())
+    }
+
+    pub fn submit_river_return_cards(
+        &mut self,
+        id: PlayerID,
+        cards: Vec<Card>,
+    ) -> Result<(), Error> {
+        let crossing = self
+            .river_crossing
+            .as_ref()
+            .ok_or_else(|| anyhow!("five-trump river crossing has not started"))?;
+        if crossing.stage != RiverCrossingStage::SelectingReturnCards {
+            bail!("not selecting return cards")
+        }
+        if self.partner_decision(id) != Some(true) {
+            bail!("this player has no cards to return")
+        }
+        if cards.len() != RIVER_CROSSING_CARD_COUNT {
+            bail!("must return exactly five cards")
+        }
+        self.hands.contains(id, cards.iter().copied())?;
+        {
+            let player = self
+                .river_crossing
+                .as_mut()
+                .unwrap()
+                .players
+                .iter_mut()
+                .find(|p| p.player_id == id)
+                .ok_or_else(|| anyhow!("player not found"))?;
+            if player.return_cards_submitted {
+                bail!("return cards already submitted")
+            }
+            player.return_cards = cards;
+            player.return_cards_submitted = true;
+        }
+
+        let all_submitted = self
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .all(|p| self.partner_decision(p.player_id) != Some(true) || p.return_cards_submitted);
+        if all_submitted {
+            self.apply_return_cards()?;
+        }
+        Ok(())
+    }
+
+    fn apply_return_cards(&mut self) -> Result<(), Error> {
+        let transfers = self
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .filter(|p| p.return_cards_submitted)
+            .map(|p| {
+                Ok((
+                    p.player_id,
+                    self.partner_of(p.player_id)?,
+                    p.return_cards.clone(),
+                ))
+            })
+            .collect::<Result<Vec<_>, Error>>()?;
+
+        // Remove every selection before adding any returned cards. This makes a
+        // two-way return genuinely simultaneous even when identical cards occur.
+        for (from, _, cards) in &transfers {
+            self.hands.remove(*from, cards.iter().copied())?;
+        }
+        for (_, to, cards) in &transfers {
+            self.hands.add(*to, cards.iter().copied())?;
+        }
+        self.river_crossing.as_mut().unwrap().stage = RiverCrossingStage::Complete;
+        Ok(())
+    }
+
+    pub fn river_crossing_complete(&self) -> bool {
+        self.river_crossing
+            .as_ref()
+            .map(|r| r.stage == RiverCrossingStage::Complete)
+            .unwrap_or(false)
     }
 
     pub fn request_reset(
@@ -428,6 +787,7 @@ impl ExchangePhase {
     }
 
     pub fn destructively_redact_for_player(&mut self, player: PlayerID) {
+        let players_partner = self.partner_of(player).ok();
         self.hands.destructively_redact_except_for_player(player);
         if player != self.exchanger || self.finalized {
             for card in &mut self.kitty {
@@ -442,5 +802,257 @@ impl ExchangePhase {
                 friends.clear();
             }
         }
+        if let Some(ref mut crossing) = self.river_crossing {
+            let stage = crossing.stage;
+            for state in &mut crossing.players {
+                if state.player_id != player {
+                    if stage == RiverCrossingStage::Deciding {
+                        state.eligible = false;
+                        state.decision = None;
+                    }
+                    state.crossing_cards.clear();
+                    state.return_cards.clear();
+                    if players_partner != Some(state.player_id) {
+                        state.received_crossing_cards.clear();
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod river_crossing_tests {
+    use super::*;
+    use shengji_mechanics::player::Player;
+    use shengji_mechanics::types::{
+        cards::{C_4, C_8, D_2, D_5, D_9, H_3, H_4, H_5, S_10, S_2, S_3, S_6, S_7},
+        Rank, Suit,
+    };
+
+    const P1: PlayerID = PlayerID(1);
+    const P2: PlayerID = PlayerID(2);
+    const P3: PlayerID = PlayerID(3);
+    const P4: PlayerID = PlayerID(4);
+
+    fn player(id: PlayerID, name: &str) -> Player {
+        Player {
+            id,
+            name: name.to_string(),
+            level: Rank::Number(Number::Two),
+            metalevel: 0,
+        }
+    }
+
+    fn phase(p1_cards: Vec<Card>, p3_cards: Vec<Card>) -> ExchangePhase {
+        let mut propagated = PropagatedState::default();
+        propagated.players = vec![
+            player(P1, "p1"),
+            player(P2, "p2"),
+            player(P3, "p3"),
+            player(P4, "p4"),
+        ];
+        propagated.five_trump_river_crossing_enabled = true;
+        propagated.game_mode = crate::settings::GameModeSettings::Tractor;
+
+        let trump = Trump::Standard {
+            suit: Suit::Hearts,
+            number: Number::Two,
+        };
+        let mut hands = Hands::new([P1, P2, P3, P4]);
+        hands.set_trump(trump);
+        hands.add(P1, p1_cards).unwrap();
+        hands.add(P2, vec![H_5; 6]).unwrap();
+        hands.add(P3, p3_cards).unwrap();
+        hands.add(P4, vec![H_5; 6]).unwrap();
+
+        ExchangePhase::new(
+            propagated,
+            2,
+            GameMode::Tractor,
+            vec![],
+            P1,
+            hands,
+            trump,
+            vec![],
+            None,
+            vec![],
+            vec![],
+        )
+    }
+
+    #[test]
+    fn zero_trumps_is_eligible() {
+        let p1_cards = vec![S_3, C_4, D_5, S_6, S_7];
+        let mut phase = phase(p1_cards, vec![H_4, S_7, C_8, D_9, S_10]);
+        assert!(phase.start_river_crossing(P1).unwrap());
+        let p1 = phase
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .find(|p| p.player_id == P1)
+            .unwrap();
+        assert!(p1.eligible);
+    }
+
+    #[test]
+    fn jokers_and_off_suit_level_cards_count_as_trumps() {
+        let mut phase = phase(
+            vec![Card::SmallJoker, Card::BigJoker, S_2, D_2, H_3, H_4, C_4],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        phase.start_river_crossing(P1).unwrap();
+        let p1 = phase
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .find(|p| p.player_id == P1)
+            .unwrap();
+        assert!(!p1.eligible);
+        assert_eq!(p1.decision, Some(false));
+    }
+
+    #[test]
+    fn crossing_cards_must_include_every_trump() {
+        let mut phase = phase(
+            vec![H_3, S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        phase.start_river_crossing(P1).unwrap();
+        phase.decide_river_crossing(P1, true).unwrap();
+        phase.decide_river_crossing(P3, false).unwrap();
+        assert!(phase
+            .submit_river_crossing_cards(P1, vec![S_3, C_4, D_5, S_6, S_7])
+            .is_err());
+    }
+
+    #[test]
+    fn two_way_crossing_has_a_simultaneous_return_round() {
+        let p1_cards = vec![H_3, S_3, C_4, D_5, S_6];
+        let p3_cards = vec![H_4, S_7, C_8, D_9, S_10];
+        let mut phase = phase(p1_cards.clone(), p3_cards.clone());
+        phase.start_river_crossing(P1).unwrap();
+        phase.decide_river_crossing(P1, true).unwrap();
+        phase.decide_river_crossing(P3, true).unwrap();
+
+        phase
+            .submit_river_crossing_cards(P1, p1_cards.clone())
+            .unwrap();
+        assert_eq!(
+            phase.river_crossing.as_ref().unwrap().stage,
+            RiverCrossingStage::SelectingCrossingCards
+        );
+        phase
+            .submit_river_crossing_cards(P3, p3_cards.clone())
+            .unwrap();
+        assert_eq!(
+            phase.river_crossing.as_ref().unwrap().stage,
+            RiverCrossingStage::SelectingReturnCards
+        );
+        assert!(phase.hands.contains(P1, p3_cards.clone()).is_ok());
+        assert!(phase.hands.contains(P3, p1_cards.clone()).is_ok());
+
+        phase
+            .submit_river_return_cards(P1, p3_cards.clone())
+            .unwrap();
+        assert!(!phase.river_crossing_complete());
+        // P3's selection remains secret and neither return is applied early.
+        assert!(phase.hands.contains(P1, p3_cards.clone()).is_ok());
+        phase
+            .submit_river_return_cards(P3, p1_cards.clone())
+            .unwrap();
+        assert!(phase.river_crossing_complete());
+        assert!(phase.hands.contains(P1, p1_cards).is_ok());
+        assert!(phase.hands.contains(P3, p3_cards).is_ok());
+    }
+
+    #[test]
+    fn one_way_recipient_can_return_received_cards() {
+        let p1_cards = vec![H_3, S_3, C_4, D_5, S_6];
+        let p3_cards = vec![H_4, S_7, C_8, D_9, S_10];
+        let mut phase = phase(p1_cards.clone(), p3_cards);
+        phase.start_river_crossing(P1).unwrap();
+        phase.decide_river_crossing(P1, true).unwrap();
+        phase.decide_river_crossing(P3, false).unwrap();
+        phase
+            .submit_river_crossing_cards(P1, p1_cards.clone())
+            .unwrap();
+        phase
+            .submit_river_return_cards(P3, p1_cards.clone())
+            .unwrap();
+        assert!(phase.river_crossing_complete());
+        assert!(phase.hands.contains(P1, p1_cards).is_ok());
+    }
+
+    #[test]
+    fn private_decisions_and_card_selections_are_redacted() {
+        let p1_cards = vec![H_3, S_3, C_4, D_5, S_6];
+        let p3_cards = vec![H_4, S_7, C_8, D_9, S_10];
+        let mut phase = phase(p1_cards.clone(), p3_cards.clone());
+        phase.start_river_crossing(P1).unwrap();
+        phase.decide_river_crossing(P1, true).unwrap();
+
+        let mut p3_view = phase.clone();
+        p3_view.destructively_redact_for_player(P3);
+        let hidden_p1 = p3_view
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .find(|p| p.player_id == P1)
+            .unwrap();
+        assert_eq!(hidden_p1.decision, None);
+
+        phase.decide_river_crossing(P3, true).unwrap();
+        phase
+            .submit_river_crossing_cards(P1, p1_cards.clone())
+            .unwrap();
+        let mut p3_view = phase.clone();
+        p3_view.destructively_redact_for_player(P3);
+        let hidden_p1 = p3_view
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .find(|p| p.player_id == P1)
+            .unwrap();
+        assert!(hidden_p1.crossing_cards.is_empty());
+
+        phase
+            .submit_river_crossing_cards(P3, p3_cards.clone())
+            .unwrap();
+        phase
+            .submit_river_return_cards(P1, p3_cards.clone())
+            .unwrap();
+        let mut p3_view = phase.clone();
+        p3_view.destructively_redact_for_player(P3);
+        let hidden_p1 = p3_view
+            .river_crossing
+            .as_ref()
+            .unwrap()
+            .players
+            .iter()
+            .find(|p| p.player_id == P1)
+            .unwrap();
+        assert!(hidden_p1.return_cards.is_empty());
+    }
+
+    #[test]
+    fn no_trump_skips_river_crossing() {
+        let mut phase = phase(
+            vec![H_3, S_3, C_4, D_5, S_6],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        phase.trump = Trump::NoTrump {
+            number: Some(Number::Two),
+        };
+        assert!(!phase.start_river_crossing(P1).unwrap());
+        assert!(phase.river_crossing.is_none());
     }
 }

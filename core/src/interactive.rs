@@ -276,6 +276,13 @@ impl InteractiveGame {
                 info!(logger, "Setting kitty theft policy"; "policy" => policy);
                 state.set_kitty_theft_policy(policy)?
             }
+            (
+                Action::SetFiveTrumpRiverCrossingEnabled(enabled),
+                GameState::Initialize(ref mut state),
+            ) => {
+                info!(logger, "Setting five-trump river crossing"; "enabled" => enabled);
+                state.set_five_trump_river_crossing_enabled(enabled)?
+            }
             (Action::SetGameShadowingPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting user multiple game session policy"; "policy" => policy);
                 state.set_user_multiple_game_session_policy(policy)?
@@ -366,7 +373,33 @@ impl InteractiveGame {
             }
             (Action::BeginPlay, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Entering play phase");
-                self.state = GameState::Play(state.advance(id)?);
+                let started_crossing = state.start_river_crossing(id)?;
+                if !started_crossing || state.river_crossing_complete() {
+                    self.state = GameState::Play(state.advance(id)?);
+                }
+                vec![]
+            }
+            (Action::DecideRiverCrossing(cross), GameState::Exchange(ref mut state)) => {
+                info!(logger, "Deciding five-trump river crossing"; "cross" => cross);
+                state.decide_river_crossing(id, cross)?;
+                if state.river_crossing_complete() {
+                    let landlord = state.landlord();
+                    self.state = GameState::Play(state.advance(landlord)?);
+                }
+                vec![]
+            }
+            (Action::SubmitRiverCrossingCards(ref cards), GameState::Exchange(ref mut state)) => {
+                info!(logger, "Submitting five-trump river crossing cards");
+                state.submit_river_crossing_cards(id, cards.clone())?;
+                vec![]
+            }
+            (Action::SubmitRiverReturnCards(ref cards), GameState::Exchange(ref mut state)) => {
+                info!(logger, "Submitting five-trump river return cards");
+                state.submit_river_return_cards(id, cards.clone())?;
+                if state.river_crossing_complete() {
+                    let landlord = state.landlord();
+                    self.state = GameState::Play(state.advance(landlord)?);
+                }
                 vec![]
             }
             (Action::PlayCards(ref cards), GameState::Play(ref mut state)) => {
@@ -463,6 +496,7 @@ pub enum Action {
     SetPlayTakebackPolicy(PlayTakebackPolicy),
     SetBidTakebackPolicy(BidTakebackPolicy),
     SetKittyTheftPolicy(KittyTheftPolicy),
+    SetFiveTrumpRiverCrossingEnabled(bool),
     SetGameShadowingPolicy(GameShadowingPolicy),
     SetGameStartPolicy(GameStartPolicy),
     SetShouldRevealKittyAtEndOfGame(bool),
@@ -482,6 +516,9 @@ pub enum Action {
     MoveCardToHand(Card),
     SetFriends(Vec<FriendSelection>),
     BeginPlay,
+    DecideRiverCrossing(bool),
+    SubmitRiverCrossingCards(Vec<Card>),
+    SubmitRiverReturnCards(Vec<Card>),
     PlayCards(Vec<Card>),
     PlayCardsWithHint(Vec<Card>, Vec<TrickUnit>),
     EndTrick,

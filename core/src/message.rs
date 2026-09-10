@@ -105,6 +105,9 @@ pub enum MessageVariant {
     KittyTheftPolicySet {
         policy: KittyTheftPolicy,
     },
+    FiveTrumpRiverCrossingEnabledSet {
+        enabled: bool,
+    },
     GameVisibilitySet {
         visibility: GameVisibility,
     },
@@ -367,6 +370,10 @@ impl MessageVariant {
                 format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } =>
                 format!("{} disabled stealing the bottom cards after the leader", n?),
+            FiveTrumpRiverCrossingEnabledSet { enabled: true } =>
+                format!("{} enabled five-trump river crossing (五主过河)", n?),
+            FiveTrumpRiverCrossingEnabledSet { enabled: false } =>
+                format!("{} disabled five-trump river crossing (五主过河)", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::AllowMultipleSessions } =>
                 format!("{} allowed players to be shadowed by joining with the same name", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::SingleSessionOnly } =>

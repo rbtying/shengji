@@ -38,6 +38,7 @@ function ExchangeWrapper(props: IExchangeProps) {
 
 interface IExchangeState {
   friends: Friend[];
+  selectedRiverCards: string[];
 }
 class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   constructor(props: IExchangeProps) {
@@ -50,6 +51,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     this.pickFriends = this.pickFriends.bind(this);
     this.state = {
       friends: [],
+      selectedRiverCards: [],
     };
 
     this.fixFriends = this.fixFriends.bind(this);
@@ -162,6 +164,175 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       this.props.name;
     const kittyTheftEnabled =
       this.props.state.propagated.kitty_theft_policy === "AllowKittyTheft";
+
+    const riverCrossing = this.props.state.river_crossing;
+    if (riverCrossing !== null && riverCrossing !== undefined) {
+      const playerState = riverCrossing.players.find(
+        (p) => p.player_id === playerId,
+      );
+      const playerPosition = this.props.state.propagated.players.findIndex(
+        (p) => p.id === playerId,
+      );
+      const partnerId =
+        playerPosition >= 0 && this.props.state.propagated.players.length === 4
+          ? this.props.state.propagated.players[(playerPosition + 2) % 4].id
+          : -1;
+      const partnerState = riverCrossing.players.find(
+        (p) => p.player_id === partnerId,
+      );
+
+      let actionUI: JSX.Element = (
+        <p>Waiting for other players... / 等待其他玩家……</p>
+      );
+      if (
+        riverCrossing.stage === "Deciding" &&
+        playerState?.eligible &&
+        playerState.decision === null
+      ) {
+        actionUI = (
+          <>
+            <p>
+              You have five or fewer trump cards. Would you like to cross the
+              river?（你的主牌不超过五张，是否选择五主过河？）
+            </p>
+            <button
+              className="big"
+              onClick={() =>
+                (window as any).send({
+                  Action: { DecideRiverCrossing: true },
+                })
+              }
+            >
+              Cross the river / 过河
+            </button>
+            <button
+              className="big"
+              onClick={() =>
+                (window as any).send({
+                  Action: { DecideRiverCrossing: false },
+                })
+              }
+            >
+              Decline / 不过河
+            </button>
+          </>
+        );
+      } else if (
+        riverCrossing.stage === "Deciding" &&
+        playerState !== undefined &&
+        !playerState.eligible
+      ) {
+        actionUI = (
+          <p>
+            You have more than five trump cards and cannot cross. Waiting for
+            other players... / 你的主牌多于五张，不能过河。正在等待其他玩家……
+          </p>
+        );
+      } else if (
+        riverCrossing.stage === "SelectingCrossingCards" &&
+        playerState?.decision === true &&
+        !playerState.crossing_cards_submitted
+      ) {
+        actionUI = (
+          <>
+            <p>
+              Select exactly five cards, including every trump card in your
+              hand. They will be revealed to your partner only after all
+              crossing selections are submitted. /
+              请选择正好五张牌，其中必须包含手中全部主牌；所有需要过河的玩家提交后才会同时交换。
+            </p>
+            <Cards
+              hands={this.props.state.hands}
+              playerId={playerId}
+              selectedCards={this.state.selectedRiverCards}
+              onSelect={(selectedRiverCards) =>
+                this.setState({ selectedRiverCards })
+              }
+              trump={this.props.state.trump}
+            />
+            <button
+              className="big"
+              disabled={this.state.selectedRiverCards.length !== 5}
+              onClick={() => {
+                (window as any).send({
+                  Action: {
+                    SubmitRiverCrossingCards: this.state.selectedRiverCards,
+                  },
+                });
+                this.setState({ selectedRiverCards: [] });
+              }}
+            >
+              Submit five crossing cards / 提交五张过河牌
+            </button>
+          </>
+        );
+      } else if (
+        riverCrossing.stage === "SelectingReturnCards" &&
+        playerState !== undefined &&
+        partnerState?.decision === true &&
+        !playerState.return_cards_submitted
+      ) {
+        actionUI = (
+          <>
+            <p>
+              Your partner sent you these cards. Select exactly five cards to
+              return. Return selections are exchanged simultaneously. /
+              这是对家给你的牌。请从现在的手牌中选择正好五张归还；双方都提交后才会同时还牌。
+            </p>
+            {playerState.received_crossing_cards.length > 0 ? (
+              <LabeledPlay
+                className="kitty"
+                trump={this.props.state.trump}
+                cards={playerState.received_crossing_cards}
+                label="Cards received / 收到的过河牌"
+              />
+            ) : null}
+            <Cards
+              hands={this.props.state.hands}
+              playerId={playerId}
+              selectedCards={this.state.selectedRiverCards}
+              onSelect={(selectedRiverCards) =>
+                this.setState({ selectedRiverCards })
+              }
+              trump={this.props.state.trump}
+            />
+            <button
+              className="big"
+              disabled={this.state.selectedRiverCards.length !== 5}
+              onClick={() => {
+                (window as any).send({
+                  Action: {
+                    SubmitRiverReturnCards: this.state.selectedRiverCards,
+                  },
+                });
+                this.setState({ selectedRiverCards: [] });
+              }}
+            >
+              Submit five return cards / 提交五张还牌
+            </button>
+          </>
+        );
+      }
+
+      return (
+        <div>
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
+          <Players
+            players={this.props.state.propagated.players}
+            observers={this.props.state.propagated.observers}
+            landlord={this.props.state.landlord}
+            next={this.props.state.landlord}
+            name={this.props.name}
+          />
+          <Trump trump={this.props.state.trump} />
+          <h2>Five-trump river crossing / 五主过河</h2>
+          {actionUI}
+        </div>
+      );
+    }
 
     const nextPlayer =
       kittyTheftEnabled &&

@@ -285,6 +285,8 @@ pub struct PropagatedState {
     #[serde(default)]
     pub(crate) kitty_theft_policy: KittyTheftPolicy,
     #[serde(default)]
+    pub(crate) five_trump_river_crossing_enabled: bool,
+    #[serde(default)]
     pub(crate) trick_draw_policy: TrickDrawPolicy,
     #[serde(default)]
     pub(crate) throw_evaluation_policy: ThrowEvaluationPolicy,
@@ -777,6 +779,20 @@ impl PropagatedState {
         if policy != self.kitty_theft_policy {
             self.kitty_theft_policy = policy;
             Ok(vec![MessageVariant::KittyTheftPolicySet { policy }])
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub fn set_five_trump_river_crossing_enabled(
+        &mut self,
+        enabled: bool,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        if enabled != self.five_trump_river_crossing_enabled {
+            self.five_trump_river_crossing_enabled = enabled;
+            Ok(vec![MessageVariant::FiveTrumpRiverCrossingEnabledSet {
+                enabled,
+            }])
         } else {
             Ok(vec![])
         }

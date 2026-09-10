@@ -460,6 +460,16 @@
         },
         {
           "type": "object",
+          "required": ["SetFiveTrumpRiverCrossingEnabled"],
+          "properties": {
+            "SetFiveTrumpRiverCrossingEnabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetGameShadowingPolicy"],
           "properties": {
             "SetGameShadowingPolicy": {
@@ -598,6 +608,42 @@
               "type": "array",
               "items": {
                 "$ref": "#/definitions/FriendSelection"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["DecideRiverCrossing"],
+          "properties": {
+            "DecideRiverCrossing": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SubmitRiverCrossingCards"],
+          "properties": {
+            "SubmitRiverCrossingCards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SubmitRiverReturnCards"],
+          "properties": {
+            "SubmitRiverReturnCards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
               }
             }
           },
@@ -1190,6 +1236,17 @@
           "items": {
             "$ref": "#/definitions/Card"
           }
+        },
+        "river_crossing": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RiverCrossingState"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "trump": {
           "$ref": "#/definitions/Trump"
@@ -2189,6 +2246,19 @@
         },
         {
           "type": "object",
+          "required": ["enabled", "type"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["FiveTrumpRiverCrossingEnabledSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "visibility"],
           "properties": {
             "type": {
@@ -2961,6 +3031,10 @@
             }
           ]
         },
+        "five_trump_river_crossing_enabled": {
+          "default": false,
+          "type": "boolean"
+        },
         "friend_selection_policy": {
           "default": "Unrestricted",
           "allOf": [
@@ -3179,6 +3253,79 @@
     },
     "Rank": {
       "type": "string"
+    },
+    "RiverCrossingPlayerState": {
+      "type": "object",
+      "required": [
+        "crossing_cards",
+        "crossing_cards_submitted",
+        "eligible",
+        "player_id",
+        "received_crossing_cards",
+        "return_cards",
+        "return_cards_submitted"
+      ],
+      "properties": {
+        "crossing_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "crossing_cards_submitted": {
+          "type": "boolean"
+        },
+        "decision": {
+          "type": ["boolean", "null"]
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "player_id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "received_crossing_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "return_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "return_cards_submitted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RiverCrossingStage": {
+      "type": "string",
+      "enum": [
+        "Deciding",
+        "SelectingCrossingCards",
+        "SelectingReturnCards",
+        "Complete"
+      ]
+    },
+    "RiverCrossingState": {
+      "type": "object",
+      "required": ["players", "stage"],
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RiverCrossingPlayerState"
+          }
+        },
+        "stage": {
+          "$ref": "#/definitions/RiverCrossingStage"
+        }
+      }
     },
     "ScoreSegment": {
       "type": "object",
