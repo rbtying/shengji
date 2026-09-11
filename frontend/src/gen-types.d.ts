@@ -496,6 +496,11 @@ export type MessageVariant =
       [k: string]: unknown;
     }
   | {
+      player: number;
+      type: "RiverCrossingInitiated";
+      [k: string]: unknown;
+    }
+  | {
       type: "GameVisibilitySet";
       visibility: GameVisibility;
       [k: string]: unknown;
@@ -1069,6 +1074,10 @@ export interface PlayPhase {
   };
   propagated: PropagatedState;
   removed_cards?: Card[];
+  /**
+   * Public initiator IDs for this deal only; never propagated to the next deal.
+   */
+  river_crossing_initiators?: number[];
   trick: Trick;
   trump: Trump;
   [k: string]: unknown;

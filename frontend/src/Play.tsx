@@ -18,6 +18,7 @@ import Cards from "./Cards";
 import Points, { calculatePoints, ProgressBarDisplay } from "./Points";
 import LabeledPlay from "./LabeledPlay";
 import Players from "./Players";
+import RiverCrossingNotice from "./RiverCrossingNotice";
 import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
@@ -336,6 +337,11 @@ const Play = (props: IProps): JSX.Element => {
         landlords_team={playPhase.landlords_team}
         name={props.name}
         next={nextPlayer}
+        riverCrossingInitiators={playPhase.river_crossing_initiators}
+      />
+      <RiverCrossingNotice
+        players={playPhase.propagated.players}
+        initiators={playPhase.river_crossing_initiators}
       />
       <Trump trump={playPhase.trump} />
       <Friends gameMode={playPhase.game_mode} showPlayed={true} />

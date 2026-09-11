@@ -2259,6 +2259,21 @@
         },
         {
           "type": "object",
+          "required": ["player", "type"],
+          "properties": {
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["RiverCrossingInitiated"]
+            }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "visibility"],
           "properties": {
             "type": {
@@ -2869,6 +2884,16 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Card"
+          }
+        },
+        "river_crossing_initiators": {
+          "description": "Public initiator IDs for this deal only; never propagated to the next deal.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
           }
         },
         "trick": {

@@ -60,6 +60,9 @@ pub struct PlayPhase {
     removed_cards: Vec<Card>,
     #[serde(default)]
     decks: Vec<Deck>,
+    /// Public initiator IDs for this deal only; never propagated to the next deal.
+    #[serde(default)]
+    river_crossing_initiators: Vec<PlayerID>,
     player_requested_reset: Option<PlayerID>,
 }
 
@@ -77,6 +80,7 @@ impl PlayPhase {
         landlords_team: Vec<PlayerID>,
         removed_cards: Vec<Card>,
         decks: Vec<Deck>,
+        river_crossing_initiators: Vec<PlayerID>,
     ) -> Result<Self, Error> {
         let landlord_idx = bail_unwrap!(propagated.players.iter().position(|p| p.id == landlord));
         Ok(PlayPhase {
@@ -105,6 +109,7 @@ impl PlayPhase {
             propagated,
             removed_cards,
             decks,
+            river_crossing_initiators,
             game_ended_early: false,
             last_trick: None,
             player_requested_reset: None,
@@ -194,17 +199,13 @@ impl PlayPhase {
             for msg in &mut msgs {
                 match msg {
                     PlayCardsMessage::PlayedCards { ref mut cards, .. } => {
-                        for card in cards {
-                            *card = Card::Unknown;
-                        }
+                        cards.fill(Card::Unknown);
                     }
                     PlayCardsMessage::ThrowFailed {
                         ref mut original_cards,
                         ..
                     } => {
-                        for card in original_cards {
-                            *card = Card::Unknown;
-                        }
+                        original_cards.fill(Card::Unknown);
                     }
                 }
             }
@@ -687,9 +688,7 @@ impl PlayPhase {
             self.hands.destructively_redact_except_for_player(player);
         }
         if game_ongoing && player != self.exchanger {
-            for card in &mut self.kitty {
-                *card = Card::Unknown;
-            }
+            self.kitty.fill(Card::Unknown);
         }
     }
 }

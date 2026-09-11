@@ -448,7 +448,22 @@ impl ExchangePhase {
             landlords_team,
             self.removed_cards.clone(),
             self.decks.clone(),
+            self.river_crossing_initiators(),
         )
+    }
+
+    fn river_crossing_initiators(&self) -> Vec<PlayerID> {
+        self.river_crossing
+            .as_ref()
+            .filter(|r| r.stage != RiverCrossingStage::Deciding)
+            .map(|r| {
+                r.players
+                    .iter()
+                    .filter(|p| p.decision == Some(true))
+                    .map(|p| p.player_id)
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     fn river_crossing_is_applicable(&self) -> bool {
@@ -536,7 +551,11 @@ impl ExchangePhase {
         Ok(true)
     }
 
-    pub fn decide_river_crossing(&mut self, id: PlayerID, cross: bool) -> Result<(), Error> {
+    pub fn decide_river_crossing(
+        &mut self,
+        id: PlayerID,
+        cross: bool,
+    ) -> Result<Vec<MessageVariant>, Error> {
         let crossing = self
             .river_crossing
             .as_mut()
@@ -564,7 +583,13 @@ impl ExchangePhase {
                 RiverCrossingStage::Complete
             };
         }
-        Ok(())
+        // Announce only after all simultaneous decisions are locked in. The
+        // last responder may have declined, so name each initiator explicitly.
+        Ok(self
+            .river_crossing_initiators()
+            .into_iter()
+            .map(|player| MessageVariant::RiverCrossingInitiated { player })
+            .collect())
     }
 
     fn validate_crossing_cards(&self, id: PlayerID, cards: &[Card]) -> Result<(), Error> {
@@ -790,9 +815,7 @@ impl ExchangePhase {
         let players_partner = self.partner_of(player).ok();
         self.hands.destructively_redact_except_for_player(player);
         if player != self.exchanger || self.finalized {
-            for card in &mut self.kitty {
-                *card = Card::Unknown;
-            }
+            self.kitty.fill(Card::Unknown);
         }
         if player != self.landlord {
             if let GameMode::FindingFriends {
@@ -879,6 +902,141 @@ mod river_crossing_tests {
             vec![],
             vec![],
         )
+    }
+
+    #[test]
+    fn announcements_wait_for_all_decisions_and_name_the_initiator() {
+        use crate::game_state::GameState;
+        use crate::interactive::{Action, InteractiveGame};
+        use slog::{o, Logger};
+
+        let phase = phase(
+            vec![S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        let mut game = InteractiveGame::new_from_state(GameState::Exchange(phase));
+        let logger = Logger::root(slog::Discard, o!());
+        game.interact(Action::BeginPlay, P1, &logger).unwrap();
+        assert!(game
+            .interact(Action::DecideRiverCrossing(true), P1, &logger)
+            .unwrap()
+            .is_empty());
+        let msgs = game
+            .interact(Action::DecideRiverCrossing(false), P3, &logger)
+            .unwrap();
+        assert_eq!(msgs.len(), 1);
+        let broadcast = serde_json::to_value(&msgs[0].0).unwrap();
+        assert_eq!(
+            broadcast["variant"],
+            serde_json::json!({
+                "type": "RiverCrossingInitiated", "player": 1
+            })
+        );
+        assert!(msgs[0].1.starts_with("p1 发起了五主过河"));
+        // The final responder is p3; the public message must still name p1.
+        assert_eq!(broadcast["actor"], serde_json::json!(3));
+        assert!(game
+            .interact(Action::DecideRiverCrossing(true), P1, &logger)
+            .is_err());
+    }
+
+    #[test]
+    fn multiple_initiators_are_announced_once_each() {
+        let mut phase = phase(
+            vec![S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        phase.start_river_crossing(P1).unwrap();
+        assert!(phase.decide_river_crossing(P1, true).unwrap().is_empty());
+        let msgs = phase.decide_river_crossing(P3, true).unwrap();
+        assert_eq!(msgs.len(), 2);
+        assert!(matches!(
+            msgs[0],
+            MessageVariant::RiverCrossingInitiated { player: P1 }
+        ));
+        assert!(matches!(
+            msgs[1],
+            MessageVariant::RiverCrossingInitiated { player: P3 }
+        ));
+        assert!(phase.decide_river_crossing(P3, true).is_err());
+    }
+
+    #[test]
+    fn declined_and_disabled_crossings_have_no_markers() {
+        let mut phase = phase(
+            vec![S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        let mut disabled = phase.clone();
+        disabled.propagated.five_trump_river_crossing_enabled = false;
+        assert!(!disabled.start_river_crossing(P1).unwrap());
+        let play = serde_json::to_value(disabled.advance(P1).unwrap()).unwrap();
+        assert_eq!(play["river_crossing_initiators"], serde_json::json!([]));
+
+        phase.start_river_crossing(P1).unwrap();
+        assert!(phase.decide_river_crossing(P1, false).unwrap().is_empty());
+        assert!(phase.decide_river_crossing(P3, false).unwrap().is_empty());
+        let play = serde_json::to_value(phase.advance(P1).unwrap()).unwrap();
+        assert_eq!(play["river_crossing_initiators"], serde_json::json!([]));
+    }
+
+    #[test]
+    fn initiators_survive_play_serialization_and_clear_on_reset() {
+        let cards = vec![S_3, C_4, D_5, S_6, S_7];
+        let mut phase = phase(cards.clone(), vec![H_4, S_7, C_8, D_9, S_10]);
+        phase.start_river_crossing(P1).unwrap();
+        phase.decide_river_crossing(P1, true).unwrap();
+        phase.decide_river_crossing(P3, false).unwrap();
+        phase
+            .submit_river_crossing_cards(P1, cards.clone())
+            .unwrap();
+        phase.submit_river_return_cards(P3, cards).unwrap();
+        let play = phase.advance(P1).unwrap();
+        let serialized = serde_json::to_value(&play).unwrap();
+        assert_eq!(
+            serialized["river_crossing_initiators"],
+            serde_json::json!([1])
+        );
+        let mut restored: PlayPhase = serde_json::from_value(serialized.clone()).unwrap();
+        // Finishing the deal also drops its marker instead of propagating it.
+        let mut finished = serialized.clone();
+        finished["game_ended_early"] = serde_json::json!(true);
+        finished["decks"] = serde_json::json!(vec![Deck::default(); 2]);
+        let finished: PlayPhase = serde_json::from_value(finished).unwrap();
+        let (next, _, _) = finished.finish_game().unwrap();
+        assert!(!serde_json::to_string(&next)
+            .unwrap()
+            .contains("river_crossing_initiators"));
+        // Every player and a late spectator receive the same public marker.
+        for viewer in [P1, P2, P3, P4, PlayerID(99)] {
+            let mut visible = restored.clone();
+            visible.destructively_redact_for_player(viewer);
+            assert_eq!(
+                serde_json::to_value(visible).unwrap()["river_crossing_initiators"],
+                serde_json::json!([1])
+            );
+        }
+        // A state saved before this feature remains readable.
+        let mut legacy = serialized;
+        legacy
+            .as_object_mut()
+            .unwrap()
+            .remove("river_crossing_initiators");
+        let legacy: PlayPhase = serde_json::from_value(legacy).unwrap();
+        assert_eq!(
+            serde_json::to_value(legacy).unwrap()["river_crossing_initiators"],
+            serde_json::json!([])
+        );
+
+        assert!(restored.request_reset(P1).unwrap().0.is_none());
+        let init = restored.request_reset(P2).unwrap().0.unwrap();
+        assert!(!serde_json::to_string(&init)
+            .unwrap()
+            .contains("river_crossing_initiators"));
+        let draw = init.start(P1).unwrap();
+        assert!(!serde_json::to_string(&draw)
+            .unwrap()
+            .contains("river_crossing_initiators"));
     }
 
     #[test]

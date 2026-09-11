@@ -108,6 +108,9 @@ pub enum MessageVariant {
     FiveTrumpRiverCrossingEnabledSet {
         enabled: bool,
     },
+    RiverCrossingInitiated {
+        player: PlayerID,
+    },
     GameVisibilitySet {
         visibility: GameVisibility,
     },
@@ -219,6 +222,8 @@ impl MessageVariant {
             ResetCanceled => format!("{} canceled game reset", n?),
             ResettingGame => format!("{} reset the game", n?),
             StartingGame => format!("{} started the game", n?),
+            RiverCrossingInitiated { player } =>
+                format!("{} 发起了五主过河 / initiated five-trump river crossing", player_name(*player)?),
             TrickWon { winner, points: 0 } =>
                 format!("{} wins the trick, but gets no points :(", player_name(*winner)?),
             TrickWon { winner, points } =>

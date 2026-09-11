@@ -381,12 +381,12 @@ impl InteractiveGame {
             }
             (Action::DecideRiverCrossing(cross), GameState::Exchange(ref mut state)) => {
                 info!(logger, "Deciding five-trump river crossing"; "cross" => cross);
-                state.decide_river_crossing(id, cross)?;
+                let msgs = state.decide_river_crossing(id, cross)?;
                 if state.river_crossing_complete() {
                     let landlord = state.landlord();
                     self.state = GameState::Play(state.advance(landlord)?);
                 }
-                vec![]
+                msgs
             }
             (Action::SubmitRiverCrossingCards(ref cards), GameState::Exchange(ref mut state)) => {
                 info!(logger, "Submitting five-trump river crossing cards");

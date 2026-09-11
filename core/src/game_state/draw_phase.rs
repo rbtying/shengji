@@ -361,8 +361,6 @@ impl DrawPhase {
         for card in &mut self.kitty[self.revealed_cards..] {
             *card = Card::Unknown;
         }
-        for card in &mut self.deck {
-            *card = Card::Unknown;
-        }
+        self.deck.fill(Card::Unknown);
     }
 }

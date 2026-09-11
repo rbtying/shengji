@@ -9,6 +9,7 @@ import Card from "./Card";
 import Header from "./Header";
 import Friends from "./Friends";
 import Players from "./Players";
+import RiverCrossingNotice from "./RiverCrossingNotice";
 import LabeledPlay from "./LabeledPlay";
 import { ExchangePhase, Friend } from "./gen-types";
 import Cards from "./Cards";
@@ -167,6 +168,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
 
     const riverCrossing = this.props.state.river_crossing;
     if (riverCrossing !== null && riverCrossing !== undefined) {
+      const riverCrossingInitiators =
+        riverCrossing.stage === "Deciding"
+          ? []
+          : riverCrossing.players
+              .filter((player) => player.decision === true)
+              .map((player) => player.player_id);
       const playerState = riverCrossing.players.find(
         (p) => p.player_id === playerId,
       );
@@ -326,6 +333,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             landlord={this.props.state.landlord}
             next={this.props.state.landlord}
             name={this.props.name}
+            riverCrossingInitiators={riverCrossingInitiators}
+          />
+          <RiverCrossingNotice
+            players={this.props.state.propagated.players}
+            initiators={riverCrossingInitiators}
           />
           <Trump trump={this.props.state.trump} />
           <h2>Five-trump river crossing / 五主过河</h2>
