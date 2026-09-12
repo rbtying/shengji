@@ -55,6 +55,10 @@ pub struct PlayPhase {
     trump: Trump,
     trick: Trick,
     last_trick: Option<Trick>,
+    /// Completed plays for each player in this deal. This is redacted down to
+    /// the requesting player's own history before game state is sent.
+    #[serde(default)]
+    played_card_history: HashMap<PlayerID, Vec<Vec<Card>>>,
     game_ended_early: bool,
     #[serde(default)]
     removed_cards: Vec<Card>,
@@ -83,6 +87,11 @@ impl PlayPhase {
         river_crossing_initiators: Vec<PlayerID>,
     ) -> Result<Self, Error> {
         let landlord_idx = bail_unwrap!(propagated.players.iter().position(|p| p.id == landlord));
+        let played_card_history = propagated
+            .players
+            .iter()
+            .map(|player| (player.id, Vec::new()))
+            .collect();
         Ok(PlayPhase {
             trick: Trick::new(
                 trump,
@@ -112,6 +121,7 @@ impl PlayPhase {
             river_crossing_initiators,
             game_ended_early: false,
             last_trick: None,
+            played_card_history,
             player_requested_reset: None,
         })
     }
@@ -356,6 +366,12 @@ impl PlayPhase {
             }),
             self.propagated.bomb_policy,
         );
+        for played in self.trick.played_cards() {
+            self.played_card_history
+                .entry(played.id)
+                .or_default()
+                .push(played.cards.clone());
+        }
         self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
 
         Ok(msgs)
@@ -674,6 +690,8 @@ impl PlayPhase {
     }
 
     pub fn destructively_redact_for_player(&mut self, player: PlayerID) {
+        self.played_card_history
+            .retain(|history_player, _| *history_player == player);
         if self.propagated.hide_landlord_points {
             for (k, v) in self.points.iter_mut() {
                 if self.landlords_team.contains(k) {
@@ -690,5 +708,81 @@ impl PlayPhase {
         if game_ongoing && player != self.exchanger {
             self.kitty.fill(Card::Unknown);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::game_state::initialize_phase::InitializePhase;
+    use shengji_mechanics::types::cards::{H_2, S_2};
+
+    #[test]
+    fn completed_play_history_is_private_and_survives_serialization() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        let mut draw = init.start(p1).unwrap();
+
+        *draw.deck_mut() = vec![
+            S_2,
+            Card::SmallJoker,
+            Card::BigJoker,
+            H_2,
+            S_2,
+            Card::SmallJoker,
+            Card::BigJoker,
+            H_2,
+        ];
+        *draw.position_mut() = 0;
+        for _ in 0..2 {
+            draw.draw_card(p1).unwrap();
+            draw.draw_card(p2).unwrap();
+            draw.draw_card(p3).unwrap();
+            draw.draw_card(p4).unwrap();
+        }
+        assert!(draw.bid(p1, H_2, 1));
+
+        let exchange = draw.advance(p1).unwrap();
+        let mut play = exchange.advance(p1).unwrap();
+        play.play_cards(p1, &[H_2]).unwrap();
+        play.play_cards(p2, &[Card::BigJoker]).unwrap();
+        play.play_cards(p3, &[Card::SmallJoker]).unwrap();
+        play.play_cards(p4, &[S_2]).unwrap();
+        play.finish_trick().unwrap();
+
+        assert_eq!(play.played_card_history[&p1], vec![vec![H_2]]);
+        assert_eq!(play.played_card_history[&p2], vec![vec![Card::BigJoker]]);
+        assert_eq!(play.last_trick.as_ref().unwrap().played_cards().len(), 4);
+
+        // An uncompleted or withdrawn play must not become history.
+        play.play_cards(p2, &[Card::BigJoker]).unwrap();
+        play.take_back_cards(p2).unwrap();
+        assert_eq!(play.played_card_history[&p2].len(), 1);
+
+        let serialized = serde_json::to_value(&play).unwrap();
+        let restored: PlayPhase = serde_json::from_value(serialized.clone()).unwrap();
+        assert_eq!(restored.played_card_history, play.played_card_history);
+
+        let mut p2_view = play.clone();
+        p2_view.destructively_redact_for_player(p2);
+        assert_eq!(p2_view.played_card_history.len(), 1);
+        assert_eq!(p2_view.played_card_history[&p2], vec![vec![Card::BigJoker]]);
+        assert_eq!(p2_view.last_trick.as_ref().unwrap().played_cards().len(), 4);
+
+        let mut observer_view = play.clone();
+        observer_view.destructively_redact_for_player(PlayerID(99));
+        assert!(observer_view.played_card_history.is_empty());
+
+        // State created before this field existed remains loadable.
+        let mut legacy = serialized;
+        legacy
+            .as_object_mut()
+            .unwrap()
+            .remove("played_card_history");
+        let legacy: PlayPhase = serde_json::from_value(legacy).unwrap();
+        assert!(legacy.played_card_history.is_empty());
     }
 }

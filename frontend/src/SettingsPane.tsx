@@ -146,19 +146,6 @@ const SettingsPane = (props: IProps): JSX.Element => {
           </Cell>
         </Row>
         <Row>
-          <LabelCell>show last trick</LabelCell>
-          <Cell>
-            <input
-              name="show-last-trick"
-              type="checkbox"
-              checked={settings.showLastTrick}
-              onChange={makeChangeHandler({
-                showLastTrick: !settings.showLastTrick,
-              })}
-            />
-          </Cell>
-        </Row>
-        <Row>
           <LabelCell>beep on turn</LabelCell>
           <Cell>
             <input

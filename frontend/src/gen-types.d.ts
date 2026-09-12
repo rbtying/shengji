@@ -1085,6 +1085,12 @@ export interface PlayPhase {
   penalties: {
     [k: string]: number;
   };
+  /**
+   * Completed plays for each player in this deal. This is redacted down to the requesting player's own history before game state is sent.
+   */
+  played_card_history?: {
+    [k: string]: Card[][];
+  };
   player_requested_reset?: number | null;
   points: {
     [k: string]: Card[];

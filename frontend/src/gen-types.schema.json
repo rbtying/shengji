@@ -2908,6 +2908,20 @@
             "minimum": 0.0
           }
         },
+        "played_card_history": {
+          "description": "Completed plays for each player in this deal. This is redacted down to the requesting player's own history before game state is sent.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            }
+          }
+        },
         "player_requested_reset": {
           "type": ["integer", "null"],
           "format": "uint",
