@@ -117,6 +117,7 @@
             "StartGame",
             "DrawCard",
             "RevealCard",
+            "DeclineKittyTheft",
             "PickUpKitty",
             "PutDownKitty",
             "BeginPlay",
@@ -1212,6 +1213,18 @@
           "format": "uint",
           "minimum": 0.0
         },
+        "kitty_theft": {
+          "default": {
+            "current_player": null,
+            "remaining_players": 0,
+            "stage": "Disabled"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/KittyTheftState"
+            }
+          ]
+        },
         "landlord": {
           "type": "integer",
           "format": "uint",
@@ -1837,6 +1850,29 @@
       "type": "string",
       "enum": ["AllowKittyTheft", "NoKittyTheft"]
     },
+    "KittyTheftStage": {
+      "type": "string",
+      "enum": ["Disabled", "Exchanging", "Waiting", "Complete"]
+    },
+    "KittyTheftState": {
+      "type": "object",
+      "required": ["remaining_players", "stage"],
+      "properties": {
+        "current_player": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "remaining_players": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "stage": {
+          "$ref": "#/definitions/KittyTheftStage"
+        }
+      }
+    },
     "MaxRank": {
       "$ref": "#/definitions/Rank"
     },
@@ -2302,6 +2338,16 @@
             "type": {
               "type": "string",
               "enum": ["TookBackBid"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["KittyTheftDeclined"]
             }
           }
         },

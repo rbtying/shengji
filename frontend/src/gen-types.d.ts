@@ -12,6 +12,7 @@ export type Action =
       | "StartGame"
       | "DrawCard"
       | "RevealCard"
+      | "DeclineKittyTheft"
       | "PickUpKitty"
       | "PutDownKitty"
       | "BeginPlay"
@@ -342,6 +343,11 @@ export type GameMode =
         [k: string]: unknown;
       };
     };
+export type KittyTheftStage =
+  | "Disabled"
+  | "Exchanging"
+  | "Waiting"
+  | "Complete";
 export type RiverCrossingStage =
   | "Deciding"
   | "SelectingCrossingCards"
@@ -511,6 +517,10 @@ export type MessageVariant =
     }
   | {
       type: "TookBackBid";
+      [k: string]: unknown;
+    }
+  | {
+      type: "KittyTheftDeclined";
       [k: string]: unknown;
     }
   | {
@@ -1029,6 +1039,7 @@ export interface ExchangePhase {
   hands: Hands;
   kitty: Card[];
   kitty_size: number;
+  kitty_theft?: KittyTheftState;
   landlord: number;
   num_decks: number;
   player_requested_reset?: number | null;
@@ -1036,6 +1047,12 @@ export interface ExchangePhase {
   removed_cards?: Card[];
   river_crossing?: RiverCrossingState | null;
   trump: Trump;
+  [k: string]: unknown;
+}
+export interface KittyTheftState {
+  current_player?: number | null;
+  remaining_players: number;
+  stage: KittyTheftStage;
   [k: string]: unknown;
 }
 export interface RiverCrossingState {

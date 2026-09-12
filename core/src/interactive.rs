@@ -335,8 +335,11 @@ impl InteractiveGame {
             }
             (Action::Bid(card, count), GameState::Exchange(ref mut state)) => {
                 info!(logger, "Making exchange bid");
-                if state.bid(id, card, count) {
-                    vec![MessageVariant::MadeBid { card, count }]
+                if state.bid(id, card, count)? {
+                    vec![
+                        MessageVariant::MadeBid { card, count },
+                        MessageVariant::PickedUpCards,
+                    ]
                 } else {
                     bail!("bid was invalid")
                 }
@@ -346,10 +349,13 @@ impl InteractiveGame {
                 state.take_back_bid(id)?;
                 vec![MessageVariant::TookBackBid]
             }
-            (Action::PickUpKitty, GameState::Exchange(ref mut state)) => {
-                info!(logger, "Picking up cards after over-bid");
-                state.pick_up_cards(id)?;
-                vec![MessageVariant::PickedUpCards]
+            (Action::PickUpKitty, GameState::Exchange(_)) => {
+                bail!("a successful sequential kitty-theft bid picks up the bottom immediately")
+            }
+            (Action::DeclineKittyTheft, GameState::Exchange(ref mut state)) => {
+                info!(logger, "Declining kitty theft");
+                state.decline_kitty_theft(id)?;
+                vec![MessageVariant::KittyTheftDeclined]
             }
             (Action::PutDownKitty, GameState::Exchange(ref mut state)) => {
                 info!(logger, "Putting down cards after over-bid");
@@ -510,6 +516,7 @@ pub enum Action {
     DrawCard,
     RevealCard,
     Bid(Card, usize),
+    DeclineKittyTheft,
     PickUpKitty,
     PutDownKitty,
     MoveCardToKitty(Card),

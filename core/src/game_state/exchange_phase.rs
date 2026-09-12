@@ -53,6 +53,22 @@ pub struct RiverCrossingState {
     players: Vec<RiverCrossingPlayerState>,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
+pub enum KittyTheftStage {
+    #[default]
+    Disabled,
+    Exchanging,
+    Waiting,
+    Complete,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
+pub struct KittyTheftState {
+    stage: KittyTheftStage,
+    current_player: Option<PlayerID>,
+    remaining_players: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExchangePhase {
     propagated: PropagatedState,
@@ -78,6 +94,8 @@ pub struct ExchangePhase {
     decks: Vec<Deck>,
     #[serde(default)]
     river_crossing: Option<RiverCrossingState>,
+    #[serde(default)]
+    kitty_theft: KittyTheftState,
     player_requested_reset: Option<PlayerID>,
 }
 
@@ -96,6 +114,16 @@ impl ExchangePhase {
         removed_cards: Vec<Card>,
         decks: Vec<Deck>,
     ) -> Self {
+        let kitty_theft = if propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
+            && autobid.is_none()
+        {
+            KittyTheftState {
+                stage: KittyTheftStage::Exchanging,
+                ..KittyTheftState::default()
+            }
+        } else {
+            KittyTheftState::default()
+        };
         ExchangePhase {
             kitty_size: kitty.len(),
             num_decks,
@@ -111,6 +139,7 @@ impl ExchangePhase {
             removed_cards,
             decks,
             river_crossing: None,
+            kitty_theft,
             finalized: false,
             epoch: 1,
             player_requested_reset: None,
@@ -267,6 +296,55 @@ impl ExchangePhase {
             bail!("incorrect number of cards in the bottom")
         }
         self.finalized = true;
+        if self.kitty_theft.stage == KittyTheftStage::Exchanging {
+            self.start_kitty_theft_round()?;
+        }
+        Ok(())
+    }
+
+    fn player_after(&self, id: PlayerID) -> Result<PlayerID, Error> {
+        let position = self
+            .propagated
+            .players
+            .iter()
+            .position(|player| player.id == id)
+            .ok_or_else(|| anyhow!("player not found"))?;
+        let next = (position + 1) % self.propagated.players.len();
+        Ok(self.propagated.players[next].id)
+    }
+
+    fn start_kitty_theft_round(&mut self) -> Result<(), Error> {
+        let remaining_players = self.propagated.players.len().saturating_sub(1);
+        if remaining_players == 0 {
+            self.kitty_theft = KittyTheftState {
+                stage: KittyTheftStage::Complete,
+                ..KittyTheftState::default()
+            };
+        } else {
+            self.kitty_theft = KittyTheftState {
+                stage: KittyTheftStage::Waiting,
+                current_player: Some(self.player_after(self.exchanger)?),
+                remaining_players,
+            };
+        }
+        Ok(())
+    }
+
+    pub fn decline_kitty_theft(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.kitty_theft.stage != KittyTheftStage::Waiting
+            || self.kitty_theft.current_player != Some(id)
+        {
+            bail!("not this player's turn to decide whether to steal the bottom")
+        }
+        if self.kitty_theft.remaining_players <= 1 {
+            self.kitty_theft = KittyTheftState {
+                stage: KittyTheftStage::Complete,
+                ..KittyTheftState::default()
+            };
+        } else {
+            self.kitty_theft.current_player = Some(self.player_after(id)?);
+            self.kitty_theft.remaining_players -= 1;
+        }
         Ok(())
     }
 
@@ -279,6 +357,11 @@ impl ExchangePhase {
         }
         if self.autobid.is_some() {
             bail!("Bid was automatically determined; no overbidding allowed")
+        }
+        if self.kitty_theft.stage != KittyTheftStage::Waiting
+            || self.kitty_theft.current_player != Some(id)
+        {
+            bail!("not this player's turn to steal the bottom")
         }
         if self.bids.last().map(|b| b.epoch) != Some(self.epoch) {
             bail!("No bids have been made since the last player finished exchanging cards")
@@ -303,15 +386,24 @@ impl ExchangePhase {
         self.finalized = false;
         self.epoch += 1;
         self.exchanger = winning_bid.id;
+        self.kitty_theft = KittyTheftState {
+            stage: KittyTheftStage::Exchanging,
+            ..KittyTheftState::default()
+        };
 
         Ok(())
     }
 
-    pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> bool {
-        if self.river_crossing.is_some() || !self.finalized || self.autobid.is_some() {
-            return false;
+    pub fn bid(&mut self, id: PlayerID, card: Card, count: usize) -> Result<bool, Error> {
+        if self.river_crossing.is_some()
+            || !self.finalized
+            || self.autobid.is_some()
+            || self.kitty_theft.stage != KittyTheftStage::Waiting
+            || self.kitty_theft.current_player != Some(id)
+        {
+            return Ok(false);
         }
-        Bid::bid(
+        if !Bid::bid(
             id,
             card,
             count,
@@ -325,7 +417,11 @@ impl ExchangePhase {
             self.propagated.joker_bid_policy,
             self.num_decks,
             self.epoch,
-        )
+        ) {
+            return Ok(false);
+        }
+        self.pick_up_cards(id)?;
+        Ok(true)
     }
 
     pub fn take_back_bid(&mut self, id: PlayerID) -> Result<(), Error> {
@@ -373,14 +469,21 @@ impl ExchangePhase {
             // revealing which players are eligible or have already submitted.
             return Ok(self.landlord);
         }
-        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
-            && self.autobid.is_none()
-            && !self.finalized
-        {
-            Ok(self.exchanger)
-        } else {
-            Ok(self.landlord)
+        match self.kitty_theft.stage {
+            KittyTheftStage::Exchanging => Ok(self.exchanger),
+            KittyTheftStage::Waiting => self
+                .kitty_theft
+                .current_player
+                .ok_or_else(|| anyhow!("missing current player for kitty-theft decision")),
+            KittyTheftStage::Disabled | KittyTheftStage::Complete => Ok(self.landlord),
         }
+    }
+
+    fn kitty_theft_complete(&self) -> bool {
+        matches!(
+            self.kitty_theft.stage,
+            KittyTheftStage::Disabled | KittyTheftStage::Complete
+        )
     }
 
     pub fn advance(&self, id: PlayerID) -> Result<PlayPhase, Error> {
@@ -400,11 +503,8 @@ impl ExchangePhase {
             }
         }
 
-        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
-            && self.autobid.is_none()
-            && !self.finalized
-        {
-            bail!("must give other players a chance to over-bid and swap cards")
+        if !self.kitty_theft_complete() {
+            bail!("must finish sequential kitty-theft decisions first")
         }
 
         if self.river_crossing_is_applicable() {
@@ -521,11 +621,8 @@ impl ExchangePhase {
         if self.kitty.len() != self.kitty_size {
             bail!("incorrect number of cards in the bottom")
         }
-        if self.propagated.kitty_theft_policy == KittyTheftPolicy::AllowKittyTheft
-            && self.autobid.is_none()
-            && !self.finalized
-        {
-            bail!("must give other players a chance to over-bid and swap cards")
+        if !self.kitty_theft_complete() {
+            bail!("must finish sequential kitty-theft decisions first")
         }
 
         let mut players = Vec::with_capacity(4);
@@ -902,6 +999,62 @@ mod river_crossing_tests {
             vec![],
             vec![],
         )
+    }
+
+    fn enable_sequential_kitty_theft(phase: &mut ExchangePhase) {
+        phase.propagated.kitty_theft_policy = KittyTheftPolicy::AllowKittyTheft;
+        phase.kitty_theft = KittyTheftState {
+            stage: KittyTheftStage::Exchanging,
+            ..KittyTheftState::default()
+        };
+    }
+
+    #[test]
+    fn sequential_kitty_theft_must_complete_before_river_crossing() {
+        let mut phase = phase(
+            vec![S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        enable_sequential_kitty_theft(&mut phase);
+
+        phase.finalize(P1).unwrap();
+        assert_eq!(phase.next_player().unwrap(), P2);
+        assert!(phase.start_river_crossing(P1).is_err());
+        assert!(phase.advance(P1).is_err());
+
+        phase.decline_kitty_theft(P2).unwrap();
+        assert_eq!(phase.next_player().unwrap(), P3);
+        phase.decline_kitty_theft(P3).unwrap();
+        assert_eq!(phase.next_player().unwrap(), P4);
+        phase.decline_kitty_theft(P4).unwrap();
+
+        assert_eq!(phase.next_player().unwrap(), P1);
+        assert!(phase.start_river_crossing(P1).unwrap());
+    }
+
+    #[test]
+    fn sequential_kitty_theft_turn_is_public_and_survives_serialization() {
+        let mut phase = phase(
+            vec![S_3, C_4, D_5, S_6, S_7],
+            vec![H_4, S_7, C_8, D_9, S_10],
+        );
+        enable_sequential_kitty_theft(&mut phase);
+        phase.finalize(P1).unwrap();
+
+        let serialized = serde_json::to_value(&phase).unwrap();
+        assert_eq!(serialized["kitty_theft"]["stage"], "Waiting");
+        assert_eq!(serialized["kitty_theft"]["current_player"], 2);
+        assert_eq!(serialized["kitty_theft"]["remaining_players"], 3);
+
+        let restored: ExchangePhase = serde_json::from_value(serialized).unwrap();
+        assert_eq!(restored.next_player().unwrap(), P2);
+        for viewer in [P1, P2, P3, P4, PlayerID(99)] {
+            let mut visible = restored.clone();
+            visible.destructively_redact_for_player(viewer);
+            let visible = serde_json::to_value(visible).unwrap();
+            assert_eq!(visible["kitty_theft"]["current_player"], 2);
+            assert_eq!(visible["kitty_theft"]["remaining_players"], 3);
+        }
     }
 
     #[test]

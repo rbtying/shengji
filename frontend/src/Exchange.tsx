@@ -47,7 +47,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     this.moveCardToKitty = this.moveCardToKitty.bind(this);
     this.moveCardToHand = this.moveCardToHand.bind(this);
     this.startGame = this.startGame.bind(this);
-    this.pickUpKitty = this.pickUpKitty.bind(this);
+    this.declineKittyTheft = this.declineKittyTheft.bind(this);
     this.putDownKitty = this.putDownKitty.bind(this);
     this.pickFriends = this.pickFriends.bind(this);
     this.state = {
@@ -110,9 +110,9 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     (window as any).send({ Action: "BeginPlay" });
   }
 
-  pickUpKitty(evt: React.SyntheticEvent): void {
+  declineKittyTheft(evt: React.SyntheticEvent): void {
     evt.preventDefault();
-    (window as any).send({ Action: "PickUpKitty" });
+    (window as any).send({ Action: "DeclineKittyTheft" });
   }
 
   putDownKitty(evt: React.SyntheticEvent): void {
@@ -346,12 +346,29 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       );
     }
 
+    const kittyTheft = this.props.state.kitty_theft;
+    const kittyTheftStage = kittyTheft?.stage ?? "Disabled";
+    const currentKittyTheftPlayer = kittyTheft?.current_player ?? null;
+    const activeKittyTheftPlayer =
+      kittyTheftStage === "Waiting"
+        ? currentKittyTheftPlayer
+        : this.props.state.exchanger;
+    const currentKittyTheftPlayerName =
+      this.props.state.propagated.players.find(
+        (player) => player.id === activeKittyTheftPlayer,
+      )?.name ?? "another player";
     const nextPlayer =
-      kittyTheftEnabled &&
-      !this.props.state.finalized &&
-      this.props.state.exchanger !== null
-        ? this.props.state.exchanger
-        : this.props.state.landlord;
+      kittyTheftStage === "Waiting" && currentKittyTheftPlayer !== null
+        ? currentKittyTheftPlayer
+        : kittyTheftStage === "Exchanging" &&
+            this.props.state.exchanger !== null
+          ? this.props.state.exchanger
+          : this.props.state.landlord;
+    const kittyTheftComplete =
+      !kittyTheftEnabled ||
+      this.props.state.autobid !== null ||
+      kittyTheftStage === "Disabled" ||
+      kittyTheftStage === "Complete";
 
     const exchangeUI =
       isExchanger && !this.props.state.finalized ? (
@@ -392,15 +409,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         </>
       ) : null;
 
-    const lastBid = this.props.state.bids![this.props.state.bids!.length - 1];
     const startGame = (
       <button
         onClick={this.startGame}
         disabled={
           this.props.state.kitty.length !== this.props.state.kitty_size ||
-          (kittyTheftEnabled &&
-            !this.props.state.finalized &&
-            this.props.state.autobid === null)
+          !kittyTheftComplete
         }
         className="big"
       >
@@ -411,7 +425,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       kittyTheftEnabled &&
       this.props.state.finalized &&
       this.props.state.autobid === null &&
-      (!isExchanger || lastBid.epoch! + 1 !== this.props.state.epoch) ? (
+      kittyTheftStage === "Waiting" &&
+      currentKittyTheftPlayer === playerId ? (
         <>
           <BidArea
             bids={this.props.state.bids!}
@@ -428,27 +443,17 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             jokerBidPolicy={this.props.state.propagated.joker_bid_policy!}
             numDecks={this.props.state.num_decks}
             header={
-              <h2>Bids (round {this.props.state.epoch! + 1} of bidding)</h2>
+              <h2>
+                Your turn to decide whether to steal the bottom /
+                轮到你决定是否炒底
+              </h2>
             }
             suffixButtons={
-              <>
-                <button
-                  onClick={this.pickUpKitty}
-                  disabled={
-                    lastBid.id !== playerId ||
-                    lastBid.epoch !== this.props.state.epoch
-                  }
-                  className="big"
-                >
-                  Pick up cards from the bottom
-                </button>
-                {isLandlord ? startGame : null}
-              </>
+              <button onClick={this.declineKittyTheft} className="big">
+                Decline / 放弃炒底
+              </button>
             }
-            bidTakeBacksEnabled={
-              this.props.state.propagated.bid_takeback_policy ===
-              "AllowBidTakeback"
-            }
+            bidTakeBacksEnabled={false}
           />
           <LabeledPlay
             className="kitty"
@@ -498,7 +503,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           players={this.props.state.propagated.players}
           observers={this.props.state.propagated.observers}
           landlord={this.props.state.landlord}
-          next={this.props.state.landlord}
+          next={nextPlayer}
           name={this.props.name}
         />
         <Trump trump={this.props.state.trump} />
@@ -520,11 +525,17 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               playerId={playerId}
               trump={this.props.state.trump}
             />
-            <p>Waiting...</p>
+            <p role="status" aria-live="polite">
+              {kittyTheftStage === "Waiting"
+                ? `Waiting for ${currentKittyTheftPlayerName} to decide whether to steal the bottom... / 正在等待 ${currentKittyTheftPlayerName} 决定是否炒底……`
+                : kittyTheftStage === "Exchanging"
+                  ? `Waiting for ${currentKittyTheftPlayerName} to finish exchanging cards... / 正在等待埋底完成……`
+                  : "Waiting..."}
+            </p>
           </>
         ) : null}
         {playerId !== nextPlayer && <BeepButton />}
-        {isLandlord && bidUI === null ? startGame : null}
+        {isLandlord && bidUI === null && kittyTheftComplete ? startGame : null}
         {bidUI}
       </div>
     );

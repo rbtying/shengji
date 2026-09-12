@@ -116,6 +116,7 @@ pub enum MessageVariant {
     },
     TookBackPlay,
     TookBackBid,
+    KittyTheftDeclined,
     PlayedCards {
         cards: Vec<Card>,
     },
@@ -316,6 +317,8 @@ impl MessageVariant {
                 format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
             TookBackBid => format!("{} took back their last bid", n?),
             TookBackPlay => format!("{} took back their last play", n?),
+            KittyTheftDeclined =>
+                format!("{} 放弃炒底 / declined to steal the bottom", n?),
             PlayedCards { ref cards } =>
                 format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
             EndOfGameKittyReveal { ref cards } =>

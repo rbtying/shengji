@@ -871,16 +871,41 @@ mod tests {
 
         assert!(draw.bid(p1, cards::H_2, 1));
         let mut exchange = draw.advance(p1).unwrap();
+        // The original landlord must bury first. The first decision then goes
+        // to the landlord's next seated player, not the fastest bidder.
+        assert_eq!(exchange.next_player().unwrap(), p1);
         exchange.finalize(p1).unwrap();
-        assert!(exchange.bid(p1, cards::H_2, 2));
-        assert!(exchange.bid(p3, Card::SmallJoker, 2));
-        exchange.pick_up_cards(p3).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(!exchange.bid(p3, Card::SmallJoker, 2).unwrap());
+        assert!(exchange.decline_kitty_theft(p3).is_err());
         exchange.advance(p1).unwrap_err();
+
+        // Passing proceeds in seat order. A successful bid immediately picks
+        // up the bottom and makes the bidder the new exchanger.
+        exchange.decline_kitty_theft(p2).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p3);
+        assert!(exchange.bid(p3, Card::SmallJoker, 2).unwrap());
+        assert_eq!(exchange.next_player().unwrap(), p3);
         exchange.finalize(p3).unwrap();
-        assert!(exchange.bid(p2, Card::BigJoker, 2));
-        exchange.pick_up_cards(p2).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p4);
+
+        // Every new burial starts a fresh circuit, including players who
+        // passed in the previous circuit and excluding the current exchanger.
+        exchange.decline_kitty_theft(p4).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p1);
+        exchange.decline_kitty_theft(p1).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(exchange.bid(p2, Card::BigJoker, 2).unwrap());
+        assert_eq!(exchange.next_player().unwrap(), p2);
         exchange.finalize(p2).unwrap();
-        assert!(!exchange.bid(p1, cards::H_2, 2));
+        assert_eq!(exchange.next_player().unwrap(), p3);
+        assert!(!exchange.bid(p1, cards::H_2, 2).unwrap());
+
+        // Once every other player passes, the landlord may begin play.
+        exchange.decline_kitty_theft(p3).unwrap();
+        exchange.decline_kitty_theft(p4).unwrap();
+        exchange.decline_kitty_theft(p1).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p1);
         exchange.advance(p1).unwrap();
     }
 
