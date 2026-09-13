@@ -94,6 +94,9 @@ fn main() {
                             game_state = GameState::Draw(s.start(landlord).unwrap());
                         }
                     },
+                    GameState::Draw(ref mut s) if s.deck_cut_player().is_some() => {
+                        s.cut_deck(s.next_player().unwrap(), 0).unwrap();
+                    }
                     GameState::Draw(ref mut s) if !s.done_drawing() => {
                         s.draw_card(s.next_player().unwrap()).unwrap();
                     }

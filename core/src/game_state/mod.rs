@@ -808,6 +808,7 @@ mod tests {
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         // Hackily ensure that everyone can bid.
         *draw.deck_mut() = vec![
             cards::S_2,
@@ -847,6 +848,7 @@ mod tests {
         init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
             .unwrap();
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         // Hackily ensure that everyone can bid.
         *draw.deck_mut() = vec![
             cards::S_2,
@@ -923,6 +925,7 @@ mod tests {
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
 
         let p1_hand = [S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
         let p2_hand = [S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
@@ -976,6 +979,7 @@ mod tests {
                 .unwrap();
 
             let mut draw = init.start(PlayerID(1)).unwrap();
+            draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
             *draw.deck_mut() = vec![bid, bid, bid, bid];
             draw.draw_card(p2).unwrap();
             draw.draw_card(p3).unwrap();
@@ -1058,6 +1062,7 @@ mod tests {
         init.set_rank(p2, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(1)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
 
         let p1_hand = [
             Card::SmallJoker,
@@ -1429,6 +1434,7 @@ mod tests {
         init.set_rank(p1, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         let mut deck = vec![];
 
         // We need at least two cards per person, since the landlord needs to

@@ -311,6 +311,11 @@ impl InteractiveGame {
                 state.draw_card(id)?;
                 vec![]
             }
+            (Action::CutDeck(count), GameState::Draw(ref mut state)) => {
+                info!(logger, "Cutting the deck"; "count" => count);
+                state.cut_deck(id, count)?;
+                vec![MessageVariant::DeckCut { count }]
+            }
             (Action::RevealCard, GameState::Draw(ref mut state)) => {
                 info!(logger, "Revealing card");
                 vec![state.reveal_card()?]
@@ -513,6 +518,7 @@ pub enum Action {
     SetCompoundFormats(CompoundFormats),
     SetGameVisibility(GameVisibility),
     StartGame,
+    CutDeck(usize),
     DrawCard,
     RevealCard,
     Bid(Card, usize),

@@ -27,6 +27,9 @@ pub enum MessageVariant {
     ResetCanceled,
     ResettingGame,
     StartingGame,
+    DeckCut {
+        count: usize,
+    },
     TrickWon {
         winner: PlayerID,
         points: usize,
@@ -223,6 +226,7 @@ impl MessageVariant {
             ResetCanceled => format!("{} canceled game reset", n?),
             ResettingGame => format!("{} reset the game", n?),
             StartingGame => format!("{} started the game", n?),
+            DeckCut { count } => format!("{} cut {} cards / 切了 {} 张牌", n?, count, count),
             RiverCrossingInitiated { player } =>
                 format!("{} 发起了五主过河 / initiated five-trump river crossing", player_name(*player)?),
             TrickWon { winner, points: 0 } =>

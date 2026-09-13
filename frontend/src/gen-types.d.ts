@@ -147,6 +147,9 @@ export type Action =
       SetGameVisibility: GameVisibility;
     }
   | {
+      CutDeck: number;
+    }
+  | {
       /**
        * @minItems 2
        * @maxItems 2
@@ -368,6 +371,11 @@ export type MessageVariant =
     }
   | {
       type: "StartingGame";
+      [k: string]: unknown;
+    }
+  | {
+      count: number;
+      type: "DeckCut";
       [k: string]: unknown;
     }
   | {
@@ -1008,6 +1016,7 @@ export interface DrawPhase {
   autobid?: Bid | null;
   bids: Bid[];
   deck: Card[];
+  deck_cut_player?: number | null;
   decks?: Deck[];
   game_mode: GameMode;
   hands: Hands;

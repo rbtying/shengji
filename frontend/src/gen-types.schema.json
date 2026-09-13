@@ -561,6 +561,18 @@
         },
         {
           "type": "object",
+          "required": ["CutDeck"],
+          "properties": {
+            "CutDeck": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["Bid"],
           "properties": {
             "Bid": {
@@ -1075,6 +1087,12 @@
           "items": {
             "$ref": "#/definitions/Card"
           }
+        },
+        "deck_cut_player": {
+          "default": null,
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
         },
         "decks": {
           "default": [],
@@ -1915,6 +1933,21 @@
             "type": {
               "type": "string",
               "enum": ["StartingGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["count", "type"],
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["DeckCut"]
             }
           }
         },

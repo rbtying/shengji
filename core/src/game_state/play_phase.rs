@@ -725,6 +725,7 @@ mod tests {
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(p1).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
 
         *draw.deck_mut() = vec![
             S_2,

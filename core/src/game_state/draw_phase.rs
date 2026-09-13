@@ -24,6 +24,8 @@ pub struct DrawPhase {
     #[serde(default)]
     autobid: Option<Bid>,
     position: usize,
+    #[serde(default)]
+    deck_cut_player: Option<PlayerID>,
     kitty: Vec<Card>,
     #[serde(default)]
     revealed_cards: usize,
@@ -48,12 +50,22 @@ impl DrawPhase {
         decks: Vec<Deck>,
         removed_cards: Vec<Card>,
     ) -> Self {
+        let deck_cut_player = if propagated.players.is_empty() {
+            None
+        } else {
+            Some(
+                propagated.players
+                    [(position + propagated.players.len() - 1) % propagated.players.len()]
+                .id,
+            )
+        };
         DrawPhase {
             hands: Hands::new(propagated.players.iter().map(|p| p.id)),
             deck,
             kitty,
             propagated,
             position,
+            deck_cut_player,
             num_decks,
             decks,
             game_mode,
@@ -86,6 +98,10 @@ impl DrawPhase {
         &self.kitty
     }
 
+    pub fn deck_cut_player(&self) -> Option<PlayerID> {
+        self.deck_cut_player
+    }
+
     #[cfg(test)]
     pub fn deck_mut(&mut self) -> &mut Vec<Card> {
         &mut self.deck
@@ -110,6 +126,9 @@ impl DrawPhase {
     }
 
     pub fn next_player(&self) -> Result<PlayerID, Error> {
+        if let Some(player) = self.deck_cut_player {
+            return Ok(player);
+        }
         if self.deck.is_empty() {
             let (first_bid, winning_bid) = Bid::first_and_winner(&self.bids, self.autobid)?;
             let landlord = self.propagated.landlord.unwrap_or(
@@ -126,6 +145,9 @@ impl DrawPhase {
     }
 
     pub fn draw_card(&mut self, id: PlayerID) -> Result<(), Error> {
+        if self.deck_cut_player.is_some() {
+            bail!("the deck must be cut before cards can be drawn");
+        }
         if id != self.propagated.players[self.position].id {
             bail!("not your turn!");
         }
@@ -136,6 +158,39 @@ impl DrawPhase {
         } else {
             bail!("no cards left in deck")
         }
+    }
+
+    pub fn cut_deck(&mut self, id: PlayerID, count: usize) -> Result<(), Error> {
+        if self.deck_cut_player != Some(id) {
+            bail!("not your turn to cut the deck");
+        }
+
+        let total_cards = self.deck.len() + self.kitty.len();
+        if count > total_cards {
+            bail!("cut must be between 0 and {total_cards}");
+        }
+
+        // `deck.pop()` draws from the top, so the drawable portion is stored
+        // bottom-to-top. Reconstruct the physical top-to-bottom order including
+        // the kitty, rotate the requested top cards to the bottom, then split it
+        // back without changing the kitty size.
+        let num_drawable_cards = self.deck.len();
+        let mut top_to_bottom = self
+            .deck
+            .iter()
+            .rev()
+            .chain(self.kitty.iter())
+            .copied()
+            .collect::<Vec<_>>();
+        top_to_bottom.rotate_left(count);
+        self.deck = top_to_bottom[..num_drawable_cards]
+            .iter()
+            .rev()
+            .copied()
+            .collect();
+        self.kitty = top_to_bottom[num_drawable_cards..].to_vec();
+        self.deck_cut_player = None;
+        Ok(())
     }
 
     pub fn reveal_card(&mut self) -> Result<MessageVariant, Error> {
@@ -362,5 +417,40 @@ impl DrawPhase {
             *card = Card::Unknown;
         }
         self.deck.fill(Card::Unknown);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shengji_mechanics::types::cards;
+
+    #[test]
+    fn player_before_first_drawer_cuts_entire_deck() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        init.add_player("p2".into()).unwrap();
+        init.add_player("p3".into()).unwrap();
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        let mut draw = init.start(p1).unwrap();
+
+        draw.position = 0;
+        draw.deck_cut_player = Some(p4);
+        draw.deck = vec![cards::S_6, cards::S_5, cards::S_4];
+        draw.kitty = vec![cards::S_7, cards::S_8];
+
+        assert_eq!(draw.next_player().unwrap(), p4);
+        assert!(draw.draw_card(p1).is_err());
+        assert!(draw.cut_deck(p1, 2).is_err());
+        assert!(draw.cut_deck(p4, 6).is_err());
+
+        draw.cut_deck(p4, 2).unwrap();
+        assert_eq!(draw.deck, vec![cards::S_8, cards::S_7, cards::S_6]);
+        assert_eq!(draw.kitty, vec![cards::S_4, cards::S_5]);
+        assert_eq!(draw.next_player().unwrap(), p1);
+
+        draw.draw_card(p1).unwrap();
+        assert_eq!(draw.hands.get(p1).unwrap().get(&cards::S_6), Some(&1));
+        assert!(draw.cut_deck(p4, 0).is_err());
     }
 }
