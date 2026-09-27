@@ -27,28 +27,28 @@ macro_rules! bail_unwrap {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ExchangePhase {
-    propagated: PropagatedState,
-    num_decks: usize,
-    game_mode: GameMode,
-    hands: Hands,
-    kitty: Vec<Card>,
-    kitty_size: usize,
-    landlord: PlayerID,
-    trump: Trump,
-    exchanger: PlayerID,
+    pub(crate) propagated: PropagatedState,
+    pub(crate) num_decks: usize,
+    pub(crate) game_mode: GameMode,
+    pub(crate) hands: Hands,
+    pub(crate) kitty: Vec<Card>,
+    pub(crate) kitty_size: usize,
+    pub(crate) landlord: PlayerID,
+    pub(crate) trump: Trump,
+    pub(crate) exchanger: PlayerID,
     #[serde(default)]
-    finalized: bool,
+    pub(crate) finalized: bool,
     #[serde(default)]
-    epoch: usize,
+    pub(crate) epoch: usize,
     #[serde(default)]
-    bids: Vec<Bid>,
+    pub(crate) bids: Vec<Bid>,
     #[serde(default)]
-    autobid: Option<Bid>,
+    pub(crate) autobid: Option<Bid>,
     #[serde(default)]
-    removed_cards: Vec<Card>,
+    pub(crate) removed_cards: Vec<Card>,
     #[serde(default)]
-    decks: Vec<Deck>,
-    player_requested_reset: Option<PlayerID>,
+    pub(crate) decks: Vec<Deck>,
+    pub(crate) player_requested_reset: Option<PlayerID>,
 }
 
 impl ExchangePhase {

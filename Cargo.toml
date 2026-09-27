@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "backend",
+  "bot-client",
   "frontend/json-schema-bin",
   "frontend/shengji-wasm",
   "wasm-rpc-impl"

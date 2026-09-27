@@ -15,24 +15,24 @@ use crate::game_state::initialize_phase::InitializePhase;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DrawPhase {
-    num_decks: usize,
-    game_mode: GameMode,
-    deck: Vec<Card>,
-    propagated: PropagatedState,
-    hands: Hands,
-    bids: Vec<Bid>,
+    pub(crate) num_decks: usize,
+    pub(crate) game_mode: GameMode,
+    pub(crate) deck: Vec<Card>,
+    pub(crate) propagated: PropagatedState,
+    pub(crate) hands: Hands,
+    pub(crate) bids: Vec<Bid>,
     #[serde(default)]
-    autobid: Option<Bid>,
-    position: usize,
-    kitty: Vec<Card>,
+    pub(crate) autobid: Option<Bid>,
+    pub(crate) position: usize,
+    pub(crate) kitty: Vec<Card>,
     #[serde(default)]
-    revealed_cards: usize,
-    level: Option<Rank>,
+    pub(crate) revealed_cards: usize,
+    pub(crate) level: Option<Rank>,
     #[serde(default)]
-    removed_cards: Vec<Card>,
+    pub(crate) removed_cards: Vec<Card>,
     #[serde(default)]
-    decks: Vec<Deck>,
-    player_requested_reset: Option<PlayerID>,
+    pub(crate) decks: Vec<Deck>,
+    pub(crate) player_requested_reset: Option<PlayerID>,
 }
 
 impl DrawPhase {

@@ -9,3 +9,5 @@ pub mod settings;
 pub mod game_state;
 pub mod interactive;
 pub mod message;
+
+pub mod bot;

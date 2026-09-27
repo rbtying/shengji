@@ -647,6 +647,10 @@ impl Trick {
         self.trick_format.as_ref()
     }
 
+    pub fn current_winner(&self) -> Option<PlayerID> {
+        self.current_winner
+    }
+
     ///
     /// Determines whether the player can play the cards.
     ///

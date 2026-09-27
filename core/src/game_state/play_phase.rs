@@ -42,25 +42,25 @@ pub struct PlayerGameFinishedResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PlayPhase {
-    num_decks: usize,
-    game_mode: GameMode,
-    propagated: PropagatedState,
-    hands: Hands,
-    points: HashMap<PlayerID, Vec<Card>>,
-    penalties: HashMap<PlayerID, usize>,
-    kitty: Vec<Card>,
-    landlord: PlayerID,
-    landlords_team: Vec<PlayerID>,
-    exchanger: PlayerID,
-    trump: Trump,
-    trick: Trick,
-    last_trick: Option<Trick>,
-    game_ended_early: bool,
+    pub(crate) num_decks: usize,
+    pub(crate) game_mode: GameMode,
+    pub(crate) propagated: PropagatedState,
+    pub(crate) hands: Hands,
+    pub(crate) points: HashMap<PlayerID, Vec<Card>>,
+    pub(crate) penalties: HashMap<PlayerID, usize>,
+    pub(crate) kitty: Vec<Card>,
+    pub(crate) landlord: PlayerID,
+    pub(crate) landlords_team: Vec<PlayerID>,
+    pub(crate) exchanger: PlayerID,
+    pub(crate) trump: Trump,
+    pub(crate) trick: Trick,
+    pub(crate) last_trick: Option<Trick>,
+    pub(crate) game_ended_early: bool,
     #[serde(default)]
-    removed_cards: Vec<Card>,
+    pub(crate) removed_cards: Vec<Card>,
     #[serde(default)]
-    decks: Vec<Deck>,
-    player_requested_reset: Option<PlayerID>,
+    pub(crate) decks: Vec<Deck>,
+    pub(crate) player_requested_reset: Option<PlayerID>,
 }
 
 impl PlayPhase {
