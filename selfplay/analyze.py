@@ -18,13 +18,31 @@ def logit(p):
     return math.log(p / (1 - p))
 
 
+def sigmoid(z):
+    if z >= 0:
+        return 1 / (1 + math.exp(-z))
+    e = math.exp(z)
+    return e / (1 + e)
+
+
+def log_likelihood(points, a, b):
+    total = 0.0
+    for x, y in points:
+        q = min(max(sigmoid(a + b * x), 1e-300), 1 - 1e-16)
+        total += y * math.log(q) + (1 - y) * math.log(1 - q)
+    return total
+
+
 def fit(points):
-    """Two-parameter logistic regression of won on logit(p), by Newton's method."""
+    """Two-parameter logistic regression of won on logit(p), by Newton's method.
+
+    Steps that would lower the likelihood are halved: full Newton steps can oscillate and
+    diverge on this data (they did on Hard/Tractor/attacking)."""
     a, b = 0.0, 1.0
-    for _ in range(50):
+    for _ in range(200):
         ga = gb = haa = hab = hbb = 0.0
         for x, y in points:
-            q = 1 / (1 + math.exp(-(a + b * x)))
+            q = sigmoid(a + b * x)
             w = q * (1 - q)
             ga += y - q
             gb += (y - q) * x
@@ -36,11 +54,33 @@ def fit(points):
             break
         da = (hbb * ga - hab * gb) / det
         db = (haa * gb - hab * ga) / det
-        a += da
-        b += db
-        if abs(da) + abs(db) < 1e-9:
+        base = log_likelihood(points, a, b)
+        t = 1.0
+        while t > 1e-8 and log_likelihood(points, a + t * da, b + t * db) < base:
+            t /= 2
+        a += t * da
+        b += t * db
+        if abs(t * da) + abs(t * db) < 1e-9:
             break
     return a, b
+
+
+# Hands a table needs, on its own side, to go into FITS.
+MIN_HANDS = 30
+
+# Real fits stay well inside this; separable data drives the coefficients toward infinity.
+MAX_COEF = 10.0
+
+
+def degenerate(points, a, b):
+    """Why the fit of `points` to (a, b) can't be trusted, or None if it can."""
+    outcomes = {y for _, y in points}
+    if len(outcomes) < 2:
+        return f"every hand was {'won' if 1 in outcomes else 'lost'}, nothing to fit"
+    if abs(a) > MAX_COEF or abs(b) > MAX_COEF:
+        return (f"no finite fit (a={a:+.1f} b={b:.1f}): the predictions separate wins from "
+                f"losses perfectly; add hands")
+    return None
 
 
 def bins(pairs, n=5):
@@ -59,7 +99,7 @@ def bins(pairs, n=5):
 def main(paths):
     h2h = []
     cal = defaultdict(list)  # (bots, friends, side) -> [(p, won, hand_id)]
-    hands = defaultdict(int)
+    configs = defaultdict(set)  # (coach_smart, bots_smart) -> files
     for path in paths:
         with open(path, encoding="utf-8") as f:
             for n, line in enumerate(f):
@@ -71,10 +111,20 @@ def main(paths):
                     h2h.append(r)
                 elif r["kind"] == "calibrate":
                     friends = r["mode"].startswith("friends")
-                    hands[(r["bots"], friends)] += 1
+                    configs[(r.get("coach_smart"), r.get("bots_smart"))].add(path)
                     for pr in r["predictions"]:
                         key = (r["bots"], friends, pr["landlord_side"])
                         cal[key].append((pr["p"], 1 if r["won"] else 0, f"{path}:{n}"))
+
+    # FITS describes one configuration; fitting hands from several together would be wrong.
+    if len(configs) > 1:
+        print("error: calibration hands from different configurations; analyze them "
+              "separately:", file=sys.stderr)
+        for (coach, bots), files in sorted(configs.items(), key=str):
+            print(f"  coach_smart={str(coach).lower()} bots_smart={str(bots).lower()}: "
+                  f"{', '.join(sorted(files))}",
+                  file=sys.stderr)
+        sys.exit(1)
 
     if h2h:
         diffs = [r["smart_levels"] - r["basic_levels"] for r in h2h]
@@ -94,26 +144,35 @@ def main(paths):
         print()
 
     rust = []
+    skipped = []
     for key in sorted(cal):
         bots, friends, side = key
         pts = cal[key]
         game = "Finding Friends" if friends else "Tractor"
         who = "landlord side" if side else "attacking"
-        print(f"== {bots} bots, {game}, {who}: {len(pts)} predictions "
-              f"from {hands[(bots, friends)]} hands")
+        # A Finding Friends hand can count on both sides: seat 0 may switch when a friend shows.
+        hands = len({hand for _, _, hand in pts})
+        print(f"== {bots} bots, {game}, {who}: {len(pts)} predictions from {hands} hands")
         raw = [(p, y) for p, y, _ in pts]
         mp = sum(p for p, _ in raw) / len(raw)
         my = sum(y for _, y in raw) / len(raw)
         print(f"  raw: predicted {mp:.2f}, actual {my:.2f}")
         for line in bins(raw):
             print("   ", line)
-        a, b = fit([(logit(p), y) for p, y in raw])
-        adj = [(1 / (1 + math.exp(-(a + b * logit(p)))), y) for p, y in raw]
+        points = [(logit(p), y) for p, y in raw]
+        a, b = fit(points)
+        reason = degenerate(points, a, b)
+        if reason:
+            print(f"  fit: skipped, {reason}")
+            skipped.append(f"{bots} bots, {game}, {who}: {reason}")
+            print()
+            continue
+        adj = [(sigmoid(a + b * logit(p)), y) for p, y in raw]
         print(f"  fit: a={a:+.3f} b={b:.3f}; after: predicted "
               f"{sum(p for p, _ in adj) / len(adj):.2f}")
         for line in bins(adj):
             print("   ", line)
-        if hands[(bots, friends)] >= 60:
+        if hands >= MIN_HANDS:
             rust.append(
                 f"    (Difficulty::{bots}, {str(friends).lower()}, {str(side).lower()}, "
                 f"{a:.4f}, {b:.4f}),"
@@ -121,10 +180,16 @@ def main(paths):
         print()
 
     if rust:
-        print("== FITS for core/src/bot/calibration.rs (tables with 60+ hands)")
+        (coach, bots), = configs
+        print(f"== FITS for core/src/bot/calibration.rs (tables with {MIN_HANDS}+ hands; "
+              f"coach_smart={str(coach).lower()} bots_smart={str(bots).lower()})")
         print("const FITS: &[(Difficulty, bool, bool, f64, f64)] = &[")
         print("\n".join(rust))
         print("];")
+    if skipped:
+        print(f"\nWARNING: {len(skipped)} table(s) left out of FITS:", file=sys.stderr)
+        for s in skipped:
+            print(f"  {s}", file=sys.stderr)
 
 
 if __name__ == "__main__":

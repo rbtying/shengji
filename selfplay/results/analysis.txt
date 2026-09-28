@@ -1,0 +1,246 @@
+== Head to head (1000 hands, Hard bots)
+smart minus basic: -0.060 levels per hand (standard error 0.036)
+  smart team as landlord side: won 294/519 (57%)
+  smart team as attackers: won 169/481 (35%)
+
+== Easy bots, Tractor, attacking: 641 predictions from 41 hands
+  raw: predicted 0.78, actual 0.77
+    0.0-0.2: predicted 0.08, actual 0.00 (n=34)
+    0.2-0.4: predicted 0.29, actual 0.28 (n=46)
+    0.4-0.6: predicted 0.50, actual 0.69 (n=65)
+    0.6-0.8: predicted 0.70, actual 0.74 (n=96)
+    0.8-1.0: predicted 0.96, actual 0.92 (n=400)
+  fit: a=+0.031 b=0.829; after: predicted 0.77
+    0.0-0.2: predicted 0.10, actual 0.00 (n=30)
+    0.2-0.4: predicted 0.31, actual 0.16 (n=43)
+    0.4-0.6: predicted 0.51, actual 0.71 (n=82)
+    0.6-0.8: predicted 0.71, actual 0.72 (n=106)
+    0.8-1.0: predicted 0.95, actual 0.93 (n=380)
+
+== Easy bots, Tractor, landlord side: 638 predictions from 39 hands
+  raw: predicted 0.77, actual 0.91
+    0.0-0.2: predicted 0.04, actual 0.14 (n=37)
+    0.2-0.4: predicted 0.31, actual 0.67 (n=43)
+    0.4-0.6: predicted 0.51, actual 0.94 (n=64)
+    0.6-0.8: predicted 0.71, actual 0.96 (n=114)
+    0.8-1.0: predicted 0.96, actual 0.98 (n=380)
+  fit: a=+1.867 b=0.945; after: predicted 0.91
+    0.0-0.2: predicted 0.04, actual 0.00 (n=26)
+    0.2-0.4: predicted 0.28, actual 0.50 (n=2)
+    0.4-0.6: predicted 0.52, actual 0.40 (n=5)
+    0.6-0.8: predicted 0.73, actual 0.65 (n=43)
+    0.8-1.0: predicted 0.96, actual 0.97 (n=562)
+
+== Easy bots, Finding Friends, attacking: 546 predictions from 49 hands
+  raw: predicted 0.78, actual 0.69
+    0.0-0.2: predicted 0.09, actual 0.07 (n=29)
+    0.2-0.4: predicted 0.29, actual 0.14 (n=36)
+    0.4-0.6: predicted 0.51, actual 0.28 (n=50)
+    0.6-0.8: predicted 0.72, actual 0.55 (n=91)
+    0.8-1.0: predicted 0.94, actual 0.90 (n=340)
+  fit: a=-0.814 b=1.050; after: predicted 0.69
+    0.0-0.2: predicted 0.09, actual 0.10 (n=61)
+    0.2-0.4: predicted 0.31, actual 0.28 (n=54)
+    0.4-0.6: predicted 0.52, actual 0.52 (n=64)
+    0.6-0.8: predicted 0.70, actual 0.73 (n=116)
+    0.8-1.0: predicted 0.96, actual 0.95 (n=251)
+
+== Easy bots, Finding Friends, landlord side: 460 predictions from 51 hands
+  raw: predicted 0.73, actual 0.95
+    0.0-0.2: predicted 0.12, actual 0.79 (n=14)
+    0.2-0.4: predicted 0.32, actual 0.87 (n=46)
+    0.4-0.6: predicted 0.50, actual 0.87 (n=103)
+    0.6-0.8: predicted 0.68, actual 0.98 (n=60)
+    0.8-1.0: predicted 0.96, actual 1.00 (n=237)
+  fit: a=+2.464 b=0.774; after: predicted 0.95
+    0.0-0.2: predicted 0.16, actual 0.00 (n=3)
+    0.6-0.8: predicted 0.75, actual 1.00 (n=11)
+    0.8-1.0: predicted 0.96, actual 0.95 (n=446)
+
+== Expert bots, Tractor, attacking: 524 predictions from 40 hands
+  raw: predicted 0.59, actual 0.43
+    0.0-0.2: predicted 0.05, actual 0.00 (n=103)
+    0.2-0.4: predicted 0.31, actual 0.00 (n=57)
+    0.4-0.6: predicted 0.50, actual 0.14 (n=85)
+    0.6-0.8: predicted 0.71, actual 0.36 (n=76)
+    0.8-1.0: predicted 0.94, actual 0.91 (n=203)
+  fit: a=-2.087 b=1.715; after: predicted 0.43
+    0.0-0.2: predicted 0.05, actual 0.05 (n=246)
+    0.2-0.4: predicted 0.31, actual 0.28 (n=47)
+    0.4-0.6: predicted 0.50, actual 0.56 (n=34)
+    0.6-0.8: predicted 0.71, actual 0.72 (n=39)
+    0.8-1.0: predicted 0.96, actual 0.96 (n=158)
+
+== Expert bots, Tractor, landlord side: 552 predictions from 40 hands
+  raw: predicted 0.61, actual 0.60
+    0.0-0.2: predicted 0.05, actual 0.17 (n=95)
+    0.2-0.4: predicted 0.29, actual 0.48 (n=81)
+    0.4-0.6: predicted 0.51, actual 0.42 (n=65)
+    0.6-0.8: predicted 0.69, actual 0.53 (n=77)
+    0.8-1.0: predicted 0.95, actual 0.89 (n=234)
+  fit: a=+0.034 b=0.637; after: predicted 0.60
+    0.0-0.2: predicted 0.06, actual 0.06 (n=71)
+    0.2-0.4: predicted 0.33, actual 0.49 (n=84)
+    0.4-0.6: predicted 0.50, actual 0.44 (n=99)
+    0.6-0.8: predicted 0.70, actual 0.57 (n=120)
+    0.8-1.0: predicted 0.94, actual 0.98 (n=178)
+
+== Expert bots, Finding Friends, attacking: 475 predictions from 49 hands
+  raw: predicted 0.67, actual 0.49
+    0.0-0.2: predicted 0.07, actual 0.07 (n=44)
+    0.2-0.4: predicted 0.29, actual 0.07 (n=41)
+    0.4-0.6: predicted 0.50, actual 0.30 (n=63)
+    0.6-0.8: predicted 0.71, actual 0.53 (n=129)
+    0.8-1.0: predicted 0.91, actual 0.72 (n=198)
+  fit: a=-0.768 b=0.685; after: predicted 0.49
+    0.0-0.2: predicted 0.10, actual 0.06 (n=65)
+    0.2-0.4: predicted 0.31, actual 0.30 (n=101)
+    0.4-0.6: predicted 0.51, actual 0.58 (n=162)
+    0.6-0.8: predicted 0.67, actual 0.63 (n=83)
+    0.8-1.0: predicted 0.92, actual 0.86 (n=64)
+
+== Expert bots, Finding Friends, landlord side: 406 predictions from 39 hands
+  raw: predicted 0.55, actual 0.52
+    0.0-0.2: predicted 0.05, actual 0.07 (n=56)
+    0.2-0.4: predicted 0.31, actual 0.29 (n=58)
+    0.4-0.6: predicted 0.49, actual 0.46 (n=124)
+    0.6-0.8: predicted 0.67, actual 0.58 (n=69)
+    0.8-1.0: predicted 0.95, actual 0.96 (n=99)
+  fit: a=-0.150 b=0.965; after: predicted 0.52
+    0.0-0.2: predicted 0.06, actual 0.10 (n=59)
+    0.2-0.4: predicted 0.32, actual 0.31 (n=80)
+    0.4-0.6: predicted 0.49, actual 0.53 (n=119)
+    0.6-0.8: predicted 0.67, actual 0.56 (n=57)
+    0.8-1.0: predicted 0.95, actual 0.96 (n=91)
+
+== Hard bots, Tractor, attacking: 574 predictions from 42 hands
+  raw: predicted 0.53, actual 0.24
+    0.0-0.2: predicted 0.06, actual 0.01 (n=122)
+    0.2-0.4: predicted 0.31, actual 0.06 (n=70)
+    0.4-0.6: predicted 0.49, actual 0.18 (n=125)
+    0.6-0.8: predicted 0.69, actual 0.26 (n=99)
+    0.8-1.0: predicted 0.93, actual 0.53 (n=158)
+  fit: a=-1.917 b=0.711; after: predicted 0.24
+    0.0-0.2: predicted 0.09, actual 0.10 (n=362)
+    0.2-0.4: predicted 0.28, actual 0.25 (n=100)
+    0.4-0.6: predicted 0.46, actual 0.33 (n=42)
+    0.6-0.8: predicted 0.68, actual 0.50 (n=14)
+    0.8-1.0: predicted 0.86, actual 0.95 (n=56)
+
+== Hard bots, Tractor, landlord side: 552 predictions from 38 hands
+  raw: predicted 0.51, actual 0.61
+    0.0-0.2: predicted 0.06, actual 0.15 (n=133)
+    0.2-0.4: predicted 0.29, actual 0.67 (n=92)
+    0.4-0.6: predicted 0.50, actual 0.59 (n=83)
+    0.6-0.8: predicted 0.71, actual 0.67 (n=98)
+    0.8-1.0: predicted 0.95, actual 0.97 (n=146)
+  fit: a=+0.663 b=0.728; after: predicted 0.61
+    0.0-0.2: predicted 0.05, actual 0.01 (n=80)
+    0.2-0.4: predicted 0.32, actual 0.38 (n=47)
+    0.4-0.6: predicted 0.50, actual 0.63 (n=101)
+    0.6-0.8: predicted 0.70, actual 0.62 (n=134)
+    0.8-1.0: predicted 0.92, actual 0.91 (n=190)
+
+== Hard bots, Finding Friends, attacking: 337 predictions from 34 hands
+  raw: predicted 0.71, actual 0.45
+    0.0-0.2: predicted 0.05, actual 0.00 (n=25)
+    0.2-0.4: predicted 0.31, actual 0.19 (n=21)
+    0.4-0.6: predicted 0.51, actual 0.09 (n=35)
+    0.6-0.8: predicted 0.71, actual 0.38 (n=95)
+    0.8-1.0: predicted 0.91, actual 0.66 (n=161)
+  fit: a=-1.403 b=0.820; after: predicted 0.45
+    0.0-0.2: predicted 0.09, actual 0.08 (n=62)
+    0.2-0.4: predicted 0.31, actual 0.36 (n=100)
+    0.4-0.6: predicted 0.50, actual 0.47 (n=86)
+    0.6-0.8: predicted 0.68, actual 0.65 (n=49)
+    0.8-1.0: predicted 0.92, actual 0.93 (n=40)
+
+== Hard bots, Finding Friends, landlord side: 565 predictions from 50 hands
+  raw: predicted 0.50, actual 0.52
+    0.0-0.2: predicted 0.07, actual 0.07 (n=122)
+    0.2-0.4: predicted 0.29, actual 0.33 (n=100)
+    0.4-0.6: predicted 0.50, actual 0.53 (n=114)
+    0.6-0.8: predicted 0.69, actual 0.72 (n=99)
+    0.8-1.0: predicted 0.94, actual 0.95 (n=130)
+  fit: a=+0.132 b=1.015; after: predicted 0.52
+    0.0-0.2: predicted 0.07, actual 0.07 (n=116)
+    0.2-0.4: predicted 0.30, actual 0.31 (n=94)
+    0.4-0.6: predicted 0.51, actual 0.50 (n=110)
+    0.6-0.8: predicted 0.70, actual 0.72 (n=106)
+    0.8-1.0: predicted 0.93, actual 0.92 (n=139)
+
+== Intermediate bots, Tractor, attacking: 471 predictions from 33 hands
+  raw: predicted 0.67, actual 0.55
+    0.0-0.2: predicted 0.06, actual 0.13 (n=60)
+    0.2-0.4: predicted 0.30, actual 0.11 (n=53)
+    0.4-0.6: predicted 0.51, actual 0.36 (n=59)
+    0.6-0.8: predicted 0.70, actual 0.43 (n=70)
+    0.8-1.0: predicted 0.95, actual 0.85 (n=229)
+  fit: a=-0.863 b=0.823; after: predicted 0.55
+    0.0-0.2: predicted 0.09, actual 0.10 (n=102)
+    0.2-0.4: predicted 0.31, actual 0.35 (n=89)
+    0.4-0.6: predicted 0.50, actual 0.48 (n=61)
+    0.6-0.8: predicted 0.69, actual 0.60 (n=63)
+    0.8-1.0: predicted 0.95, actual 0.97 (n=156)
+
+== Intermediate bots, Tractor, landlord side: 739 predictions from 47 hands
+  raw: predicted 0.58, actual 0.62
+    0.0-0.2: predicted 0.04, actual 0.12 (n=155)
+    0.2-0.4: predicted 0.29, actual 0.55 (n=86)
+    0.4-0.6: predicted 0.50, actual 0.67 (n=111)
+    0.6-0.8: predicted 0.71, actual 0.70 (n=121)
+    0.8-1.0: predicted 0.95, actual 0.88 (n=266)
+  fit: a=+0.403 b=0.633; after: predicted 0.62
+    0.0-0.2: predicted 0.06, actual 0.02 (n=104)
+    0.2-0.4: predicted 0.31, actual 0.36 (n=61)
+    0.4-0.6: predicted 0.51, actual 0.58 (n=133)
+    0.6-0.8: predicted 0.71, actual 0.69 (n=199)
+    0.8-1.0: predicted 0.93, actual 0.91 (n=242)
+
+== Intermediate bots, Finding Friends, attacking: 441 predictions from 42 hands
+  raw: predicted 0.70, actual 0.48
+    0.0-0.2: predicted 0.05, actual 0.00 (n=48)
+    0.2-0.4: predicted 0.31, actual 0.00 (n=29)
+    0.4-0.6: predicted 0.51, actual 0.09 (n=44)
+    0.6-0.8: predicted 0.71, actual 0.44 (n=87)
+    0.8-1.0: predicted 0.92, actual 0.73 (n=233)
+  fit: a=-1.826 b=1.158; after: predicted 0.48
+    0.0-0.2: predicted 0.07, actual 0.03 (n=120)
+    0.2-0.4: predicted 0.30, actual 0.38 (n=69)
+    0.4-0.6: predicted 0.50, actual 0.54 (n=87)
+    0.6-0.8: predicted 0.69, actual 0.65 (n=69)
+    0.8-1.0: predicted 0.95, actual 0.93 (n=96)
+
+== Intermediate bots, Finding Friends, landlord side: 473 predictions from 44 hands
+  raw: predicted 0.58, actual 0.63
+    0.0-0.2: predicted 0.09, actual 0.30 (n=44)
+    0.2-0.4: predicted 0.31, actual 0.53 (n=93)
+    0.4-0.6: predicted 0.49, actual 0.45 (n=117)
+    0.6-0.8: predicted 0.68, actual 0.70 (n=77)
+    0.8-1.0: predicted 0.95, actual 0.90 (n=142)
+  fit: a=+0.288 b=0.567; after: predicted 0.63
+    0.0-0.2: predicted 0.07, actual 0.07 (n=15)
+    0.2-0.4: predicted 0.34, actual 0.40 (n=42)
+    0.4-0.6: predicted 0.52, actual 0.49 (n=178)
+    0.6-0.8: predicted 0.68, actual 0.70 (n=122)
+    0.8-1.0: predicted 0.92, actual 0.91 (n=116)
+
+== FITS for core/src/bot/calibration.rs (tables with 30+ hands; coach_smart=false bots_smart=false)
+const FITS: &[(Difficulty, bool, bool, f64, f64)] = &[
+    (Difficulty::Easy, false, false, 0.0314, 0.8287),
+    (Difficulty::Easy, false, true, 1.8670, 0.9451),
+    (Difficulty::Easy, true, false, -0.8141, 1.0496),
+    (Difficulty::Easy, true, true, 2.4637, 0.7743),
+    (Difficulty::Expert, false, false, -2.0871, 1.7151),
+    (Difficulty::Expert, false, true, 0.0337, 0.6369),
+    (Difficulty::Expert, true, false, -0.7681, 0.6854),
+    (Difficulty::Expert, true, true, -0.1496, 0.9651),
+    (Difficulty::Hard, false, false, -1.9172, 0.7106),
+    (Difficulty::Hard, false, true, 0.6631, 0.7284),
+    (Difficulty::Hard, true, false, -1.4029, 0.8198),
+    (Difficulty::Hard, true, true, 0.1323, 1.0153),
+    (Difficulty::Intermediate, false, false, -0.8630, 0.8229),
+    (Difficulty::Intermediate, false, true, 0.4035, 0.6330),
+    (Difficulty::Intermediate, true, false, -1.8255, 1.1579),
+    (Difficulty::Intermediate, true, true, 0.2880, 0.5669),
+];

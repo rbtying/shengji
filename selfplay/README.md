@@ -7,7 +7,7 @@ cargo build --release -p selfplay
 # Smart vs basic rollouts: four bots of one level, Tractor, teams swap seats every hand.
 ./target/release/selfplay h2h --bots Hard --hands 300 --out results/h2h-hard.jsonl
 # Coach calibration: seat 0 follows the coach against bots of one level.
-./target/release/selfplay calibrate --bots Expert --mode tractor --hands 80 \
+./target/release/selfplay calibrate --bots Expert --mode tractor --hands 120 \
     --coach-smart true --bots-smart true --out results/cal-expert-tractor.jsonl
 python3 selfplay/analyze.py results/*.jsonl
 ```
