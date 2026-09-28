@@ -1292,6 +1292,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "selfplay"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "shengji-core",
+ "shengji-mechanics",
+ "slog",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.215"
 source = "registry+https://github.com/rust-lang/crates.io-index"

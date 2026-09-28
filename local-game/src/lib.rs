@@ -10,7 +10,8 @@ use serde::{Deserialize, Serialize};
 use slog::{o, Discard, Logger};
 
 use shengji_core::bot::{
-    hint, review_play, summarize, Bot, BotConfig, Decision, Difficulty, PlayVerdict, RecordedPlay,
+    hint_against, review_play, summarize, Bot, BotConfig, Decision, Difficulty, PlayVerdict,
+    RecordedPlay,
 };
 use shengji_core::game_state::GameState;
 use shengji_core::interactive::{Action, InteractiveGame};
@@ -222,8 +223,11 @@ impl LocalGame {
             }
             UserMessage::RequestHint => {
                 let view = self.game.dump_state_for_player(me)?;
+                // With a table of same-level bots, the coach corrects its odds for their level.
+                let level = self.bots.first().map(|b| b.difficulty);
+                let opponents = level.filter(|l| self.bots.iter().all(|b| b.difficulty == *l));
                 Ok(vec![GameMessage::Hint {
-                    hint: hint(&view, &name),
+                    hint: hint_against(&view, &name, opponents),
                 }])
             }
             UserMessage::Message(message) => Ok(vec![GameMessage::Message {
@@ -346,6 +350,7 @@ fn broadcasts(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use shengji_core::bot::hint;
 
     /// A human who always accepts the first suggested play, against three bots, for a full hand.
     #[test]

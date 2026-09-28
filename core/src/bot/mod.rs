@@ -20,11 +20,15 @@ use shengji_mechanics::types::{Card, EffectiveSuit, PlayerID, Trump};
 use crate::game_state::play_phase::PlayPhase;
 use crate::game_state::GameState;
 use crate::interactive::Action;
+use crate::settings::GameMode;
 
+mod calibration;
+pub use calibration::on_landlord_side;
 mod heuristics;
 mod play;
 mod review;
 mod setup;
+mod smart;
 
 pub use review::{
     review_hand, review_play, summarize, HandReview, Moment, PlayVerdict, RecordedPlay,
@@ -82,6 +86,9 @@ pub struct BotConfig {
     pub heuristic_only: bool,
     /// Chance of playing a random legal candidate instead of the chosen play.
     pub mistake_rate: f64,
+    /// Simulate the rest of the hand with the sharper rollout policy (`smart.rs`) instead of
+    /// the basic one.
+    pub smart_rollouts: bool,
 }
 
 impl Default for BotConfig {
@@ -118,6 +125,7 @@ impl BotConfig {
             start_new_games: false,
             heuristic_only,
             mistake_rate,
+            smart_rollouts: false,
         }
     }
 }
@@ -315,6 +323,28 @@ impl Bot {
 /// Advice for the player called `name`, using only what that player can see. Works for card play
 /// (when it's their turn) and for burying the kitty and calling friends.
 pub fn hint(state: &GameState, name: &str) -> Option<Hint> {
+    hint_against(state, name, None)
+}
+
+/// A hint whose win chances are corrected for opponents of the given level (when known, e.g.
+/// a table of bots). Choices don't change, only the percentages shown.
+pub fn hint_against(state: &GameState, name: &str, opponents: Option<Difficulty>) -> Option<Hint> {
+    hint_with(
+        state,
+        name,
+        &BotConfig::for_difficulty(Difficulty::Expert),
+        opponents,
+    )
+}
+
+/// A hint simulated with `config`, uncorrected unless `opponents` is given. For tools that
+/// measure the coach itself.
+pub fn hint_with(
+    state: &GameState,
+    name: &str,
+    config: &BotConfig,
+    opponents: Option<Difficulty>,
+) -> Option<Hint> {
     let me = state.player_id(name).ok()?;
     if !state.is_player(me) {
         return None;
@@ -322,8 +352,13 @@ pub fn hint(state: &GameState, name: &str) -> Option<Hint> {
     let mut rng = StdRng::from_entropy();
     match state {
         GameState::Play(p) if p.trick.next_player() == Some(me) && !p.game_finished() => {
-            let config = BotConfig::for_difficulty(Difficulty::Expert);
-            play::play_hint(p, me, &Memory::default(), &config, &mut rng)
+            let friends = matches!(p.game_mode, GameMode::FindingFriends { .. });
+            let side = calibration::on_landlord_side(p, me);
+            let adjust = |x: f64| match opponents {
+                Some(d) => calibration::adjust(x, d, friends, side),
+                None => x,
+            };
+            play::play_hint(p, me, &Memory::default(), config, &adjust, &mut rng)
         }
         GameState::Exchange(e) => setup::exchange_hint(e, me),
         _ => None,

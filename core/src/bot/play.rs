@@ -47,7 +47,7 @@ impl Sides {
         Sides { landlord_side }
     }
 
-    fn same(&self, a: PlayerID, b: PlayerID) -> bool {
+    pub(crate) fn same(&self, a: PlayerID, b: PlayerID) -> bool {
         self.landlord_side.contains(&a) == self.landlord_side.contains(&b)
     }
 }
@@ -170,7 +170,14 @@ pub(crate) fn analyze_with(
                 if sim.play_cards(me, c).is_err() {
                     continue;
                 }
-                if let Some(o) = rollout(sim, me, &base_levels, &sides, &mut trng) {
+                if let Some(o) = rollout(
+                    sim,
+                    me,
+                    &base_levels,
+                    &sides,
+                    config.smart_rollouts,
+                    &mut trng,
+                ) {
                     local[i].add(&o);
                 }
             }
@@ -264,6 +271,7 @@ pub(crate) fn play_hint(
     me: PlayerID,
     memory: &Memory,
     config: &BotConfig,
+    adjust: &dyn Fn(f64) -> f64,
     rng: &mut StdRng,
 ) -> Option<Hint> {
     let a = analyze(p, me, memory, config, rng);
@@ -286,7 +294,7 @@ pub(crate) fn play_hint(
             let s = a.stats[*i];
             HintOption {
                 cards: a.candidates[*i].clone(),
-                win_rate: s.wins / s.n as f64,
+                win_rate: adjust(s.wins / s.n as f64),
                 defender_points: s.defender_points / s.n as f64,
                 levels: s.levels / s.n as f64,
                 samples: s.n,
@@ -428,6 +436,7 @@ fn rollout(
     me: PlayerID,
     base: &HashMap<PlayerID, i64>,
     sides: &Sides,
+    smart: bool,
     rng: &mut StdRng,
 ) -> Option<Outcome> {
     for _ in 0..5000 {
@@ -441,7 +450,11 @@ fn rollout(
                 continue;
             }
         };
-        let cards = policy_play(&s, next, sides, rng);
+        let cards = if smart {
+            super::smart::smart_play(&s, next, sides, rng)
+        } else {
+            policy_play(&s, next, sides, rng)
+        };
         if s.play_cards(next, &cards).is_err() {
             let fallback = candidates(&s, next);
             let c = fallback.first()?;
