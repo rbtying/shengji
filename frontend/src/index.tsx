@@ -10,6 +10,7 @@ import WebsocketProvider from "./WebsocketProvider";
 import OfflineProvider, { isOffline } from "./OfflineProvider";
 import TimerProvider from "./TimerProvider";
 import Root from "./Root";
+import AppRoot from "./app/AppRoot";
 
 const WasmProvider = React.lazy(
   async () => await import("./WasmOrRpcProvider"),
@@ -37,7 +38,7 @@ const bootstrap = (): void => {
             <AppStateProvider>
               <Connection>
                 <ErrorBoundary fallback={fallback}>
-                  <Root />
+                  {isOffline() ? <AppRoot /> : <Root />}
                 </ErrorBoundary>
               </Connection>
             </AppStateProvider>

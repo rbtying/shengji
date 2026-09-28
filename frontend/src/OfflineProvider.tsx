@@ -35,6 +35,8 @@ const OfflineProvider = (props: IProps): JSX.Element => {
   const stateRef = React.useRef<AppState>(state);
   const updateStateRef = React.useRef(updateState);
   const workerRef = React.useRef<Worker | null>(null);
+  // Messages sent before the worker starts (children mount first) wait here.
+  const queued = React.useRef<any[]>([]);
 
   React.useEffect(() => {
     stateRef.current = state;
@@ -42,7 +44,11 @@ const OfflineProvider = (props: IProps): JSX.Element => {
   }, [state, updateState]);
 
   const send = React.useCallback((value: any): void => {
-    workerRef.current?.postMessage({ type: "send", payload: value });
+    if (workerRef.current === null) {
+      queued.current.push(value);
+    } else {
+      workerRef.current.postMessage({ type: "send", payload: value });
+    }
   }, []);
 
   React.useEffect(() => {
@@ -75,6 +81,9 @@ const OfflineProvider = (props: IProps): JSX.Element => {
       // Start fresh.
     }
     worker.postMessage({ type: "init", snapshot });
+    queued.current
+      .splice(0)
+      .forEach((payload) => worker.postMessage({ type: "send", payload }));
     updateStateRef.current({ connected: true, everConnected: true });
     return () => worker.terminate();
   }, []);

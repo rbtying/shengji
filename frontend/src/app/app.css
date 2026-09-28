@@ -1,0 +1,947 @@
+/* Two to Ace: the phone app screens (offline play). */
+
+.tta {
+  --ivory: #f5f1e8;
+  --paper: #fffdf8;
+  --line: #cfc8b8;
+  --line-strong: #bdb5a3;
+  --ink: #1c1b19;
+  --ink-2: #3d3a34;
+  --muted: #5f5a50;
+  --felt: #1d4d40;
+  --felt-dark: #163c32;
+  --felt-text: #e6efea;
+  --felt-muted: #cfe3da;
+  --red: #b8352a;
+  --gold: #c9a24b;
+  --gold-soft: #f1d9a0;
+  --tray: #ede6d6;
+  --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --zh: "PingFang SC", "Songti SC", "Noto Serif SC", "Microsoft YaHei", serif;
+
+  box-sizing: border-box;
+  max-width: 440px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--body);
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+    env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body:has(.tta) {
+  background: #e7e1d3;
+}
+
+.tta *,
+.tta *::before,
+.tta *::after {
+  box-sizing: border-box;
+}
+
+.tta button {
+  font-family: var(--body);
+  cursor: pointer;
+}
+
+.tta button:focus-visible,
+.tta a:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.tta-zh {
+  font-family: var(--zh);
+}
+
+/* ---------- Common pieces ---------- */
+
+.tta-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px 18px 24px;
+}
+
+.tta-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tta-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 700;
+}
+
+.tta-round {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tta-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tta-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tta-chip {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.tta-chip[aria-pressed="true"] {
+  background: var(--felt);
+  border-color: var(--felt);
+  color: var(--paper);
+}
+
+.tta-note {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.tta-panel {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.tta-btn {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.tta-btn.primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--paper);
+}
+
+.tta-btn.felt {
+  background: var(--felt);
+  border-color: var(--felt);
+  color: var(--paper);
+}
+
+.tta-btn.outline {
+  border-color: var(--felt);
+  color: var(--felt);
+}
+
+.tta-btn:disabled {
+  background: #d8d0be;
+  border-color: #d8d0be;
+  color: var(--muted);
+  cursor: default;
+}
+
+.tta-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tta-row > * {
+  flex: 1;
+}
+
+.tta-row > .grow {
+  flex: 2;
+}
+
+.tta-bottom {
+  margin-top: auto;
+}
+
+/* ---------- Home ---------- */
+
+.tta-home {
+  padding-top: 56px;
+  gap: 28px;
+}
+
+.tta-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.tta-brand-fan {
+  display: flex;
+  align-items: flex-end;
+  height: 110px;
+}
+
+.tta-brand-fan > .tta-card {
+  width: 64px;
+  height: 92px;
+  font-size: 20px;
+}
+
+.tta-brand-fan > :nth-child(1) {
+  transform: rotate(-12deg) translateX(14px);
+}
+
+.tta-brand-fan > :nth-child(2) {
+  transform: translateY(-10px);
+  z-index: 1;
+}
+
+.tta-brand-fan > :nth-child(3) {
+  transform: rotate(12deg) translateX(-14px);
+}
+
+.tta-brand h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.tta-brand .zh {
+  font-family: var(--zh);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 4px;
+}
+
+.tta-brand .sub {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tta-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tta-menu .tta-btn {
+  justify-content: space-between;
+  min-height: 60px;
+  text-align: left;
+}
+
+.tta-menu .tta-btn small {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.tta-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tta-footer button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 4px;
+}
+
+.tta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.tta-field input {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-size: 17px;
+  color: var(--ink);
+}
+
+/* ---------- Setup ---------- */
+
+.tta-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tta-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 96px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+
+.tta-mode[aria-pressed="true"] {
+  background: var(--felt);
+  border-color: var(--felt);
+  color: var(--paper);
+}
+
+.tta-mode strong {
+  font-size: 16px;
+}
+
+.tta-mode .tta-zh {
+  font-size: 14px;
+}
+
+.tta-mode span:last-child {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* ---------- Cards ---------- */
+
+.tta-card {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 64px;
+  padding: 5px 0 0 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: -1px 1px 3px rgba(28, 27, 25, 0.18);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.tta-card.red {
+  color: var(--red);
+}
+
+.tta-card .suit {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tta-card.joker {
+  padding: 1px;
+  overflow: hidden;
+}
+
+.tta-card.joker .art {
+  display: block;
+  border-radius: 5px;
+}
+
+.tta-card.small {
+  width: 34px;
+  height: 48px;
+  padding: 3px 0 0 3px;
+  font-size: 13px;
+  border-radius: 5px;
+}
+
+.tta-card.small .suit {
+  font-size: 12px;
+}
+
+.tta-card.back {
+  background: repeating-linear-gradient(45deg, #2e5e51 0 4px, #25503f 4px 8px);
+  border-color: #6e9a8b;
+}
+
+.tta-card.points::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gold);
+}
+
+button.tta-card {
+  cursor: pointer;
+}
+
+button.tta-card[aria-pressed="true"] {
+  transform: translateY(-16px);
+  border: 2px solid var(--red);
+}
+
+button.tta-card.suggested {
+  border: 2px solid var(--gold);
+}
+
+/* ---------- Table ---------- */
+
+.tta-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tta-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 6px;
+}
+
+.tta-trump {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.tta-trump b {
+  font-size: 17px;
+}
+
+.tta-trump b.red {
+  color: var(--red);
+}
+
+.tta-levels {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tta-level {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tta-level i {
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 13px;
+  border: 1px solid #a79f8e;
+  background: var(--paper);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tta-level.ours i {
+  background: var(--felt);
+  border-color: var(--felt);
+  color: var(--paper);
+}
+
+.tta-score {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 14px 8px;
+}
+
+.tta-score-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.tta-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #e3dccc;
+}
+
+.tta-bar > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: var(--red);
+  transition: width 0.3s ease;
+}
+
+.tta-bar > em {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--ink);
+}
+
+.tta-felt {
+  position: relative;
+  margin: 0 10px;
+  height: 330px;
+  flex-shrink: 0;
+  border-radius: 22px;
+  background: var(--felt);
+  box-shadow: inset 0 0 0 1px var(--felt-dark);
+  overflow: hidden;
+}
+
+.tta-seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  max-width: 120px;
+}
+
+.tta-seat-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--felt-text);
+  white-space: nowrap;
+}
+
+.tta-seat.next .tta-seat-name {
+  color: var(--gold-soft);
+}
+
+.tta-seat.next .tta-seat-name::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--gold-soft);
+}
+
+.tta-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: #2e5e51;
+  color: var(--felt-text);
+}
+
+.tta-badge.gold {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.tta-badge.teal {
+  background: #9fc3b6;
+  color: var(--ink);
+}
+
+.tta-played {
+  display: flex;
+  min-height: 48px;
+  align-items: flex-end;
+}
+
+.tta-played > .tta-card + .tta-card {
+  margin-left: -18px;
+}
+
+.tta-seat.winning .tta-played {
+  filter: drop-shadow(0 0 6px rgba(241, 217, 160, 0.9));
+}
+
+.tta-felt-note {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 46%;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--felt-muted);
+}
+
+.tta-toast {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  animation: tta-pop 0.35s ease;
+}
+
+@keyframes tta-pop {
+  from {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.tta-coach {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tta-coach header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tta-coach header span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--felt);
+}
+
+.tta-coach header button {
+  width: 44px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+}
+
+.tta-coach p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.tta-coach table {
+  border-collapse: collapse;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.tta-coach td {
+  padding: 2px 0;
+}
+
+.tta-coach td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tta-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 2px;
+}
+
+.tta-actions .tta-btn {
+  min-height: 48px;
+  flex: 1;
+}
+
+.tta-actions .tta-btn.grow {
+  flex: 2;
+}
+
+.tta-tip {
+  min-height: 20px;
+  padding: 2px 16px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tta-tip.error {
+  color: var(--red);
+}
+
+.tta-tray {
+  margin-top: auto;
+  padding: 8px 10px 18px;
+  background: var(--tray);
+  border-top: 1px solid #d8d0be;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tta-tray-row {
+  display: flex;
+  align-items: flex-end;
+  height: 76px;
+  padding-top: 12px;
+}
+
+.tta-tray-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Kitty ---------- */
+
+.tta-kitty-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--felt);
+}
+
+.tta-kitty-box .tta-label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--gold-soft);
+}
+
+.tta-kitty-slots {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  min-height: 56px;
+}
+
+.tta-kitty-slots .tta-card {
+  width: auto;
+  height: 56px;
+}
+
+.tta-slot {
+  height: 56px;
+  border: 2px dashed #6e9a8b;
+  border-radius: 6px;
+}
+
+.tta-friend-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tta-friend-pick .tta-chip {
+  min-width: 48px;
+  padding: 0 10px;
+}
+
+/* ---------- Waiting / review ---------- */
+
+.tta-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.tta-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--felt);
+  color: var(--paper);
+}
+
+.tta-result h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 24px;
+}
+
+.tta-result p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--felt-muted);
+}
+
+.tta-result .tta-bar {
+  background: #2e5e51;
+}
+
+.tta-result .tta-bar > span {
+  background: var(--gold-soft);
+}
+
+.tta-result .tta-bar > em {
+  background: var(--paper);
+}
+
+.tta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tta-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-size: 14px;
+}
+
+.tta-list-item b {
+  white-space: nowrap;
+}
+
+.tta-list-item.ours b {
+  color: var(--felt);
+}
+
+.tta-list-item.theirs b {
+  color: var(--red);
+}
+
+.tta-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(28, 27, 25, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.tta-sheet {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0));
+  border-radius: 20px 20px 0 0;
+  background: var(--ivory);
+}
+
+.tta-errors {
+  position: fixed;
+  left: 50%;
+  top: calc(12px + env(safe-area-inset-top, 0));
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: 90%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--red);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}

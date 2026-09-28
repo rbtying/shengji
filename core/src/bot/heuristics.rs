@@ -164,6 +164,10 @@ pub(crate) fn card_name(c: Card) -> String {
     match c {
         Card::BigJoker => "big joker".to_string(),
         Card::SmallJoker => "small joker".to_string(),
-        c => format!("{c:?}"),
+        c => format!("{c:?}")
+            .replace('♤', "♠")
+            .replace('♡', "♥")
+            .replace('♧', "♣")
+            .replace('♢', "♦"),
     }
 }
