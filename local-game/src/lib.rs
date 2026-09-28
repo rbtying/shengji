@@ -422,23 +422,29 @@ mod tests {
     /// Calibration: does the coach's predicted win chance at your first play match how often
     /// your side actually wins when everyone follows the bots' play? Slow; run by hand with
     /// `cargo test -p local-game --release calibrate -- --ignored --nocapture`.
+    /// CALIBRATE_BOTS picks the opponents' level (default Easy); CALIBRATE_HANDS the count.
     #[test]
     #[ignore]
     fn calibrate_hint_win_rate() {
-        let hands = 30;
+        let hands: usize = std::env::var("CALIBRATE_HANDS")
+            .ok()
+            .and_then(|h| h.parse().ok())
+            .unwrap_or(30);
+        let level = std::env::var("CALIBRATE_BOTS").unwrap_or_else(|_| "Easy".into());
+        let add_bot = format!(r#"{{"AddBot":"{level}"}}"#);
         // (predicted win chance, won) for each hand that offered a real choice.
         let mut results: Vec<(f64, bool)> = vec![];
         for n in 0..hands {
             let mut g = LocalGame::new();
             g.handle(r#"{"room_name":"offline-practice","name":"Me"}"#);
             for _ in 0..3 {
-                g.handle(r#"{"AddBot":"Easy"}"#);
+                g.handle(&add_bot);
             }
             g.handle(r#"{"Action":"StartGame"}"#);
             let me = g.human.as_ref().unwrap().0;
             let mut first: Option<f64> = None;
             let mut now = 0.0;
-            for _ in 0..40_000 {
+            for _ in 0..400_000 {
                 now += 100.0;
                 g.tick(now);
                 let state = g.game.dump_state_for_player(me).unwrap();
@@ -484,7 +490,7 @@ mod tests {
         let predicted: f64 = results.iter().map(|r| r.0).sum::<f64>() / k;
         let actual = results.iter().filter(|r| r.1).count() as f64 / k;
         println!(
-            "predicted {:.0}%, actual {:.0}% over {} hands",
+            "{level} bots: predicted {:.0}%, actual {:.0}% over {} hands",
             predicted * 100.0,
             actual * 100.0,
             results.len()

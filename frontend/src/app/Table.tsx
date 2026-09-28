@@ -545,9 +545,10 @@ const Table = (props: IProps): JSX.Element => {
                         <tr key={i}>
                           <td>
                             {(o.cards as string[])
-                              .map(
-                                (c) =>
-                                  `${face(c).rank}${face(c).rank === "★" ? "" : face(c).suit}`,
+                              .map((c) =>
+                                face(c).rank === "★"
+                                  ? face(c).label.toLowerCase()
+                                  : `${face(c).rank}${face(c).suit}`,
                               )
                               .join(" ")}
                           </td>
