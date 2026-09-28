@@ -416,21 +416,6 @@ JAVASCRIPT PACKAGES INCLUDED IN THE BUNDLE
   Copyright (c) case <case@casesandberg.com>
   Source: https://github.com/at-icons/material.git
 
-@sentry/browser 9.13.0
-  License: MIT
-  Copyright (c) 2019 Functional Software, Inc. dba Sentry
-  Source: git://github.com/getsentry/sentry-javascript.git
-
-@sentry/core 9.13.0
-  License: MIT
-  Copyright (c) 2019 Functional Software, Inc. dba Sentry
-  Source: git://github.com/getsentry/sentry-javascript.git
-
-@sentry/react 9.13.0
-  License: MIT
-  Copyright (c) 2019 Functional Software, Inc. dba Sentry
-  Source: git://github.com/getsentry/sentry-javascript.git
-
 canvas-confetti 1.9.3
   License: ISC
   Copyright (c) 2020, Kiril Vatev
@@ -595,12 +580,7 @@ Playing card SVG images (svgs/, frontend/src/generated/playing-cards*) Adrian Ke
   Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components.
   Source: https://www.me.uk/cards/
 
-Gear and paper-plane icons (frontend/src/icons/Gear.tsx, PaperPlane.tsx) Font Awesome Free 5 ("cog", "paper-plane")
-  License: CC-BY-4.0
-  Icons from Font Awesome Free by Fonticons, Inc., https://fontawesome.com , licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
-  Source: https://fontawesome.com/license/free
-
-Bar-chart icon (frontend/src/icons/BarChart.tsx) Bootstrap Icons "bar-chart-fill"
+Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx) Bootstrap Icons 1.11.3 "bar-chart-fill", "gear-fill", "send-fill"
   License: MIT
   Copyright (c) 2019-2024 The Bootstrap Authors
   Source: https://github.com/twbs/icons
@@ -611,7 +591,7 @@ LICENSE TEXTS
 
 ------------------------------------------------------------------------------
 MIT
-Applies to: shengji (upstream project this app is forked from), anyhow, byteorder, cfg-if, console_error_panic_hook, dyn-clone, either, erased-serde, form_urlencoded, getrandom, gloo-utils, idna, idna_adapter, itertools, itoa, js-sys, lazy_static, memchr, once_cell, percent-encoding, ppv-lite86, rand, rand_chacha, rand_core, ruzstd, schemars, serde, serde_json, slog, smallvec, stable_deref_trait, static_assertions, thiserror, thiserror-core, twox-hash, url, utf16_iter, utf8_iter, wasm-bindgen, web-sys, web-time, write16, zerocopy, Rust standard library (core, alloc, std, dlmalloc allocator) compiled into the .wasm, @babel/runtime, @emotion/cache, @emotion/hash, @emotion/memoize, @emotion/react, @emotion/serialize, @emotion/sheet, @emotion/unitless, @emotion/unitless, @emotion/use-insertion-effect-with-fallbacks, @emotion/utils, @floating-ui/core, @floating-ui/dom, @floating-ui/utils, @icons/material, @sentry/browser, @sentry/core, @sentry/react, classnames, emoji-picker-react, flairup, lodash, lodash-es, memoize-one, prop-types, react, react-color, react-dom, react-is, react-lifecycles-compat, react-modal, react-select, react-tooltip, reactcss, scheduler, shallowequal, styled-components, stylis, stylis, tinycolor2, use-isomorphic-layout-effect, warning, webpack runtime (bootstrap code emitted into the bundle), Bar-chart icon (frontend/src/icons/BarChart.tsx)
+Applies to: shengji (upstream project this app is forked from), anyhow, byteorder, cfg-if, console_error_panic_hook, dyn-clone, either, erased-serde, form_urlencoded, getrandom, gloo-utils, idna, idna_adapter, itertools, itoa, js-sys, lazy_static, memchr, once_cell, percent-encoding, ppv-lite86, rand, rand_chacha, rand_core, ruzstd, schemars, serde, serde_json, slog, smallvec, stable_deref_trait, static_assertions, thiserror, thiserror-core, twox-hash, url, utf16_iter, utf8_iter, wasm-bindgen, web-sys, web-time, write16, zerocopy, Rust standard library (core, alloc, std, dlmalloc allocator) compiled into the .wasm, @babel/runtime, @emotion/cache, @emotion/hash, @emotion/memoize, @emotion/react, @emotion/serialize, @emotion/sheet, @emotion/unitless, @emotion/unitless, @emotion/use-insertion-effect-with-fallbacks, @emotion/utils, @floating-ui/core, @floating-ui/dom, @floating-ui/utils, @icons/material, classnames, emoji-picker-react, flairup, lodash, lodash-es, memoize-one, prop-types, react, react-color, react-dom, react-is, react-lifecycles-compat, react-modal, react-select, react-tooltip, reactcss, scheduler, shallowequal, styled-components, stylis, stylis, tinycolor2, use-isomorphic-layout-effect, warning, webpack runtime (bootstrap code emitted into the bundle), Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx)
 ------------------------------------------------------------------------------
 
 Copyright (c) <the copyright holders listed for each component above>
@@ -753,7 +733,7 @@ DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------
 CC-BY-4.0
-Applies to: Sound effect "taking card" (frontend/static/434472_dersuperanton_taking-card.mp3), Gear and paper-plane icons (frontend/src/icons/Gear.tsx, PaperPlane.tsx)
+Applies to: Sound effect "taking card" (frontend/static/434472_dersuperanton_taking-card.mp3)
 ------------------------------------------------------------------------------
 
 Creative Commons Attribution 4.0 International (CC BY 4.0).

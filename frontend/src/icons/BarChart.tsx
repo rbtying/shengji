@@ -2,6 +2,8 @@ import * as React from "react";
 
 import type { JSX } from "react";
 
+// Bootstrap Icons "bar-chart-fill" (MIT License, https://icons.getbootstrap.com).
+
 interface IProps {
   width?: string;
 }

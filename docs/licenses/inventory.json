@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-28T01:13:33.673Z",
+  "generated": "2026-09-28T01:30:10.957Z",
   "npmMethod": "source maps in frontend\\dist",
   "rustShipped": [
     {
@@ -2151,66 +2151,6 @@
     },
     {
       "eco": "npm",
-      "name": "@sentry/browser",
-      "version": "9.13.0",
-      "license": "MIT",
-      "chosen": [
-        "MIT"
-      ],
-      "dual": false,
-      "shipped": true,
-      "modules": 3,
-      "repository": "git://github.com/getsentry/sentry-javascript.git",
-      "files": [
-        "../shengji-server/frontend/node_modules/@sentry/browser/LICENSE"
-      ],
-      "copyright": [
-        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
-      ],
-      "nested": false
-    },
-    {
-      "eco": "npm",
-      "name": "@sentry/core",
-      "version": "9.13.0",
-      "license": "MIT",
-      "chosen": [
-        "MIT"
-      ],
-      "dual": false,
-      "shipped": true,
-      "modules": 23,
-      "repository": "git://github.com/getsentry/sentry-javascript.git",
-      "files": [
-        "../shengji-server/frontend/node_modules/@sentry/core/LICENSE"
-      ],
-      "copyright": [
-        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
-      ],
-      "nested": false
-    },
-    {
-      "eco": "npm",
-      "name": "@sentry/react",
-      "version": "9.13.0",
-      "license": "MIT",
-      "chosen": [
-        "MIT"
-      ],
-      "dual": false,
-      "shipped": true,
-      "modules": 3,
-      "repository": "git://github.com/getsentry/sentry-javascript.git",
-      "files": [
-        "../shengji-server/frontend/node_modules/@sentry/react/LICENSE"
-      ],
-      "copyright": [
-        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
-      ],
-      "nested": false
-    },
-    {
-      "eco": "npm",
       "name": "canvas-confetti",
       "version": "1.9.3",
       "license": "ISC",
@@ -2869,22 +2809,8 @@
     },
     {
       "eco": "asset",
-      "name": "Gear and paper-plane icons (frontend/src/icons/Gear.tsx, PaperPlane.tsx)",
-      "version": "Font Awesome Free 5 (\"cog\", \"paper-plane\")",
-      "license": "CC-BY-4.0",
-      "chosen": [
-        "CC-BY-4.0"
-      ],
-      "copyright": [
-        "Icons from Font Awesome Free by Fonticons, Inc., https://fontawesome.com , licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)."
-      ],
-      "repository": "https://fontawesome.com/license/free",
-      "files": []
-    },
-    {
-      "eco": "asset",
-      "name": "Bar-chart icon (frontend/src/icons/BarChart.tsx)",
-      "version": "Bootstrap Icons \"bar-chart-fill\"",
+      "name": "Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx)",
+      "version": "Bootstrap Icons 1.11.3 \"bar-chart-fill\", \"gear-fill\", \"send-fill\"",
       "license": "MIT",
       "chosen": [
         "MIT"

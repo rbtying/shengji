@@ -2,6 +2,8 @@ import * as React from "react";
 
 import type { JSX } from "react";
 
+// Bootstrap Icons "send-fill" (MIT License, https://icons.getbootstrap.com).
+
 interface IProps {
   width?: string;
 }
@@ -10,13 +12,11 @@ const PaperPlane = ({ width = "100%" }: IProps): JSX.Element => (
     focusable="false"
     role="img"
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 512 512"
+    viewBox="0 0 16 16"
+    fill="currentColor"
     width={width}
   >
-    <path
-      fill="currentcolor"
-      d="M476 3.2L12.5 270.6c-18.1 10.4-15.8 35.6 2.2 43.2L121 358.4l287.3-253.2c5.5-4.9 13.3 2.6 8.6 8.3L176 407v80.5c0 23.6 28.5 32.9 42.5 15.8L282 426l124.6 52.2c14.2 6 30.4-2.9 33-18.2l72-432C515 7.8 493.3-6.8 476 3.2z"
-    />
+    <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z" />
   </svg>
 );
 

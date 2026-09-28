@@ -1,11 +1,11 @@
 import { createRoot } from "react-dom/client";
 import * as React from "react";
 import ReactModal from "react-modal";
-import * as Sentry from "@sentry/react";
 
 import "./style.css";
 
 import AppStateProvider from "./AppStateProvider";
+import ErrorBoundary from "./ErrorBoundary";
 import WebsocketProvider from "./WebsocketProvider";
 import OfflineProvider, { isOffline } from "./OfflineProvider";
 import TimerProvider from "./TimerProvider";
@@ -16,8 +16,6 @@ const WasmProvider = React.lazy(
 );
 
 const bootstrap = (): void => {
-  // Error reporting to the original project's Sentry account is disabled in this fork.
-
   const root = document.getElementById("root");
   const fallback = (
     <>
@@ -32,21 +30,21 @@ const bootstrap = (): void => {
   const Connection = isOffline() ? OfflineProvider : WebsocketProvider;
 
   root_.render(
-    <Sentry.ErrorBoundary fallback={fallback}>
+    <ErrorBoundary fallback={fallback}>
       <React.Suspense fallback={"loading..."}>
         <WasmProvider>
           <TimerProvider>
             <AppStateProvider>
               <Connection>
-                <Sentry.ErrorBoundary fallback={fallback}>
+                <ErrorBoundary fallback={fallback}>
                   <Root />
-                </Sentry.ErrorBoundary>
+                </ErrorBoundary>
               </Connection>
             </AppStateProvider>
           </TimerProvider>
         </WasmProvider>
       </React.Suspense>
-    </Sentry.ErrorBoundary>,
+    </ErrorBoundary>,
   );
 };
 

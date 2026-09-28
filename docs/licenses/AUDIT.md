@@ -2,6 +2,10 @@
 
 Audit date: 2026-09-27. Repo `C:\Claude\shengji`, branch `computer-players`. Scope: what ships in a closed-source iOS (App Store) build. That means the webpack bundle, the `shengji-wasm` WebAssembly module and the static assets, all wrapped in Capacitor.
 
+## Status (2026-09-27)
+
+Done: 1 (notices bundled as `licenses.txt`, linked from the footer), 2 (sound credited in the footer), 3 (Font Awesome icons replaced with MIT Bootstrap Icons), 5 (upstream contact, payment links and social tags removed; attribution kept), 6 (Sentry removed; a local error boundary replaces it) and 7 (dependencies reclassified). Remaining: 8, re-run `gen-notices.js` after Capacitor is added.
+
 ## Summary
 
 **Verdict: no blockers.** Nothing that ships is GPL, LGPL, AGPL, MPL-only, EPL, SSPL, CC-BY-SA, CC-NC, unlicensed or of unknown license. Every shipped component allows closed-source commercial distribution, including through the App Store. The remaining obligations are attribution and notice requirements. Most of them are met by shipping `THIRD_PARTY_NOTICES.txt` in the app and linking to it from an in-app "Licenses / Credits" screen.
