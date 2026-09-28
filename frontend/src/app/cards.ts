@@ -132,17 +132,18 @@ export const fromMe = (players: Player[], me: number): Player[] => {
 export const seatPositions = (n: number): Array<{ x: number; y: number }> => {
   if (n === 4) {
     return [
-      { x: 50, y: 84 },
-      { x: 86, y: 47 },
-      { x: 50, y: 12 },
-      { x: 14, y: 47 },
+      { x: 50, y: 83 },
+      { x: 86, y: 48 },
+      { x: 50, y: 16 },
+      { x: 14, y: 48 },
     ];
   }
   const out = [];
   for (let i = 0; i < n; i++) {
     // Spread seats around an ellipse, starting at the bottom.
     const angle = Math.PI / 2 - (2 * Math.PI * i) / n;
-    out.push({ x: 50 + 38 * Math.cos(angle), y: 48 + 38 * Math.sin(angle) });
+    // A little flatter than a circle, so the top and bottom seats stay on the felt.
+    out.push({ x: 50 + 38 * Math.cos(angle), y: 49 + 33 * Math.sin(angle) });
   }
   return out;
 };

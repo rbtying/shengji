@@ -577,8 +577,12 @@ Sound effect "taking card" (frontend/static/434472_dersuperanton_taking-card.mp3
 
 Playing card SVG images (svgs/, frontend/src/generated/playing-cards*) Adrian Kennard card set
   License: CC0-1.0
-  Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components; the joker is also redrawn with bolder lines in red and in black.
+  Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components. The app's jokers use separate artwork (below).
   Source: https://www.me.uk/cards/
+
+Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png) Big and small joker, 2026
+  License: Own work (AI-generated)
+  Created for Two to Ace with ChatGPT (OpenAI) image generation. Used under OpenAI's terms of use, which assign the output to the user; no third-party license applies.
 
 Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx) Bootstrap Icons 1.11.3 "bar-chart-fill", "gear-fill", "send-fill"
   License: MIT
@@ -781,6 +785,13 @@ Copyright 2014 Shuhei Kagawa
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 
 THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+------------------------------------------------------------------------------
+Own work (AI-generated)
+Applies to: Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png)
+------------------------------------------------------------------------------
+
+(Full text: https://spdx.org/licenses/Own work (AI-generated).html)
 
 ------------------------------------------------------------------------------
 Unicode-3.0

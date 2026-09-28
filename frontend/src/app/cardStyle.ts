@@ -32,3 +32,37 @@ export const useCardStyle = (): CardStyle => {
   }, []);
   return style;
 };
+
+/** "large": bigger cards for easier reading, with the hand in more rows. */
+export type CardSize = "normal" | "large";
+
+const SIZE_KEY = "tta_card_size";
+
+export const getCardSize = (): CardSize => {
+  try {
+    return window.localStorage.getItem(SIZE_KEY) === "large"
+      ? "large"
+      : "normal";
+  } catch {
+    return "normal";
+  }
+};
+
+export const setCardSize = (size: CardSize): void => {
+  try {
+    window.localStorage.setItem(SIZE_KEY, size);
+  } catch {
+    // The choice just won't be remembered.
+  }
+  window.dispatchEvent(new Event(EVENT));
+};
+
+export const useCardSize = (): CardSize => {
+  const [size, setSize] = React.useState<CardSize>(getCardSize);
+  React.useEffect(() => {
+    const update = (): void => setSize(getCardSize());
+    window.addEventListener(EVENT, update);
+    return () => window.removeEventListener(EVENT, update);
+  }, []);
+  return size;
+};

@@ -4,7 +4,12 @@ import { WebsocketContext } from "../WebsocketProvider";
 import { clearOfflineGame, OFFLINE_ROOM } from "../OfflineProvider";
 import { GameState } from "../gen-types";
 import MiniCard from "./MiniCard";
-import { setCardStyle, useCardStyle } from "./cardStyle";
+import {
+  setCardSize,
+  setCardStyle,
+  useCardSize,
+  useCardStyle,
+} from "./cardStyle";
 
 import type { JSX } from "react";
 
@@ -38,6 +43,7 @@ const Home = (props: IProps): JSX.Element => {
   const [name, setName] = React.useState(state.name || "");
   const gs = state.gameState;
   const cardStyle = useCardStyle();
+  const cardSize = useCardSize();
 
   const join = (n: string): void => {
     const trimmed = n.trim().slice(0, 31) || "You";
@@ -188,6 +194,24 @@ const Home = (props: IProps): JSX.Element => {
                     onClick={() => setCardStyle("simple")}
                   >
                     Large simple cards
+                  </button>
+                </div>
+                <div className="tta-chips">
+                  <button
+                    type="button"
+                    className="tta-chip"
+                    aria-pressed={cardSize === "normal"}
+                    onClick={() => setCardSize("normal")}
+                  >
+                    Normal size
+                  </button>
+                  <button
+                    type="button"
+                    className="tta-chip"
+                    aria-pressed={cardSize === "large"}
+                    onClick={() => setCardSize("large")}
+                  >
+                    Large cards
                   </button>
                 </div>
                 <div className="tta-row" aria-hidden="true">

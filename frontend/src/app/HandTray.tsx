@@ -1,5 +1,6 @@
 import * as React from "react";
 import MiniCard from "./MiniCard";
+import { useCardSize } from "./cardStyle";
 
 import type { JSX } from "react";
 
@@ -17,18 +18,28 @@ interface IProps {
   title?: string;
 }
 
-const CARD_W = 44;
 const SUIT_GAP = 8;
 
+/** Card width and the least of each card that must show (its corner index), by card size. */
+const SIZES = {
+  normal: { cardW: 44, minStep: 17, maxStep: 30 },
+  large: { cardW: 58, minStep: 23, maxStep: 38 },
+};
+
 /** Split groups into rows that fit, trump first, never splitting a suit across rows. */
-const layoutRows = (groups: CardGroup[], width: number): CardGroup[][] => {
+const layoutRows = (
+  groups: CardGroup[],
+  width: number,
+  cardW: number,
+  minStep: number,
+): CardGroup[][] => {
   const fits = (row: CardGroup[]): boolean => {
     const n = row.reduce((s, g) => s + g.cards.length, 0);
     if (n <= 1) {
       return true;
     }
-    const step = (width - CARD_W - SUIT_GAP * (row.length - 1)) / (n - 1);
-    return step >= 17;
+    const step = (width - cardW - SUIT_GAP * (row.length - 1)) / (n - 1);
+    return step >= minStep;
   };
   const rows: CardGroup[][] = [];
   groups.forEach((g) => {
@@ -67,8 +78,9 @@ const HandTray = (props: IProps): JSX.Element => {
     return () => ro.disconnect();
   }, []);
 
+  const { cardW, minStep, maxStep } = SIZES[useCardSize()];
   const groups = props.groups.filter((g) => g.cards.length > 0);
-  const rows = layoutRows(groups, width);
+  const rows = layoutRows(groups, width, cardW, minStep);
   const total = groups.reduce((s, g) => s + g.cards.length, 0);
   const seen: { [card: string]: number } = {};
 
@@ -82,10 +94,10 @@ const HandTray = (props: IProps): JSX.Element => {
         const n = row.reduce((s, g) => s + g.cards.length, 0);
         const step =
           n <= 1
-            ? CARD_W
+            ? cardW
             : Math.min(
-                30,
-                (width - CARD_W - SUIT_GAP * (row.length - 1)) / (n - 1),
+                maxStep,
+                (width - cardW - SUIT_GAP * (row.length - 1)) / (n - 1),
               );
         return (
           <div className="tta-tray-row" key={ri}>
@@ -97,8 +109,8 @@ const HandTray = (props: IProps): JSX.Element => {
                 const marginLeft = first
                   ? 0
                   : ci === 0
-                    ? step - CARD_W + SUIT_GAP
-                    : step - CARD_W;
+                    ? step - cardW + SUIT_GAP
+                    : step - cardW;
                 return (
                   <MiniCard
                     key={key}

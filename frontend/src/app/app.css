@@ -406,7 +406,10 @@ body:has(.tta) {
 
 .tta-card.joker .art {
   display: block;
-  border-radius: 5px;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  border-radius: 4px;
 }
 
 /* Real card faces: the artwork draws its own border, corner index and pips. */
@@ -451,12 +454,18 @@ button.tta-card.face.suggested {
   height: 96px;
 }
 
-/* Say which joker it is: the artwork alone is hard to tell apart at phone sizes. */
+.tta-card.face.joker {
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  padding: 0;
+}
+
+/* Say which joker it is: the corner text is too small to read at phone sizes. The tag sits
+   over the corner, the part of each card that still shows in a fanned hand. */
 .tta-card.joker .joker-tag {
   position: absolute;
-  left: 50%;
-  bottom: 3px;
-  transform: translateX(-50%);
+  left: 2px;
+  top: 3px;
   padding: 1px 3px;
   border-radius: 3px;
   background: var(--paper);
@@ -694,10 +703,6 @@ button.tta-card.suggested {
   display: flex;
   min-height: 48px;
   align-items: flex-end;
-}
-
-.tta-played > .tta-card + .tta-card {
-  margin-left: -18px;
 }
 
 .tta-seat.winning .tta-played {
@@ -1077,4 +1082,132 @@ button.tta-card.suggested {
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-2);
+}
+
+/* ---------- Large-card mode ---------- */
+
+.tta.large .tta-card {
+  width: 58px;
+  height: 84px;
+  padding: 6px 0 0 6px;
+  font-size: 20px;
+}
+
+.tta.large .tta-card .suit {
+  font-size: 19px;
+}
+
+.tta.large .tta-card.face {
+  width: 58px;
+  height: 90px;
+  padding: 0;
+}
+
+.tta.large .tta-card.small {
+  width: 40px;
+  height: 58px;
+  padding: 4px 0 0 4px;
+  font-size: 15px;
+}
+
+.tta.large .tta-card.small .suit {
+  font-size: 14px;
+}
+
+.tta.large .tta-card.face.small {
+  width: 40px;
+  height: 62px;
+  padding: 0;
+}
+
+.tta.large .tta-tray-row {
+  height: 108px;
+}
+
+.tta.large .tta-card.joker .joker-tag {
+  font-size: 10px;
+}
+
+.tta.large .tta-seat-name {
+  font-size: 13px;
+}
+
+/* ---------- Animations ---------- */
+
+/* A played card lands on the felt: yours rises from your hand, others slide in from their seat. */
+.tta-played > .tta-card {
+  animation: tta-land 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes tta-land {
+  from {
+    transform: translate(var(--fx, 0px), var(--fy, 30px)) scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* A finished trick sweeps to whoever won it. */
+.tta-sweep {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.tta-sweep-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  animation: tta-sweep 0.6s ease-in forwards;
+}
+
+@keyframes tta-sweep {
+  from {
+    transform: translate(-50%, -50%) translate(var(--sx), var(--sy));
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(0.55);
+    opacity: 0;
+  }
+}
+
+/* A friend is revealed: their seat glows for a moment. */
+.tta-seat.glow .tta-seat-name {
+  animation: tta-glow 0.8s ease-in-out 3;
+  border-radius: 10px;
+}
+
+@keyframes tta-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 75, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(201, 162, 75, 0.55);
+    background: rgba(201, 162, 75, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tta-played > .tta-card,
+  .tta-sweep-card,
+  .tta-seat.glow .tta-seat-name,
+  .tta-toast,
+  .tta-card {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .tta-sweep {
+    display: none;
+  }
 }

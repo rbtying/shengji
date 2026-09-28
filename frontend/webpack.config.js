@@ -91,6 +91,10 @@ module.exports = {
           from: "../docs/licenses/THIRD_PARTY_NOTICES.txt",
           to: "licenses.txt",
         },
+        {
+          from: "static/jokers",
+          to: "jokers",
+        },
       ],
     }),
   ],

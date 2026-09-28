@@ -3,6 +3,7 @@ import { AppStateContext } from "../AppStateProvider";
 import { WebsocketContext } from "../WebsocketProvider";
 import { GameState, InitializePhase } from "../gen-types";
 import { displayName } from "./cards";
+import { useCardSize } from "./cardStyle";
 import Dealing from "./Dealing";
 import Home from "./Home";
 import Kitty from "./Kitty";
@@ -85,6 +86,7 @@ const AppRoot = (): JSX.Element => {
   const [onHome, setOnHome] = React.useState(true);
   const [changingTable, setChangingTable] = React.useState(false);
   const nextHandRequested = React.useRef(false);
+  const cardSize = useCardSize();
   const gs = state.gameState;
 
   // Errors from the engine show briefly as a banner.
@@ -164,7 +166,7 @@ const AppRoot = (): JSX.Element => {
   }
 
   return (
-    <div className="tta">
+    <div className={cardSize === "large" ? "tta large" : "tta"}>
       {lastError !== null && (
         <div
           className="tta-errors"

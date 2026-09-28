@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-28T08:39:02.547Z",
+  "generated": "2026-09-28T09:05:29.291Z",
   "npmMethod": "source maps in frontend\\dist",
   "rustShipped": [
     {
@@ -2802,9 +2802,23 @@
         "CC0-1.0"
       ],
       "copyright": [
-        "Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components; the joker is also redrawn with bolder lines in red and in black."
+        "Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components. The app's jokers use separate artwork (below)."
       ],
       "repository": "https://www.me.uk/cards/",
+      "files": []
+    },
+    {
+      "eco": "asset",
+      "name": "Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png)",
+      "version": "Big and small joker, 2026",
+      "license": "Own work (AI-generated)",
+      "chosen": [
+        "Own work (AI-generated)"
+      ],
+      "copyright": [
+        "Created for Two to Ace with ChatGPT (OpenAI) image generation. Used under OpenAI's terms of use, which assign the output to the user; no third-party license applies."
+      ],
+      "repository": "",
       "files": []
     },
     {

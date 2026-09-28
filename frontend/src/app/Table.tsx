@@ -15,6 +15,7 @@ import {
 } from "./cards";
 import HandTray from "./HandTray";
 import MiniCard from "./MiniCard";
+import { useCardSize, useCardStyle } from "./cardStyle";
 import { useHandGroups } from "./useHandGroups";
 
 import type { JSX } from "react";
@@ -121,6 +122,107 @@ const Table = (props: IProps): JSX.Element => {
     played[pc.id] = pc.cards;
   });
   const allFriendsFound = friends.every((f) => f.player_id != null);
+
+  // Animations: finished tricks sweep to the winner; newly revealed friends glow.
+  const feltRef = React.useRef<HTMLDivElement>(null);
+  const tricksDone = p.played_tricks?.length ?? 0;
+  const prevTricksDone = React.useRef(tricksDone);
+  const [sweep, setSweep] = React.useState<{
+    key: number;
+    to: { x: number; y: number };
+    cards: { card: string; dx: number; dy: number }[];
+  } | null>(null);
+  React.useEffect(() => {
+    const before = prevTricksDone.current;
+    prevTricksDone.current = tricksDone;
+    const last = p.played_tricks?.[tricksDone - 1];
+    const felt = feltRef.current;
+    if (tricksDone !== before + 1 || last == null || felt === null) {
+      return;
+    }
+    const seatPos = (id: number) =>
+      positions[
+        Math.max(
+          0,
+          seated.findIndex((pl) => pl.id === id),
+        )
+      ];
+    const to = seatPos(last.current_winner ?? me);
+    const w = felt.clientWidth;
+    const h = felt.clientHeight;
+    const cards = last.played_cards.flatMap((pc) => {
+      const from = seatPos(pc.id);
+      return pc.cards.map((card, j) => ({
+        card,
+        dx: ((from.x - to.x) / 100) * w + j * 12,
+        dy: ((from.y - to.y) / 100) * h,
+      }));
+    });
+    setSweep({ key: tricksDone, to, cards });
+    const t = setTimeout(() => setSweep(null), 700);
+    return () => clearTimeout(t);
+  }, [tricksDone]);
+
+  const [glow, setGlow] = React.useState<number[]>([]);
+  const prevTeamForGlow = React.useRef<number[]>(p.landlords_team);
+  React.useEffect(() => {
+    const joined = p.landlords_team.filter(
+      (id) => !prevTeamForGlow.current.includes(id),
+    );
+    prevTeamForGlow.current = p.landlords_team;
+    if (isFriends && joined.length > 0) {
+      setGlow(joined);
+      const t = setTimeout(() => setGlow([]), 2400);
+      return () => clearTimeout(t);
+    }
+  }, [p.landlords_team.length]);
+
+  // A seat's played cards squeeze into a fixed width, so a big tractor or throw stays in its
+  // seat: each card shows at most 16px, less when there are many, never under 8px.
+  const large = useCardSize() === "large";
+  const faces = useCardStyle() === "faces";
+  const playedCardW = large ? 40 : faces ? 32 : 34;
+  const playedMaxW = large ? 116 : 104;
+  const playedStep = (n: number): number =>
+    n <= 1
+      ? playedCardW
+      : Math.max(8, Math.min(16, (playedMaxW - playedCardW) / (n - 1)));
+
+  /** Side seats hug the felt's edge so a wide play grows inward instead of off the table. */
+  const seatStyle = (pos: { x: number; y: number }): React.CSSProperties => {
+    if (pos.x < 25) {
+      return {
+        left: "3%",
+        top: `${pos.y}%`,
+        transform: "translate(0, -50%)",
+        alignItems: "flex-start",
+      };
+    }
+    if (pos.x > 75) {
+      return {
+        right: "3%",
+        top: `${pos.y}%`,
+        transform: "translate(0, -50%)",
+        alignItems: "flex-end",
+      };
+    }
+    return { left: `${pos.x}%`, top: `${pos.y}%` };
+  };
+
+  /** Where a seat's played cards fly in from: your hand, or the edge behind each other seat. */
+  const flyFrom = (i: number): React.CSSProperties => {
+    if (i === 0) {
+      return { "--fx": "0px", "--fy": "120px" } as React.CSSProperties;
+    }
+    const pos = positions[i];
+    const vx = pos.x - 50;
+    const vy = pos.y - 48;
+    const len = Math.max(1, Math.hypot(vx, vy));
+    return {
+      "--fx": `${(vx / len) * 36}px`,
+      "--fy": `${(vy / len) * 36}px`,
+    } as React.CSSProperties;
+  };
   const role = (
     id: number,
   ): { text: string; tone: "gold" | "teal" | "" } | null => {
@@ -303,6 +405,7 @@ const Table = (props: IProps): JSX.Element => {
 
       <div
         className="tta-felt"
+        ref={feltRef}
         // Big tables need more room so the seats around the edge don't touch.
         style={seated.length >= 9 ? { height: 400 } : undefined}
         onClick={() => {
@@ -318,12 +421,13 @@ const Table = (props: IProps): JSX.Element => {
             <div
               key={pl.id}
               className={classNames("tta-seat", {
+                glow: glow.includes(pl.id),
                 next: next === pl.id,
                 winning:
                   trick.current_winner === pl.id &&
                   trick.played_cards.length > 1,
               })}
-              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+              style={seatStyle(pos)}
             >
               {i !== 0 && (
                 <span className="tta-seat-name">
@@ -335,9 +439,18 @@ const Table = (props: IProps): JSX.Element => {
                   )}
                 </span>
               )}
-              <div className="tta-played">
-                {(played[pl.id] ?? []).map((c, j) => (
-                  <MiniCard key={j} card={c} small />
+              <div className="tta-played" style={flyFrom(i)}>
+                {(played[pl.id] ?? []).map((c, j, all) => (
+                  <MiniCard
+                    key={`${tricksDone}-${j}`}
+                    card={c}
+                    small
+                    style={
+                      j === 0
+                        ? undefined
+                        : { marginLeft: playedStep(all.length) - playedCardW }
+                    }
+                  />
                 ))}
               </div>
               {i === 0 && (
@@ -353,6 +466,29 @@ const Table = (props: IProps): JSX.Element => {
             </div>
           );
         })}
+        {sweep !== null && (
+          <div
+            key={sweep.key}
+            className="tta-sweep"
+            style={{ left: `${sweep.to.x}%`, top: `${sweep.to.y}%` }}
+            aria-hidden="true"
+          >
+            {sweep.cards.map((c, j) => (
+              <div
+                key={j}
+                className="tta-sweep-card"
+                style={
+                  {
+                    "--sx": `${c.dx}px`,
+                    "--sy": `${c.dy}px`,
+                  } as React.CSSProperties
+                }
+              >
+                <MiniCard card={c.card} small />
+              </div>
+            ))}
+          </div>
+        )}
         {!coachOpen && <div className="tta-felt-note">{note}</div>}
         {toast !== null && (
           <div className="tta-toast" role="status">

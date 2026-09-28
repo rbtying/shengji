@@ -2,8 +2,6 @@ import * as React from "react";
 import classNames from "classnames";
 import { face } from "./cards";
 import { useCardStyle } from "./cardStyle";
-import SvgBlackJoker from "./BlackJoker";
-import SvgRedJoker from "./RedJoker";
 
 import type { JSX } from "react";
 
@@ -51,15 +49,18 @@ const MiniCard = (props: IProps): JSX.Element => {
       {props.card === "🃏" ? "BIG" : "SMALL"}
     </span>
   ) : null;
-  // The two jokers are the same jester: red for the big joker, black for the small.
-  const jokerArt = isJoker
-    ? React.createElement(props.card === "🃏" ? SvgRedJoker : SvgBlackJoker, {
-        className: "art",
-        width: "100%",
-        height: "100%",
-        "aria-hidden": true,
-      })
-    : null;
+  // The jokers use their own artwork (big and small jesters), in both card styles.
+  const jokerName = props.card === "🃏" ? "big" : "small";
+  const jokerArt = isJoker ? (
+    <img
+      className="art"
+      src={`jokers/${jokerName}-joker-160.webp`}
+      srcSet={`jokers/${jokerName}-joker-160.webp 160w, jokers/${jokerName}-joker-320.webp 320w`}
+      sizes="60px"
+      alt=""
+      draggable={false}
+    />
+  ) : null;
   const simple = isJoker ? (
     jokerArt
   ) : (

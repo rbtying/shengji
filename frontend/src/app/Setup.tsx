@@ -188,7 +188,7 @@ const Setup = (props: IProps): JSX.Element => {
             <span className="tta-zh" lang="zh">
               找朋友
             </span>
-            <span>5–12 players · secret partners</span>
+            <span>5 or 6 players · secret partners</span>
           </button>
         </div>
       </div>
@@ -197,7 +197,7 @@ const Setup = (props: IProps): JSX.Element => {
         <div className="tta-section">
           <div className="tta-label">Players</div>
           <div className="tta-chips">
-            {[5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
+            {[5, 6].map((n) => (
               <button
                 key={n}
                 type="button"
