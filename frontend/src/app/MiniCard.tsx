@@ -43,12 +43,6 @@ const MiniCard = (props: IProps): JSX.Element => {
     points: f.points > 0 && !faces,
     suggested: props.suggested,
   });
-  // Jokers are hard to tell apart when small, so they always say which one they are.
-  const jokerTag = isJoker ? (
-    <span className="joker-tag" aria-hidden="true">
-      {props.card === "🃏" ? "BIG" : "SMALL"}
-    </span>
-  ) : null;
   // The jokers use their own artwork (big and small jesters), in both card styles.
   const jokerName = props.card === "🃏" ? "big" : "small";
   const jokerArt = isJoker ? (
@@ -84,7 +78,6 @@ const MiniCard = (props: IProps): JSX.Element => {
       ) : (
         simple
       )}
-      {jokerTag}
     </>
   );
   if (props.onClick !== undefined) {

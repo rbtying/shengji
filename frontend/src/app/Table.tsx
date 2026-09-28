@@ -15,7 +15,7 @@ import {
 } from "./cards";
 import HandTray from "./HandTray";
 import MiniCard from "./MiniCard";
-import { useCardSize, useCardStyle } from "./cardStyle";
+import { useCardSize } from "./cardStyle";
 import { useHandGroups } from "./useHandGroups";
 
 import type { JSX } from "react";
@@ -180,13 +180,12 @@ const Table = (props: IProps): JSX.Element => {
   // A seat's played cards squeeze into a fixed width, so a big tractor or throw stays in its
   // seat: each card shows at most 16px, less when there are many, never under 8px.
   const large = useCardSize() === "large";
-  const faces = useCardStyle() === "faces";
-  const playedCardW = large ? 40 : faces ? 32 : 34;
-  const playedMaxW = large ? 116 : 104;
+  const playedCardW = large ? 44 : 38;
+  const playedMaxW = large ? 128 : 116;
   const playedStep = (n: number): number =>
     n <= 1
       ? playedCardW
-      : Math.max(8, Math.min(16, (playedMaxW - playedCardW) / (n - 1)));
+      : Math.max(8, Math.min(18, (playedMaxW - playedCardW) / (n - 1)));
 
   /** Side seats hug the felt's edge so a wide play grows inward instead of off the table. */
   const seatStyle = (pos: { x: number; y: number }): React.CSSProperties => {
@@ -406,8 +405,6 @@ const Table = (props: IProps): JSX.Element => {
       <div
         className="tta-felt"
         ref={feltRef}
-        // Big tables need more room so the seats around the edge don't touch.
-        style={seated.length >= 9 ? { height: 400 } : undefined}
         onClick={() => {
           if (trickDone) {
             send({ Action: "EndTrick" });

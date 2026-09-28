@@ -120,7 +120,7 @@ const Dealing = (props: IProps): JSX.Element => {
         </button>
       </div>
 
-      <div className="tta-felt" style={{ height: 250 }}>
+      <div className="tta-felt">
         <div className="tta-felt-note" style={{ top: "34%", width: "80%" }}>
           {status}
         </div>

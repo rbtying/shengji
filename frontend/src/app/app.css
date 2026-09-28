@@ -22,8 +22,9 @@
 
   box-sizing: border-box;
   max-width: 440px;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -62,8 +63,11 @@ body:has(.tta) {
 
 /* ---------- Common pieces ---------- */
 
+/* Menu-style screens (home, setup, review) scroll within the app when they need to. */
 .tta-screen {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -460,34 +464,6 @@ button.tta-card.face.suggested {
   padding: 0;
 }
 
-/* Say which joker it is: the corner text is too small to read at phone sizes. The tag sits
-   over the corner, the part of each card that still shows in a fanned hand. */
-.tta-card.joker .joker-tag {
-  position: absolute;
-  left: 2px;
-  top: 3px;
-  padding: 1px 3px;
-  border-radius: 3px;
-  background: var(--paper);
-  color: var(--ink);
-  border: 1px solid var(--ink);
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.3px;
-  line-height: 1;
-}
-
-.tta-card.joker.red .joker-tag {
-  background: var(--red);
-  border-color: var(--red);
-  color: var(--paper);
-}
-
-.tta-card.joker.small .joker-tag {
-  font-size: 7px;
-  bottom: 2px;
-}
-
 .tta-card.small {
   width: 34px;
   height: 48px;
@@ -531,11 +507,14 @@ button.tta-card.suggested {
 
 /* ---------- Table ---------- */
 
+/* Playing screens never scroll: they fill the screen exactly, and the felt takes the room
+   left over by the header, the buttons and your hand. */
 .tta-table {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .tta-hud {
@@ -640,8 +619,8 @@ button.tta-card.suggested {
 .tta-felt {
   position: relative;
   margin: 0 10px;
-  height: 330px;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-height: 200px;
   border-radius: 22px;
   background: var(--felt);
   box-shadow: inset 0 0 0 1px var(--felt-dark);
@@ -837,7 +816,8 @@ button.tta-card.suggested {
 }
 
 .tta-tray {
-  margin-top: auto;
+  flex-shrink: 0;
+  margin-top: 6px;
   padding: 8px 10px 18px;
   background: var(--tray);
   border-top: 1px solid #d8d0be;
@@ -1124,10 +1104,6 @@ button.tta-card.suggested {
   height: 108px;
 }
 
-.tta.large .tta-card.joker .joker-tag {
-  font-size: 10px;
-}
-
 .tta.large .tta-seat-name {
   font-size: 13px;
 }
@@ -1210,4 +1186,159 @@ button.tta-card.suggested {
   .tta-sweep {
     display: none;
   }
+}
+
+/* ---------- Desktop: show the app as it looks on an iPhone ---------- */
+
+/* On wider screens the app sits in a phone-shaped frame (iPhone 15 proportions) instead of
+   stretching to fill the window. On phones it fills the screen as usual. */
+@media (min-width: 500px) {
+  body:has(.tta) {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 30%, #3a3833, #1f1e1b);
+  }
+
+  .tta {
+    width: 390px;
+    max-width: 390px;
+    height: min(844px, calc(100vh - 48px));
+    min-height: 0;
+    margin: 24px auto;
+    border-radius: 44px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 10px #0f0f0e,
+      0 0 0 11px #3b3a36,
+      0 24px 60px rgba(0, 0, 0, 0.55);
+    /* Makes pop-up sheets and banners position inside the frame, not the window. */
+    transform: translateZ(0);
+  }
+
+  .tta-screen {
+    scrollbar-width: none;
+  }
+
+  .tta-screen::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Room for the phone's status bar and home indicator. */
+  .tta {
+    padding-top: 28px;
+    padding-bottom: 12px;
+  }
+}
+
+/* Keep the action row, tip and hand at their natural size on playing screens. */
+.tta-table > .tta-hud,
+.tta-table > .tta-score,
+.tta-table > .tta-called,
+.tta-table > .tta-actions,
+.tta-table > .tta-tip {
+  flex-shrink: 0;
+}
+
+/* The kitty screen's top part (kitty, coach, friend call) scrolls on small phones; the hand
+   and buttons below it stay put. */
+.tta-table > .tta-screen.tta-kitty-top {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 8px;
+  gap: 12px;
+}
+
+/* ---------- Sizes: a notch bigger, now that the felt flexes to fit ---------- */
+
+.tta-card {
+  width: 50px;
+  height: 72px;
+  font-size: 17px;
+}
+
+.tta-card .suit {
+  font-size: 16px;
+}
+
+.tta-card.face {
+  width: 50px;
+  height: 77px;
+}
+
+.tta-card.small {
+  width: 38px;
+  height: 54px;
+  font-size: 14px;
+}
+
+.tta-card.small .suit {
+  font-size: 13px;
+}
+
+.tta-card.face.small {
+  width: 38px;
+  height: 59px;
+}
+
+.tta-tray-row {
+  height: 92px;
+}
+
+.tta-seat-name {
+  font-size: 14px;
+}
+
+.tta-badge {
+  font-size: 11px;
+  padding: 1px 8px;
+}
+
+.tta-felt-note {
+  font-size: 14px;
+}
+
+.tta-tip,
+.tta-called {
+  font-size: 14px;
+}
+
+.tta-score-text,
+.tta-levels {
+  font-size: 14px;
+}
+
+.tta.large .tta-card {
+  width: 64px;
+  height: 92px;
+  font-size: 22px;
+}
+
+.tta.large .tta-card .suit {
+  font-size: 20px;
+}
+
+.tta.large .tta-card.face {
+  width: 64px;
+  height: 99px;
+}
+
+.tta.large .tta-card.small {
+  width: 44px;
+  height: 64px;
+  font-size: 16px;
+}
+
+.tta.large .tta-card.face.small {
+  width: 44px;
+  height: 68px;
+}
+
+.tta.large .tta-tray-row {
+  height: 116px;
+}
+
+.tta.large .tta-seat-name {
+  font-size: 15px;
 }

@@ -129,10 +129,7 @@ const Kitty = (props: IProps): JSX.Element => {
 
   return (
     <div className="tta-table">
-      <div
-        className="tta-screen"
-        style={{ flex: "none", paddingBottom: 8, gap: 12 }}
-      >
+      <div className="tta-screen tta-kitty-top">
         <div className="tta-topbar">
           <div>
             <h1 className="tta-title">Bury the kitty</h1>

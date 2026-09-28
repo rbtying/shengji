@@ -22,8 +22,8 @@ const SUIT_GAP = 8;
 
 /** Card width and the least of each card that must show (its corner index), by card size. */
 const SIZES = {
-  normal: { cardW: 44, minStep: 17, maxStep: 30 },
-  large: { cardW: 58, minStep: 23, maxStep: 38 },
+  normal: { cardW: 50, minStep: 19, maxStep: 34 },
+  large: { cardW: 64, minStep: 25, maxStep: 42 },
 };
 
 /** Split groups into rows that fit, trump first, never splitting a suit across rows. */
