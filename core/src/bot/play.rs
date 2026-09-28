@@ -295,29 +295,55 @@ pub(crate) fn play_hint(
         .collect();
     // Rounded the same way the app rounds, so the sentence and the table agree.
     let pct = |x: f64| (x * 100.0).round() as i64;
-    let lv = |x: f64| format!("{:+.1}", x);
+    // Levels relative to the other side, with a real minus sign as the app shows them.
+    let lv = |x: f64| {
+        let r = (x * 10.0).round() / 10.0;
+        if r == 0.0 {
+            "0.0".to_string()
+        } else {
+            format!("{:+.1}", r).replacen('-', "−", 1)
+        }
+    };
     let b = &options[0];
-    let summary = match options.get(1) {
-        // The best play by expected result can win slightly less often than the next one, if
-        // it wins by more when it does. Say so, rather than listing a higher number second.
-        Some(next) if pct(next.win_rate) > pct(b.win_rate) => format!(
-            "Play {}. It wins a little less often than {} ({}% against {}%), but by more: {} levels on average against {}.",
-            describe(&a.candidates[best]),
-            describe(&next.cards),
+    let play = describe(&a.candidates[best]);
+    // The best play by expected result can win slightly less often than another, when it
+    // loses less or wins bigger. Name the one that wins most often and say why it's second.
+    let rival = options[1..]
+        .iter()
+        .max_by(|x, y| x.win_rate.total_cmp(&y.win_rate))
+        .filter(|r| pct(r.win_rate) > pct(b.win_rate));
+    let summary = match (rival, options.get(1)) {
+        (Some(r), _) if lv(r.levels) != lv(b.levels) => format!(
+            "Play {play}. {} wins a little more often ({}% against {}%), but {play} comes out              ahead on average: {} levels against {}.",
+            describe(&r.cards),
+            pct(r.win_rate),
             pct(b.win_rate),
-            pct(next.win_rate),
             lv(b.levels),
-            lv(next.levels)
+            lv(r.levels)
         ),
-        Some(next) => format!(
-            "Play {}. Your side won the hand in {}% of {} simulated deals. Next best: {} ({}%).",
-            describe(&a.candidates[best]),
+        (Some(r), _) => format!(
+            "Play {play}. {} wins a little more often ({}% against {}%), but {play} does              better on points, and both average {} levels.",
+            describe(&r.cards),
+            pct(r.win_rate),
             pct(b.win_rate),
-            b.samples,
-            describe(&next.cards),
-            pct(next.win_rate)
+            lv(b.levels)
         ),
-        None => format!(
+        (None, Some(_)) => {
+            let tied = options[1..]
+                .iter()
+                .any(|o| pct(o.win_rate) == pct(b.win_rate));
+            format!(
+                "Play {play}. Your side won the hand in {}% of {} simulated deals, {}.",
+                pct(b.win_rate),
+                b.samples,
+                if tied {
+                    "as often as any other play, and it comes out ahead on average"
+                } else {
+                    "more often than any other play"
+                }
+            )
+        }
+        (None, None) => format!(
             "Play {}. Your side won the hand in {}% of {} simulated deals.",
             describe(&a.candidates[best]),
             pct(b.win_rate),

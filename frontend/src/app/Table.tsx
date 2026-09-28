@@ -21,8 +21,10 @@ import { useHandGroups } from "./useHandGroups";
 import type { JSX } from "react";
 
 /** Average levels gained relative to the other side, e.g. "+1.2". */
-const formatLevels = (x: number | undefined): string =>
-  `${(x ?? 0) >= 0 ? "+" : "−"}${Math.abs(x ?? 0).toFixed(1)}`;
+const formatLevels = (x: number | undefined): string => {
+  const r = Math.round((x ?? 0) * 10) / 10;
+  return r === 0 ? "0.0" : `${r > 0 ? "+" : "−"}${Math.abs(r).toFixed(1)}`;
+};
 
 interface IProps {
   phase: PlayPhase;
@@ -531,6 +533,13 @@ const Table = (props: IProps): JSX.Element => {
                 <p>{hint.summary}</p>
                 {hint.options.length > 1 && (
                   <table>
+                    <thead>
+                      <tr>
+                        <th>Play</th>
+                        <th>Your side wins</th>
+                        <th>Levels vs. them</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       {hint.options.map((o, i) => (
                         <tr key={i}>
@@ -547,10 +556,9 @@ const Table = (props: IProps): JSX.Element => {
                               <strong>{Math.round(o.win_rate * 100)}%</strong>
                             ) : (
                               `${Math.round(o.win_rate * 100)}%`
-                            )}{" "}
-                            wins
+                            )}
                           </td>
-                          <td>{formatLevels(o.levels)} levels</td>
+                          <td>{formatLevels(o.levels)}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -418,4 +418,76 @@ mod tests {
         let restored = LocalGame::restore(serde_json::from_str(&snap).unwrap()).unwrap();
         assert_eq!(restored.bots.len(), 3);
     }
+
+    /// Calibration: does the coach's predicted win chance at your first play match how often
+    /// your side actually wins when everyone follows the bots' play? Slow; run by hand with
+    /// `cargo test -p local-game --release calibrate -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn calibrate_hint_win_rate() {
+        let hands = 30;
+        // (predicted win chance, won) for each hand that offered a real choice.
+        let mut results: Vec<(f64, bool)> = vec![];
+        for n in 0..hands {
+            let mut g = LocalGame::new();
+            g.handle(r#"{"room_name":"offline-practice","name":"Me"}"#);
+            for _ in 0..3 {
+                g.handle(r#"{"AddBot":"Easy"}"#);
+            }
+            g.handle(r#"{"Action":"StartGame"}"#);
+            let me = g.human.as_ref().unwrap().0;
+            let mut first: Option<f64> = None;
+            let mut now = 0.0;
+            for _ in 0..40_000 {
+                now += 100.0;
+                g.tick(now);
+                let state = g.game.dump_state_for_player(me).unwrap();
+                match &state {
+                    GameState::Draw(_) if state.next_player().ok() == Some(me) => {
+                        g.handle(r#"{"Action":"DrawCard"}"#);
+                    }
+                    GameState::Play(_) => {
+                        let full = g.game.dump_state().unwrap();
+                        let GameState::Play(p) = &full else {
+                            unreachable!()
+                        };
+                        if p.game_finished() {
+                            let (_, landlord_won, _) = p.finish_game().unwrap();
+                            let mine = p.landlords_team().contains(&me);
+                            let won = landlord_won == mine;
+                            if let Some(f) = first {
+                                results.push((f, won));
+                            }
+                            println!(
+                                "hand {n}: predicted {:.0}%, {} ({})",
+                                first.unwrap_or(0.0) * 100.0,
+                                if won { "won" } else { "lost" },
+                                if mine { "landlord side" } else { "attacking" }
+                            );
+                            break;
+                        }
+                        if p.trick().next_player() == Some(me) {
+                            let h = hint(&state, "Me").expect("a hint on my turn");
+                            // Forced plays carry no prediction; use the first real choice.
+                            if first.is_none() {
+                                first = h.options.first().map(|o| o.win_rate);
+                            }
+                            let msg = serde_json::json!({ "Action": { "PlayCards": h.cards } });
+                            g.handle(&msg.to_string());
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+        let k = results.len().max(1) as f64;
+        let predicted: f64 = results.iter().map(|r| r.0).sum::<f64>() / k;
+        let actual = results.iter().filter(|r| r.1).count() as f64 / k;
+        println!(
+            "predicted {:.0}%, actual {:.0}% over {} hands",
+            predicted * 100.0,
+            actual * 100.0,
+            results.len()
+        );
+    }
 }
