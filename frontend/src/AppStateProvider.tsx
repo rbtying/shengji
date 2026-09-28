@@ -1,7 +1,7 @@
 import * as React from "react";
 import gameStatistics, { GameStatistics } from "./state/GameStatistics";
 import settings, { Settings } from "./state/Settings";
-import { GameState, Hint } from "./gen-types";
+import { GameState, HandReview, Hint } from "./gen-types";
 import { Message } from "./ChatMessage";
 import { State, combineState, noPersistence } from "./State";
 import {
@@ -26,6 +26,8 @@ export interface AppState {
   changeLogLastViewed: number;
   hint: Hint | null;
   hintPending: boolean;
+  review: HandReview | null;
+  reviewPending: boolean;
 }
 
 const appState: State<AppState> = combineState({
@@ -43,6 +45,8 @@ const appState: State<AppState> = combineState({
   confetti: noPersistence<string | null>(() => null),
   hint: noPersistence<Hint | null>(() => null),
   hintPending: noPersistence<boolean>(() => false),
+  review: noPersistence<HandReview | null>(() => null),
+  reviewPending: noPersistence<boolean>(() => false),
 });
 
 interface Context {

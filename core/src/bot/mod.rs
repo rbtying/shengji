@@ -23,7 +23,12 @@ use crate::interactive::Action;
 
 mod heuristics;
 mod play;
+mod review;
 mod setup;
+
+pub use review::{
+    review_hand, review_play, summarize, HandReview, Moment, PlayVerdict, RecordedPlay,
+};
 
 /// How strongly a bot plays.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema, Default)]

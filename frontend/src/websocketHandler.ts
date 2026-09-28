@@ -170,8 +170,17 @@ const hintHandler: WebsocketHandler = (_: AppState, message: GameMessage) => {
   }
 };
 
+const reviewHandler: WebsocketHandler = (_: AppState, message: GameMessage) => {
+  if ("Review" in message) {
+    return { review: message.Review.review ?? null, reviewPending: false };
+  } else {
+    return null;
+  }
+};
+
 const allHandlers: WebsocketHandler[] = [
   hintHandler,
+  reviewHandler,
   messageHandler,
   broadcastHandler,
   errorHandler,

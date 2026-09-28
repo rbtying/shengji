@@ -322,6 +322,12 @@ export type GameMessage =
         hint?: Hint | null;
         [k: string]: unknown;
       };
+    }
+  | {
+      Review: {
+        review?: HandReview | null;
+        [k: string]: unknown;
+      };
     };
 export type GameState =
   | {
@@ -1097,6 +1103,38 @@ export interface HintOption {
    * Fraction of simulated deals in which your side won the hand.
    */
   win_rate: number;
+  [k: string]: unknown;
+}
+export interface HandReview {
+  /**
+   * Of those, plays that matched the coach (or came within 2%).
+   */
+  matched: number;
+  moments: Moment[];
+  /**
+   * Plays that had a real choice.
+   */
+  reviewed: number;
+  [k: string]: unknown;
+}
+export interface Moment {
+  best: Card[];
+  best_win: number;
+  /**
+   * True for a strong play, false for a costly one.
+   */
+  good: boolean;
+  played: Card[];
+  /**
+   * Chance your side won the hand in simulation after your play, and after the best play.
+   */
+  played_win: number;
+  text: string;
+  title: string;
+  /**
+   * 1-based trick number.
+   */
+  trick: number;
   [k: string]: unknown;
 }
 export interface NextThresholdReachableRequest {

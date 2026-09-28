@@ -945,3 +945,59 @@ button.tta-card.suggested {
   font-weight: 700;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
+
+/* ---------- Key moments ---------- */
+
+.tta-moment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.tta-moment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.tta-moment-head span {
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.tta-moment.good .tta-moment-head span {
+  color: var(--felt);
+}
+
+.tta-moment.costly .tta-moment-head span {
+  color: var(--red);
+}
+
+.tta-moment-cards {
+  display: flex;
+  gap: 18px;
+}
+
+.tta-moment-cards > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tta-moment .tta-played {
+  min-height: 50px;
+}
+
+.tta-moment p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}

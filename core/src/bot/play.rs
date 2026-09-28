@@ -56,9 +56,9 @@ impl Sides {
 #[derive(Clone, Copy, Default)]
 pub(crate) struct Stats {
     value: f64,
-    wins: f64,
+    pub(crate) wins: f64,
     defender_points: f64,
-    n: usize,
+    pub(crate) n: usize,
 }
 
 impl Stats {
@@ -93,7 +93,7 @@ pub(crate) struct Analysis {
 
 impl Analysis {
     /// Candidate indices, best first; only those that were simulated at least once.
-    fn ranked(&self) -> Vec<usize> {
+    pub(crate) fn ranked(&self) -> Vec<usize> {
         let mut idx: Vec<usize> = (0..self.candidates.len())
             .filter(|i| self.stats[*i].n > 0)
             .collect();
@@ -115,8 +115,28 @@ pub(crate) fn analyze(
     config: &BotConfig,
     rng: &mut StdRng,
 ) -> Analysis {
+    analyze_with(p, me, memory, config, rng, None)
+}
+
+/// Like `analyze`, also simulating `extra` (e.g. the play a person actually made) if it isn't
+/// already a candidate.
+pub(crate) fn analyze_with(
+    p: &PlayPhase,
+    me: PlayerID,
+    memory: &Memory,
+    config: &BotConfig,
+    rng: &mut StdRng,
+    extra: Option<&[Card]>,
+) -> Analysis {
     let history = memory.history(p);
-    let cands = candidates_with_throws(p, me, history);
+    let mut cands = candidates_with_throws(p, me, history);
+    if let Some(extra) = extra {
+        let mut e = extra.to_vec();
+        sort_by_rank(p.trump, &mut e);
+        if !cands.contains(&e) {
+            cands.push(e);
+        }
+    }
     let n = cands.len();
     let start = Instant::now();
     let base_levels = levels(&p.propagated.players);

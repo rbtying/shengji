@@ -9,7 +9,9 @@ use anyhow::{anyhow, Error};
 use serde::{Deserialize, Serialize};
 use slog::{o, Discard, Logger};
 
-use shengji_core::bot::{hint, Bot, BotConfig, Decision, Difficulty};
+use shengji_core::bot::{
+    hint, review_play, summarize, Bot, BotConfig, Decision, Difficulty, PlayVerdict, RecordedPlay,
+};
 use shengji_core::game_state::GameState;
 use shengji_core::interactive::{Action, InteractiveGame};
 use shengji_mechanics::types::PlayerID;
@@ -38,6 +40,7 @@ enum UserMessage {
     Ready,
     AddBot(Difficulty),
     RequestHint,
+    RequestReview,
 }
 
 struct LocalBot {
@@ -66,6 +69,9 @@ pub struct LocalGame {
     bots: Vec<LocalBot>,
     version: u64,
     logger: Logger,
+    /// The human's plays this hand, with what they could see, for the after-hand review, and
+    /// each one's analysis once done (`Some(None)`: nothing to review).
+    plays: Vec<(RecordedPlay, Option<Option<PlayVerdict>>)>,
 }
 
 impl Default for LocalGame {
@@ -82,6 +88,7 @@ impl LocalGame {
             bots: vec![],
             version: 0,
             logger: Logger::root(Discard, o!()),
+            plays: vec![],
         }
     }
 
@@ -117,6 +124,7 @@ impl LocalGame {
             bots,
             version: 1,
             logger: Logger::root(Discard, o!()),
+            plays: vec![],
         })
     }
 
@@ -160,9 +168,33 @@ impl LocalGame {
         let (me, name) = self.human.clone().unwrap();
         match user {
             UserMessage::Action(action) => {
+                let played = match &action {
+                    Action::PlayCards(cards) | Action::PlayCardsWithHint(cards, _) => {
+                        Some((self.game.dump_state_for_player(me)?, cards.clone()))
+                    }
+                    _ => None,
+                };
+                let starting = matches!(action, Action::StartGame);
                 let msgs = self.game.interact(action, me, &self.logger)?;
+                if starting {
+                    self.plays.clear();
+                }
+                if let Some((view, cards)) = played {
+                    self.plays.push((RecordedPlay { view, cards }, None));
+                }
                 self.version += 1;
                 Ok(broadcasts(msgs))
+            }
+            UserMessage::RequestReview => {
+                while self.idle_work(1500.0) {}
+                let verdicts: Vec<PlayVerdict> = self
+                    .plays
+                    .iter()
+                    .filter_map(|(_, v)| v.clone().flatten())
+                    .collect();
+                Ok(vec![GameMessage::Review {
+                    review: Some(summarize(&verdicts)),
+                }])
             }
             UserMessage::AddBot(difficulty) => {
                 let state = self.game.dump_state()?;
@@ -199,6 +231,27 @@ impl LocalGame {
                 message,
             }]),
             UserMessage::Beep | UserMessage::ReadyCheck | UserMessage::Ready => Ok(vec![]),
+        }
+    }
+
+    /// Whether some of the human's plays still await review analysis.
+    pub fn has_idle_work(&self) -> bool {
+        self.plays.iter().any(|(_, v)| v.is_none())
+    }
+
+    /// Analyze one pending play for the after-hand review, within `budget_ms`. Hosts call this
+    /// while nothing else is due (e.g. while the human is thinking). Returns false when idle.
+    pub fn idle_work(&mut self, budget_ms: f64) -> bool {
+        let Some((_, name)) = self.human.clone() else {
+            return false;
+        };
+        match self.plays.iter_mut().find(|(_, v)| v.is_none()) {
+            Some((rec, verdict)) => {
+                let budget = std::time::Duration::from_millis(budget_ms.max(100.0) as u64);
+                *verdict = Some(review_play(rec, &name, budget));
+                true
+            }
+            None => false,
         }
     }
 
@@ -335,6 +388,32 @@ mod tests {
             }
         }
         assert!(finished, "the hand should finish");
+        let review = g.handle(r#""RequestReview""#);
+        let r = review
+            .iter()
+            .find_map(|m| match m {
+                GameMessage::Review { review } => review.clone(),
+                _ => None,
+            })
+            .expect("a review");
+        assert!(r.reviewed > 0, "some plays should have had a choice");
+        assert!(r.matched <= r.reviewed);
+        // Following the coach's hints, most plays should match its review.
+        assert!(
+            r.matched * 2 >= r.reviewed,
+            "{} of {} matched",
+            r.matched,
+            r.reviewed
+        );
+        println!(
+            "review: {} of {} matched; {} moments",
+            r.matched,
+            r.reviewed,
+            r.moments.len()
+        );
+        for m in &r.moments {
+            println!("  {} :: {}", m.title, m.text);
+        }
         let snap = serde_json::to_string(&g.snapshot().unwrap()).unwrap();
         let restored = LocalGame::restore(serde_json::from_str(&snap).unwrap()).unwrap();
         assert_eq!(restored.bots.len(), 3);

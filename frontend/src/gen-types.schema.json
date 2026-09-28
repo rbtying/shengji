@@ -1592,6 +1592,29 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "description": "The coach's review of the hand just played (offline play).",
+          "type": "object",
+          "required": ["Review"],
+          "properties": {
+            "Review": {
+              "type": "object",
+              "properties": {
+                "review": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/HandReview"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -1779,6 +1802,30 @@
     "GameVisibility": {
       "type": "string",
       "enum": ["Public", "Unlisted"]
+    },
+    "HandReview": {
+      "type": "object",
+      "required": ["matched", "moments", "reviewed"],
+      "properties": {
+        "matched": {
+          "description": "Of those, plays that matched the coach (or came within 2%).",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "moments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Moment"
+          }
+        },
+        "reviewed": {
+          "description": "Plays that had a real choice.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
     },
     "Hands": {
       "type": "object",
@@ -2761,6 +2808,58 @@
           }
         }
       ]
+    },
+    "Moment": {
+      "type": "object",
+      "required": [
+        "best",
+        "best_win",
+        "good",
+        "played",
+        "played_win",
+        "text",
+        "title",
+        "trick"
+      ],
+      "properties": {
+        "best": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "best_win": {
+          "type": "number",
+          "format": "double"
+        },
+        "good": {
+          "description": "True for a strong play, false for a costly one.",
+          "type": "boolean"
+        },
+        "played": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "played_win": {
+          "description": "Chance your side won the hand in simulation after your play, and after the best play.",
+          "type": "number",
+          "format": "double"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "trick": {
+          "description": "1-based trick number.",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        }
+      }
     },
     "MultipleJoinPolicy": {
       "type": "string",

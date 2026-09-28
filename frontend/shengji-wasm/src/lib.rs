@@ -173,6 +173,16 @@ impl OfflineGame {
         serde_json::to_string(&self.inner.view()).unwrap_or_else(|_| "[]".to_string())
     }
 
+    /// Whether review analysis is waiting to run in idle time.
+    pub fn has_idle_work(&self) -> bool {
+        self.inner.has_idle_work()
+    }
+
+    /// Run one slice of review analysis (about `budget_ms`) while nothing else is due.
+    pub fn idle_work(&mut self, budget_ms: f64) -> bool {
+        self.inner.idle_work(budget_ms)
+    }
+
     /// When `tick` should next be called, in ms on the same clock; undefined if nothing is due.
     pub fn next_wake(&self) -> Option<f64> {
         self.inner.next_wake()

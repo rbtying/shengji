@@ -35,6 +35,10 @@ pub enum GameMessage {
     Hint {
         hint: Option<shengji_core::bot::Hint>,
     },
+    /// The coach's review of the hand just played (offline play).
+    Review {
+        review: Option<shengji_core::bot::HandReview>,
+    },
 }
 
 /// zstd dictionary, compressed with zstd.

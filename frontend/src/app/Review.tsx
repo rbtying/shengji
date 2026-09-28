@@ -1,5 +1,8 @@
 import * as React from "react";
 import { useEngine } from "../useEngine";
+import { AppStateContext } from "../AppStateProvider";
+import { WebsocketContext } from "../WebsocketProvider";
+import MiniCard from "./MiniCard";
 import { GameScoreResult, PlayPhase } from "../gen-types";
 import { displayName, pointsIn } from "./cards";
 
@@ -15,7 +18,16 @@ interface IProps {
 /** The end of a hand: who won, by how much, and where the points went. */
 const Review = (props: IProps): JSX.Element => {
   const engine = useEngine();
+  const { state, updateState } = React.useContext(AppStateContext);
+  const { send } = React.useContext(WebsocketContext);
   const p = props.phase;
+
+  // Ask the coach to review this hand's plays (mostly analyzed already while you played).
+  React.useEffect(() => {
+    updateState({ review: null, reviewPending: true });
+    send("RequestReview");
+  }, []);
+  const review = state.review;
   const players = p.propagated.players;
   const name = (id: number): string =>
     id === props.me
@@ -110,6 +122,78 @@ const Review = (props: IProps): JSX.Element => {
           />
           <em style={{ left: "50%" }} />
         </div>
+      </div>
+
+      <div className="tta-section">
+        <div className="tta-label">Key moments</div>
+        {state.reviewPending || review === null ? (
+          <div className="tta-panel" role="status">
+            The coach is reviewing your plays…
+          </div>
+        ) : review.reviewed === 0 ? (
+          <div className="tta-note">
+            None of your plays this hand had a real choice to review.
+          </div>
+        ) : (
+          <>
+            <div className="tta-note">
+              You matched the coach on <b>{review.matched}</b> of{" "}
+              {review.reviewed} plays where you had a choice.
+            </div>
+            {review.moments.length === 0 && (
+              <div className="tta-panel">
+                No big swings this hand: every play was close to the
+                coach&apos;s choice.
+              </div>
+            )}
+            {review.moments.map((m, i) => (
+              <div
+                key={i}
+                className={`tta-moment ${m.good ? "good" : "costly"}`}
+              >
+                <div className="tta-moment-head">
+                  <strong>{m.title}</strong>
+                  <span>
+                    {m.good
+                      ? `${Math.round(m.best_win * 100)}% to win`
+                      : `−${Math.round((m.best_win - m.played_win) * 100)}% win chance`}
+                  </span>
+                </div>
+                <div className="tta-moment-cards">
+                  <div>
+                    <span className="tta-label">You played</span>
+                    <div className="tta-played">
+                      {(m.played as string[]).map((c, j) => (
+                        <MiniCard
+                          key={j}
+                          card={c}
+                          small
+                          style={{ marginLeft: j === 0 ? 0 : -18 }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {!m.good && (
+                    <div>
+                      <span className="tta-label">Better</span>
+                      <div className="tta-played">
+                        {(m.best as string[]).map((c, j) => (
+                          <MiniCard
+                            key={j}
+                            card={c}
+                            small
+                            style={{ marginLeft: j === 0 ? 0 : -18 }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p>{m.text}</p>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <div className="tta-section">

@@ -9,6 +9,33 @@ type OfflineGame = import("../shengji-wasm/pkg/shengji-core.js").OfflineGame;
 
 let game: OfflineGame | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+// While nothing is due soon (usually: the player is thinking), analyze earlier plays for the
+// after-hand review in short slices, so the review is ready when the hand ends.
+const IDLE_SLICE_MS = 450;
+const scheduleIdle = (): void => {
+  if (game === null || idleTimer !== null || !game.has_idle_work()) {
+    return;
+  }
+  const wake = game.next_wake();
+  if (wake !== undefined && wake !== null && wake - performance.now() < 1200) {
+    return;
+  }
+  idleTimer = setTimeout(() => {
+    idleTimer = null;
+    const wake2 = game?.next_wake();
+    if (
+      game !== null &&
+      (wake2 === undefined ||
+        wake2 === null ||
+        wake2 - performance.now() >= 1200)
+    ) {
+      game.idle_work(IDLE_SLICE_MS);
+    }
+    scheduleIdle();
+  }, 250);
+};
 const queue: any[] = [];
 
 const ctx = self as unknown as {
@@ -37,9 +64,11 @@ const schedule = (): void => {
   }
   const wake = game.next_wake();
   if (wake === undefined || wake === null) {
+    scheduleIdle();
     return;
   }
   timer = setTimeout(run, Math.max(0, wake - performance.now()));
+  scheduleIdle();
 };
 
 const run = (): void => {

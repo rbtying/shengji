@@ -172,7 +172,8 @@ async fn player_subscribe_task(
                 | GameMessage::Message { .. }
                 | GameMessage::Error(_)
                 | GameMessage::Header { .. }
-                | GameMessage::Hint { .. } => true,
+                | GameMessage::Hint { .. }
+                | GameMessage::Review { .. } => true,
                 GameMessage::Beep { target } | GameMessage::Kicked { target } => *target == name_,
                 GameMessage::ReadyCheck { from } => *from != name_,
             };
