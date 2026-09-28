@@ -93,6 +93,8 @@ pub enum ThrowPenalty {
     #[default]
     None,
     TenPointsPerAttempt,
+    /// Ten points for each card the thrower has to take back (Pagat's rule).
+    TenPointsPerCard,
 }
 
 shengji_mechanics::impl_slog_value!(ThrowPenalty);
@@ -144,6 +146,19 @@ pub enum FirstLandlordSelectionPolicy {
 }
 
 shengji_mechanics::impl_slog_value!(FirstLandlordSelectionPolicy);
+
+/// Who declares (is landlord) in the next hand.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
+pub enum NextLandlordPolicy {
+    /// The next player on the winning side, going around the table.
+    #[default]
+    NextOnWinningSide,
+    /// The landlord stays on if their side won; otherwise the next player on the winning side
+    /// (Pagat's Zhao Pengyou rule).
+    LandlordStaysIfWon,
+}
+
+shengji_mechanics::impl_slog_value!(NextLandlordPolicy);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub enum KittyBidPolicy {
@@ -290,6 +305,8 @@ pub struct PropagatedState {
     pub(crate) throw_evaluation_policy: ThrowEvaluationPolicy,
     #[serde(default)]
     pub(crate) first_landlord_selection_policy: FirstLandlordSelectionPolicy,
+    #[serde(default)]
+    pub(crate) next_landlord_policy: NextLandlordPolicy,
     #[serde(default)]
     pub(crate) bid_policy: BidPolicy,
     #[serde(default)]
@@ -580,6 +597,14 @@ impl PropagatedState {
         Ok(vec![MessageVariant::FirstLandlordSelectionPolicySet {
             policy,
         }])
+    }
+
+    pub fn set_next_landlord_policy(
+        &mut self,
+        policy: NextLandlordPolicy,
+    ) -> Result<Vec<MessageVariant>, Error> {
+        self.next_landlord_policy = policy;
+        Ok(vec![MessageVariant::NextLandlordPolicySet { policy }])
     }
 
     pub fn set_bid_policy(&mut self, policy: BidPolicy) -> Result<Vec<MessageVariant>, Error> {

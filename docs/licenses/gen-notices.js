@@ -246,7 +246,7 @@ const ASSETS = [
     repository: "https://freesound.org/s/434472/", files: [] },
   { eco: "asset", name: "Playing card SVG images (svgs/, frontend/src/generated/playing-cards*)",
     version: "Adrian Kennard card set", license: "CC0-1.0", chosen: ["CC0-1.0"],
-    copyright: ["Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components."],
+    copyright: ["Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components; the joker is also redrawn with bolder lines in red and in black."],
     repository: "https://www.me.uk/cards/", files: [] },
   { eco: "asset", name: "Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx)",
     version: "Bootstrap Icons 1.11.3 \"bar-chart-fill\", \"gear-fill\", \"send-fill\"", license: "MIT", chosen: ["MIT"],

@@ -167,6 +167,9 @@ const DifficultySettings = (props: IDifficultyProps): JSX.Element => {
             <option value="TenPointsPerAttempt">
               Ten points per bad throw
             </option>
+            <option value="TenPointsPerCard">
+              Ten points per card taken back
+            </option>
           </select>
         </label>
       </div>
@@ -441,6 +444,7 @@ interface IUncommonSettings {
   setFirstLandlordSelectionPolicy: (
     v: React.ChangeEvent<HTMLSelectElement>,
   ) => void;
+  setNextLandlordPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameStartPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setGameShadowingPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
   setKittyBidPolicy: (v: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -499,6 +503,24 @@ const UncommonSettings = (props: IUncommonSettings): JSX.Element => {
             </option>
             <option value="ByFirstBid">
               First bid decides landlord, winning bid decides trump
+            </option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          Next hand&apos;s landlord:{" "}
+          <select
+            value={
+              props.state.propagated.next_landlord_policy ?? "NextOnWinningSide"
+            }
+            onChange={props.setNextLandlordPolicy}
+          >
+            <option value="NextOnWinningSide">
+              Next player on the winning side
+            </option>
+            <option value="LandlordStaysIfWon">
+              Landlord stays on after winning
             </option>
           </select>
         </label>
@@ -804,6 +826,7 @@ const Initialize = (props: IProps): JSX.Element => {
   const setFirstLandlordSelectionPolicy = onSelectString(
     "SetFirstLandlordSelectionPolicy",
   );
+  const setNextLandlordPolicy = onSelectString("SetNextLandlordPolicy");
   const setBidPolicy = onSelectString("SetBidPolicy");
   const setBidReinforcementPolicy = onSelectString("SetBidReinforcementPolicy");
   const setJokerBidPolicy = onSelectString("SetJokerBidPolicy");
@@ -1005,6 +1028,13 @@ const Initialize = (props: IProps): JSX.Element => {
             send({
               Action: {
                 SetFirstLandlordSelectionPolicy: value,
+              },
+            });
+            break;
+          case "next_landlord_policy":
+            send({
+              Action: {
+                SetNextLandlordPolicy: value,
               },
             });
             break;
@@ -1391,6 +1421,7 @@ const Initialize = (props: IProps): JSX.Element => {
           setShouldRevealKittyAtEndOfGame={setShouldRevealKittyAtEndOfGame}
           setHideThrowHaltingPlayer={setHideThrowHaltingPlayer}
           setFirstLandlordSelectionPolicy={setFirstLandlordSelectionPolicy}
+          setNextLandlordPolicy={setNextLandlordPolicy}
           setGameStartPolicy={setGameStartPolicy}
           setGameShadowingPolicy={setGameShadowingPolicy}
           setKittyBidPolicy={setKittyBidPolicy}

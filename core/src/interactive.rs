@@ -19,8 +19,8 @@ use crate::message::MessageVariant;
 use crate::settings::{
     AdvancementPolicy, BackToTwoSetting, FirstLandlordSelectionPolicy, FriendSelection,
     FriendSelectionPolicy, GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility,
-    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy,
-    PropagatedState, ThrowPenalty,
+    KittyBidPolicy, KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, NextLandlordPolicy,
+    PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 pub struct InteractiveGame {
     state: GameState,
@@ -164,6 +164,10 @@ impl InteractiveGame {
             ) => {
                 info!(logger, "Setting first landlord selection policy"; "policy" => policy);
                 state.set_first_landlord_selection_policy(policy)?
+            }
+            (Action::SetNextLandlordPolicy(policy), GameState::Initialize(ref mut state)) => {
+                info!(logger, "Setting next landlord policy"; "policy" => policy);
+                state.set_next_landlord_policy(policy)?
             }
             (Action::SetBidPolicy(policy), GameState::Initialize(ref mut state)) => {
                 info!(logger, "Setting bid selection policy"; "policy" => policy);
@@ -441,6 +445,7 @@ pub enum Action {
     SetFriendSelectionPolicy(FriendSelectionPolicy),
     SetMultipleJoinPolicy(MultipleJoinPolicy),
     SetFirstLandlordSelectionPolicy(FirstLandlordSelectionPolicy),
+    SetNextLandlordPolicy(NextLandlordPolicy),
     SetBidPolicy(BidPolicy),
     SetBidReinforcementPolicy(BidReinforcementPolicy),
     SetJokerBidPolicy(JokerBidPolicy),

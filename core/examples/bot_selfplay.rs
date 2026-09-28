@@ -52,6 +52,21 @@ fn main() {
         )
         .unwrap();
     }
+    if std::env::var("PAGAT").is_ok() {
+        use shengji_core::settings::{NextLandlordPolicy, ThrowPenalty};
+        game.interact(
+            Action::SetNextLandlordPolicy(NextLandlordPolicy::LandlordStaysIfWon),
+            host,
+            &logger,
+        )
+        .unwrap();
+        game.interact(
+            Action::SetThrowPenalty(ThrowPenalty::TenPointsPerCard),
+            host,
+            &logger,
+        )
+        .unwrap();
+    }
     game.interact(Action::StartGame, host, &logger).unwrap();
 
     let mut hands_done = 0;

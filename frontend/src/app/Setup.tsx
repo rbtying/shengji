@@ -8,11 +8,13 @@ import { DIFFICULTIES, botLevel } from "./cards";
 import type { JSX } from "react";
 
 type Mode = "tractor" | "friends";
-type Preset = "Standard" | "Beijing" | "Custom";
+type Preset = "Pagat" | "Standard" | "Beijing" | "Custom";
 
 const LEVEL_KEY = "bot_difficulty";
 
 const PRESETS: { [k in Preset]: string } = {
+  Pagat:
+    "The rules from pagat.com · failed throws cost 10 points per card taken back · the declarer stays on after winning · defenders go up at 60 points per deck (40–59: nobody goes up)",
   Standard:
     "Kitty of 8 · pairs must follow pairs · failed throws are shown, not penalized · defenders need 40 points per deck to take over",
   Beijing:
@@ -26,6 +28,24 @@ interface IProps {
   me: number;
   onBack: () => void;
 }
+
+/** Presets offered for each game; the first is the default. */
+const PRESETS_FOR: { [m in Mode]: Preset[] } = {
+  friends: ["Pagat", "Standard", "Beijing", "Custom"],
+  tractor: ["Standard", "Beijing", "Custom"],
+};
+
+/** Pagat: 2 decks for 5–7 players, 3 for 8–11, 4 for 12. */
+const pagatDecks = (players: number): number =>
+  players <= 7 ? 2 : players <= 11 ? 3 : 4;
+
+/** A kitty of 6–8 cards, choosing the size that needs the fewest cards removed to deal evenly. */
+const pagatKitty = (players: number, decks: number): number => {
+  const total = 54 * decks;
+  return [8, 7, 6].reduce((best, k) =>
+    (total - k) % players < (total - best) % players ? k : best,
+  );
+};
 
 const loadLevel = (): string => {
   try {
@@ -47,11 +67,28 @@ const Setup = (props: IProps): JSX.Element => {
   );
   const [players, setPlayers] = React.useState<number>(5);
   const [level, setLevel] = React.useState<string>(loadLevel);
-  const [preset, setPreset] = React.useState<Preset>("Standard");
+  const [preset, setPreset] = React.useState<Preset>(
+    PRESETS_FOR[
+      props.phase.propagated.game_mode === "Tractor" ? "tractor" : "friends"
+    ][0],
+  );
   const [customOpen, setCustomOpen] = React.useState(false);
 
+  const chooseMode = (m: Mode): void => {
+    setMode(m);
+    setPreset(PRESETS_FOR[m][0]);
+  };
+
   const seats = mode === "tractor" ? 4 : players;
-  const decks = mode === "tractor" ? 2 : players >= 7 ? 4 : 3;
+  const decks =
+    mode === "tractor"
+      ? 2
+      : preset === "Pagat"
+        ? pagatDecks(players)
+        : players >= 7
+          ? 4
+          : 3;
+  const kitty = preset === "Pagat" ? pagatKitty(seats, decks) : null;
 
   const chooseLevel = (v: string): void => {
     setLevel(v);
@@ -81,12 +118,31 @@ const Setup = (props: IProps): JSX.Element => {
       },
     });
     send({ Action: { SetNumDecks: decks } });
-    if (preset === "Standard") {
-      send({ Action: { SetTrickDrawPolicy: "NoProtections" } });
-      send({ Action: { SetAdvancementPolicy: "Unrestricted" } });
-    } else if (preset === "Beijing") {
-      send({ Action: { SetTrickDrawPolicy: "LongerTuplesProtected" } });
-      send({ Action: { SetAdvancementPolicy: "DefendPoints" } });
+    if (preset !== "Custom") {
+      send({ Action: { SetKittySize: kitty } });
+      send({
+        Action: {
+          SetThrowPenalty: preset === "Pagat" ? "TenPointsPerCard" : "None",
+        },
+      });
+      send({
+        Action: {
+          SetNextLandlordPolicy:
+            preset === "Pagat" ? "LandlordStaysIfWon" : "NextOnWinningSide",
+        },
+      });
+      send({
+        Action: {
+          SetTrickDrawPolicy:
+            preset === "Beijing" ? "LongerTuplesProtected" : "NoProtections",
+        },
+      });
+      send({
+        Action: {
+          SetAdvancementPolicy:
+            preset === "Beijing" ? "DefendPoints" : "Unrestricted",
+        },
+      });
     }
     send({ Action: "StartGame" });
   };
@@ -114,7 +170,7 @@ const Setup = (props: IProps): JSX.Element => {
             type="button"
             className="tta-mode"
             aria-pressed={mode === "tractor"}
-            onClick={() => setMode("tractor")}
+            onClick={() => chooseMode("tractor")}
           >
             <strong>Tractor</strong>
             <span className="tta-zh" lang="zh">
@@ -126,13 +182,13 @@ const Setup = (props: IProps): JSX.Element => {
             type="button"
             className="tta-mode"
             aria-pressed={mode === "friends"}
-            onClick={() => setMode("friends")}
+            onClick={() => chooseMode("friends")}
           >
             <strong>Finding Friends</strong>
             <span className="tta-zh" lang="zh">
               找朋友
             </span>
-            <span>5–8 players · secret partners</span>
+            <span>5–12 players · secret partners</span>
           </button>
         </div>
       </div>
@@ -141,7 +197,7 @@ const Setup = (props: IProps): JSX.Element => {
         <div className="tta-section">
           <div className="tta-label">Players</div>
           <div className="tta-chips">
-            {[5, 6, 7, 8].map((n) => (
+            {[5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
               <button
                 key={n}
                 type="button"
@@ -177,7 +233,7 @@ const Setup = (props: IProps): JSX.Element => {
       <div className="tta-section">
         <div className="tta-label">House rules</div>
         <div className="tta-chips">
-          {(Object.keys(PRESETS) as Preset[]).map((p) => (
+          {PRESETS_FOR[mode].map((p) => (
             <button
               key={p}
               type="button"
@@ -195,7 +251,8 @@ const Setup = (props: IProps): JSX.Element => {
           ))}
         </div>
         <div className="tta-panel">
-          {decks} decks · {PRESETS[preset]}
+          {decks} decks{kitty !== null ? ` · kitty of ${kitty}` : ""} ·{" "}
+          {PRESETS[preset]}
           {preset === "Custom" && (
             <>
               {" "}

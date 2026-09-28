@@ -50,6 +50,9 @@ export type Action =
       SetFirstLandlordSelectionPolicy: FirstLandlordSelectionPolicy;
     }
   | {
+      SetNextLandlordPolicy: NextLandlordPolicy;
+    }
+  | {
       SetBidPolicy: BidPolicy;
     }
   | {
@@ -176,6 +179,10 @@ export type FriendSelectionPolicy =
   | "PointCardNotAllowed";
 export type MultipleJoinPolicy = "Unrestricted" | "NoDoubleJoin";
 export type FirstLandlordSelectionPolicy = "ByWinningBid" | "ByFirstBid";
+/**
+ * Who declares (is landlord) in the next hand.
+ */
+export type NextLandlordPolicy = "NextOnWinningSide" | "LandlordStaysIfWon";
 export type BidPolicy =
   | "JokerOrHigherSuit"
   | "JokerOrGreaterLength"
@@ -212,7 +219,9 @@ export type TrickDrawPolicy =
   | "LongerTuplesProtected"
   | "OnlyDrawTractorOnTractor"
   | "LongerTuplesProtectedAndOnlyDrawTractorOnTractor";
-export type ThrowPenalty = "None" | "TenPointsPerAttempt";
+export type ThrowPenalty =
+  | ("None" | "TenPointsPerAttempt")
+  | "TenPointsPerCard";
 export type ThrowEvaluationPolicy = "All" | "Highest" | "TrickUnitLength";
 export type PlayTakebackPolicy = "AllowPlayTakeback" | "NoPlayTakeback";
 export type BidTakebackPolicy = "AllowBidTakeback" | "NoBidTakeback";
@@ -447,6 +456,11 @@ export type MessageVariant =
   | {
       policy: FirstLandlordSelectionPolicy;
       type: "FirstLandlordSelectionPolicySet";
+      [k: string]: unknown;
+    }
+  | {
+      policy: NextLandlordPolicy;
+      type: "NextLandlordPolicySet";
       [k: string]: unknown;
     }
   | {
@@ -975,6 +989,7 @@ export interface PropagatedState {
   max_player_id: number;
   max_rank?: MaxRank;
   multiple_join_policy?: MultipleJoinPolicy & string;
+  next_landlord_policy?: NextLandlordPolicy & string;
   num_decks?: number | null;
   num_games_finished?: number;
   observers: Player[];

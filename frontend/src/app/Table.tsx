@@ -288,8 +288,23 @@ const Table = (props: IProps): JSX.Element => {
         </div>
       </div>
 
+      {isFriends && !allFriendsFound && (
+        <div className="tta-called">
+          <span className="tta-badge gold">Called</span>{" "}
+          {friends
+            .filter((f) => f.player_id == null)
+            .map(
+              (f) =>
+                `${["first", "second", "third", "fourth"][f.initial_skip]} ${face(f.card).rank}${face(f.card).suit}`,
+            )
+            .join(" · ")}
+        </div>
+      )}
+
       <div
         className="tta-felt"
+        // Big tables need more room so the seats around the edge don't touch.
+        style={seated.length >= 9 ? { height: 400 } : undefined}
         onClick={() => {
           if (trickDone) {
             send({ Action: "EndTrick" });
@@ -342,21 +357,6 @@ const Table = (props: IProps): JSX.Element => {
         {toast !== null && (
           <div className="tta-toast" role="status">
             {toast}
-          </div>
-        )}
-        {isFriends && !allFriendsFound && (
-          <div
-            className="tta-badge gold"
-            style={{ position: "absolute", left: 10, top: 10 }}
-          >
-            Called:{" "}
-            {friends
-              .filter((f) => f.player_id == null)
-              .map(
-                (f) =>
-                  `${["first", "second", "third", "fourth"][f.initial_skip]} ${face(f.card).rank}${face(f.card).suit}`,
-              )
-              .join(", ")}
           </div>
         )}
         {coachOpen && (

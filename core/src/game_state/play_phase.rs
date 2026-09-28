@@ -16,7 +16,7 @@ use shengji_mechanics::types::{Card, PlayerID, Rank, Trump};
 use crate::message::MessageVariant;
 use crate::settings::{
     AdvancementPolicy, BackToTwoSetting, GameMode, KittyPenalty, MultipleJoinPolicy,
-    PlayTakebackPolicy, PropagatedState, ThrowPenalty,
+    NextLandlordPolicy, PlayTakebackPolicy, PropagatedState, ThrowPenalty,
 };
 
 use crate::game_state::initialize_phase::InitializePhase;
@@ -262,6 +262,11 @@ impl PlayPhase {
                 ThrowPenalty::TenPointsPerAttempt => {
                     if let Some(id) = self.trick.played_cards().first().map(|pc| pc.id) {
                         *self.penalties.entry(id).or_insert(0) += 10;
+                    }
+                }
+                ThrowPenalty::TenPointsPerCard => {
+                    if let Some(id) = self.trick.played_cards().first().map(|pc| pc.id) {
+                        *self.penalties.entry(id).or_insert(0) += 10 * failed_throw_size;
                     }
                 }
             }
@@ -618,7 +623,13 @@ impl PlayPhase {
             self.propagated.jack_variation,
         ));
 
-        let mut idx = (landlord_idx + 1) % propagated.players.len();
+        let stays = landlord_won
+            && propagated.next_landlord_policy == NextLandlordPolicy::LandlordStaysIfWon;
+        let mut idx = if stays {
+            landlord_idx
+        } else {
+            (landlord_idx + 1) % propagated.players.len()
+        };
         let (next_landlord, next_landlord_idx) = loop {
             if landlord_won == self.landlords_team.contains(&propagated.players[idx].id) {
                 break (propagated.players[idx].id, idx);

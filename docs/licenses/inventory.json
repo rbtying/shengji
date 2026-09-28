@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-28T01:30:10.957Z",
+  "generated": "2026-09-28T08:39:02.547Z",
   "npmMethod": "source maps in frontend\\dist",
   "rustShipped": [
     {
@@ -2802,7 +2802,7 @@
         "CC0-1.0"
       ],
       "copyright": [
-        "Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components."
+        "Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components; the joker is also redrawn with bolder lines in red and in black."
       ],
       "repository": "https://www.me.uk/cards/",
       "files": []

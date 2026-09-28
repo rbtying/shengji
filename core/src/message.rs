@@ -18,7 +18,8 @@ use crate::game_state::play_phase::PlayerGameFinishedResult;
 use crate::settings::{
     AdvancementPolicy, BackToTwoSetting, FirstLandlordSelectionPolicy, FriendSelectionPolicy,
     GameModeSettings, GameShadowingPolicy, GameStartPolicy, GameVisibility, KittyBidPolicy,
-    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, PlayTakebackPolicy, ThrowPenalty,
+    KittyPenalty, KittyTheftPolicy, MultipleJoinPolicy, NextLandlordPolicy, PlayTakebackPolicy,
+    ThrowPenalty,
 };
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
@@ -77,6 +78,9 @@ pub enum MessageVariant {
     },
     FirstLandlordSelectionPolicySet {
         policy: FirstLandlordSelectionPolicy,
+    },
+    NextLandlordPolicySet {
+        policy: NextLandlordPolicy,
     },
     BidPolicySet {
         policy: BidPolicy,
@@ -264,6 +268,10 @@ impl MessageVariant {
                 format!("{} set winning bid to decide both landlord and trump", n?),
             FirstLandlordSelectionPolicySet { policy: FirstLandlordSelectionPolicy::ByFirstBid } =>
                 format!("{} set first bid to decide landlord, winning bid to decide trump", n?),
+            NextLandlordPolicySet { policy: NextLandlordPolicy::NextOnWinningSide } =>
+                format!("{} set the next landlord to be the next player on the winning side", n?),
+            NextLandlordPolicySet { policy: NextLandlordPolicy::LandlordStaysIfWon } =>
+                format!("{} set the landlord to stay on after winning", n?),
             BidPolicySet { policy: BidPolicy::JokerOrHigherSuit } =>
                 format!("{} allowed joker or higher suit bids to outbid non-joker bids with the same number of cards", n?),
             BidPolicySet { policy: BidPolicy::JokerOrGreaterLength } =>
@@ -335,6 +343,8 @@ impl MessageVariant {
                 format!("{} removed the throw penalty", n?),
             ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerAttempt } =>
                 format!("{} set the throw penalty to 10 points per throw", n?),
+            ThrowPenaltySet { throw_penalty: ThrowPenalty::TenPointsPerCard } =>
+                format!("{} set the throw penalty to 10 points per card taken back", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCard } =>
                 format!("{} set the bid-from-bottom policy to be the first card revealed", n?),
             KittyBidPolicySet { policy: KittyBidPolicy::FirstCardOfLevelOrHighest } =>

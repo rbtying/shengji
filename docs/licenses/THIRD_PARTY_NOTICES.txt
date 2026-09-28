@@ -577,7 +577,7 @@ Sound effect "taking card" (frontend/static/434472_dersuperanton_taking-card.mp3
 
 Playing card SVG images (svgs/, frontend/src/generated/playing-cards*) Adrian Kennard card set
   License: CC0-1.0
-  Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components.
+  Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components; the joker is also redrawn with bolder lines in red and in black.
   Source: https://www.me.uk/cards/
 
 Icons (frontend/src/icons/BarChart.tsx, Gear.tsx, PaperPlane.tsx) Bootstrap Icons 1.11.3 "bar-chart-fill", "gear-fill", "send-fill"

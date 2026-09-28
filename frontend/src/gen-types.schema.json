@@ -235,6 +235,16 @@
         },
         {
           "type": "object",
+          "required": ["SetNextLandlordPolicy"],
+          "properties": {
+            "SetNextLandlordPolicy": {
+              "$ref": "#/definitions/NextLandlordPolicy"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetBidPolicy"],
           "properties": {
             "SetBidPolicy": {
@@ -2224,6 +2234,19 @@
           "required": ["policy", "type"],
           "properties": {
             "policy": {
+              "$ref": "#/definitions/NextLandlordPolicy"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["NextLandlordPolicySet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["policy", "type"],
+          "properties": {
+            "policy": {
               "$ref": "#/definitions/BidPolicy"
             },
             "type": {
@@ -2865,6 +2888,21 @@
       "type": "string",
       "enum": ["Unrestricted", "NoDoubleJoin"]
     },
+    "NextLandlordPolicy": {
+      "description": "Who declares (is landlord) in the next hand.",
+      "oneOf": [
+        {
+          "description": "The next player on the winning side, going around the table.",
+          "type": "string",
+          "enum": ["NextOnWinningSide"]
+        },
+        {
+          "description": "The landlord stays on if their side won; otherwise the next player on the winning side (Pagat's Zhao Pengyou rule).",
+          "type": "string",
+          "enum": ["LandlordStaysIfWon"]
+        }
+      ]
+    },
     "NextThresholdReachableRequest": {
       "type": "object",
       "required": ["decks", "non_landlord_points", "observed_points", "params"],
@@ -3314,6 +3352,14 @@
             }
           ]
         },
+        "next_landlord_policy": {
+          "default": "NextOnWinningSide",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextLandlordPolicy"
+            }
+          ]
+        },
         "num_decks": {
           "type": ["integer", "null"],
           "format": "uint",
@@ -3459,8 +3505,17 @@
       "enum": ["All", "Highest", "TrickUnitLength"]
     },
     "ThrowPenalty": {
-      "type": "string",
-      "enum": ["None", "TenPointsPerAttempt"]
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["None", "TenPointsPerAttempt"]
+        },
+        {
+          "description": "Ten points for each card the thrower has to take back (Pagat's rule).",
+          "type": "string",
+          "enum": ["TenPointsPerCard"]
+        }
+      ]
     },
     "TractorRequirements": {
       "type": "object",

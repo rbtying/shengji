@@ -409,6 +409,76 @@ body:has(.tta) {
   border-radius: 5px;
 }
 
+/* Real card faces: the artwork draws its own border, corner index and pips. */
+.tta-card.face {
+  width: 44px;
+  height: 68px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  overflow: hidden;
+}
+
+.tta-card.face .face-art,
+.tta-card.face .face-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tta-card.face.small {
+  width: 32px;
+  height: 50px;
+}
+
+button.tta-card.face[aria-pressed="true"] {
+  border: none;
+  box-shadow:
+    0 0 0 2px var(--red),
+    -1px 1px 3px rgba(28, 27, 25, 0.25);
+}
+
+button.tta-card.face.suggested {
+  border: none;
+  box-shadow:
+    0 0 0 2px var(--gold),
+    -1px 1px 3px rgba(28, 27, 25, 0.25);
+}
+
+.tta-brand-fan > .tta-card.face {
+  width: 62px;
+  height: 96px;
+}
+
+/* Say which joker it is: the artwork alone is hard to tell apart at phone sizes. */
+.tta-card.joker .joker-tag {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+.tta-card.joker.red .joker-tag {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--paper);
+}
+
+.tta-card.joker.small .joker-tag {
+  font-size: 7px;
+  bottom: 2px;
+}
+
 .tta-card.small {
   width: 34px;
   height: 48px;
@@ -774,7 +844,7 @@ button.tta-card.suggested {
 .tta-tray-row {
   display: flex;
   align-items: flex-end;
-  height: 76px;
+  height: 82px;
   padding-top: 12px;
 }
 
@@ -999,5 +1069,12 @@ button.tta-card.suggested {
   margin: 0;
   font-size: 14px;
   line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.tta-called {
+  padding: 0 14px 8px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--ink-2);
 }

@@ -4,6 +4,7 @@ import { WebsocketContext } from "../WebsocketProvider";
 import { clearOfflineGame, OFFLINE_ROOM } from "../OfflineProvider";
 import { GameState } from "../gen-types";
 import MiniCard from "./MiniCard";
+import { setCardStyle, useCardStyle } from "./cardStyle";
 
 import type { JSX } from "react";
 
@@ -36,6 +37,7 @@ const Home = (props: IProps): JSX.Element => {
   const [showSettings, setShowSettings] = React.useState(false);
   const [name, setName] = React.useState(state.name || "");
   const gs = state.gameState;
+  const cardStyle = useCardStyle();
 
   const join = (n: string): void => {
     const trimmed = n.trim().slice(0, 31) || "You";
@@ -167,6 +169,36 @@ const Home = (props: IProps): JSX.Element => {
             <div className="tta-section">
               <div className="tta-topbar">
                 <h2 className="tta-title">Settings</h2>
+              </div>
+              <div className="tta-section">
+                <div className="tta-label">Cards</div>
+                <div className="tta-chips">
+                  <button
+                    type="button"
+                    className="tta-chip"
+                    aria-pressed={cardStyle === "faces"}
+                    onClick={() => setCardStyle("faces")}
+                  >
+                    Real card faces
+                  </button>
+                  <button
+                    type="button"
+                    className="tta-chip"
+                    aria-pressed={cardStyle === "simple"}
+                    onClick={() => setCardStyle("simple")}
+                  >
+                    Large simple cards
+                  </button>
+                </div>
+                <div className="tta-row" aria-hidden="true">
+                  <div style={{ display: "flex", gap: 6, flex: "none" }}>
+                    <MiniCard card="🂾" />
+                    <MiniCard card="🂪" />
+                    <MiniCard card="🃅" />
+                    <MiniCard card="🃏" />
+                    <MiniCard card="🃟" />
+                  </div>
+                </div>
               </div>
               <div className="tta-panel">
                 <strong>Tip jar.</strong> Two to Ace is free, with every level
