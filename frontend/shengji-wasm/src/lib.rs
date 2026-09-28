@@ -123,3 +123,64 @@ pub fn zstd_decompress(req: &[u8]) -> Result<String, JsValue> {
         Ok(String::from_utf8(v).map_err(|_| "Failed to parse utf-8")?)
     })
 }
+
+/// A game against computer players that runs entirely in the browser (or app), with no server.
+/// Messages in and out are JSON in the same shapes as the server's websocket.
+#[wasm_bindgen]
+pub struct OfflineGame {
+    inner: local_game::LocalGame,
+}
+
+#[wasm_bindgen]
+impl OfflineGame {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> OfflineGame {
+        console_error_panic_hook::set_once();
+        OfflineGame {
+            inner: local_game::LocalGame::new(),
+        }
+    }
+
+    /// Resume from `snapshot()` output.
+    pub fn restore(snapshot: &str) -> Result<OfflineGame, JsValue> {
+        console_error_panic_hook::set_once();
+        let snap = serde_json::from_str(snapshot).map_err(|e| JsValue::from(e.to_string()))?;
+        let inner =
+            local_game::LocalGame::restore(snap).map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(OfflineGame { inner })
+    }
+
+    /// JSON to save for resuming later, once someone has joined.
+    pub fn snapshot(&self) -> Option<String> {
+        self.inner
+            .snapshot()
+            .ok()
+            .and_then(|s| serde_json::to_string(&s).ok())
+    }
+
+    /// Handle one message from the player. Returns a JSON array of messages.
+    pub fn handle(&mut self, json: &str) -> String {
+        serde_json::to_string(&self.inner.handle(json)).unwrap_or_else(|_| "[]".to_string())
+    }
+
+    /// Let bots act. Returns a JSON array of messages.
+    pub fn tick(&mut self, now_ms: f64) -> String {
+        serde_json::to_string(&self.inner.tick(now_ms)).unwrap_or_else(|_| "[]".to_string())
+    }
+
+    /// The current state, as a JSON array of messages.
+    pub fn view(&self) -> String {
+        serde_json::to_string(&self.inner.view()).unwrap_or_else(|_| "[]".to_string())
+    }
+
+    /// When `tick` should next be called, in ms on the same clock; undefined if nothing is due.
+    pub fn next_wake(&self) -> Option<f64> {
+        self.inner.next_wake()
+    }
+}
+
+impl Default for OfflineGame {
+    fn default() -> Self {
+        Self::new()
+    }
+}

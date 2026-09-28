@@ -16,6 +16,7 @@ slog = { version = "2.5", features = ["nested-values"] }
 slog_derive = "0.2"
 schemars = "0.8"
 thiserror = "1.0"
+web-time = "1"
 url = "2.1"
 
 [dev-dependencies]

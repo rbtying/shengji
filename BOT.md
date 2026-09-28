@@ -28,6 +28,26 @@ option, and the defenders' average points. **Select suggested cards** selects th
 you. While you're burying the kitty, Hint suggests what to bury and which friend to call,
 and can move the cards for you.
 
+## Playing offline
+
+On the join screen, click **Practice offline against computer players** (or open the
+site with `#offline-practice` at the end of the address). The engine and bots then run
+inside the page, in a background worker compiled to WebAssembly, with no server needed. The
+game is saved in the browser as you play and resumes after a reload. Offline is always a
+single human against bots; the lobby, levels and Hint work the same way.
+
+The pieces:
+
+- `local-game/` runs a game with bots in-process. It accepts the same JSON messages a
+  client sends the server and returns the same messages the server would send, and it can
+  save and restore a game (`snapshot`/`restore`).
+- `frontend/shengji-wasm` exposes it to JavaScript as `OfflineGame`.
+- `frontend/src/offlineWorker.ts` hosts it in a Web Worker so the page stays responsive
+  while bots think. `OfflineProvider.tsx` stands in for the websocket connection.
+
+WebAssembly runs single-threaded, so bots simulate fewer deals in the same time than
+server-side bots do. This is also the basis for the planned iOS app.
+
 ## Command-line bots
 
 `shengji-bot` seats bots from the command line, for example to join a server elsewhere:

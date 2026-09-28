@@ -2,6 +2,7 @@
 members = [
   "backend",
   "bot-client",
+  "local-game",
   "frontend/json-schema-bin",
   "frontend/shengji-wasm",
   "wasm-rpc-impl"

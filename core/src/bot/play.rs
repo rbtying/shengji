@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
-use std::time::Instant;
+use web_time::Instant;
 
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -125,45 +125,51 @@ pub(crate) fn analyze(
     let no_worlds = AtomicBool::new(false);
     let seeds: Vec<u64> = (0..config.threads.max(1)).map(|_| rng.gen()).collect();
 
-    if n > 1 {
-        std::thread::scope(|scope| {
-            for seed in &seeds {
-                let (cands, totals, samples_started, no_worlds, base_levels) =
-                    (&cands, &totals, &samples_started, &no_worlds, &base_levels);
-                scope.spawn(move || {
-                    let mut trng = StdRng::seed_from_u64(*seed);
-                    let mut local = vec![Stats::default(); n];
-                    loop {
-                        if start.elapsed() > config.time_budget
-                            || samples_started.fetch_add(1, Ordering::Relaxed) >= config.samples
-                        {
-                            break;
-                        }
-                        let world = match determinize(p, me, history, &mut trng) {
-                            Some(w) => w,
-                            None => {
-                                no_worlds.store(true, Ordering::Relaxed);
-                                break;
-                            }
-                        };
-                        let sides = Sides::of(&world);
-                        for (i, c) in cands.iter().enumerate() {
-                            let mut sim = world.clone();
-                            if sim.play_cards(me, c).is_err() {
-                                continue;
-                            }
-                            if let Some(o) = rollout(sim, me, base_levels, &sides, &mut trng) {
-                                local[i].add(&o);
-                            }
-                        }
-                    }
-                    let mut t = totals.lock().unwrap();
-                    for (i, s) in local.iter().enumerate() {
-                        t[i].merge(s);
-                    }
-                });
+    let worker = |seed: u64| {
+        let mut trng = StdRng::seed_from_u64(seed);
+        let mut local = vec![Stats::default(); n];
+        loop {
+            if start.elapsed() > config.time_budget
+                || samples_started.fetch_add(1, Ordering::Relaxed) >= config.samples
+            {
+                break;
             }
-        });
+            let world = match determinize(p, me, history, &mut trng) {
+                Some(w) => w,
+                None => {
+                    no_worlds.store(true, Ordering::Relaxed);
+                    break;
+                }
+            };
+            let sides = Sides::of(&world);
+            for (i, c) in cands.iter().enumerate() {
+                let mut sim = world.clone();
+                if sim.play_cards(me, c).is_err() {
+                    continue;
+                }
+                if let Some(o) = rollout(sim, me, &base_levels, &sides, &mut trng) {
+                    local[i].add(&o);
+                }
+            }
+        }
+        let mut t = totals.lock().unwrap();
+        for (i, s) in local.iter().enumerate() {
+            t[i].merge(s);
+        }
+    };
+
+    if n > 1 {
+        if seeds.len() == 1 {
+            // Single-threaded platforms (WebAssembly) run the simulation inline.
+            worker(seeds[0]);
+        } else {
+            std::thread::scope(|scope| {
+                for seed in &seeds {
+                    let worker = &worker;
+                    scope.spawn(move || worker(*seed));
+                }
+            });
+        }
     }
 
     let stats = totals.into_inner().unwrap();

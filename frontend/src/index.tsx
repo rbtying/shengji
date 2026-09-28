@@ -7,6 +7,7 @@ import "./style.css";
 
 import AppStateProvider from "./AppStateProvider";
 import WebsocketProvider from "./WebsocketProvider";
+import OfflineProvider, { isOffline } from "./OfflineProvider";
 import TimerProvider from "./TimerProvider";
 import Root from "./Root";
 
@@ -15,20 +16,7 @@ const WasmProvider = React.lazy(
 );
 
 const bootstrap = (): void => {
-  Sentry.init({
-    dsn: "https://dfdd871554eb4ab48de73a6575c1117a@o476591.ingest.sentry.io/5516535",
-    release: (window as any)._VERSION,
-    ignoreErrors: [
-      /Promise.*is.*defined/,
-      /WebAssembly.*is.*defined/,
-      /fetch.*is.*defined/,
-      "Can't find variable: fetch",
-      "Can't find variable: WebAssembly",
-      /Loading chunk.*failed/,
-      /ChunkLoadError/,
-      /Const declarations are not supported in strict mode/,
-    ],
-  });
+  // Error reporting to the original project's Sentry account is disabled in this fork.
 
   const root = document.getElementById("root");
   const fallback = (
@@ -41,17 +29,19 @@ const bootstrap = (): void => {
   ReactModal.setAppElement(root!);
   const root_ = createRoot(root!);
 
+  const Connection = isOffline() ? OfflineProvider : WebsocketProvider;
+
   root_.render(
     <Sentry.ErrorBoundary fallback={fallback}>
       <React.Suspense fallback={"loading..."}>
         <WasmProvider>
           <TimerProvider>
             <AppStateProvider>
-              <WebsocketProvider>
+              <Connection>
                 <Sentry.ErrorBoundary fallback={fallback}>
                   <Root />
                 </Sentry.ErrorBoundary>
-              </WebsocketProvider>
+              </Connection>
             </AppStateProvider>
           </TimerProvider>
         </WasmProvider>

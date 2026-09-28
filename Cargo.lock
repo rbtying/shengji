@@ -897,6 +897,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee93343901ab17bd981295f2cf0026d4ad018c7c31ba84549a4ddbb47a45104"
 
 [[package]]
+name = "local-game"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "shengji-core",
+ "shengji-mechanics",
+ "shengji-types",
+ "slog",
+]
+
+[[package]]
 name = "log"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1422,6 +1435,7 @@ dependencies = [
  "slog_derive",
  "thiserror 1.0.69",
  "url",
+ "web-time",
 ]
 
 [[package]]
@@ -1472,9 +1486,11 @@ dependencies = [
  "console_error_panic_hook",
  "getrandom",
  "gloo-utils",
+ "local-game",
  "ruzstd",
  "schemars",
  "serde",
+ "serde_json",
  "shengji-mechanics",
  "shengji-types",
  "wasm-bindgen",
@@ -2132,6 +2148,16 @@ name = "web-sys"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a98bc3c33f0fe7e59ad7cd041b89034fa82a7c2d4365ca538dda6cdaf513863c"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "web-time"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",

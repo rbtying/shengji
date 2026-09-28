@@ -4,6 +4,7 @@ import { TimerContext } from "./TimerProvider";
 import LabeledPlay from "./LabeledPlay";
 import PublicRoomsPane from "./PublicRoomsPane";
 import { isWasmAvailable } from "./detectWasm";
+import { isOffline, OFFLINE_ROOM } from "./OfflineProvider";
 
 import type { JSX } from "react";
 
@@ -69,6 +70,55 @@ const JoinRoom = (props: IProps): JSX.Element => {
     );
   };
 
+  const goOffline = (): void => {
+    window.location.hash = OFFLINE_ROOM;
+    window.location.reload();
+  };
+
+  const goOnline = (): void => {
+    window.location.hash = "";
+    window.location.reload();
+  };
+
+  if (isOffline()) {
+    return (
+      <div>
+        <LabeledPlay
+          cards={["🃟", "🃟", "🃏", "🃏"]}
+          trump={{ NoTrump: {} }}
+          label={null}
+        ></LabeledPlay>
+        <h2>Practice against computer players</h2>
+        <p>
+          This table runs entirely on your device; no server or internet
+          connection is needed. Your game is saved as you play.
+        </p>
+        <form className="join-room" onSubmit={handleSubmit}>
+          <label>
+            <strong>Your name:</strong>{" "}
+            <input
+              type="text"
+              placeholder="Enter your name here"
+              value={props.name}
+              onChange={handleChange}
+              autoFocus={true}
+            />
+          </label>{" "}
+          <input
+            type="submit"
+            value="Sit down at the table"
+            disabled={props.name.length === 0 || props.name.length > 32}
+          />
+        </form>
+        <p>
+          <button className="normal" onClick={goOnline}>
+            Play online with other people instead
+          </button>
+        </p>
+      </div>
+    );
+  }
+
   if (shouldGenerate) {
     setTimeout(generateRoomName, 0);
   }
@@ -117,6 +167,11 @@ const JoinRoom = (props: IProps): JSX.Element => {
           />
         </div>
       </form>
+      <p>
+        <button className="normal" onClick={goOffline}>
+          Practice offline against computer players
+        </button>
+      </p>
       <div>
         <p>
           Welcome to the game! Enter your name above to create a new game, or

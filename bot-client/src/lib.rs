@@ -101,14 +101,14 @@ pub async fn run_bot(
                         println!("[{name}] was kicked");
                         return Ok(());
                     }
-                    GameMessage::Error(e) => {
-                        // Racing to finish a trick is expected; other errors get a retry.
-                        if !e.contains("OutOfOrder") && !e.contains("out of order") {
-                            eprintln!("[{name}] server rejected action: {e}");
-                            failures += 1;
-                            if failures <= 3 {
-                                retry_at = Some(Instant::now() + Duration::from_secs(2));
-                            }
+                    // Racing to finish a trick is expected; other errors get a retry.
+                    GameMessage::Error(e)
+                        if !e.contains("OutOfOrder") && !e.contains("out of order") =>
+                    {
+                        eprintln!("[{name}] server rejected action: {e}");
+                        failures += 1;
+                        if failures <= 3 {
+                            retry_at = Some(Instant::now() + Duration::from_secs(2));
                         }
                     }
                     _ => (),

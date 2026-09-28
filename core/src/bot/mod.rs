@@ -85,6 +85,17 @@ impl Default for BotConfig {
     }
 }
 
+/// Simulation threads to use: one on WebAssembly (no threads there), else up to eight.
+fn default_threads() -> usize {
+    if cfg!(target_arch = "wasm32") {
+        1
+    } else {
+        std::thread::available_parallelism()
+            .map(|n| n.get().min(8))
+            .unwrap_or(2)
+    }
+}
+
 impl BotConfig {
     pub fn for_difficulty(d: Difficulty) -> Self {
         let (samples, ms, heuristic_only, mistake_rate) = match d {
@@ -97,9 +108,7 @@ impl BotConfig {
         BotConfig {
             samples,
             time_budget: Duration::from_millis(ms),
-            threads: std::thread::available_parallelism()
-                .map(|n| n.get().min(8))
-                .unwrap_or(2),
+            threads: default_threads(),
             finish_tricks: true,
             start_new_games: false,
             heuristic_only,
