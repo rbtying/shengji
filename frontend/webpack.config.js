@@ -87,6 +87,10 @@ module.exports = {
           from: "static/434472_dersuperanton_taking-card.mp3",
           to: "434472_dersuperanton_taking-card.mp3",
         },
+        {
+          from: "../docs/licenses/THIRD_PARTY_NOTICES.txt",
+          to: "licenses.txt",
+        },
       ],
     }),
   ],

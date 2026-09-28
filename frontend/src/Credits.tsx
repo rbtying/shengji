@@ -495,33 +495,32 @@ const ChangeLog = (): JSX.Element => {
 
 const Credits = (): JSX.Element => (
   <p style={{ padding: "0 20px" }}>
-    Made by Robert Ying (
-    <a href="mailto:me@robertying.com">me@robertying.com</a>), Abra Shen, and
-    other{" "}
-    <a
-      href="https://github.com/rbtying/shengji/graphs/contributors"
-      target="_blank"
-      rel="noreferrer"
-    >
-      friends
-    </a>
-    . Consider buying us boba via Venmo at @Robert-Ying or via{" "}
-    <a
-      href="https://donate.stripe.com/aEU8x982f3oj4Ja7ss"
-      target="_blank"
-      rel="noreferrer"
-    >
-      other payment methods
-    </a>
-    , or contributing on{" "}
+    Based on{" "}
     <a
       href="https://github.com/rbtying/shengji"
       target="_blank"
       rel="noreferrer"
     >
-      GitHub
+      shengji
+    </a>{" "}
+    by Robert Ying and contributors (MIT license), with computer players, hints
+    and offline play added. Card-play sound: &ldquo;taking card&rdquo; by
+    dersuperanton (
+    <a href="https://freesound.org/s/434472/" target="_blank" rel="noreferrer">
+      freesound.org
     </a>
-    !
+    ,{" "}
+    <a
+      href="https://creativecommons.org/licenses/by/4.0/"
+      target="_blank"
+      rel="noreferrer"
+    >
+      CC BY 4.0
+    </a>
+    ).{" "}
+    <a href="licenses.txt" target="_blank">
+      Licenses and credits
+    </a>
     <span style={{ float: "right" }}>
       <ChangeLog />
     </span>

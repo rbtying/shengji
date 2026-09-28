@@ -8,6 +8,7 @@ import { SettingsContext } from "./AppStateProvider";
 import { ISuitOverrides } from "./state/Settings";
 import { Trump, CardInfo } from "./gen-types";
 import { useEngine } from "./useEngine";
+import { useNarrowScreen } from "./useNarrowScreen";
 import {
   cardInfoCache,
   getTrumpKey,
@@ -35,7 +36,10 @@ const Card = (props: IProps): JSX.Element => {
   const engine = useEngine();
   const [cardInfo, setCardInfo] = React.useState<CardInfo | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const height = props.smaller ? 95 : 120;
+  // Phones get smaller, more tightly overlapped cards so a full hand fits the screen.
+  const narrow = useNarrowScreen();
+  const height = narrow ? (props.smaller ? 72 : 88) : props.smaller ? 95 : 120;
+  const overlap = narrow ? 0.66 : 0.6;
   const bounds = getCardBounds(height);
 
   // Create a cache key for the card info based on card and trump
@@ -215,7 +219,9 @@ const Card = (props: IProps): JSX.Element => {
       <div
         className={classNames("card", "unknown", props.className)}
         style={{
-          marginRight: props.collapseRight ? `-${bounds.width * 0.6}px` : "0",
+          marginRight: props.collapseRight
+            ? `-${bounds.width * overlap}px`
+            : "0",
         }}
       >
         <CardCanvas
@@ -238,7 +244,7 @@ const Card = (props: IProps): JSX.Element => {
             className={classNames("card", "svg", "unknown", props.className)}
             style={{
               marginRight: props.collapseRight
-                ? `-${bounds.width * 0.6}px`
+                ? `-${bounds.width * overlap}px`
                 : "0",
             }}
           >
@@ -287,7 +293,9 @@ const Card = (props: IProps): JSX.Element => {
         onMouseEnter={props.onMouseEnter}
         onMouseLeave={props.onMouseLeave}
         style={{
-          marginRight: props.collapseRight ? `-${bounds.width * 0.6}px` : "0",
+          marginRight: props.collapseRight
+            ? `-${bounds.width * overlap}px`
+            : "0",
         }}
       >
         {label(bounds.height / 10)}
@@ -325,7 +333,7 @@ const Card = (props: IProps): JSX.Element => {
             onMouseLeave={props.onMouseLeave}
             style={{
               marginRight: props.collapseRight
-                ? `-${bounds.width * 0.6}px`
+                ? `-${bounds.width * overlap}px`
                 : "0",
             }}
           >

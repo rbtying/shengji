@@ -503,3 +503,124 @@ label {
   padding: 0.15em 0.9em 0.15em 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Phone layout ---------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (max-width: 600px) {
+  body {
+    /* Keep clear of the notch and home indicator on iPhones. */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+      env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  h1 {
+    font-size: 1.4em;
+    margin: 0.4em 0;
+  }
+
+  h2 {
+    font-size: 1.15em;
+  }
+
+  .game,
+  .hide-chat-box .game {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    width: auto;
+    padding: 0 8px;
+  }
+
+  /* The chat and game log move below the table instead of beside it. */
+  .chat {
+    float: none;
+    width: auto;
+    min-width: 0;
+    margin: 12px 8px;
+  }
+
+  .messages {
+    height: 28vh;
+  }
+
+  /* Comfortable touch targets (Apple suggests at least 44 points). */
+  button.big {
+    min-height: 44px;
+    padding: 10px 14px;
+    margin: 4px;
+    font-size: 16px;
+  }
+
+  button.normal {
+    min-height: 36px;
+    padding: 6px 10px;
+    margin: 3px;
+    font-size: 15px;
+  }
+
+  /* 16px text stops iOS from zooming in when a field is focused. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  .game-settings select {
+    max-width: 100%;
+  }
+
+  /* Player boxes: let a wide row scroll sideways instead of widening the page. */
+  table.players {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 13px;
+  }
+
+  .player {
+    padding: 6px;
+  }
+
+  .trick {
+    padding: 4px 0;
+    overflow-x: auto;
+  }
+
+  .hand .unselected-cards,
+  .hand .selected-cards {
+    padding: 0;
+  }
+
+  .card {
+    margin-top: 12px;
+  }
+
+  /* The current trick: compact boxes, two to a row. */
+  .trick .labeled-play {
+    padding: 4px 6px;
+    margin: 0 4px 6px 0;
+    font-size: 13px;
+  }
+
+  .trick .labeled-play .play {
+    padding-bottom: 4px;
+  }
+
+  .trick .card {
+    margin-top: 6px;
+  }
+
+  .hint-body {
+    padding: 0.5em;
+  }
+
+  .hint-options {
+    font-size: 14px;
+  }
+}

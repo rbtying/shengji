@@ -15,6 +15,7 @@ import LabeledPlay from "./LabeledPlay";
 import classNames from "classnames";
 import { cardLookup } from "./util/cardHelpers";
 import { useEngine } from "./useEngine";
+import { useNarrowScreen } from "./useNarrowScreen";
 import { SettingsContext } from "./AppStateProvider";
 import { explainScoringCache, getExplainScoringKey } from "./util/cachePrefill";
 
@@ -78,6 +79,7 @@ const Points = (props: IProps): JSX.Element => {
   );
   const settings = React.useContext(SettingsContext);
   const engine = useEngine();
+  const narrow = useNarrowScreen();
   const [scoreData, setScoreData] = React.useState<ComputeScoreResponse | null>(
     null,
   );
@@ -179,6 +181,26 @@ const Points = (props: IProps): JSX.Element => {
 
   const { score, next_threshold: nextThreshold } = scoreData;
 
+  // On phones, a one-line summary instead of each player's pile of point cards.
+  const compactPoints = (
+    <p className="points-compact">
+      Points won:{" "}
+      {props.players
+        .filter(
+          (player) =>
+            !(
+              props.hideLandlordPoints && props.landlordTeam.includes(player.id)
+            ),
+        )
+        .map((player) => {
+          const penalty =
+            player.id in props.penalties ? props.penalties[player.id] : 0;
+          return `${player.name} ${pointsPerPlayer[player.id] - penalty}分`;
+        })
+        .join(" · ")}
+    </p>
+  );
+
   const playerPointElements = props.players.map((player) => {
     const onLandlordTeam = props.landlordTeam.includes(player.id);
     const cards =
@@ -243,7 +265,7 @@ const Points = (props: IProps): JSX.Element => {
         分{props.hideLandlordPoints ? null : ` / ${totalPointsPlayed}分`} stolen
         from {landlord?.name}&apos;s team. {thresholdStr}
       </p>
-      {playerPointElements}
+      {narrow ? compactPoints : playerPointElements}
     </div>
   );
 };

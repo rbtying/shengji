@@ -4,6 +4,7 @@ import { Tooltip } from "react-tooltip";
 import classNames from "classnames";
 
 import LabeledPlay from "./LabeledPlay";
+import { useNarrowScreen } from "./useNarrowScreen";
 import { PlayedCards, Player, Trick } from "./gen-types";
 import ArrayUtils from "./util/array";
 
@@ -20,6 +21,7 @@ interface IProps {
   showTrickInPlayerOrder: boolean;
 }
 const TrickE = (props: IProps): JSX.Element => {
+  const narrow = useNarrowScreen();
   const namesById = ArrayUtils.mapObject(props.players, (p: Player) => [
     String(p.id),
     p.name,
@@ -144,6 +146,7 @@ const TrickE = (props: IProps): JSX.Element => {
             trump={props.trick.trump}
             next={props.next}
             moreCards={playedByID[id]?.bad_throw_cards}
+            smaller={narrow}
           />
         );
       })}

@@ -21,6 +21,7 @@ import Players from "./Players";
 import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
 import HintPanel from "./HintPanel";
+import { useNarrowScreen } from "./useNarrowScreen";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
@@ -55,6 +56,7 @@ const Play = (props: IProps): JSX.Element => {
   const [selected, setSelected] = React.useState<string[]>([]);
   const [grouping, setGrouping] = React.useState<FoundViablePlay[]>([]);
   const engine = useEngine();
+  const narrow = useNarrowScreen();
   const [lastPrefillTrump, setLastPrefillTrump] = React.useState<string | null>(
     null,
   );
@@ -541,12 +543,15 @@ const Play = (props: IProps): JSX.Element => {
           smallerTeamSize={smallerTeamSize}
         />
       ) : null}
-      <LabeledPlay
-        trump={playPhase.trump}
-        className="kitty"
-        cards={playPhase.kitty}
-        label="底牌"
-      />
+      {/* On phones, only show the kitty when its cards are visible to you. */}
+      {(!narrow || playPhase.kitty.some((c) => c !== "🂠")) && (
+        <LabeledPlay
+          trump={playPhase.trump}
+          className="kitty"
+          cards={playPhase.kitty}
+          label="底牌"
+        />
+      )}
     </div>
   );
 };

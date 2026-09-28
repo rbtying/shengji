@@ -1,0 +1,2899 @@
+{
+  "generated": "2026-09-28T01:13:33.673Z",
+  "npmMethod": "source maps in frontend\\dist",
+  "rustShipped": [
+    {
+      "eco": "rust",
+      "name": "anyhow",
+      "version": "1.0.93",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/anyhow",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.93/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.93/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "byteorder",
+      "version": "1.5.0",
+      "license": "Unlicense OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/BurntSushi/byteorder",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/byteorder-1.5.0/COPYING",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/byteorder-1.5.0/LICENSE-MIT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/byteorder-1.5.0/UNLICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2015 Andrew Gallant"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "cfg-if",
+      "version": "1.0.0",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/alexcrichton/cfg-if",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cfg-if-1.0.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "console_error_panic_hook",
+      "version": "0.1.7",
+      "license": "Apache-2.0/MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rustwasm/console_error_panic_hook",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/console_error_panic_hook-0.1.7/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/console_error_panic_hook-0.1.7/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2018 Nick Fitzgerald"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "dyn-clone",
+      "version": "1.0.17",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/dyn-clone",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dyn-clone-1.0.17/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dyn-clone-1.0.17/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "either",
+      "version": "1.13.0",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rayon-rs/either",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/either-1.13.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/either-1.13.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) bluss"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "erased-serde",
+      "version": "0.3.31",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/erased-serde",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/erased-serde-0.3.31/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/erased-serde-0.3.31/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "form_urlencoded",
+      "version": "1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/servo/rust-url",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/form_urlencoded-1.2.1/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/form_urlencoded-1.2.1/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-2016 The rust-url developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "getrandom",
+      "version": "0.2.15",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-random/getrandom",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.2.15/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/getrandom-0.2.15/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2018-2024 The rust-random Project Developers",
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "gloo-utils",
+      "version": "0.1.7",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rustwasm/gloo/tree/master/crates/utils",
+      "files": [],
+      "copyright": [
+        "Copyright (c) Rust and WebAssembly Working Group"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_collections",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_collections-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_locid",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_locid-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_locid_transform",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_locid_transform-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_locid_transform_data",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_locid_transform_data-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_normalizer",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_normalizer_data",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer_data-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_properties",
+      "version": "1.5.1",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_properties-1.5.1/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_properties_data",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_properties_data-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "icu_provider",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_provider-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "idna",
+      "version": "1.0.3",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/servo/rust-url/",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idna-1.0.3/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idna-1.0.3/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-2022 The rust-url developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "idna_adapter",
+      "version": "1.2.0",
+      "license": "Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/hsivonen/idna_adapter",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idna_adapter-1.2.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/idna_adapter-1.2.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) The rust-url developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "itertools",
+      "version": "0.10.5",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-itertools/itertools",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itertools-0.10.5/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itertools-0.10.5/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) bluss"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "itoa",
+      "version": "1.0.14",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/itoa",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.14/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itoa-1.0.14/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "js-sys",
+      "version": "0.3.74",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/js-sys",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.74/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.74/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "lazy_static",
+      "version": "1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-lang-nursery/lazy-static.rs",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lazy_static-1.5.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/lazy_static-1.5.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2010 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "litemap",
+      "version": "0.7.4",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/litemap-0.7.4/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "local-game",
+      "version": "0.1.0",
+      "license": "MIT (workspace crate, upstream shengji / this fork)",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "",
+      "files": [],
+      "copyright": [
+        "Copyright (c) the local-game developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "memchr",
+      "version": "2.7.4",
+      "license": "Unlicense OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/BurntSushi/memchr",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.4/COPYING",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.4/LICENSE-MIT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.4/UNLICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2015 Andrew Gallant"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "once_cell",
+      "version": "1.20.2",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/matklad/once_cell",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.20.2/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/once_cell-1.20.2/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Aleksey Kladov <aleksey.kladov@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "percent-encoding",
+      "version": "2.3.1",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/servo/rust-url/",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/percent-encoding-2.3.1/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/percent-encoding-2.3.1/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-2022 The rust-url developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "ppv-lite86",
+      "version": "0.2.20",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/cryptocorrosion/cryptocorrosion",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ppv-lite86-0.2.20/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ppv-lite86-0.2.20/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 The CryptoCorrosion Contributors"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "rand",
+      "version": "0.8.5",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-random/rand",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.8.5/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.8.5/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand-0.8.5/LICENSE-MIT"
+      ],
+      "copyright": [
+        "copyright assignment is required to contribute to the Rand project.",
+        "Copyright 2018 Developers of the Rand project",
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "rand_chacha",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-random/rand",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_chacha-0.3.1/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_chacha-0.3.1/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_chacha-0.3.1/LICENSE-MIT"
+      ],
+      "copyright": [
+        "copyright assignment is required to contribute to the Rand project.",
+        "Copyright 2018 Developers of the Rand project",
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "rand_core",
+      "version": "0.6.4",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rust-random/rand",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rand_core-0.6.4/LICENSE-MIT"
+      ],
+      "copyright": [
+        "copyright assignment is required to contribute to the Rand project.",
+        "Copyright 2018 Developers of the Rand project",
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "ruzstd",
+      "version": "0.4.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/KillingSpark/zstd-rs",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ruzstd-0.4.0/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Moritz Borcherding"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "ryu",
+      "version": "1.0.18",
+      "license": "Apache-2.0 OR BSL-1.0",
+      "chosen": [
+        "BSL-1.0"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/ryu",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ryu-1.0.18/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ryu-1.0.18/LICENSE-BOOST"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "schemars",
+      "version": "0.8.21",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/GREsau/schemars",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/schemars-0.8.21/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Graham Esau"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "serde",
+      "version": "1.0.215",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/serde-rs/serde",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.215/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.215/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "serde_json",
+      "version": "1.0.133",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/serde-rs/json",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.133/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.133/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "shengji-core",
+      "version": "0.1.0",
+      "license": "MIT (workspace crate, upstream shengji / this fork)",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "",
+      "files": [],
+      "copyright": [
+        "Copyright (c) Robert Ying <rbtying@aeturnalus.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "shengji-mechanics",
+      "version": "0.1.0",
+      "license": "MIT (workspace crate, upstream shengji / this fork)",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "",
+      "files": [],
+      "copyright": [
+        "Copyright (c) the shengji-mechanics developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "shengji-types",
+      "version": "0.1.0",
+      "license": "MIT (workspace crate, upstream shengji / this fork)",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "",
+      "files": [],
+      "copyright": [
+        "Copyright (c) Robert Ying <rbtying@aeturnalus.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "shengji-wasm",
+      "version": "0.1.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "https://github.com/rbtying/shengji",
+      "files": [],
+      "copyright": [
+        "Copyright (c) Robert Ying <rbtying@aeturnalus.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "slog",
+      "version": "2.7.0",
+      "license": "MPL-2.0 OR MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/slog-rs/slog",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slog-2.7.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slog-2.7.0/LICENSE-MIT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slog-2.7.0/LICENSE-MPL2"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "smallvec",
+      "version": "1.13.2",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/servo/rust-smallvec",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.13.2/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.13.2/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2018 The Servo Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "stable_deref_trait",
+      "version": "1.2.0",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/storyyeller/stable_deref_trait",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stable_deref_trait-1.2.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/stable_deref_trait-1.2.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2017 Robert Grosse"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "static_assertions",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/nvzqz/static-assertions-rs",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/static_assertions-1.1.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/static_assertions-1.1.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2017 Nikolai Vazquez"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/dtolnay/thiserror",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.69/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-1.0.69/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "thiserror-core",
+      "version": "1.0.50",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/FlorianUekermann/thiserror/tree/1.0.50",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-core-1.0.50/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-core-1.0.50/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>, Florian Uekermann <florian@code.green>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "tinystr",
+      "version": "0.7.6",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tinystr-0.7.6/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "twox-hash",
+      "version": "1.6.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/shepmaster/twox-hash",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/twox-hash-1.6.3/LICENSE.txt"
+      ],
+      "copyright": [
+        "Copyright (c) 2015 Jake Goulding"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "url",
+      "version": "2.5.4",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/servo/rust-url",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.4/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-2022 The rust-url developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "utf16_iter",
+      "version": "1.0.5",
+      "license": "Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/hsivonen/utf16_iter",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf16_iter-1.0.5/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf16_iter-1.0.5/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf16_iter-1.0.5/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright Mozilla Foundation"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "utf8_iter",
+      "version": "1.0.4",
+      "license": "Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/hsivonen/utf8_iter",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf8_iter-1.0.4/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf8_iter-1.0.4/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utf8_iter-1.0.4/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright Mozilla Foundation"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-bindgen",
+      "version": "0.2.97",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rustwasm/wasm-bindgen",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-0.2.97/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-0.2.97/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-rpc-impl",
+      "version": "0.1.0",
+      "license": "MIT (workspace crate, upstream shengji / this fork)",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": true,
+      "shipped": true,
+      "repository": "",
+      "files": [],
+      "copyright": [
+        "Copyright (c) Robert Ying <rbtying@aeturnalus.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "web-sys",
+      "version": "0.3.74",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/web-sys",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.74/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-sys-0.3.74/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "web-time",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/daxpedda/web-time",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-time-1.1.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/web-time-1.1.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2023 dAxpeDDa"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "write16",
+      "version": "1.0.0",
+      "license": "Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/hsivonen/write16",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/write16-1.0.0/COPYRIGHT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/write16-1.0.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/write16-1.0.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright Mozilla Foundation"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "writeable",
+      "version": "0.5.5",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/writeable-0.5.5/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "yoke",
+      "version": "0.7.5",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/yoke-0.7.5/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "zerocopy",
+      "version": "0.7.35",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/google/zerocopy",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.7.35/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.7.35/LICENSE-BSD",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.7.35/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright 2023 The Fuchsia Authors"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "zerofrom",
+      "version": "0.1.5",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerofrom-0.1.5/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "zerovec",
+      "version": "0.10.4",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-0.10.4/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": false
+    }
+  ],
+  "rustBuildOnly": [
+    {
+      "eco": "rust",
+      "name": "bumpalo",
+      "version": "3.16.0",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/fitzgen/bumpalo",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bumpalo-3.16.0/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bumpalo-3.16.0/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Nick Fitzgerald"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "displaydoc",
+      "version": "0.2.5",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/yaahc/displaydoc",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.5/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/displaydoc-0.2.5/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Jane Lusby <jlusby@yaah.dev>"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "icu_provider_macros",
+      "version": "1.5.0",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_provider_macros-1.5.0/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "log",
+      "version": "0.4.22",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/rust-lang/log",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/log-0.4.22/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/log-0.4.22/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 The Rust Project Developers"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "proc-macro2",
+      "version": "1.0.92",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/proc-macro2",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.92/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.92/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>, Alex Crichton <alex@alexcrichton.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "quote",
+      "version": "1.0.37",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/quote",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quote-1.0.37/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/quote-1.0.37/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "schemars_derive",
+      "version": "0.8.21",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/GREsau/schemars",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/schemars_derive-0.8.21/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Graham Esau"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "serde_derive",
+      "version": "1.0.215",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/serde-rs/serde",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.215/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.215/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "serde_derive_internals",
+      "version": "0.29.1",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/serde-rs/serde",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive_internals-0.29.1/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive_internals-0.29.1/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "slog_derive",
+      "version": "0.2.0",
+      "license": "MIT/Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/slog-rs/derive",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slog_derive-0.2.0/LICENSE-APACHE.md",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/slog_derive-0.2.0/LICENSE-MIT.md"
+      ],
+      "copyright": [
+        "Copyright 2018 Michael-F-Bryan"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "syn",
+      "version": "1.0.109",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/syn",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-1.0.109/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-1.0.109/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "syn",
+      "version": "2.0.90",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/syn",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.90/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.90/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "synstructure",
+      "version": "0.13.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/mystor/synstructure",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/synstructure-0.13.1/LICENSE"
+      ],
+      "copyright": [
+        "Copyright 2016 Nika Layzell"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "thiserror-core-impl",
+      "version": "1.0.50",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/FlorianUekermann/thiserror/tree/1.0.50",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-core-impl-1.0.50/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-core-impl-1.0.50/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>, Florian Uekermann <florian@code.green>"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/thiserror",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-1.0.69/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-1.0.69/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "unicode-ident",
+      "version": "1.0.14",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "chosen": [
+        "MIT",
+        "Unicode-3.0"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/unicode-ident",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.14/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.14/LICENSE-MIT",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.14/LICENSE-UNICODE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 1991-2023 Unicode, Inc."
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-bindgen-backend",
+      "version": "0.2.97",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/backend",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-backend-0.2.97/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-backend-0.2.97/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.97",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/macro",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-0.2.97/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-0.2.97/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.97",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/macro-support",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.97/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-macro-support-0.2.97/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.97",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/rustwasm/wasm-bindgen/tree/master/crates/shared",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-shared-0.2.97/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-shared-0.2.97/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2014 Alex Crichton"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "yoke-derive",
+      "version": "0.7.5",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/yoke-derive-0.7.5/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "zerocopy-derive",
+      "version": "0.7.35",
+      "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/google/zerocopy",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.7.35/LICENSE-APACHE",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.7.35/LICENSE-BSD",
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.7.35/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright 2023 The Fuchsia Authors"
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "zerofrom-derive",
+      "version": "0.1.5",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerofrom-derive-0.1.5/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": true
+    },
+    {
+      "eco": "rust",
+      "name": "zerovec-derive",
+      "version": "0.10.3",
+      "license": "Unicode-3.0",
+      "chosen": [
+        "Unicode-3.0"
+      ],
+      "dual": false,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/unicode-org/icu4x",
+      "files": [
+        "../../Users/anathematizer/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-derive-0.10.3/LICENSE"
+      ],
+      "copyright": [
+        "COPYRIGHT AND PERMISSION NOTICE",
+        "Copyright © 2020-2024 Unicode, Inc."
+      ],
+      "proc_macro": true
+    }
+  ],
+  "npmShipped": [
+    {
+      "eco": "npm",
+      "name": "@babel/runtime",
+      "version": "7.27.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 28,
+      "repository": "https://github.com/babel/babel.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@babel/runtime/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2014-present Sebastian McKenzie and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/cache",
+      "version": "11.14.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/cache",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/cache/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/hash",
+      "version": "0.9.2",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/hash",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/hash/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/memoize",
+      "version": "0.9.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/memoize",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/memoize/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/react",
+      "version": "11.14.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/react",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/react/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/serialize",
+      "version": "1.3.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/serialize",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/serialize/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/sheet",
+      "version": "1.4.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/sheet",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/sheet/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/unitless",
+      "version": "0.10.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/unitless",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/serialize/node_modules/@emotion/unitless/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": true
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/unitless",
+      "version": "0.8.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/unitless",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/unitless/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/use-insertion-effect-with-fallbacks",
+      "version": "1.2.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/use-insertion-effect-with-fallbacks",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/use-insertion-effect-with-fallbacks/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@emotion/utils",
+      "version": "1.4.2",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/emotion-js/emotion/tree/main/packages/utils",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/utils/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Emotion team and other contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@floating-ui/core",
+      "version": "1.6.9",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/floating-ui/floating-ui.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@floating-ui/core/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2021-present Floating UI contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@floating-ui/dom",
+      "version": "1.6.13",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/floating-ui/floating-ui.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@floating-ui/dom/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2021-present Floating UI contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@floating-ui/utils",
+      "version": "0.2.9",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/floating-ui/floating-ui.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@floating-ui/utils/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2021-present Floating UI contributors"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@icons/material",
+      "version": "0.2.4",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/at-icons/material.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@icons/material/CopyrightIcon.js"
+      ],
+      "copyright": [
+        "Copyright (c) case <case@casesandberg.com>"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@sentry/browser",
+      "version": "9.13.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 3,
+      "repository": "git://github.com/getsentry/sentry-javascript.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@sentry/browser/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@sentry/core",
+      "version": "9.13.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 23,
+      "repository": "git://github.com/getsentry/sentry-javascript.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@sentry/core/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "@sentry/react",
+      "version": "9.13.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 3,
+      "repository": "git://github.com/getsentry/sentry-javascript.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/@sentry/react/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Functional Software, Inc. dba Sentry"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "canvas-confetti",
+      "version": "1.9.3",
+      "license": "ISC",
+      "chosen": [
+        "ISC"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "git+https://github.com/catdad/canvas-confetti.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/canvas-confetti/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2020, Kiril Vatev"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "classnames",
+      "version": "2.5.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "git+https://github.com/JedWatson/classnames.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/classnames/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2018 Jed Watson"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "emoji-picker-react",
+      "version": "4.12.2",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/ealush/emoji-picker-react.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/emoji-picker-react/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2022 ealush"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "exenv",
+      "version": "1.2.2",
+      "license": "BSD-3-Clause",
+      "chosen": [
+        "BSD-3-Clause"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/JedWatson/exenv.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/exenv/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-2015, Facebook, Inc."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "flairup",
+      "version": "1.0.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/ealush/flairup.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/flairup/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2024 ealush"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "hoist-non-react-statics",
+      "version": "3.3.2",
+      "license": "BSD-3-Clause",
+      "chosen": [
+        "BSD-3-Clause"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "git://github.com/mridgway/hoist-non-react-statics.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/hoist-non-react-statics/LICENSE.md"
+      ],
+      "copyright": [
+        "Copyright (c) 2015, Yahoo! Inc. All rights reserved."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "lodash",
+      "version": "4.17.21",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 157,
+      "repository": "lodash/lodash",
+      "files": [
+        "../shengji-server/frontend/node_modules/lodash/LICENSE"
+      ],
+      "copyright": [
+        "Copyright OpenJS Foundation and other contributors <https://openjsf.org/>"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "lodash-es",
+      "version": "4.17.21",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 162,
+      "repository": "lodash/lodash",
+      "files": [
+        "../shengji-server/frontend/node_modules/lodash-es/LICENSE"
+      ],
+      "copyright": [
+        "Copyright OpenJS Foundation and other contributors <https://openjsf.org/>"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "material-colors",
+      "version": "1.2.6",
+      "license": "ISC",
+      "chosen": [
+        "ISC"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/shuhei/material-colors.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/material-colors/LICENSE"
+      ],
+      "copyright": [
+        "Copyright 2014 Shuhei Kagawa"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "memoize-one",
+      "version": "6.0.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/alexreardon/memoize-one.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/memoize-one/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2019 Alexander Reardon"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "prop-types",
+      "version": "15.8.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 3,
+      "repository": "facebook/prop-types",
+      "files": [
+        "../shengji-server/frontend/node_modules/prop-types/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-present, Facebook, Inc."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react",
+      "version": "19.1.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/facebook/react.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/react/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Meta Platforms, Inc. and affiliates."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-color",
+      "version": "2.19.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 55,
+      "repository": "git+https://github.com/casesandberg/react-color.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-color/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2015 Case Sandberg"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-dom",
+      "version": "19.1.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 4,
+      "repository": "https://github.com/facebook/react.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-dom/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Meta Platforms, Inc. and affiliates."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-is",
+      "version": "16.13.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/facebook/react.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/hoist-non-react-statics/node_modules/react-is/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Facebook, Inc. and its affiliates."
+      ],
+      "nested": true
+    },
+    {
+      "eco": "npm",
+      "name": "react-lifecycles-compat",
+      "version": "3.0.4",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "reactjs/react-lifecycles-compat",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-lifecycles-compat/LICENSE.md"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-present, Facebook, Inc."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-modal",
+      "version": "3.16.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 11,
+      "repository": "https://github.com/reactjs/react-modal.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-modal/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2017 Ryan Florence"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-select",
+      "version": "5.10.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 4,
+      "repository": "https://github.com/JedWatson/react-select/tree/master/packages/react-select",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-select/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2022 Jed Watson"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "react-tooltip",
+      "version": "5.28.1",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/ReactTooltip/react-tooltip",
+      "files": [
+        "../shengji-server/frontend/node_modules/react-tooltip/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2022 ReactTooltip Team Github"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "reactcss",
+      "version": "1.2.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 7,
+      "repository": "https://github.com/casesandberg/reactcss",
+      "files": [
+        "../shengji-server/frontend/node_modules/reactcss/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2015 Case Sandberg"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "scheduler",
+      "version": "0.26.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 2,
+      "repository": "https://github.com/facebook/react.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/scheduler/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Meta Platforms, Inc. and affiliates."
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "shallowequal",
+      "version": "1.1.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "dashed/shallowequal",
+      "files": [
+        "../shengji-server/frontend/node_modules/shallowequal/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2017 Alberto Leal <mailforalberto@gmail.com> (github.com/dashed)"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "styled-components",
+      "version": "6.1.17",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "git+https://github.com/styled-components/styled-components.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/styled-components/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2016-present Glen Maddern and Maximilian Stoiber"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "stylis",
+      "version": "4.2.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 6,
+      "repository": "https://github.com/thysultan/stylis.js",
+      "files": [
+        "../shengji-server/frontend/node_modules/@emotion/cache/node_modules/stylis/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2016-present Sultan Tarimo"
+      ],
+      "nested": true
+    },
+    {
+      "eco": "npm",
+      "name": "stylis",
+      "version": "4.3.2",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 7,
+      "repository": "https://github.com/thysultan/stylis.js",
+      "files": [
+        "../shengji-server/frontend/node_modules/styled-components/node_modules/stylis/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) 2016-present Sultan Tarimo"
+      ],
+      "nested": true
+    },
+    {
+      "eco": "npm",
+      "name": "tinycolor2",
+      "version": "1.6.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/bgrins/TinyColor.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/tinycolor2/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c), Brian Grinstead, http://briangrinstead.com"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "tslib",
+      "version": "2.6.2",
+      "license": "0BSD",
+      "chosen": [
+        "0BSD"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/Microsoft/tslib.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/styled-components/node_modules/tslib/CopyrightNotice.txt",
+        "../shengji-server/frontend/node_modules/styled-components/node_modules/tslib/LICENSE.txt"
+      ],
+      "copyright": [
+        "Copyright (c) Microsoft Corporation."
+      ],
+      "nested": true
+    },
+    {
+      "eco": "npm",
+      "name": "use-isomorphic-layout-effect",
+      "version": "1.2.0",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "git+https://github.com/Andarist/use-isomorphic-layout-effect.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/use-isomorphic-layout-effect/LICENSE"
+      ],
+      "copyright": [
+        "Copyright (c) Mateusz Burzyński"
+      ],
+      "nested": false
+    },
+    {
+      "eco": "npm",
+      "name": "warning",
+      "version": "4.0.3",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": false,
+      "shipped": true,
+      "modules": 1,
+      "repository": "https://github.com/BerkeleyTrue/warning.git",
+      "files": [
+        "../shengji-server/frontend/node_modules/warning/LICENSE.md"
+      ],
+      "copyright": [
+        "Copyright (c) 2013-present, Facebook, Inc."
+      ],
+      "nested": false
+    }
+  ],
+  "manual": [
+    {
+      "eco": "project",
+      "name": "shengji (upstream project this app is forked from)",
+      "version": "github.com/rbtying/shengji",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2020 Robert Ying https://robertying.com"
+      ],
+      "repository": "https://github.com/rbtying/shengji",
+      "files": [
+        "LICENSE"
+      ]
+    },
+    {
+      "eco": "rust",
+      "name": "Rust standard library (core, alloc, std, dlmalloc allocator) compiled into the .wasm",
+      "version": "toolchain",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "copyright": [
+        "Copyright (c) The Rust Project Developers"
+      ],
+      "repository": "https://github.com/rust-lang/rust",
+      "files": []
+    },
+    {
+      "eco": "npm",
+      "name": "webpack runtime (bootstrap code emitted into the bundle)",
+      "version": "5.x",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "copyright": [
+        "Copyright JS Foundation and other contributors"
+      ],
+      "repository": "https://github.com/webpack/webpack",
+      "files": []
+    }
+  ],
+  "assets": [
+    {
+      "eco": "asset",
+      "name": "Sound effect \"taking card\" (frontend/static/434472_dersuperanton_taking-card.mp3)",
+      "version": "freesound.org sound #434472",
+      "license": "CC-BY-4.0",
+      "chosen": [
+        "CC-BY-4.0"
+      ],
+      "copyright": [
+        "\"taking card\" by dersuperanton, https://freesound.org/s/434472/ , licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Used unmodified."
+      ],
+      "repository": "https://freesound.org/s/434472/",
+      "files": []
+    },
+    {
+      "eco": "asset",
+      "name": "Playing card SVG images (svgs/, frontend/src/generated/playing-cards*)",
+      "version": "Adrian Kennard card set",
+      "license": "CC0-1.0",
+      "chosen": [
+        "CC0-1.0"
+      ],
+      "copyright": [
+        "Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components."
+      ],
+      "repository": "https://www.me.uk/cards/",
+      "files": []
+    },
+    {
+      "eco": "asset",
+      "name": "Gear and paper-plane icons (frontend/src/icons/Gear.tsx, PaperPlane.tsx)",
+      "version": "Font Awesome Free 5 (\"cog\", \"paper-plane\")",
+      "license": "CC-BY-4.0",
+      "chosen": [
+        "CC-BY-4.0"
+      ],
+      "copyright": [
+        "Icons from Font Awesome Free by Fonticons, Inc., https://fontawesome.com , licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)."
+      ],
+      "repository": "https://fontawesome.com/license/free",
+      "files": []
+    },
+    {
+      "eco": "asset",
+      "name": "Bar-chart icon (frontend/src/icons/BarChart.tsx)",
+      "version": "Bootstrap Icons \"bar-chart-fill\"",
+      "license": "MIT",
+      "chosen": [
+        "MIT"
+      ],
+      "copyright": [
+        "Copyright (c) 2019-2024 The Bootstrap Authors"
+      ],
+      "repository": "https://github.com/twbs/icons",
+      "files": []
+    }
+  ]
+}

@@ -16,6 +16,8 @@ interface IProps {
   label: string | JSX.Element | null;
   next?: number | null;
   onClick?: () => void;
+  /** Draw the cards at the smaller size. */
+  smaller?: boolean;
 }
 const LabeledPlay = (props: IProps): JSX.Element => {
   const className = classNames("label", {
@@ -31,6 +33,7 @@ const LabeledPlay = (props: IProps): JSX.Element => {
       key={idx}
       trump={props.trump}
       collapseRight={idx !== (props.cards || []).length - 1}
+      smaller={props.smaller}
     />
   ));
 
@@ -46,6 +49,7 @@ const LabeledPlay = (props: IProps): JSX.Element => {
                     card={card}
                     key={`${gidx}-${idx}`}
                     collapseRight={idx !== c.length - 1}
+                    smaller={props.smaller}
                   />
                 ),
               )}
