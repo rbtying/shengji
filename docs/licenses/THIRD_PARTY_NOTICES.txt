@@ -580,7 +580,7 @@ Playing card SVG images (svgs/, frontend/src/generated/playing-cards*) Adrian Ke
   Card images by Adrian Kennard, https://www.me.uk/cards/ , dedicated to the public domain (CC0 1.0). Optimised with svgo and converted to React components. The app's jokers use separate artwork (below).
   Source: https://www.me.uk/cards/
 
-Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png) Big and small joker, 2026
+Joker artwork (frontend/static/jokers/, art/Big_JokerV2.png, art/Small_jokerV2.png; earlier versions art/big-joker-source.png, art/small-joker-source.png) Big and small joker, V2, 2026
   License: Own work (AI-generated)
   Created for Two to Ace with ChatGPT (OpenAI) image generation. Used under OpenAI's terms of use, which assign the output to the user; no third-party license applies.
 
@@ -788,7 +788,7 @@ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH RE
 
 ------------------------------------------------------------------------------
 Own work (AI-generated)
-Applies to: Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png)
+Applies to: Joker artwork (frontend/static/jokers/, art/Big_JokerV2.png, art/Small_jokerV2.png; earlier versions art/big-joker-source.png, art/small-joker-source.png)
 ------------------------------------------------------------------------------
 
 (Full text: https://spdx.org/licenses/Own work (AI-generated).html)

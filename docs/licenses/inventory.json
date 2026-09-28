@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-28T09:05:29.291Z",
+  "generated": "2026-09-28T15:07:49.638Z",
   "npmMethod": "source maps in frontend\\dist",
   "rustShipped": [
     {
@@ -2809,8 +2809,8 @@
     },
     {
       "eco": "asset",
-      "name": "Joker artwork (frontend/static/jokers/, art/big-joker-source.png, art/small-joker-source.png)",
-      "version": "Big and small joker, 2026",
+      "name": "Joker artwork (frontend/static/jokers/, art/Big_JokerV2.png, art/Small_jokerV2.png; earlier versions art/big-joker-source.png, art/small-joker-source.png)",
+      "version": "Big and small joker, V2, 2026",
       "license": "Own work (AI-generated)",
       "chosen": [
         "Own work (AI-generated)"

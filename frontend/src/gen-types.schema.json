@@ -1904,6 +1904,12 @@
           "type": "number",
           "format": "double"
         },
+        "levels": {
+          "description": "Average levels your side gained relative to the other side.",
+          "default": 0.0,
+          "type": "number",
+          "format": "double"
+        },
         "samples": {
           "type": "integer",
           "format": "uint",

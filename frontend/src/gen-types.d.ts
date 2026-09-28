@@ -1113,6 +1113,10 @@ export interface HintOption {
    * Average points the defending side ended with.
    */
   defender_points: number;
+  /**
+   * Average levels your side gained relative to the other side.
+   */
+  levels?: number;
   samples: number;
   /**
    * Fraction of simulated deals in which your side won the hand.

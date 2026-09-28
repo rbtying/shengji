@@ -9,7 +9,7 @@ import {
   fromMe,
   handCards,
   pointsIn,
-  seatPositions,
+  seatCells,
   suitSymbol,
   trumpLabel,
 } from "./cards";
@@ -19,6 +19,10 @@ import { useCardSize } from "./cardStyle";
 import { useHandGroups } from "./useHandGroups";
 
 import type { JSX } from "react";
+
+/** Average levels gained relative to the other side, e.g. "+1.2". */
+const formatLevels = (x: number | undefined): string =>
+  `${(x ?? 0) >= 0 ? "+" : "−"}${Math.abs(x ?? 0).toFixed(1)}`;
 
 interface IProps {
   phase: PlayPhase;
@@ -116,7 +120,11 @@ const Table = (props: IProps): JSX.Element => {
 
   // Seats, starting with you at the bottom.
   const seated = fromMe(players, me);
-  const positions = seatPositions(seated.length);
+  const cells = seatCells(seated.length);
+  const positions = cells.map((c) => ({
+    x: ((c.col + 0.5) / 3) * 100,
+    y: ((c.row + 0.5) / 3) * 100,
+  }));
   const played: { [id: number]: string[] } = {};
   trick.played_cards.forEach((pc) => {
     played[pc.id] = pc.cards;
@@ -177,36 +185,42 @@ const Table = (props: IProps): JSX.Element => {
     }
   }, [p.landlords_team.length]);
 
-  // A seat's played cards squeeze into a fixed width, so a big tractor or throw stays in its
-  // seat: each card shows at most 16px, less when there are many, never under 8px.
+  // Played cards are sized to their grid cell: as large as the felt allows, keeping a line
+  // for the player's name. A seat's cards squeeze into the cell's width, so a big tractor or
+  // throw stays in its seat (each card shows at most 26px, never under 8px).
   const large = useCardSize() === "large";
-  const playedCardW = large ? 44 : 38;
-  const playedMaxW = large ? 128 : 116;
+  const [feltSize, setFeltSize] = React.useState({ w: 355, h: 330 });
+  React.useEffect(() => {
+    const el = feltRef.current;
+    if (el === null) {
+      return;
+    }
+    const measure = (): void =>
+      setFeltSize({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const cellW = (feltSize.w - 24) / 3;
+  const cellH = (feltSize.h - 24) / 3;
+  const nameH = 20;
+  const playedCardH = Math.max(
+    44,
+    Math.min(large ? 104 : 92, cellH - nameH - 6, cellW * 0.6 * 1.54),
+  );
+  const playedCardW = Math.round(playedCardH / 1.54);
+  const playedMaxW = cellW - 6;
   const playedStep = (n: number): number =>
     n <= 1
       ? playedCardW
-      : Math.max(8, Math.min(18, (playedMaxW - playedCardW) / (n - 1)));
-
-  /** Side seats hug the felt's edge so a wide play grows inward instead of off the table. */
-  const seatStyle = (pos: { x: number; y: number }): React.CSSProperties => {
-    if (pos.x < 25) {
-      return {
-        left: "3%",
-        top: `${pos.y}%`,
-        transform: "translate(0, -50%)",
-        alignItems: "flex-start",
-      };
-    }
-    if (pos.x > 75) {
-      return {
-        right: "3%",
-        top: `${pos.y}%`,
-        transform: "translate(0, -50%)",
-        alignItems: "flex-end",
-      };
-    }
-    return { left: `${pos.x}%`, top: `${pos.y}%` };
-  };
+      : Math.max(8, Math.min(26, (playedMaxW - playedCardW) / (n - 1)));
+  const playedStyle = (j: number, n: number): React.CSSProperties => ({
+    width: playedCardW,
+    height: Math.round(playedCardH),
+    fontSize: Math.round(playedCardW * 0.36),
+    marginLeft: j === 0 ? undefined : playedStep(n) - playedCardW,
+  });
 
   /** Where a seat's played cards fly in from: your hand, or the edge behind each other seat. */
   const flyFrom = (i: number): React.CSSProperties => {
@@ -411,58 +425,56 @@ const Table = (props: IProps): JSX.Element => {
           }
         }}
       >
-        {seated.map((pl, i) => {
-          const pos = positions[i];
-          const r = role(pl.id);
-          return (
-            <div
-              key={pl.id}
-              className={classNames("tta-seat", {
-                glow: glow.includes(pl.id),
-                next: next === pl.id,
-                winning:
-                  trick.current_winner === pl.id &&
-                  trick.played_cards.length > 1,
-              })}
-              style={seatStyle(pos)}
-            >
-              {i !== 0 && (
-                <span className="tta-seat-name">
-                  {name(pl.id)}
-                  {r !== null && (
-                    <span className={classNames("tta-badge", r.tone)}>
-                      {r.text}
-                    </span>
-                  )}
-                </span>
-              )}
-              <div className="tta-played" style={flyFrom(i)}>
-                {(played[pl.id] ?? []).map((c, j, all) => (
-                  <MiniCard
-                    key={`${tricksDone}-${j}`}
-                    card={c}
-                    small
-                    style={
-                      j === 0
-                        ? undefined
-                        : { marginLeft: playedStep(all.length) - playedCardW }
-                    }
-                  />
-                ))}
+        <div className="tta-felt-grid">
+          {seated.map((pl, i) => {
+            const cell = cells[i];
+            const r = role(pl.id);
+            const label = (
+              <span className="tta-seat-name">
+                {i === 0 ? "You" : name(pl.id)}
+                {r !== null && (
+                  <span className={classNames("tta-badge", r.tone)}>
+                    {r.text}
+                  </span>
+                )}
+              </span>
+            );
+            return (
+              <div
+                key={pl.id}
+                className={classNames("tta-seat", {
+                  glow: glow.includes(pl.id),
+                  next: next === pl.id,
+                  winning:
+                    trick.current_winner === pl.id &&
+                    trick.played_cards.length > 1,
+                })}
+                style={{ gridRow: cell.row + 1, gridColumn: cell.col + 1 }}
+              >
+                {i !== 0 && label}
+                <div className="tta-played" style={flyFrom(i)}>
+                  {(played[pl.id] ?? []).map((c, j, all) => (
+                    <MiniCard
+                      key={`${tricksDone}-${j}`}
+                      card={c}
+                      small
+                      style={playedStyle(j, all.length)}
+                    />
+                  ))}
+                </div>
+                {i === 0 && label}
               </div>
-              {i === 0 && (
-                <span className="tta-seat-name">
-                  You
-                  {r !== null && (
-                    <span className={classNames("tta-badge", r.tone)}>
-                      {r.text}
-                    </span>
-                  )}
-                </span>
-              )}
+            );
+          })}
+          {!coachOpen && (
+            <div
+              className="tta-felt-note"
+              style={{ gridRow: 2, gridColumn: 2 }}
+            >
+              {note}
             </div>
-          );
-        })}
+          )}
+        </div>
         {sweep !== null && (
           <div
             key={sweep.key}
@@ -481,12 +493,11 @@ const Table = (props: IProps): JSX.Element => {
                   } as React.CSSProperties
                 }
               >
-                <MiniCard card={c.card} small />
+                <MiniCard card={c.card} small style={playedStyle(0, 1)} />
               </div>
             ))}
           </div>
         )}
-        {!coachOpen && <div className="tta-felt-note">{note}</div>}
         {toast !== null && (
           <div className="tta-toast" role="status">
             {toast}
@@ -537,8 +548,9 @@ const Table = (props: IProps): JSX.Element => {
                             ) : (
                               `${Math.round(o.win_rate * 100)}%`
                             )}{" "}
-                            your side wins
+                            wins
                           </td>
+                          <td>{formatLevels(o.levels)} levels</td>
                         </tr>
                       ))}
                     </tbody>

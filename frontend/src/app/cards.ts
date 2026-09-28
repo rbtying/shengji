@@ -171,3 +171,54 @@ export const DIFFICULTIES = [
     note: "The deepest simulation. Plays to win every point.",
   },
 ] as const;
+
+/**
+ * Which cell of a 3x3 grid on the felt each seat uses, starting with you at the bottom centre
+ * and going around the table in playing order. The centre cell is left for the table note.
+ */
+export const seatCells = (n: number): Array<{ row: number; col: number }> => {
+  const layouts: { [n: number]: Array<[number, number]> } = {
+    4: [
+      [2, 1],
+      [1, 2],
+      [0, 1],
+      [1, 0],
+    ],
+    5: [
+      [2, 1],
+      [1, 2],
+      [0, 2],
+      [0, 0],
+      [1, 0],
+    ],
+    6: [
+      [2, 1],
+      [1, 2],
+      [0, 2],
+      [0, 1],
+      [0, 0],
+      [1, 0],
+    ],
+    7: [
+      [2, 1],
+      [2, 2],
+      [1, 2],
+      [0, 2],
+      [0, 1],
+      [0, 0],
+      [1, 0],
+    ],
+    8: [
+      [2, 1],
+      [2, 2],
+      [1, 2],
+      [0, 2],
+      [0, 1],
+      [0, 0],
+      [1, 0],
+      [2, 0],
+    ],
+  };
+  const cells = layouts[Math.min(8, Math.max(4, n))] ?? layouts[4];
+  return cells.slice(0, n).map(([row, col]) => ({ row, col }));
+};

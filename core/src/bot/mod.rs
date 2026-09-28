@@ -149,6 +149,9 @@ pub struct HintOption {
     pub win_rate: f64,
     /// Average points the defending side ended with.
     pub defender_points: f64,
+    /// Average levels your side gained relative to the other side.
+    #[serde(default)]
+    pub levels: f64,
     pub samples: usize,
 }
 

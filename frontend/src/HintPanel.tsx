@@ -51,6 +51,7 @@ const HintPanel = (props: IProps): JSX.Element => {
                 <tr>
                   <th>Play</th>
                   <th>Your side wins</th>
+                  <th>Levels (avg)</th>
                   <th>Defenders&apos; points (avg)</th>
                 </tr>
               </thead>
@@ -63,6 +64,7 @@ const HintPanel = (props: IProps): JSX.Element => {
                       ))}
                     </td>
                     <td>{Math.round(o.win_rate * 100)}%</td>
+                    <td>{(o.levels ?? 0).toFixed(1)}</td>
                     <td>{Math.round(o.defender_points)}</td>
                   </tr>
                 ))}

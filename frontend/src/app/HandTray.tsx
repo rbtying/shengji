@@ -79,8 +79,36 @@ const HandTray = (props: IProps): JSX.Element => {
   }, []);
 
   const { cardW, minStep, maxStep } = SIZES[useCardSize()];
+  // Two rows always fit a full hand; a third would only take room from the felt.
+  const maxRows = 2;
   const groups = props.groups.filter((g) => g.cards.length > 0);
   const rows = layoutRows(groups, width, cardW, minStep);
+  // Short screens keep the hand to two rows (or fewer): re-flow the suits, in order, into
+  // that many rows so the biggest row is as small as possible. Cards overlap a little more
+  // instead, and the felt keeps its room.
+  if (rows.length > maxRows) {
+    const flat = rows.flat();
+    const count = (gs: CardGroup[]) =>
+      gs.reduce((n, g) => n + g.cards.length, 0);
+    let best: CardGroup[][] | null = null;
+    const search = (start: number, left: number, acc: CardGroup[][]): void => {
+      if (left === 1) {
+        const candidate = [...acc, flat.slice(start)];
+        const worst = Math.max(...candidate.map(count));
+        if (best === null || worst < Math.max(...best.map(count))) {
+          best = candidate;
+        }
+        return;
+      }
+      for (let end = start + 1; end <= flat.length - left + 1; end++) {
+        search(end, left - 1, [...acc, flat.slice(start, end)]);
+      }
+    };
+    search(0, Math.min(maxRows, flat.length), []);
+    if (best !== null) {
+      rows.splice(0, rows.length, ...(best as CardGroup[][]));
+    }
+  }
   const total = groups.reduce((s, g) => s + g.cards.length, 0);
   const seen: { [card: string]: number } = {};
 

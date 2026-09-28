@@ -1342,3 +1342,109 @@ button.tta-card.suggested {
 .tta.large .tta-seat-name {
   font-size: 15px;
 }
+
+/* ---------- The felt as a 3x3 grid ---------- */
+
+/* Each player gets a cell around the edge (you at the bottom centre) and the note sits in the
+   middle, so played cards can use nearly all of their cell. */
+.tta-felt-grid {
+  position: absolute;
+  inset: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.tta-felt-grid > .tta-seat {
+  position: static;
+  transform: none;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tta-felt-grid .tta-seat-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 16px;
+}
+
+.tta-felt-grid .tta-played {
+  min-height: 0;
+  justify-content: center;
+}
+
+.tta-felt-grid > .tta-felt-note {
+  position: static;
+  transform: none;
+  width: auto;
+  align-self: center;
+  justify-self: center;
+  font-size: 13px;
+}
+
+/* ---------- Short screens (iPhone SE, and small windows) ---------- */
+
+@media (max-height: 740px) {
+  .tta-hud {
+    padding: 6px 10px 4px;
+  }
+
+  .tta-hud .tta-round {
+    width: 38px;
+    height: 38px;
+    font-size: 19px;
+  }
+
+  .tta-trump {
+    padding: 4px 8px;
+  }
+
+  .tta-score {
+    padding: 0 12px 6px;
+    gap: 4px;
+  }
+
+  .tta-called {
+    padding: 0 12px 4px;
+    font-size: 13px;
+  }
+
+  .tta-actions {
+    padding: 8px 10px 2px;
+  }
+
+  .tta-actions .tta-btn {
+    min-height: 44px;
+  }
+
+  /* The Hint button covers what the tip says, and the card count is in the points line. */
+  .tta-table > .tta-tip,
+  .tta-tray-head {
+    display: none;
+  }
+
+  .tta-tray {
+    padding: 4px 8px 10px;
+  }
+
+  .tta-tray-row {
+    height: 86px;
+  }
+
+  .tta.large .tta-tray-row {
+    height: 108px;
+  }
+
+  button.tta-card[aria-pressed="true"],
+  button.tta-card.face[aria-pressed="true"] {
+    transform: translateY(-11px);
+  }
+}

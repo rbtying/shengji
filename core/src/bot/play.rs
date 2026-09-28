@@ -58,6 +58,7 @@ pub(crate) struct Stats {
     value: f64,
     pub(crate) wins: f64,
     defender_points: f64,
+    levels: f64,
     pub(crate) n: usize,
 }
 
@@ -66,6 +67,7 @@ impl Stats {
         self.value += o.value;
         self.wins += if o.won { 1.0 } else { 0.0 };
         self.defender_points += o.defender_points;
+        self.levels += o.levels;
         self.n += 1;
     }
 
@@ -73,6 +75,7 @@ impl Stats {
         self.value += o.value;
         self.wins += o.wins;
         self.defender_points += o.defender_points;
+        self.levels += o.levels;
         self.n += o.n;
     }
 
@@ -285,24 +288,42 @@ pub(crate) fn play_hint(
                 cards: a.candidates[*i].clone(),
                 win_rate: s.wins / s.n as f64,
                 defender_points: s.defender_points / s.n as f64,
+                levels: s.levels / s.n as f64,
                 samples: s.n,
             }
         })
         .collect();
+    // Rounded the same way the app rounds, so the sentence and the table agree.
+    let pct = |x: f64| (x * 100.0).round() as i64;
+    let lv = |x: f64| format!("{:+.1}", x);
     let b = &options[0];
-    let mut summary = format!(
-        "Play {}. Your side won the hand in {:.0}% of {} simulated deals.",
-        describe(&a.candidates[best]),
-        b.win_rate * 100.0,
-        b.samples
-    );
-    if let Some(next) = options.get(1) {
-        summary.push_str(&format!(
-            " Next best: {} ({:.0}%).",
+    let summary = match options.get(1) {
+        // The best play by expected result can win slightly less often than the next one, if
+        // it wins by more when it does. Say so, rather than listing a higher number second.
+        Some(next) if pct(next.win_rate) > pct(b.win_rate) => format!(
+            "Play {}. It wins a little less often than {} ({}% against {}%), but by more: {} levels on average against {}.",
+            describe(&a.candidates[best]),
             describe(&next.cards),
-            next.win_rate * 100.0
-        ));
-    }
+            pct(b.win_rate),
+            pct(next.win_rate),
+            lv(b.levels),
+            lv(next.levels)
+        ),
+        Some(next) => format!(
+            "Play {}. Your side won the hand in {}% of {} simulated deals. Next best: {} ({}%).",
+            describe(&a.candidates[best]),
+            pct(b.win_rate),
+            b.samples,
+            describe(&next.cards),
+            pct(next.win_rate)
+        ),
+        None => format!(
+            "Play {}. Your side won the hand in {}% of {} simulated deals.",
+            describe(&a.candidates[best]),
+            pct(b.win_rate),
+            b.samples
+        ),
+    };
     Some(Hint {
         cards: a.candidates[best].clone(),
         summary,
@@ -326,6 +347,8 @@ pub(crate) struct Outcome {
     value: f64,
     won: bool,
     defender_points: f64,
+    /// Levels gained relative to the other side.
+    levels: f64,
 }
 
 /// Outcome of a finished hand from `me`'s point of view: how far I advanced relative to the
@@ -370,6 +393,7 @@ fn evaluate(s: &PlayPhase, me: PlayerID, base: &HashMap<PlayerID, i64>) -> Outco
         value: level_term + 0.5 * point_term,
         won,
         defender_points: defender_points as f64,
+        levels: level_term,
     }
 }
 
