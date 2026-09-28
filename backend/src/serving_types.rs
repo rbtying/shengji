@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use shengji_core::bot::Difficulty;
 use shengji_core::interactive::Action;
 use shengji_mechanics::types::{CardInfo, PlayerID};
 use shengji_types::GameMessage;
@@ -54,6 +55,10 @@ pub enum UserMessage {
     Beep,
     ReadyCheck,
     Ready,
+    /// Seat a computer player of the given strength in this room.
+    AddBot(Difficulty),
+    /// Ask for advice on the current decision.
+    RequestHint,
 }
 
 #[derive(Clone, Serialize)]

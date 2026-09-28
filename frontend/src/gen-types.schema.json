@@ -15,6 +15,7 @@
     "decompose_trick_format_request",
     "decompose_trick_format_response",
     "decomposed_trick_format",
+    "difficulty",
     "explain_scoring_request",
     "explain_scoring_response",
     "find_valid_bids_request",
@@ -65,6 +66,9 @@
     },
     "decomposed_trick_format": {
       "$ref": "#/definitions/DecomposedTrickFormat"
+    },
+    "difficulty": {
+      "$ref": "#/definitions/Difficulty"
     },
     "explain_scoring_request": {
       "$ref": "#/definitions/ExplainScoringRequest"
@@ -993,6 +997,36 @@
         }
       }
     },
+    "Difficulty": {
+      "description": "How strongly a bot plays.",
+      "oneOf": [
+        {
+          "description": "Simple rules with frequent mistakes. Good for learning.",
+          "type": "string",
+          "enum": ["Beginner"]
+        },
+        {
+          "description": "Simple rules, no simulation.",
+          "type": "string",
+          "enum": ["Easy"]
+        },
+        {
+          "description": "Light simulation.",
+          "type": "string",
+          "enum": ["Intermediate"]
+        },
+        {
+          "description": "Full simulation.",
+          "type": "string",
+          "enum": ["Hard"]
+        },
+        {
+          "description": "Deep simulation.",
+          "type": "string",
+          "enum": ["Expert"]
+        }
+      ]
+    },
     "DrawPhase": {
       "type": "object",
       "required": [
@@ -1535,6 +1569,29 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "description": "Advice for the player who asked; `None` when there's nothing to suggest right now.",
+          "type": "object",
+          "required": ["Hint"],
+          "properties": {
+            "Hint": {
+              "type": "object",
+              "properties": {
+                "hint": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/Hint"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -1747,6 +1804,58 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "Hint": {
+      "description": "Advice for a human player.",
+      "type": "object",
+      "required": ["cards", "options", "summary"],
+      "properties": {
+        "cards": {
+          "description": "The suggested cards (to play, or to bury).",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "options": {
+          "description": "Options compared, best first (card play only).",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HintOption"
+          }
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    },
+    "HintOption": {
+      "description": "One option considered for a hint, with how it fared in simulation.",
+      "type": "object",
+      "required": ["cards", "defender_points", "samples", "win_rate"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "defender_points": {
+          "description": "Average points the defending side ended with.",
+          "type": "number",
+          "format": "double"
+        },
+        "samples": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "win_rate": {
+          "description": "Fraction of simulated deals in which your side won the hand.",
+          "type": "number",
+          "format": "double"
         }
       }
     },
@@ -2775,6 +2884,14 @@
             "type": "integer",
             "format": "uint",
             "minimum": 0.0
+          }
+        },
+        "played_tricks": {
+          "description": "Every completed trick this hand, in order.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Trick"
           }
         },
         "player_requested_reset": {

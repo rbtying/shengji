@@ -1,5 +1,6 @@
 /* tslint:disable:max-classes-per-file variable-name forin */
 import * as React from "react";
+import HintPanel from "./HintPanel";
 import BeepButton from "./BeepButton";
 import BidArea from "./BidArea";
 import Trump from "./Trump";
@@ -92,6 +93,22 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
 
   componentDidUpdate(): void {
     this.fixFriends();
+  }
+
+  // Move cards so the kitty holds exactly `bury` (as a multiset).
+  applyBury(bury: string[]): void {
+    const want = [...bury];
+    const toHand: string[] = [];
+    for (const c of this.props.state.kitty) {
+      const i = want.indexOf(c);
+      if (i >= 0) {
+        want.splice(i, 1);
+      } else {
+        toHand.push(c);
+      }
+    }
+    toHand.forEach((c) => this.moveCardToHand(c));
+    want.forEach((c) => this.moveCardToKitty(c));
   }
 
   moveCardToKitty(card: string): void {
@@ -195,6 +212,11 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               />
             ))}
           </div>
+          <HintPanel
+            contextKey="exchange"
+            enabled={true}
+            onSelect={(cards) => this.applyBury(cards)}
+          />
           {kittyTheftEnabled ? (
             <button
               onClick={this.putDownKitty}

@@ -1,29 +1,49 @@
 # Computer players
 
-`shengji-bot` connects computer players to a room on a shengji server. They join like
-ordinary players, see only what a human in their seat would see, and play Tractor or
-Finding Friends under whatever rules the room is set to.
+Computer players join a room like ordinary players, see only what a human in their seat
+would see, and play Tractor or Finding Friends under whatever rules the room is set to.
 
 ## Playing against bots
 
-1. Start the server and open it in a browser (http://localhost:3030).
-2. Enter your name. The address bar now ends in `#` followed by a 16-character room code.
-3. Start the bots with that code (or the whole link):
+1. Run `pwsh -File play-local.ps1`. It starts the server and opens http://localhost:3030.
+   Add `-Build` after pulling changes, and `-Stop` to shut the server down.
+2. Enter your name and join.
+3. Under **Computer players**, pick a level and click **Fill to 4 players with bots** (or
+   **Add a bot** for each seat). Kick a bot to remove it.
+4. Choose the game mode, decks and other settings, then click **Start game**.
 
-   ```
-   target\release\shengji-bot.exe --room <code> --names Ann,Bo,Cy,Di
-   ```
+Levels:
 
-4. In the browser, choose the game mode, number of decks and other settings, then start
-   the game. You draw your own cards; the bots draw theirs when it's their turn.
+| Level | How it plays |
+|---|---|
+| Beginner (learning) | Simple rules, with a deliberate mistake about a third of the time |
+| Easy | Simple rules, no simulation |
+| Intermediate | 16 simulated deals per play, about 0.5 s |
+| Hard | 64 simulated deals, about 1.5 s |
+| Expert | 200 simulated deals, about 4 s |
+
+**Hint** appears on your turn. It simulates 200 deals from your point of view (it never
+sees other hands) and shows the best play, the chance your side wins the hand with each
+option, and the defenders' average points. **Select suggested cards** selects them for
+you. While you're burying the kitty, Hint suggests what to bury and which friend to call,
+and can move the cards for you.
+
+## Command-line bots
+
+`shengji-bot` seats bots from the command line, for example to join a server elsewhere:
+
+```
+target\release\shengji-bot.exe --room <code> --names Ann,Bo,Cy --difficulty hard
+```
 
 Useful options:
 
 | Option | Default | Meaning |
 |---|---|---|
 | `--names A,B,C` | `Bot-Ann` | One bot per name, seated in this order |
-| `--think-ms N` | 1500 | Time budget per card play; more time means more simulated deals |
-| `--samples N` | 64 | Maximum simulated deals per card play |
+| `--difficulty L` | `hard` | beginner, easy, intermediate, hard or expert |
+| `--think-ms N` | by level | Time budget per card play; more time means more simulated deals |
+| `--samples N` | by level | Maximum simulated deals per card play |
 | `--threads N` | cores, up to 8 | Simulation threads per bot |
 | `--start-new-games` | off | Bots start the next hand themselves when one of them is landlord |
 | `--no-finish-tricks` | off | Leave finishing completed tricks to the humans |
@@ -47,7 +67,8 @@ The logic lives in `core/src/bot/`:
   suit, skipping past the copies the bot holds).
 - `heuristics.rs` has shared card helpers.
 
-The bot doesn't attempt throws (multi-unit leads) yet, and its bidding, burying and
+When leading, it also considers throws of cards that card counting says nobody can beat,
+and the simulations check whether each throw is safe. Its bidding, burying and
 friend calls are rule-based rather than simulated.
 
 ## Testing without a server

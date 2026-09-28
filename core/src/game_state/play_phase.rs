@@ -61,6 +61,9 @@ pub struct PlayPhase {
     #[serde(default)]
     pub(crate) decks: Vec<Deck>,
     pub(crate) player_requested_reset: Option<PlayerID>,
+    /// Every completed trick this hand, in order.
+    #[serde(default)]
+    pub(crate) played_tricks: Vec<Trick>,
 }
 
 impl PlayPhase {
@@ -108,6 +111,7 @@ impl PlayPhase {
             game_ended_early: false,
             last_trick: None,
             player_requested_reset: None,
+            played_tricks: vec![],
         })
     }
 
@@ -355,7 +359,9 @@ impl PlayPhase {
             }),
             self.propagated.bomb_policy,
         );
-        self.last_trick = Some(std::mem::replace(&mut self.trick, new_trick));
+        let finished = std::mem::replace(&mut self.trick, new_trick);
+        self.played_tricks.push(finished.clone());
+        self.last_trick = Some(finished);
 
         Ok(msgs)
     }

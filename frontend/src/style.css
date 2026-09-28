@@ -465,3 +465,41 @@ label {
 .rules .card:last-child {
   margin-right: 0;
 }
+
+.add-bots {
+  margin: 0.5em 0;
+}
+
+.add-bots-help {
+  margin: 0.25em 0 0;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.hint-panel {
+  margin: 0.5em 0;
+}
+
+.hint-body {
+  margin-top: 0.4em;
+  padding: 0.5em 0.75em;
+  border-left: 3px solid #4a7fb5;
+  background: rgba(74, 127, 181, 0.08);
+  max-width: 48em;
+}
+
+.hint-body p {
+  margin: 0 0 0.4em;
+}
+
+.hint-options {
+  border-collapse: collapse;
+  margin-bottom: 0.4em;
+}
+
+.hint-options th,
+.hint-options td {
+  text-align: left;
+  padding: 0.15em 0.9em 0.15em 0;
+  font-variant-numeric: tabular-nums;
+}

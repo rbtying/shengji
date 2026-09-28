@@ -5,7 +5,7 @@ use rand::rngs::StdRng;
 use shengji_mechanics::bidding::Bid;
 use shengji_mechanics::types::{Card, EffectiveSuit, Number, PlayerID, Rank, Trump, ALL_SUITS};
 
-use super::heuristics::{counts, hand_cards, points, sort_by_rank, subtract};
+use super::heuristics::{card_name, counts, hand_cards, points, sort_by_rank, subtract};
 use super::Decision;
 use crate::game_state::draw_phase::DrawPhase;
 use crate::game_state::exchange_phase::ExchangePhase;
@@ -27,7 +27,7 @@ pub(crate) fn draw_decision(d: &DrawPhase, me: PlayerID, _rng: &mut StdRng) -> O
 
     if !d.deck.is_empty() {
         if d.propagated.players.get(d.position).map(|p| p.id) == Some(me) {
-            return Some(Decision::new(Action::DrawCard, 200, "draw"));
+            return Some(Decision::new(Action::DrawCard, 60, "draw"));
         }
         return None;
     }
@@ -361,4 +361,50 @@ fn choose_friends(e: &ExchangePhase, me: PlayerID) -> Option<Vec<FriendSelection
     } else {
         None
     }
+}
+
+/// Suggest what to bury (and, in Finding Friends, whom to call) for the exchanging player.
+pub(crate) fn exchange_hint(e: &ExchangePhase, me: PlayerID) -> Option<super::Hint> {
+    if e.exchanger != me || e.finalized {
+        return None;
+    }
+    let mut all = hand_cards(&e.hands, me);
+    all.extend(e.kitty.iter().copied().filter(|c| *c != Card::Unknown));
+    sort_by_rank(e.trump, &mut all);
+    let bury = choose_bury(e.trump, &all, e.kitty_size);
+    let names = bury
+        .iter()
+        .map(|c| card_name(*c))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut summary = format!(
+        "Bury {names}. Aim to empty a short side suit so you can trump it later, and keep trumps, \
+         aces, pairs and point cards."
+    );
+    if e.landlord == me {
+        if let Some(friends) = choose_friends(e, me) {
+            let calls = friends
+                .iter()
+                .map(|f| {
+                    let nth = match f.initial_skip {
+                        0 => "first",
+                        1 => "second",
+                        2 => "third",
+                        _ => "fourth",
+                    };
+                    format!("the {nth} {}", card_name(f.card))
+                })
+                .collect::<Vec<_>>()
+                .join(" and ");
+            summary.push_str(&format!(
+                " Call {calls}: an ace in a suit you're short in, so your friend can win it and \
+                 lead back to you."
+            ));
+        }
+    }
+    Some(super::Hint {
+        cards: bury,
+        summary,
+        options: vec![],
+    })
 }

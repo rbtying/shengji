@@ -3,6 +3,7 @@ import { Tooltip } from "react-tooltip";
 import ReactModal from "react-modal";
 import { EmojiStyle } from "emoji-picker-react";
 import ReadyCheck from "./ReadyCheck";
+import AddBots from "./AddBots";
 import LandlordSelector from "./LandlordSelector";
 import NumDecksSelector from "./NumDecksSelector";
 import KittySizeSelector from "./KittySizeSelector";
@@ -1266,6 +1267,7 @@ const Initialize = (props: IProps): JSX.Element => {
       ) : (
         <h2>Waiting for players...</h2>
       )}
+      <AddBots numPlayers={props.state.propagated.players.length} />
       <RandomizePlayersButton players={props.state.propagated.players}>
         Randomize player order
       </RandomizePlayersButton>

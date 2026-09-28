@@ -158,3 +158,12 @@ pub(crate) fn rank_score(trump: Trump, cards: &[Card], suit_cards: &[Card]) -> u
         })
         .sum()
 }
+
+/// A card as a person would say it, e.g. "K♤" or "big joker".
+pub(crate) fn card_name(c: Card) -> String {
+    match c {
+        Card::BigJoker => "big joker".to_string(),
+        Card::SmallJoker => "small joker".to_string(),
+        c => format!("{c:?}"),
+    }
+}

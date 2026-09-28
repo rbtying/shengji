@@ -11,16 +11,55 @@ use std::time::Duration;
 
 use rand::rngs::StdRng;
 use rand::SeedableRng;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use shengji_mechanics::trick::Trick;
 use shengji_mechanics::types::{Card, EffectiveSuit, PlayerID, Trump};
 
+use crate::game_state::play_phase::PlayPhase;
 use crate::game_state::GameState;
 use crate::interactive::Action;
 
 mod heuristics;
 mod play;
 mod setup;
+
+/// How strongly a bot plays.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema, Default)]
+pub enum Difficulty {
+    /// Simple rules with frequent mistakes. Good for learning.
+    Beginner,
+    /// Simple rules, no simulation.
+    Easy,
+    /// Light simulation.
+    Intermediate,
+    /// Full simulation.
+    #[default]
+    Hard,
+    /// Deep simulation.
+    Expert,
+}
+
+impl Difficulty {
+    pub const ALL: [Difficulty; 5] = [
+        Difficulty::Beginner,
+        Difficulty::Easy,
+        Difficulty::Intermediate,
+        Difficulty::Hard,
+        Difficulty::Expert,
+    ];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Difficulty::Beginner => "beginner",
+            Difficulty::Easy => "easy",
+            Difficulty::Intermediate => "intermediate",
+            Difficulty::Hard => "hard",
+            Difficulty::Expert => "expert",
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct BotConfig {
@@ -34,21 +73,37 @@ pub struct BotConfig {
     pub finish_tricks: bool,
     /// Whether the bot starts the next hand once a hand is over.
     pub start_new_games: bool,
-    /// Skip simulation and play by the fast heuristic alone (a weaker baseline for testing).
+    /// Skip simulation and play by the fast heuristic alone.
     pub heuristic_only: bool,
+    /// Chance of playing a random legal candidate instead of the chosen play.
+    pub mistake_rate: f64,
 }
 
 impl Default for BotConfig {
     fn default() -> Self {
+        BotConfig::for_difficulty(Difficulty::Hard)
+    }
+}
+
+impl BotConfig {
+    pub fn for_difficulty(d: Difficulty) -> Self {
+        let (samples, ms, heuristic_only, mistake_rate) = match d {
+            Difficulty::Beginner => (0, 0, true, 0.35),
+            Difficulty::Easy => (0, 0, true, 0.0),
+            Difficulty::Intermediate => (16, 500, false, 0.0),
+            Difficulty::Hard => (64, 1500, false, 0.0),
+            Difficulty::Expert => (200, 4000, false, 0.0),
+        };
         BotConfig {
-            samples: 64,
-            time_budget: Duration::from_millis(1500),
+            samples,
+            time_budget: Duration::from_millis(ms),
             threads: std::thread::available_parallelism()
                 .map(|n| n.get().min(8))
                 .unwrap_or(2),
             finish_tricks: true,
             start_new_games: false,
-            heuristic_only: false,
+            heuristic_only,
+            mistake_rate,
         }
     }
 }
@@ -72,11 +127,32 @@ impl Decision {
     }
 }
 
-/// What the bot remembers between state updates: the tricks completed so far this hand. The
-/// server state only carries the current and previous trick.
+/// One option considered for a hint, with how it fared in simulation.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct HintOption {
+    pub cards: Vec<Card>,
+    /// Fraction of simulated deals in which your side won the hand.
+    pub win_rate: f64,
+    /// Average points the defending side ended with.
+    pub defender_points: f64,
+    pub samples: usize,
+}
+
+/// Advice for a human player.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct Hint {
+    /// The suggested cards (to play, or to bury).
+    pub cards: Vec<Card>,
+    pub summary: String,
+    /// Options compared, best first (card play only).
+    pub options: Vec<HintOption>,
+}
+
+/// What the bot remembers between state updates: the tricks completed so far this hand. Newer
+/// servers record these in the state; with older ones, the bot collects them as it watches.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Memory {
-    pub(crate) tricks: Vec<Trick>,
+    tricks: Vec<Trick>,
     last_trick_key: Option<String>,
     hand_marker: Option<(PlayerID, Trump, usize)>,
 }
@@ -107,45 +183,54 @@ impl Memory {
         }
     }
 
-    /// Suits each player has shown out of, from failures to follow suit.
-    pub(crate) fn voids(&self, current: &Trick) -> HashMap<PlayerID, Vec<EffectiveSuit>> {
-        let mut voids: HashMap<PlayerID, Vec<EffectiveSuit>> = HashMap::new();
-        for trick in self.tricks.iter().chain(std::iter::once(current)) {
-            let tf = match trick.trick_format() {
-                Some(tf) => tf,
-                None => continue,
-            };
-            if tf.is_rainbow() {
-                continue;
-            }
-            let trump = trick.trump();
-            for pc in trick.played_cards().iter().skip(1) {
-                let in_suit = pc
-                    .cards
-                    .iter()
-                    .filter(|c| **c != Card::Unknown && trump.effective_suit(**c) == tf.suit())
-                    .count();
-                if in_suit < tf.size() {
-                    let v = voids.entry(pc.id).or_default();
-                    if !v.contains(&tf.suit()) {
-                        v.push(tf.suit());
-                    }
+    /// The best record of this hand's completed tricks.
+    pub(crate) fn history<'a>(&'a self, p: &'a PlayPhase) -> &'a [Trick] {
+        if p.played_tricks.len() >= self.tricks.len() {
+            &p.played_tricks
+        } else {
+            &self.tricks
+        }
+    }
+}
+
+/// Suits each player has shown out of, from failures to follow suit.
+pub(crate) fn voids(history: &[Trick], current: &Trick) -> HashMap<PlayerID, Vec<EffectiveSuit>> {
+    let mut voids: HashMap<PlayerID, Vec<EffectiveSuit>> = HashMap::new();
+    for trick in history.iter().chain(std::iter::once(current)) {
+        let tf = match trick.trick_format() {
+            Some(tf) => tf,
+            None => continue,
+        };
+        if tf.is_rainbow() {
+            continue;
+        }
+        let trump = trick.trump();
+        for pc in trick.played_cards().iter().skip(1) {
+            let in_suit = pc
+                .cards
+                .iter()
+                .filter(|c| **c != Card::Unknown && trump.effective_suit(**c) == tf.suit())
+                .count();
+            if in_suit < tf.size() {
+                let v = voids.entry(pc.id).or_default();
+                if !v.contains(&tf.suit()) {
+                    v.push(tf.suit());
                 }
             }
         }
-        voids
     }
+    voids
+}
 
-    /// Every card played so far this hand, as far as we saw.
-    pub(crate) fn played_cards(&self, current: &Trick) -> Vec<Card> {
-        self.tricks
-            .iter()
-            .chain(std::iter::once(current))
-            .flat_map(|t| t.played_cards().iter())
-            .flat_map(|pc| pc.cards.iter().copied())
-            .filter(|c| *c != Card::Unknown)
-            .collect()
-    }
+/// Every card played so far this hand, as far as we know.
+pub(crate) fn played_cards(history: &[Trick], current: &Trick) -> Vec<Card> {
+    history
+        .iter()
+        .chain(std::iter::once(current))
+        .flat_map(|t| t.played_cards().iter())
+        .flat_map(|pc| pc.cards.iter().copied())
+        .filter(|c| *c != Card::Unknown)
+        .collect()
 }
 
 pub struct Bot {
@@ -207,5 +292,23 @@ impl Bot {
                 None
             }
         }
+    }
+}
+
+/// Advice for the player called `name`, using only what that player can see. Works for card play
+/// (when it's their turn) and for burying the kitty and calling friends.
+pub fn hint(state: &GameState, name: &str) -> Option<Hint> {
+    let me = state.player_id(name).ok()?;
+    if !state.is_player(me) {
+        return None;
+    }
+    let mut rng = StdRng::from_entropy();
+    match state {
+        GameState::Play(p) if p.trick.next_player() == Some(me) && !p.game_finished() => {
+            let config = BotConfig::for_difficulty(Difficulty::Expert);
+            play::play_hint(p, me, &Memory::default(), &config, &mut rng)
+        }
+        GameState::Exchange(e) => setup::exchange_hint(e, me),
+        _ => None,
     }
 }

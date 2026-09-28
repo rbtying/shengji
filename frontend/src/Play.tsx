@@ -20,6 +20,7 @@ import LabeledPlay from "./LabeledPlay";
 import Players from "./Players";
 import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
+import HintPanel from "./HintPanel";
 import BeepButton from "./BeepButton";
 import { WebsocketContext } from "./WebsocketProvider";
 import { SettingsContext } from "./AppStateProvider";
@@ -384,6 +385,23 @@ const Play = (props: IProps): JSX.Element => {
         unsetAutoPlayWhenWinnerChanges={props.unsetAutoPlayWhenWinnerChanges}
         isCurrentPlayerTurn={isCurrentPlayerTurn}
       />
+      {!isSpectator && (
+        <HintPanel
+          contextKey={JSON.stringify([
+            playPhase.trick.played_cards.length,
+            playPhase.played_tricks?.length ?? 0,
+            playPhase.trick.player_queue,
+          ])}
+          enabled={isCurrentPlayerTurn && !playPhase.game_ended_early}
+          onSelect={(cards) =>
+            updateSelectionAndGrouping(
+              cards,
+              playPhase.trump,
+              playPhase.propagated.tractor_requirements!,
+            )
+          }
+        />
+      )}
       {playPhase.propagated.play_takeback_policy === "AllowPlayTakeback" && (
         <button className="big" onClick={takeBackCards} disabled={!canTakeBack}>
           Take back last play

@@ -1376,6 +1376,7 @@ dependencies = [
  "mime_guess",
  "serde",
  "serde_json",
+ "shengji-bot",
  "shengji-core",
  "shengji-mechanics",
  "shengji-types",

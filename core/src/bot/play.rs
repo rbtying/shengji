@@ -10,13 +10,14 @@ use rand::seq::SliceRandom;
 use rand::{Rng, SeedableRng};
 
 use shengji_mechanics::player::Player;
+use shengji_mechanics::trick::Trick;
 use shengji_mechanics::types::{Card, EffectiveSuit, PlayerID, Rank};
 
 use super::heuristics::{
-    by_suit, hand_cards, matchings, multi_units, pick, points, rank_score, sort_by_rank, subtract,
-    total_points, Fill,
+    by_suit, card_name, hand_cards, matchings, multi_units, pick, points, rank_score, sort_by_rank,
+    subtract, total_points, Fill,
 };
-use super::{BotConfig, Memory};
+use super::{played_cards, voids, BotConfig, Hint, HintOption, Memory};
 use crate::game_state::play_phase::PlayPhase;
 use crate::settings::GameMode;
 
@@ -51,6 +52,143 @@ impl Sides {
     }
 }
 
+/// How one candidate fared across the simulated deals.
+#[derive(Clone, Copy, Default)]
+pub(crate) struct Stats {
+    value: f64,
+    wins: f64,
+    defender_points: f64,
+    n: usize,
+}
+
+impl Stats {
+    fn add(&mut self, o: &Outcome) {
+        self.value += o.value;
+        self.wins += if o.won { 1.0 } else { 0.0 };
+        self.defender_points += o.defender_points;
+        self.n += 1;
+    }
+
+    fn merge(&mut self, o: &Stats) {
+        self.value += o.value;
+        self.wins += o.wins;
+        self.defender_points += o.defender_points;
+        self.n += o.n;
+    }
+
+    fn mean(&self) -> f64 {
+        if self.n == 0 {
+            f64::NEG_INFINITY
+        } else {
+            self.value / self.n as f64
+        }
+    }
+}
+
+pub(crate) struct Analysis {
+    pub(crate) candidates: Vec<Vec<Card>>,
+    pub(crate) stats: Vec<Stats>,
+    pub(crate) note: String,
+}
+
+impl Analysis {
+    /// Candidate indices, best first; only those that were simulated at least once.
+    fn ranked(&self) -> Vec<usize> {
+        let mut idx: Vec<usize> = (0..self.candidates.len())
+            .filter(|i| self.stats[*i].n > 0)
+            .collect();
+        idx.sort_by(|a, b| {
+            self.stats[*b]
+                .mean()
+                .partial_cmp(&self.stats[*a].mean())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        idx
+    }
+}
+
+/// Simulate every candidate play for `me` over sampled deals of the hidden cards.
+pub(crate) fn analyze(
+    p: &PlayPhase,
+    me: PlayerID,
+    memory: &Memory,
+    config: &BotConfig,
+    rng: &mut StdRng,
+) -> Analysis {
+    let history = memory.history(p);
+    let cands = candidates_with_throws(p, me, history);
+    let n = cands.len();
+    let start = Instant::now();
+    let base_levels = levels(&p.propagated.players);
+    let totals = Mutex::new(vec![Stats::default(); n]);
+    let samples_started = AtomicUsize::new(0);
+    let no_worlds = AtomicBool::new(false);
+    let seeds: Vec<u64> = (0..config.threads.max(1)).map(|_| rng.gen()).collect();
+
+    if n > 1 {
+        std::thread::scope(|scope| {
+            for seed in &seeds {
+                let (cands, totals, samples_started, no_worlds, base_levels) =
+                    (&cands, &totals, &samples_started, &no_worlds, &base_levels);
+                scope.spawn(move || {
+                    let mut trng = StdRng::seed_from_u64(*seed);
+                    let mut local = vec![Stats::default(); n];
+                    loop {
+                        if start.elapsed() > config.time_budget
+                            || samples_started.fetch_add(1, Ordering::Relaxed) >= config.samples
+                        {
+                            break;
+                        }
+                        let world = match determinize(p, me, history, &mut trng) {
+                            Some(w) => w,
+                            None => {
+                                no_worlds.store(true, Ordering::Relaxed);
+                                break;
+                            }
+                        };
+                        let sides = Sides::of(&world);
+                        for (i, c) in cands.iter().enumerate() {
+                            let mut sim = world.clone();
+                            if sim.play_cards(me, c).is_err() {
+                                continue;
+                            }
+                            if let Some(o) = rollout(sim, me, base_levels, &sides, &mut trng) {
+                                local[i].add(&o);
+                            }
+                        }
+                    }
+                    let mut t = totals.lock().unwrap();
+                    for (i, s) in local.iter().enumerate() {
+                        t[i].merge(s);
+                    }
+                });
+            }
+        });
+    }
+
+    let stats = totals.into_inner().unwrap();
+    let simulated = stats.iter().map(|s| s.n).max().unwrap_or(0);
+    let note = if n <= 1 {
+        "forced".to_string()
+    } else if simulated == 0 {
+        if no_worlds.load(Ordering::Relaxed) {
+            "could not sample hidden hands".to_string()
+        } else {
+            "no simulations finished".to_string()
+        }
+    } else {
+        format!(
+            "{n} candidates, {simulated} samples, {} ms",
+            start.elapsed().as_millis()
+        )
+    };
+    Analysis {
+        candidates: cands,
+        stats,
+        note,
+    }
+}
+
 pub(crate) fn choose_play(
     p: &PlayPhase,
     me: PlayerID,
@@ -58,104 +196,92 @@ pub(crate) fn choose_play(
     config: &BotConfig,
     rng: &mut StdRng,
 ) -> (Vec<Card>, String) {
+    if config.mistake_rate > 0.0 && rng.gen_bool(config.mistake_rate.min(1.0)) {
+        let cands = candidates(p, me);
+        if let Some(c) = cands.choose(rng) {
+            return (c.clone(), "careless play".into());
+        }
+    }
     if config.heuristic_only {
         let sides = Sides::of(p);
         return (policy_play(p, me, &sides, rng), "heuristic".into());
     }
-    let cands = candidates(p, me);
-    if cands.is_empty() {
-        return (
-            policy_play(p, me, &Sides::of(p), rng),
-            "no candidates; heuristic".into(),
-        );
+    let a = analyze(p, me, memory, config, rng);
+    if a.candidates.len() == 1 {
+        return (a.candidates[0].clone(), a.note);
     }
-    if cands.len() == 1 {
-        return (cands[0].clone(), "forced".into());
-    }
-
-    let start = Instant::now();
-    let base_levels = levels(&p.propagated.players);
-    let n = cands.len();
-    let totals = Mutex::new(vec![(0.0f64, 0usize); n]);
-    let samples_started = AtomicUsize::new(0);
-    let no_worlds = AtomicBool::new(false);
-    let seeds: Vec<u64> = (0..config.threads.max(1)).map(|_| rng.gen()).collect();
-
-    std::thread::scope(|scope| {
-        for seed in &seeds {
-            let (cands, totals, samples_started, no_worlds, base_levels) =
-                (&cands, &totals, &samples_started, &no_worlds, &base_levels);
-            scope.spawn(move || {
-                let mut trng = StdRng::seed_from_u64(*seed);
-                let mut local = vec![(0.0f64, 0usize); n];
-                loop {
-                    if start.elapsed() > config.time_budget
-                        || samples_started.fetch_add(1, Ordering::Relaxed) >= config.samples
-                    {
-                        break;
-                    }
-                    let world = match determinize(p, me, memory, &mut trng) {
-                        Some(w) => w,
-                        None => {
-                            no_worlds.store(true, Ordering::Relaxed);
-                            break;
-                        }
-                    };
-                    let sides = Sides::of(&world);
-                    for (i, c) in cands.iter().enumerate() {
-                        let mut sim = world.clone();
-                        if sim.play_cards(me, c).is_err() {
-                            continue;
-                        }
-                        let v = rollout(sim, me, base_levels, &sides, &mut trng);
-                        if v.is_finite() {
-                            local[i].0 += v;
-                            local[i].1 += 1;
-                        }
-                    }
-                }
-                let mut t = totals.lock().unwrap();
-                for (i, (v, c)) in local.into_iter().enumerate() {
-                    t[i].0 += v;
-                    t[i].1 += c;
-                }
-            });
-        }
-    });
-
-    let totals = totals.into_inner().unwrap();
-    let best = totals
-        .iter()
-        .enumerate()
-        .filter(|(_, (_, c))| *c > 0)
-        .max_by(|(_, (a, ca)), (_, (b, cb))| {
-            (a / *ca as f64)
-                .partial_cmp(&(b / *cb as f64))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-    match best {
-        Some((i, (v, c))) => (
-            cands[i].clone(),
-            format!(
-                "{} candidates, {} samples, {:.0} ms, value {:.3}",
-                n,
-                c,
-                start.elapsed().as_millis(),
-                v / *c as f64
-            ),
+    match a.ranked().first() {
+        Some(i) => (
+            a.candidates[*i].clone(),
+            format!("{}, value {:.3}", a.note, a.stats[*i].mean()),
         ),
-        None => {
-            let why = if no_worlds.load(Ordering::Relaxed) {
-                "could not sample hidden hands"
-            } else {
-                "no rollouts finished"
-            };
-            (
-                policy_play(p, me, &Sides::of(p), rng),
-                format!("{why}; heuristic"),
-            )
-        }
+        None => (
+            policy_play(p, me, &Sides::of(p), rng),
+            format!("{}; heuristic", a.note),
+        ),
     }
+}
+
+fn describe(cards: &[Card]) -> String {
+    cards
+        .iter()
+        .map(|c| card_name(*c))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+pub(crate) fn play_hint(
+    p: &PlayPhase,
+    me: PlayerID,
+    memory: &Memory,
+    config: &BotConfig,
+    rng: &mut StdRng,
+) -> Option<Hint> {
+    let a = analyze(p, me, memory, config, rng);
+    if a.candidates.len() == 1 {
+        return Some(Hint {
+            cards: a.candidates[0].clone(),
+            summary: format!(
+                "{} is your only sensible play here.",
+                describe(&a.candidates[0])
+            ),
+            options: vec![],
+        });
+    }
+    let ranked = a.ranked();
+    let best = *ranked.first()?;
+    let options: Vec<HintOption> = ranked
+        .iter()
+        .take(4)
+        .map(|i| {
+            let s = a.stats[*i];
+            HintOption {
+                cards: a.candidates[*i].clone(),
+                win_rate: s.wins / s.n as f64,
+                defender_points: s.defender_points / s.n as f64,
+                samples: s.n,
+            }
+        })
+        .collect();
+    let b = &options[0];
+    let mut summary = format!(
+        "Play {}. Your side won the hand in {:.0}% of {} simulated deals.",
+        describe(&a.candidates[best]),
+        b.win_rate * 100.0,
+        b.samples
+    );
+    if let Some(next) = options.get(1) {
+        summary.push_str(&format!(
+            " Next best: {} ({:.0}%).",
+            describe(&next.cards),
+            next.win_rate * 100.0
+        ));
+    }
+    Some(Hint {
+        cards: a.candidates[best].clone(),
+        summary,
+        options,
+    })
 }
 
 fn level_value(p: &Player) -> i64 {
@@ -170,9 +296,15 @@ fn levels(players: &[Player]) -> HashMap<PlayerID, i64> {
     players.iter().map(|p| (p.id, level_value(p))).collect()
 }
 
+pub(crate) struct Outcome {
+    value: f64,
+    won: bool,
+    defender_points: f64,
+}
+
 /// Outcome of a finished hand from `me`'s point of view: how far I advanced relative to the
 /// players against me, plus a small term for the point margin so close outcomes still differ.
-fn evaluate(s: &PlayPhase, me: PlayerID, base: &HashMap<PlayerID, i64>) -> f64 {
+fn evaluate(s: &PlayPhase, me: PlayerID, base: &HashMap<PlayerID, i64>) -> Outcome {
     let (defender_points, _) = s.calculate_points();
     let deck_points: usize = s.decks.iter().map(|d| d.points()).sum();
     let mine_is_landlord_side = s.landlords_team.contains(&me);
@@ -183,8 +315,8 @@ fn evaluate(s: &PlayPhase, me: PlayerID, base: &HashMap<PlayerID, i64>) -> f64 {
         margin
     };
 
-    let level_term = match s.finish_game() {
-        Ok((init, _, _)) => {
+    let (level_term, won) = match s.finish_game() {
+        Ok((init, landlord_won, _)) => {
             let after = levels(&init.players);
             let delta = |id: PlayerID| {
                 after.get(&id).copied().unwrap_or(0) - base.get(&id).copied().unwrap_or(0)
@@ -201,11 +333,18 @@ fn evaluate(s: &PlayPhase, me: PlayerID, base: &HashMap<PlayerID, i64>) -> f64 {
             } else {
                 opponents.iter().map(|id| delta(*id) as f64).sum::<f64>() / opponents.len() as f64
             };
-            delta(me) as f64 - opp
+            (
+                delta(me) as f64 - opp,
+                landlord_won == mine_is_landlord_side,
+            )
         }
-        Err(_) => 0.0,
+        Err(_) => (0.0, false),
     };
-    level_term + 0.5 * point_term
+    Outcome {
+        value: level_term + 0.5 * point_term,
+        won,
+        defender_points: defender_points as f64,
+    }
 }
 
 fn rollout(
@@ -214,30 +353,111 @@ fn rollout(
     base: &HashMap<PlayerID, i64>,
     sides: &Sides,
     rng: &mut StdRng,
-) -> f64 {
+) -> Option<Outcome> {
     for _ in 0..5000 {
         if s.game_finished() {
-            return evaluate(&s, me, base);
+            return Some(evaluate(&s, me, base));
         }
         let next = match s.trick.next_player() {
             Some(n) => n,
             None => {
-                if s.finish_trick().is_err() {
-                    return f64::NAN;
-                }
+                s.finish_trick().ok()?;
                 continue;
             }
         };
         let cards = policy_play(&s, next, sides, rng);
         if s.play_cards(next, &cards).is_err() {
             let fallback = candidates(&s, next);
-            match fallback.first() {
-                Some(c) if s.play_cards(next, c).is_ok() => (),
-                _ => return f64::NAN,
+            let c = fallback.first()?;
+            s.play_cards(next, c).ok()?;
+        }
+    }
+    None
+}
+
+/// Candidates plus, when leading, throws of cards that card-counting says nobody can beat.
+pub(crate) fn candidates_with_throws(
+    p: &PlayPhase,
+    me: PlayerID,
+    history: &[Trick],
+) -> Vec<Vec<Card>> {
+    let mut out = candidates(p, me);
+    if p.trick.trick_format().is_none() {
+        for t in safe_throws(p, me, history) {
+            if !out.contains(&t) {
+                out.push(t);
             }
         }
     }
-    f64::NAN
+    out
+}
+
+/// For each side suit, the units we hold that no unseen cards can beat, combined into one
+/// throw when there are at least two of them.
+fn safe_throws(p: &PlayPhase, me: PlayerID, history: &[Trick]) -> Vec<Vec<Card>> {
+    let trump = p.trump;
+    let hand = hand_cards(&p.hands, me);
+    let mut full: Vec<Card> = p.decks.iter().flat_map(|d| d.cards()).collect();
+    full = subtract(&full, &p.removed_cards);
+    let mut seen = hand.clone();
+    seen.extend(played_cards(history, &p.trick));
+    seen.extend(p.kitty.iter().copied().filter(|c| *c != Card::Unknown));
+    let unseen = subtract(&full, &seen);
+
+    let mut throws = vec![];
+    for (suit, cards) in by_suit(trump, &hand) {
+        if suit == EffectiveSuit::Trump {
+            continue;
+        }
+        let unseen_in_suit: Vec<Card> = unseen
+            .iter()
+            .copied()
+            .filter(|c| trump.effective_suit(*c) == suit)
+            .collect();
+        let unseen_counts = super::heuristics::counts(&unseen_in_suit);
+        // A unit of width w is safe if no unseen card above its lowest card has w copies left
+        // unseen (for singles: no higher card is unseen at all). Tractors are treated like
+        // their width, which is conservative.
+        let beats = |lowest: Card, width: usize| {
+            unseen_counts.iter().any(|(c, n)| {
+                *n >= width && trump.compare(*c, lowest) == std::cmp::Ordering::Greater
+            })
+        };
+        let mut units: Vec<Vec<Card>> =
+            multi_units(trump, p.propagated.tractor_requirements, &cards);
+        units.sort_by_key(|u| std::cmp::Reverse(u.len()));
+        let mut used: Vec<Card> = vec![];
+        let mut throw: Vec<Card> = vec![];
+        let mut pieces = 0;
+        for u in units {
+            let remaining = subtract(&cards, &used);
+            if subtract(&u, &remaining).is_empty() {
+                let width = super::heuristics::counts(&u)
+                    .values()
+                    .copied()
+                    .min()
+                    .unwrap_or(1);
+                if !beats(u[0], width) {
+                    used.extend(u.iter().copied());
+                    throw.extend(u);
+                    pieces += 1;
+                }
+            }
+        }
+        for c in subtract(&cards, &used).into_iter().rev() {
+            if !beats(c, 1) {
+                throw.push(c);
+                pieces += 1;
+            } else {
+                break;
+            }
+        }
+        if pieces >= 2 {
+            sort_by_rank(trump, &mut throw);
+            throws.push(throw);
+        }
+    }
+    throws
 }
 
 /// Deal the cards we can't see to the other players (and the kitty, if we didn't bury it),
@@ -245,13 +465,13 @@ fn rollout(
 pub(crate) fn determinize(
     p: &PlayPhase,
     me: PlayerID,
-    memory: &Memory,
+    history: &[Trick],
     rng: &mut StdRng,
 ) -> Option<PlayPhase> {
     let mut full: Vec<Card> = p.decks.iter().flat_map(|d| d.cards()).collect();
     full = subtract(&full, &p.removed_cards);
     let mut known = hand_cards(&p.hands, me);
-    known.extend(memory.played_cards(&p.trick));
+    known.extend(played_cards(history, &p.trick));
     known.extend(p.kitty.iter().copied().filter(|c| *c != Card::Unknown));
     let mut pool = subtract(&full, &known);
 
@@ -287,7 +507,7 @@ pub(crate) fn determinize(
     // If we missed some history the pool is too big; drop the excess at random.
     pool.truncate(total);
 
-    let voids = memory.voids(&p.trick);
+    let voids = voids(history, &p.trick);
     let trump = p.trump;
     let eligible = |h: Holder, c: Card| match h {
         Holder::Kitty => true,

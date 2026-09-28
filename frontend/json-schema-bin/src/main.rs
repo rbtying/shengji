@@ -17,6 +17,7 @@ use tempdir::TempDir;
 pub struct _Combined {
     pub action: Action,
     pub game_message: GameMessage,
+    pub difficulty: shengji_core::bot::Difficulty,
     pub find_viable_plays_request: FindViablePlaysRequest,
     pub find_viable_plays_response: FindViablePlaysResult,
     pub found_viable_play: FoundViablePlay,

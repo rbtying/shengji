@@ -3,6 +3,7 @@ use std::sync::Arc;
 use slog::{debug, error, info, o, Logger};
 use tokio::sync::{mpsc, oneshot, Mutex};
 
+use shengji_core::bot::BotConfig;
 use shengji_core::interactive::InteractiveGame;
 use shengji_mechanics::types::PlayerID;
 use shengji_types::GameMessage;
@@ -14,6 +15,12 @@ use crate::{
     utils::{execute_immutable_operation, execute_operation},
     ZSTD_COMPRESSOR,
 };
+
+/// Computer players connect back to this server over its own websocket.
+const BOT_SERVER_URL: &str = "ws://127.0.0.1:3030/api";
+const BOT_NAMES: [&str; 12] = [
+    "Ann", "Bo", "Cy", "Di", "Ed", "Flo", "Gus", "Hal", "Ivy", "Jo", "Kit", "Lu",
+];
 
 pub async fn entrypoint<S: Storage<VersionedGame, E>, E: std::fmt::Debug + Send>(
     tx: mpsc::UnboundedSender<Vec<u8>>,
@@ -164,7 +171,8 @@ async fn player_subscribe_task(
                 | GameMessage::Broadcast { .. }
                 | GameMessage::Message { .. }
                 | GameMessage::Error(_)
-                | GameMessage::Header { .. } => true,
+                | GameMessage::Header { .. }
+                | GameMessage::Hint { .. } => true,
                 GameMessage::Beep { target } | GameMessage::Kicked { target } => *target == name_,
                 GameMessage::ReadyCheck { from } => *from != name_,
             };
@@ -407,6 +415,84 @@ async fn handle_user_action<S: Storage<VersionedGame, E>, E: Send>(
                 "kick user",
             )
             .await;
+        }
+        UserMessage::AddBot(difficulty) => {
+            let room = room_name.to_string();
+            match backend_storage
+                .clone()
+                .get(room_name.as_bytes().to_vec())
+                .await
+            {
+                Ok(versioned) => {
+                    let taken: Vec<String> = versioned
+                        .game
+                        .players()
+                        .iter()
+                        .chain(versioned.game.observers().iter())
+                        .map(|p| p.name.clone())
+                        .collect();
+                    let bot_name = BOT_NAMES
+                        .iter()
+                        .map(|n| format!("{n} ({})", difficulty.label()))
+                        .find(|n| !taken.contains(n));
+                    match bot_name {
+                        Some(bot_name) => {
+                            info!(logger, "Adding bot"; "bot" => &bot_name);
+                            tokio::spawn(async move {
+                                let config = BotConfig::for_difficulty(difficulty);
+                                let _ = shengji_bot::run_bot(
+                                    BOT_SERVER_URL.to_string(),
+                                    room,
+                                    bot_name,
+                                    config,
+                                    true,
+                                )
+                                .await;
+                            });
+                        }
+                        None => {
+                            let _ = backend_storage
+                                .publish_to_single_subscriber(
+                                    room_name.as_bytes().to_vec(),
+                                    ws_id,
+                                    GameMessage::Error("No more bot seats available".to_string()),
+                                )
+                                .await;
+                        }
+                    }
+                }
+                Err(_) => {
+                    let _ = backend_storage
+                        .publish_to_single_subscriber(
+                            room_name.as_bytes().to_vec(),
+                            ws_id,
+                            GameMessage::Error("Couldn't add a bot".to_string()),
+                        )
+                        .await;
+                }
+            }
+        }
+        UserMessage::RequestHint => {
+            if let Ok(versioned) = backend_storage
+                .clone()
+                .get(room_name.as_bytes().to_vec())
+                .await
+            {
+                // Only ever analyze the requesting player's own view of the game.
+                let view = versioned.game.for_player(caller);
+                let hint =
+                    tokio::task::spawn_blocking(move || shengji_core::bot::hint(&view, &name))
+                        .await
+                        .ok()
+                        .flatten();
+                let _ = backend_storage
+                    .publish_to_single_subscriber(
+                        room_name.as_bytes().to_vec(),
+                        ws_id,
+                        GameMessage::Hint { hint },
+                    )
+                    .await;
+            }
         }
         UserMessage::Action(action) => {
             execute_operation(

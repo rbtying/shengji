@@ -31,6 +31,10 @@ pub enum GameMessage {
     Kicked {
         target: String,
     },
+    /// Advice for the player who asked; `None` when there's nothing to suggest right now.
+    Hint {
+        hint: Option<shengji_core::bot::Hint>,
+    },
 }
 
 /// zstd dictionary, compressed with zstd.

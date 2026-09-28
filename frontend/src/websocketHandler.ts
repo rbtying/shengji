@@ -162,7 +162,16 @@ const gameFinishedHandler: WebsocketHandler = (
   return null;
 };
 
+const hintHandler: WebsocketHandler = (_: AppState, message: GameMessage) => {
+  if ("Hint" in message) {
+    return { hint: message.Hint.hint ?? null, hintPending: false };
+  } else {
+    return null;
+  }
+};
+
 const allHandlers: WebsocketHandler[] = [
+  hintHandler,
   messageHandler,
   broadcastHandler,
   errorHandler,

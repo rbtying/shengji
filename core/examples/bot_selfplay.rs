@@ -73,6 +73,31 @@ fn main() {
             let bot = &mut bots[i];
             let view = game.dump_state_for_player(ids[i]).unwrap();
             bot.observe(&view);
+            // HINT_TEST=1: print the hint's estimate for opening leads, to compare with results.
+            if std::env::var("HINT_TEST").is_ok() {
+                if let (GameState::Play(_), GameState::Play(fp)) =
+                    (&view, game.dump_state().unwrap())
+                {
+                    let held: usize = fp
+                        .hands()
+                        .get(ids[i])
+                        .map(|h| h.values().sum())
+                        .unwrap_or(0);
+                    if fp.trick().played_cards().is_empty()
+                        && fp.next_player().ok() == Some(ids[i])
+                        && held >= 20
+                    {
+                        if let Some(h) = shengji_core::bot::hint(&view, bot.name()) {
+                            println!(
+                                "HINT {} landlord_side={} :: {}",
+                                bot.name(),
+                                fp.landlords_team().contains(&ids[i]),
+                                h.summary
+                            );
+                        }
+                    }
+                }
+            }
             let t = Instant::now();
             let decision = bot.decide(&view);
             let dt = t.elapsed();
