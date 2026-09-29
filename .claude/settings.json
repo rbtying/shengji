@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch -q origin computer-players)",
+      "Bash(git fetch -q --prune origin)",
+      "Bash(cargo fmt --all -- --check)",
+      "Bash(cargo clippy -p shengji-core --all-targets)",
+      "Bash(cargo clippy -p shengji --features dynamic)",
+      "Bash(cargo test --workspace --exclude shengji)",
+      "Bash(cargo test -p shengji --features dynamic)",
+      "Bash(npx tsc --noEmit -p .)"
+    ]
+  }
+}
