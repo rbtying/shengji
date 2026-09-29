@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T03:31:40.416Z",
+  "generated": "2026-09-29T16:45:08.800Z",
   "npmMethod": "source maps in frontend/dist",
   "rustShipped": [
     {
@@ -786,7 +786,7 @@
     {
       "eco": "rust",
       "name": "serde",
-      "version": "1.0.215",
+      "version": "1.0.229",
       "license": "MIT OR Apache-2.0",
       "chosen": [
         "MIT"
@@ -796,8 +796,29 @@
       "shipped": true,
       "repository": "https://github.com/serde-rs/serde",
       "files": [
-        "cargo-registry/serde-1.0.215/LICENSE-APACHE",
-        "cargo-registry/serde-1.0.215/LICENSE-MIT"
+        "cargo-registry/serde-1.0.229/LICENSE-APACHE",
+        "cargo-registry/serde-1.0.229/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "serde_core",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": true,
+      "repository": "https://github.com/serde-rs/serde",
+      "files": [
+        "cargo-registry/serde_core-1.0.229/LICENSE-APACHE",
+        "cargo-registry/serde_core-1.0.229/LICENSE-MIT"
       ],
       "copyright": [
         "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
@@ -1490,7 +1511,7 @@
     {
       "eco": "rust",
       "name": "serde_derive",
-      "version": "1.0.215",
+      "version": "1.0.229",
       "license": "MIT OR Apache-2.0",
       "chosen": [
         "MIT"
@@ -1500,8 +1521,8 @@
       "shipped": false,
       "repository": "https://github.com/serde-rs/serde",
       "files": [
-        "cargo-registry/serde_derive-1.0.215/LICENSE-APACHE",
-        "cargo-registry/serde_derive-1.0.215/LICENSE-MIT"
+        "cargo-registry/serde_derive-1.0.229/LICENSE-APACHE",
+        "cargo-registry/serde_derive-1.0.229/LICENSE-MIT"
       ],
       "copyright": [
         "Copyright (c) Erick Tryzelaar <erick.tryzelaar@gmail.com>, David Tolnay <dtolnay@gmail.com>"
@@ -1586,6 +1607,27 @@
       "files": [
         "cargo-registry/syn-2.0.90/LICENSE-APACHE",
         "cargo-registry/syn-2.0.90/LICENSE-MIT"
+      ],
+      "copyright": [
+        "Copyright (c) David Tolnay <dtolnay@gmail.com>"
+      ],
+      "proc_macro": false
+    },
+    {
+      "eco": "rust",
+      "name": "syn",
+      "version": "3.0.6",
+      "license": "MIT OR Apache-2.0",
+      "chosen": [
+        "MIT"
+      ],
+      "dual": true,
+      "local": false,
+      "shipped": false,
+      "repository": "https://github.com/dtolnay/syn",
+      "files": [
+        "cargo-registry/syn-3.0.6/LICENSE-APACHE",
+        "cargo-registry/syn-3.0.6/LICENSE-MIT"
       ],
       "copyright": [
         "Copyright (c) David Tolnay <dtolnay@gmail.com>"
@@ -2272,7 +2314,7 @@
     {
       "eco": "npm",
       "name": "lodash",
-      "version": "4.17.21",
+      "version": "4.18.1",
       "license": "MIT",
       "chosen": [
         "MIT"
@@ -2292,7 +2334,7 @@
     {
       "eco": "npm",
       "name": "lodash-es",
-      "version": "4.17.21",
+      "version": "4.18.1",
       "license": "MIT",
       "chosen": [
         "MIT"
