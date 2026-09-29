@@ -364,7 +364,14 @@ function main() {
   }
   fs.writeFileSync(path.join(HERE, "THIRD_PARTY_NOTICES.txt"), L.join("\n").replace(/\n{3,}/g, "\n\n"));
 
-  const strip = (c) => ({ ...c, files: (c.files || []).map((f) => path.relative(REPO, f).replace(/\\/g, "/")) });
+  // Paths inside the cargo registry start at the crate directory, so the inventory is the
+  // same whoever regenerates it; everything else is relative to the repo.
+  const portable = (f) => {
+    const p = f.replace(/\\/g, "/");
+    const m = p.match(/\/\.cargo\/registry\/src\/[^/]+\/(.*)$/);
+    return m ? "cargo-registry/" + m[1] : path.relative(REPO, f).replace(/\\/g, "/");
+  };
+  const strip = (c) => ({ ...c, files: (c.files || []).map(portable) });
   const inv = { generated: new Date().toISOString(), npmMethod: npm.method,
     rustShipped: rust.shipped.map(strip), rustBuildOnly: rust.buildOnly.map(strip),
     npmShipped: npm.pkgs.map(strip), manual: MANUAL.map(strip), assets: ASSETS.map(strip) };
