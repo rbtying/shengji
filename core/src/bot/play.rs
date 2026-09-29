@@ -239,8 +239,7 @@ pub(crate) fn choose_play(
         }
     }
     if config.heuristic_only {
-        let sides = Sides::of(p);
-        return (policy_play(p, me, &sides, rng), "heuristic".into());
+        return (legal_policy_play(p, me, rng), "heuristic".into());
     }
     let a = analyze(p, me, memory, config, rng);
     if a.candidates.len() == 1 {
@@ -252,10 +251,19 @@ pub(crate) fn choose_play(
             format!("{}, value {:.3}", a.note, a.stats[*i].mean()),
         ),
         None => (
-            policy_play(p, me, &Sides::of(p), rng),
+            legal_policy_play(p, me, rng),
             format!("{}; heuristic", a.note),
         ),
     }
+}
+
+/// The heuristic play if the rules allow it, else the first legal candidate.
+fn legal_policy_play(p: &PlayPhase, me: PlayerID, rng: &mut StdRng) -> Vec<Card> {
+    let play = policy_play(p, me, &Sides::of(p), rng);
+    if p.can_play_cards(me, &play).is_ok() {
+        return play;
+    }
+    candidates(p, me).into_iter().next().unwrap_or(play)
 }
 
 fn describe(cards: &[Card]) -> String {
@@ -473,7 +481,7 @@ pub(crate) fn candidates_with_throws(
     let mut out = candidates(p, me);
     if p.trick.trick_format().is_none() {
         for t in safe_throws(p, me, history) {
-            if !out.contains(&t) {
+            if !out.contains(&t) && p.can_play_cards(me, &t).is_ok() {
                 out.push(t);
             }
         }

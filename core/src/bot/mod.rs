@@ -364,3 +364,79 @@ pub fn hint_with(
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use slog::{o, Discard, Logger};
+
+    use super::*;
+    use crate::interactive::InteractiveGame;
+    use crate::settings::GameModeSettings;
+
+    /// Heuristic-only bots (Beginner and Easy) play whole hands through the engine, which must
+    /// accept every play they choose.
+    #[test]
+    fn heuristic_bots_only_make_legal_plays() {
+        let logger = Logger::root(Discard, o!());
+        for level in [Difficulty::Beginner, Difficulty::Easy] {
+            for (players, decks, friends) in [(4, 2, false), (5, 3, true)] {
+                let mut game = InteractiveGame::new();
+                let mut seats = vec![];
+                for i in 0..players {
+                    let name = format!("bot{i}");
+                    let (id, _) = game.register(name.clone()).unwrap();
+                    seats.push((id, Bot::new(name, BotConfig::for_difficulty(level))));
+                }
+                let host = seats[0].0;
+                game.interact(Action::SetNumDecks(Some(decks)), host, &logger)
+                    .unwrap();
+                if friends {
+                    game.interact(
+                        Action::SetGameMode(GameModeSettings::FindingFriends { num_friends: None }),
+                        host,
+                        &logger,
+                    )
+                    .unwrap();
+                }
+                game.interact(Action::StartGame, host, &logger).unwrap();
+
+                let mut plays = 0;
+                let mut finished = false;
+                for _ in 0..100_000 {
+                    if let Ok(GameState::Play(p)) = game.dump_state() {
+                        if p.game_finished() {
+                            finished = true;
+                            break;
+                        }
+                    }
+                    for (id, bot) in seats.iter_mut() {
+                        let view = game.dump_state_for_player(*id).unwrap();
+                        bot.observe(&view);
+                        let Some(d) = bot.decide(&view) else {
+                            continue;
+                        };
+                        let is_play = matches!(d.action, Action::PlayCards(_));
+                        let desc = format!("{:?}", d.action);
+                        let result = game.interact(d.action, *id, &logger);
+                        if is_play {
+                            assert!(
+                                result.is_ok(),
+                                "{:?} bot's play {} was rejected: {:?}",
+                                level,
+                                desc,
+                                result.err()
+                            );
+                            plays += 1;
+                        }
+                    }
+                }
+                assert!(
+                    finished,
+                    "{:?}, {} players: hand did not finish",
+                    level, players
+                );
+                assert!(plays > 0);
+            }
+        }
+    }
+}
