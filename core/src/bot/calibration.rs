@@ -14,7 +14,27 @@ use crate::game_state::play_phase::PlayPhase;
 use crate::settings::GameMode;
 
 /// (opponents, Finding Friends?, on the landlord's side?, a, b)
-const FITS: &[(Difficulty, bool, bool, f64, f64)] = &[];
+///
+/// From selfplay/results/analysis.txt: Expert coach and bots both with basic rollouts, 80 hands
+/// per opponent level and game (33-51 per side). Beginner is not calibrated.
+const FITS: &[(Difficulty, bool, bool, f64, f64)] = &[
+    (Difficulty::Easy, false, false, 0.0314, 0.8287),
+    (Difficulty::Easy, false, true, 1.8670, 0.9451),
+    (Difficulty::Easy, true, false, -0.8141, 1.0496),
+    (Difficulty::Easy, true, true, 2.4637, 0.7743),
+    (Difficulty::Expert, false, false, -2.0871, 1.7151),
+    (Difficulty::Expert, false, true, 0.0337, 0.6369),
+    (Difficulty::Expert, true, false, -0.7681, 0.6854),
+    (Difficulty::Expert, true, true, -0.1496, 0.9651),
+    (Difficulty::Hard, false, false, -1.9172, 0.7106),
+    (Difficulty::Hard, false, true, 0.6631, 0.7284),
+    (Difficulty::Hard, true, false, -1.4029, 0.8198),
+    (Difficulty::Hard, true, true, 0.1323, 1.0153),
+    (Difficulty::Intermediate, false, false, -0.8630, 0.8229),
+    (Difficulty::Intermediate, false, true, 0.4035, 0.6330),
+    (Difficulty::Intermediate, true, false, -1.8255, 1.1579),
+    (Difficulty::Intermediate, true, true, 0.2880, 0.5669),
+];
 
 /// Whether `me` is on the landlord's side, as far as `me` can know: the landlord's team, or
 /// holding a called friend card that hasn't been played yet.
@@ -45,4 +65,36 @@ pub(crate) fn adjust(p: f64, opponents: Difficulty, friends: bool, landlord_side
     let x = p.clamp(0.005, 0.995);
     let z = a + b * (x / (1.0 - x)).ln();
     1.0 / (1.0 + (-z).exp())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fits_are_unique_and_increasing() {
+        for (i, f) in FITS.iter().enumerate() {
+            assert!(
+                f.4 > 0.0,
+                "{:?}: a corrected chance must rise with the raw one",
+                f
+            );
+            assert!(
+                !FITS[i + 1..]
+                    .iter()
+                    .any(|g| (g.0, g.1, g.2) == (f.0, f.1, f.2)),
+                "{:?} appears twice",
+                f
+            );
+        }
+    }
+
+    #[test]
+    fn adjust_applies_the_fit() {
+        // Hard, Tractor, attacking: a=-1.9172, b=0.7106; expected values computed separately.
+        assert!((adjust(0.5, Difficulty::Hard, false, false) - 0.12817).abs() < 1e-4);
+        assert!((adjust(0.93, Difficulty::Hard, false, false) - 0.48024).abs() < 1e-4);
+        // No fit for Beginner: unchanged.
+        assert_eq!(adjust(0.7, Difficulty::Beginner, false, false), 0.7);
+    }
 }
