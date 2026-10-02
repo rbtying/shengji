@@ -72,6 +72,69 @@ button.normal {
   padding: 10px;
 }
 
+.trick-history-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.current-trick-display {
+  min-width: 0;
+  flex: 1;
+}
+
+.play-history-buttons {
+  display: flex;
+  flex-direction: column;
+  min-width: 230px;
+}
+
+.play-history-buttons button.big {
+  margin: 5px 0;
+  white-space: nowrap;
+}
+
+.play-history-panel {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+}
+
+.play-history-panel h3 {
+  margin-top: 0;
+}
+
+.own-play-history-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.own-play-history-list .labeled-play {
+  margin-right: 8px;
+}
+
+.dark-mode .play-history-panel {
+  border-color: #555;
+}
+
+@media (max-width: 850px) {
+  .trick-history-main {
+    flex-direction: column;
+  }
+
+  .play-history-buttons {
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .play-history-buttons button.big {
+    margin: 5px;
+    white-space: normal;
+  }
+}
+
 .card {
   display: inline-block;
   cursor: pointer;
@@ -464,4 +527,24 @@ label {
 }
 .rules .card:last-child {
   margin-right: 0;
+}
+.river-crossing-badge {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.1em 0.45em;
+  border: 1px solid #147d92;
+  border-radius: 0.4em;
+  background: #e6f7fa;
+  color: #095267;
+  font-size: 0.8em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.river-crossing-notice {
+  padding: 0.6em 0.8em;
+  border-left: 3px solid #147d92;
+  background: #e6f7fa;
+  color: #095267;
+  overflow-wrap: anywhere;
 }

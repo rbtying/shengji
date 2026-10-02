@@ -135,7 +135,6 @@ const Root = (): JSX.Element => {
               <Play
                 playPhase={state.gameState.Play}
                 name={state.name}
-                showLastTrick={state.settings.showLastTrick}
                 unsetAutoPlayWhenWinnerChanges={
                   state.settings.unsetAutoPlayWhenWinnerChanges
                 }

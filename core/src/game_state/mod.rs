@@ -808,6 +808,7 @@ mod tests {
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         // Hackily ensure that everyone can bid.
         *draw.deck_mut() = vec![
             cards::S_2,
@@ -847,6 +848,7 @@ mod tests {
         init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
             .unwrap();
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         // Hackily ensure that everyone can bid.
         *draw.deck_mut() = vec![
             cards::S_2,
@@ -871,17 +873,76 @@ mod tests {
 
         assert!(draw.bid(p1, cards::H_2, 1));
         let mut exchange = draw.advance(p1).unwrap();
+        // The original landlord must bury first. The first decision then goes
+        // to the landlord's next seated player, not the fastest bidder.
+        assert_eq!(exchange.next_player().unwrap(), p1);
         exchange.finalize(p1).unwrap();
-        assert!(exchange.bid(p1, cards::H_2, 2));
-        assert!(exchange.bid(p3, Card::SmallJoker, 2));
-        exchange.pick_up_cards(p3).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(!exchange.bid(p3, Card::SmallJoker, 2).unwrap());
+        assert!(exchange.decline_kitty_theft(p3).is_err());
         exchange.advance(p1).unwrap_err();
+
+        // Passing proceeds in seat order. A successful bid immediately picks
+        // up the bottom and makes the bidder the new exchanger.
+        exchange.decline_kitty_theft(p2).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p3);
+        assert!(exchange.bid(p3, Card::SmallJoker, 2).unwrap());
+        assert_eq!(exchange.next_player().unwrap(), p3);
         exchange.finalize(p3).unwrap();
-        assert!(exchange.bid(p2, Card::BigJoker, 2));
-        exchange.pick_up_cards(p2).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p4);
+
+        // Every new burial starts a fresh circuit, including players who
+        // passed in the previous circuit and excluding the current exchanger.
+        exchange.decline_kitty_theft(p4).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p1);
+        exchange.decline_kitty_theft(p1).unwrap();
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(exchange.bid(p2, Card::BigJoker, 2).unwrap());
+        assert_eq!(exchange.next_player().unwrap(), p2);
         exchange.finalize(p2).unwrap();
-        assert!(!exchange.bid(p1, cards::H_2, 2));
+        assert_eq!(exchange.next_player().unwrap(), p1);
+        assert!(!exchange.bid(p1, cards::H_2, 2).unwrap());
+
+        // A bid using every big joker is unbeatable, so the remaining players
+        // do not need to decline kitty theft individually.
+        assert!(exchange.decline_kitty_theft(p3).is_err());
         exchange.advance(p1).unwrap();
+    }
+
+    #[test]
+    fn unbeatable_initial_bid_skips_kitty_theft_decisions() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
+            .unwrap();
+        let mut draw = init.start(p1).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
+        *draw.deck_mut() = vec![
+            cards::S_2,
+            cards::H_2,
+            Card::BigJoker,
+            cards::D_2,
+            cards::S_2,
+            cards::H_2,
+            Card::BigJoker,
+            cards::D_2,
+        ];
+        *draw.position_mut() = 0;
+
+        for player in [p1, p2, p3, p4, p1, p2, p3, p4] {
+            draw.draw_card(player).unwrap();
+        }
+
+        assert!(draw.bid(p2, Card::BigJoker, 2));
+        let mut exchange = draw.advance(p2).unwrap();
+        exchange.finalize(p2).unwrap();
+
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(exchange.decline_kitty_theft(p3).is_err());
+        exchange.advance(p2).unwrap();
     }
 
     #[test]
@@ -898,6 +959,7 @@ mod tests {
         let p3 = init.add_player("p3".into()).unwrap().0;
         let p4 = init.add_player("p4".into()).unwrap().0;
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
 
         let p1_hand = [S_9, S_9, S_10, S_10, S_K, S_3, S_4, S_5, S_7, S_7, H_2];
         let p2_hand = [S_3, S_3, S_5, S_5, S_7, S_8, S_J, S_Q, C_3, C_4, C_5];
@@ -951,6 +1013,7 @@ mod tests {
                 .unwrap();
 
             let mut draw = init.start(PlayerID(1)).unwrap();
+            draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
             *draw.deck_mut() = vec![bid, bid, bid, bid];
             draw.draw_card(p2).unwrap();
             draw.draw_card(p3).unwrap();
@@ -1033,6 +1096,7 @@ mod tests {
         init.set_rank(p2, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(1)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
 
         let p1_hand = [
             Card::SmallJoker,
@@ -1404,6 +1468,7 @@ mod tests {
         init.set_rank(p1, Rank::Number(Number::Seven)).unwrap();
 
         let mut draw = init.start(PlayerID(0)).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
         let mut deck = vec![];
 
         // We need at least two cards per person, since the landlord needs to

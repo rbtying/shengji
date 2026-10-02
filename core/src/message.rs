@@ -27,6 +27,9 @@ pub enum MessageVariant {
     ResetCanceled,
     ResettingGame,
     StartingGame,
+    DeckCut {
+        count: usize,
+    },
     TrickWon {
         winner: PlayerID,
         points: usize,
@@ -105,11 +108,18 @@ pub enum MessageVariant {
     KittyTheftPolicySet {
         policy: KittyTheftPolicy,
     },
+    FiveTrumpRiverCrossingEnabledSet {
+        enabled: bool,
+    },
+    RiverCrossingInitiated {
+        player: PlayerID,
+    },
     GameVisibilitySet {
         visibility: GameVisibility,
     },
     TookBackPlay,
     TookBackBid,
+    KittyTheftDeclined,
     PlayedCards {
         cards: Vec<Card>,
     },
@@ -216,6 +226,9 @@ impl MessageVariant {
             ResetCanceled => format!("{} canceled game reset", n?),
             ResettingGame => format!("{} reset the game", n?),
             StartingGame => format!("{} started the game", n?),
+            DeckCut { count } => format!("{} cut {} cards / 切了 {} 张牌", n?, count, count),
+            RiverCrossingInitiated { player } =>
+                format!("{} 发起了五主过河 / initiated five-trump river crossing", player_name(*player)?),
             TrickWon { winner, points: 0 } =>
                 format!("{} wins the trick, but gets no points :(", player_name(*winner)?),
             TrickWon { winner, points } =>
@@ -308,6 +321,8 @@ impl MessageVariant {
                 format!("{} set the game mode to Finding Friends with {} friends", n?, friends),
             TookBackBid => format!("{} took back their last bid", n?),
             TookBackPlay => format!("{} took back their last play", n?),
+            KittyTheftDeclined =>
+                format!("{} 放弃炒底 / declined to steal the bottom", n?),
             PlayedCards { ref cards } =>
                 format!("{} played {}", n?, cards.iter().map(|c| c.as_char()).collect::<String>()),
             EndOfGameKittyReveal { ref cards } =>
@@ -367,6 +382,10 @@ impl MessageVariant {
                 format!("{} allowed stealing the bottom cards after the leader", n?),
             KittyTheftPolicySet { policy: KittyTheftPolicy::NoKittyTheft } =>
                 format!("{} disabled stealing the bottom cards after the leader", n?),
+            FiveTrumpRiverCrossingEnabledSet { enabled: true } =>
+                format!("{} enabled five-trump river crossing (五主过河)", n?),
+            FiveTrumpRiverCrossingEnabledSet { enabled: false } =>
+                format!("{} disabled five-trump river crossing (五主过河)", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::AllowMultipleSessions } =>
                 format!("{} allowed players to be shadowed by joining with the same name", n?),
             GameShadowingPolicySet { policy: GameShadowingPolicy::SingleSessionOnly } =>

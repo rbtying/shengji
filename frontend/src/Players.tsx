@@ -12,6 +12,7 @@ interface IProps {
   observers: Player[];
   landlord?: number | null;
   landlords_team?: number[];
+  riverCrossingInitiators?: number[];
   movable?: boolean;
   next?: number | null;
   name: string;
@@ -31,15 +32,28 @@ const Players = (props: IProps): JSX.Element => {
   const { send } = React.useContext(WebsocketContext);
 
   const makeDescriptor = (p: Player): Array<JSX.Element | string> => {
+    const descriptor: Array<JSX.Element | string> = [p.name];
+    if (props.riverCrossingInitiators?.includes(p.id)) {
+      descriptor.push(
+        <span
+          key={`river-crossing-${p.id}`}
+          className="river-crossing-badge"
+          title="本小局曾发起五主过河；下一小局自动清除 / Initiated river crossing this deal"
+        >
+          已过河
+        </span>,
+      );
+    }
     if (p.metalevel <= 1) {
-      return [`${p.name} (rank ${p.level})`];
+      descriptor.push(` (rank ${p.level})`);
     } else {
-      return [
-        `${p.name} (rank ${p.level}`,
+      descriptor.push(
+        ` (rank ${p.level}`,
         <sup key={`meta-${p.id}`}>{p.metalevel}</sup>,
         ")",
-      ];
+      );
     }
+    return descriptor;
   };
 
   return (

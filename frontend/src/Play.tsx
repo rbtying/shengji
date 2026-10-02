@@ -18,6 +18,8 @@ import Cards from "./Cards";
 import Points, { calculatePoints, ProgressBarDisplay } from "./Points";
 import LabeledPlay from "./LabeledPlay";
 import Players from "./Players";
+import RiverCrossingNotice from "./RiverCrossingNotice";
+import PlayHistory from "./PlayHistory";
 import ArrayUtils from "./util/array";
 import AutoPlayButton from "./AutoPlayButton";
 import BeepButton from "./BeepButton";
@@ -43,7 +45,6 @@ interface IProps {
   playPhase: PlayPhase;
   name: string;
   beepOnTurn: boolean;
-  showLastTrick: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
   showTrickInPlayerOrder: boolean;
 }
@@ -224,6 +225,9 @@ const Play = (props: IProps): JSX.Element => {
   ]);
 
   const isCurrentPlayerTurn = currentPlayer.id === nextPlayer;
+  const ownPlayHistory = isSpectator
+    ? []
+    : (playPhase.played_card_history?.[currentPlayer.id] ?? []);
   const canTakeBack =
     lastPlay !== undefined &&
     currentPlayer.id === lastPlay.id &&
@@ -336,6 +340,11 @@ const Play = (props: IProps): JSX.Element => {
         landlords_team={playPhase.landlords_team}
         name={props.name}
         next={nextPlayer}
+        riverCrossingInitiators={playPhase.river_crossing_initiators}
+      />
+      <RiverCrossingNotice
+        players={playPhase.propagated.players}
+        initiators={playPhase.river_crossing_initiators}
       />
       <Trump trump={playPhase.trump} />
       <Friends gameMode={playPhase.game_mode} showPlayed={true} />
@@ -362,15 +371,28 @@ const Play = (props: IProps): JSX.Element => {
           smallerTeamSize={smallerTeamSize}
         />
       )}
-      <Trick
-        trick={playPhase.trick}
+      <PlayHistory
+        currentTrick={
+          <Trick
+            trick={playPhase.trick}
+            players={playPhase.propagated.players}
+            landlord={playPhase.landlord}
+            landlord_suffix={landlordSuffix}
+            landlords_team={playPhase.landlords_team}
+            next={nextPlayer}
+            name={props.name}
+            showTrickInPlayerOrder={props.showTrickInPlayerOrder}
+          />
+        }
+        lastTrick={playPhase.last_trick}
+        ownHistory={ownPlayHistory}
+        ownHistoryAvailable={!isSpectator}
         players={playPhase.propagated.players}
         landlord={playPhase.landlord}
-        landlord_suffix={landlordSuffix}
-        landlords_team={playPhase.landlords_team}
-        next={nextPlayer}
+        landlordSuffix={landlordSuffix}
+        landlordsTeam={playPhase.landlords_team}
         name={props.name}
-        showTrickInPlayerOrder={props.showTrickInPlayerOrder}
+        trump={playPhase.trump}
       />
       <AutoPlayButton
         onSubmit={playCards}
@@ -491,22 +513,6 @@ const Play = (props: IProps): JSX.Element => {
           />
         </>
       )}
-      {playPhase.last_trick !== undefined &&
-      playPhase.last_trick !== null &&
-      props.showLastTrick ? (
-        <div>
-          <p>Previous trick</p>
-          <Trick
-            trick={playPhase.last_trick}
-            players={playPhase.propagated.players}
-            landlord={playPhase.landlord}
-            landlord_suffix={landlordSuffix}
-            landlords_team={playPhase.landlords_team}
-            name={props.name}
-            showTrickInPlayerOrder={props.showTrickInPlayerOrder}
-          />
-        </div>
-      ) : null}
       {playPhase.propagated.game_scoring_parameters ? (
         <Points
           points={playPhase.points}

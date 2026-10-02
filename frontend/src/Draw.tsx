@@ -20,6 +20,7 @@ interface IDrawProps {
 }
 interface IDrawState {
   autodraw: boolean;
+  cutCount: string;
 }
 class Draw extends React.Component<IDrawProps, IDrawState> {
   private could_draw: boolean = false;
@@ -30,8 +31,10 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     super(props);
     this.state = {
       autodraw: true,
+      cutCount: "0",
     };
     this.drawCard = this.drawCard.bind(this);
+    this.cutDeck = this.cutDeck.bind(this);
     this.pickUpKitty = this.pickUpKitty.bind(this);
     this.revealCard = this.revealCard.bind(this);
     this.onAutodrawClicked = this.onAutodrawClicked.bind(this);
@@ -56,6 +59,15 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
         this.drawCardAudio.play();
       }
       (window as any).send({ Action: "DrawCard" });
+    }
+  }
+
+  cutDeck(evt: React.SyntheticEvent): void {
+    evt.preventDefault();
+    const count = Number(this.state.cutCount);
+    const max = this.props.state.deck.length + this.props.state.kitty.length;
+    if (Number.isInteger(count) && count >= 0 && count <= max) {
+      (window as any).send({ Action: { CutDeck: count } });
     }
   }
 
@@ -84,9 +96,13 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
   }
 
   render(): JSX.Element {
+    const deckCutPlayer = this.props.state.deck_cut_player ?? null;
+    const waitingForCut = deckCutPlayer !== null;
     const canDraw =
+      !waitingForCut &&
       this.props.state.propagated.players[this.props.state.position].name ===
-        this.props.name && this.props.state.deck.length > 0;
+        this.props.name &&
+      this.props.state.deck.length > 0;
     if (
       canDraw &&
       !this.could_draw &&
@@ -103,6 +119,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     this.could_draw = canDraw;
 
     let next =
+      deckCutPlayer ??
       this.props.state.propagated.players[this.props.state.position].id;
     if (
       this.props.state.deck.length === 0 &&
@@ -121,6 +138,8 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
     });
 
     const landlord = this.props.state.propagated.landlord;
+    const canCut = deckCutPlayer === playerId;
+    const maxCut = this.props.state.deck.length + this.props.state.kitty.length;
     let trump: Trump | undefined;
     if (
       landlord !== null &&
@@ -184,33 +203,62 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
             </>
           }
           prefixButtons={
-            <>
-              <button
-                onClick={(evt: React.SyntheticEvent) => {
-                  evt.preventDefault();
-                  this.drawCard();
-                }}
-                disabled={!canDraw}
-                className="big"
-              >
-                Draw card
-              </button>
-              <label>
-                auto-draw
-                <input
-                  type="checkbox"
-                  name="autodraw"
-                  checked={this.state.autodraw}
-                  onChange={this.onAutodrawClicked}
-                />
-              </label>
-            </>
+            waitingForCut ? (
+              canCut ? (
+                <form onSubmit={this.cutDeck}>
+                  <label>
+                    Cut the deck / 切牌（0-{maxCut}）
+                    <input
+                      type="number"
+                      min={0}
+                      max={maxCut}
+                      step={1}
+                      value={this.state.cutCount}
+                      onChange={(evt) =>
+                        this.setState({ cutCount: evt.target.value })
+                      }
+                    />
+                  </label>
+                  <button type="submit" className="big">
+                    Cut deck / 切牌
+                  </button>
+                </form>
+              ) : (
+                <p role="status" aria-live="polite">
+                  Waiting for the player before the first drawer to cut the
+                  deck... / 正在等待摸牌首位的上家切牌……
+                </p>
+              )
+            ) : (
+              <>
+                <button
+                  onClick={(evt: React.SyntheticEvent) => {
+                    evt.preventDefault();
+                    this.drawCard();
+                  }}
+                  disabled={!canDraw}
+                  className="big"
+                >
+                  Draw card
+                </button>
+                <label>
+                  auto-draw
+                  <input
+                    type="checkbox"
+                    name="autodraw"
+                    checked={this.state.autodraw}
+                    onChange={this.onAutodrawClicked}
+                  />
+                </label>
+              </>
+            )
           }
           suffixButtons={
             <>
               <button
                 onClick={this.pickUpKitty}
                 disabled={
+                  waitingForCut ||
                   this.props.state.deck.length > 0 ||
                   (this.props.state.bids.length === 0 &&
                     this.props.state.autobid === null &&
@@ -236,6 +284,7 @@ class Draw extends React.Component<IDrawProps, IDrawState> {
               <button
                 onClick={this.revealCard}
                 disabled={
+                  waitingForCut ||
                   landlord === null ||
                   landlord === undefined ||
                   this.props.state.deck.length > 0 ||

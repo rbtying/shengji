@@ -117,6 +117,7 @@
             "StartGame",
             "DrawCard",
             "RevealCard",
+            "DeclineKittyTheft",
             "PickUpKitty",
             "PutDownKitty",
             "BeginPlay",
@@ -460,6 +461,16 @@
         },
         {
           "type": "object",
+          "required": ["SetFiveTrumpRiverCrossingEnabled"],
+          "properties": {
+            "SetFiveTrumpRiverCrossingEnabled": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["SetGameShadowingPolicy"],
           "properties": {
             "SetGameShadowingPolicy": {
@@ -550,6 +561,18 @@
         },
         {
           "type": "object",
+          "required": ["CutDeck"],
+          "properties": {
+            "CutDeck": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "required": ["Bid"],
           "properties": {
             "Bid": {
@@ -598,6 +621,42 @@
               "type": "array",
               "items": {
                 "$ref": "#/definitions/FriendSelection"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["DecideRiverCrossing"],
+          "properties": {
+            "DecideRiverCrossing": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SubmitRiverCrossingCards"],
+          "properties": {
+            "SubmitRiverCrossingCards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["SubmitRiverReturnCards"],
+          "properties": {
+            "SubmitRiverReturnCards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
               }
             }
           },
@@ -1029,6 +1088,12 @@
             "$ref": "#/definitions/Card"
           }
         },
+        "deck_cut_player": {
+          "default": null,
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
         "decks": {
           "default": [],
           "type": "array",
@@ -1166,6 +1231,18 @@
           "format": "uint",
           "minimum": 0.0
         },
+        "kitty_theft": {
+          "default": {
+            "current_player": null,
+            "remaining_players": 0,
+            "stage": "Disabled"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/KittyTheftState"
+            }
+          ]
+        },
         "landlord": {
           "type": "integer",
           "format": "uint",
@@ -1190,6 +1267,17 @@
           "items": {
             "$ref": "#/definitions/Card"
           }
+        },
+        "river_crossing": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RiverCrossingState"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "trump": {
           "$ref": "#/definitions/Trump"
@@ -1780,6 +1868,29 @@
       "type": "string",
       "enum": ["AllowKittyTheft", "NoKittyTheft"]
     },
+    "KittyTheftStage": {
+      "type": "string",
+      "enum": ["Disabled", "Exchanging", "Waiting", "Complete"]
+    },
+    "KittyTheftState": {
+      "type": "object",
+      "required": ["remaining_players", "stage"],
+      "properties": {
+        "current_player": {
+          "type": ["integer", "null"],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "remaining_players": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "stage": {
+          "$ref": "#/definitions/KittyTheftStage"
+        }
+      }
+    },
     "MaxRank": {
       "$ref": "#/definitions/Rank"
     },
@@ -1822,6 +1933,21 @@
             "type": {
               "type": "string",
               "enum": ["StartingGame"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["count", "type"],
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["DeckCut"]
             }
           }
         },
@@ -2189,6 +2315,34 @@
         },
         {
           "type": "object",
+          "required": ["enabled", "type"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["FiveTrumpRiverCrossingEnabledSet"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["player", "type"],
+          "properties": {
+            "player": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "type": {
+              "type": "string",
+              "enum": ["RiverCrossingInitiated"]
+            }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "visibility"],
           "properties": {
             "type": {
@@ -2217,6 +2371,16 @@
             "type": {
               "type": "string",
               "enum": ["TookBackBid"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["KittyTheftDeclined"]
             }
           }
         },
@@ -2777,6 +2941,20 @@
             "minimum": 0.0
           }
         },
+        "played_card_history": {
+          "description": "Completed plays for each player in this deal. This is redacted down to the requesting player's own history before game state is sent.",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Card"
+              }
+            }
+          }
+        },
         "player_requested_reset": {
           "type": ["integer", "null"],
           "format": "uint",
@@ -2799,6 +2977,16 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Card"
+          }
+        },
+        "river_crossing_initiators": {
+          "description": "Public initiator IDs for this deal only; never propagated to the next deal.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
           }
         },
         "trick": {
@@ -2960,6 +3148,10 @@
               "$ref": "#/definitions/FirstLandlordSelectionPolicy"
             }
           ]
+        },
+        "five_trump_river_crossing_enabled": {
+          "default": false,
+          "type": "boolean"
         },
         "friend_selection_policy": {
           "default": "Unrestricted",
@@ -3179,6 +3371,79 @@
     },
     "Rank": {
       "type": "string"
+    },
+    "RiverCrossingPlayerState": {
+      "type": "object",
+      "required": [
+        "crossing_cards",
+        "crossing_cards_submitted",
+        "eligible",
+        "player_id",
+        "received_crossing_cards",
+        "return_cards",
+        "return_cards_submitted"
+      ],
+      "properties": {
+        "crossing_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "crossing_cards_submitted": {
+          "type": "boolean"
+        },
+        "decision": {
+          "type": ["boolean", "null"]
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "player_id": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "received_crossing_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "return_cards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Card"
+          }
+        },
+        "return_cards_submitted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RiverCrossingStage": {
+      "type": "string",
+      "enum": [
+        "Deciding",
+        "SelectingCrossingCards",
+        "SelectingReturnCards",
+        "Complete"
+      ]
+    },
+    "RiverCrossingState": {
+      "type": "object",
+      "required": ["players", "stage"],
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RiverCrossingPlayerState"
+          }
+        },
+        "stage": {
+          "$ref": "#/definitions/RiverCrossingStage"
+        }
+      }
     },
     "ScoreSegment": {
       "type": "object",

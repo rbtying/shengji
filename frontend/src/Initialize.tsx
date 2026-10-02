@@ -1052,6 +1052,13 @@ const Initialize = (props: IProps): JSX.Element => {
               },
             });
             break;
+          case "five_trump_river_crossing_enabled":
+            send({
+              Action: {
+                SetFiveTrumpRiverCrossingEnabled: value,
+              },
+            });
+            break;
           case "throw_penalty":
             send({
               Action: {
@@ -1335,6 +1342,37 @@ const Initialize = (props: IProps): JSX.Element => {
               <option value="NoKittyTheft">Not allowed</option>
             </select>
           </label>
+        </div>
+        <div>
+          <label>
+            Five-trump river crossing / 五主过河:{" "}
+            <select
+              value={
+                props.state.propagated.five_trump_river_crossing_enabled
+                  ? "enabled"
+                  : "disabled"
+              }
+              onChange={(evt) =>
+                send({
+                  Action: {
+                    SetFiveTrumpRiverCrossingEnabled:
+                      evt.target.value === "enabled",
+                  },
+                })
+              }
+              disabled={
+                props.state.propagated.game_mode !== "Tractor" ||
+                props.state.propagated.players.length !== 4
+              }
+            >
+              <option value="disabled">Disabled / 关闭</option>
+              <option value="enabled">Enabled / 开启</option>
+            </select>
+          </label>
+          {props.state.propagated.game_mode !== "Tractor" ||
+          props.state.propagated.players.length !== 4 ? (
+            <span> (available only in four-player Tractor games)</span>
+          ) : null}
         </div>
         <div>
           <label>

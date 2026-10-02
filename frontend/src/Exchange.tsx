@@ -9,6 +9,7 @@ import Card from "./Card";
 import Header from "./Header";
 import Friends from "./Friends";
 import Players from "./Players";
+import RiverCrossingNotice from "./RiverCrossingNotice";
 import LabeledPlay from "./LabeledPlay";
 import { ExchangePhase, Friend } from "./gen-types";
 import Cards from "./Cards";
@@ -38,6 +39,7 @@ function ExchangeWrapper(props: IExchangeProps) {
 
 interface IExchangeState {
   friends: Friend[];
+  selectedRiverCards: string[];
 }
 class Exchange extends React.Component<IExchangeProps, IExchangeState> {
   constructor(props: IExchangeProps) {
@@ -45,11 +47,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     this.moveCardToKitty = this.moveCardToKitty.bind(this);
     this.moveCardToHand = this.moveCardToHand.bind(this);
     this.startGame = this.startGame.bind(this);
-    this.pickUpKitty = this.pickUpKitty.bind(this);
+    this.declineKittyTheft = this.declineKittyTheft.bind(this);
     this.putDownKitty = this.putDownKitty.bind(this);
     this.pickFriends = this.pickFriends.bind(this);
     this.state = {
       friends: [],
+      selectedRiverCards: [],
     };
 
     this.fixFriends = this.fixFriends.bind(this);
@@ -107,9 +110,9 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     (window as any).send({ Action: "BeginPlay" });
   }
 
-  pickUpKitty(evt: React.SyntheticEvent): void {
+  declineKittyTheft(evt: React.SyntheticEvent): void {
     evt.preventDefault();
-    (window as any).send({ Action: "PickUpKitty" });
+    (window as any).send({ Action: "DeclineKittyTheft" });
   }
 
   putDownKitty(evt: React.SyntheticEvent): void {
@@ -163,12 +166,209 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
     const kittyTheftEnabled =
       this.props.state.propagated.kitty_theft_policy === "AllowKittyTheft";
 
+    const riverCrossing = this.props.state.river_crossing;
+    if (riverCrossing !== null && riverCrossing !== undefined) {
+      const riverCrossingInitiators =
+        riverCrossing.stage === "Deciding"
+          ? []
+          : riverCrossing.players
+              .filter((player) => player.decision === true)
+              .map((player) => player.player_id);
+      const playerState = riverCrossing.players.find(
+        (p) => p.player_id === playerId,
+      );
+      const playerPosition = this.props.state.propagated.players.findIndex(
+        (p) => p.id === playerId,
+      );
+      const partnerId =
+        playerPosition >= 0 && this.props.state.propagated.players.length === 4
+          ? this.props.state.propagated.players[(playerPosition + 2) % 4].id
+          : -1;
+      const partnerState = riverCrossing.players.find(
+        (p) => p.player_id === partnerId,
+      );
+
+      let actionUI: JSX.Element = (
+        <p>Waiting for other players... / 等待其他玩家……</p>
+      );
+      if (
+        riverCrossing.stage === "Deciding" &&
+        playerState?.eligible &&
+        playerState.decision === null
+      ) {
+        actionUI = (
+          <>
+            <p>
+              You have five or fewer trump cards. Would you like to cross the
+              river?（你的主牌不超过五张，是否选择五主过河？）
+            </p>
+            <button
+              className="big"
+              onClick={() =>
+                (window as any).send({
+                  Action: { DecideRiverCrossing: true },
+                })
+              }
+            >
+              Cross the river / 过河
+            </button>
+            <button
+              className="big"
+              onClick={() =>
+                (window as any).send({
+                  Action: { DecideRiverCrossing: false },
+                })
+              }
+            >
+              Decline / 不过河
+            </button>
+          </>
+        );
+      } else if (
+        riverCrossing.stage === "Deciding" &&
+        playerState !== undefined &&
+        !playerState.eligible
+      ) {
+        actionUI = (
+          <p>
+            You have more than five trump cards and cannot cross. Waiting for
+            other players... / 你的主牌多于五张，不能过河。正在等待其他玩家……
+          </p>
+        );
+      } else if (
+        riverCrossing.stage === "SelectingCrossingCards" &&
+        playerState?.decision === true &&
+        !playerState.crossing_cards_submitted
+      ) {
+        actionUI = (
+          <>
+            <p>
+              Select exactly five cards, including every trump card in your
+              hand. They will be revealed to your partner only after all
+              crossing selections are submitted. /
+              请选择正好五张牌，其中必须包含手中全部主牌；所有需要过河的玩家提交后才会同时交换。
+            </p>
+            <Cards
+              hands={this.props.state.hands}
+              playerId={playerId}
+              selectedCards={this.state.selectedRiverCards}
+              onSelect={(selectedRiverCards) =>
+                this.setState({ selectedRiverCards })
+              }
+              trump={this.props.state.trump}
+            />
+            <button
+              className="big"
+              disabled={this.state.selectedRiverCards.length !== 5}
+              onClick={() => {
+                (window as any).send({
+                  Action: {
+                    SubmitRiverCrossingCards: this.state.selectedRiverCards,
+                  },
+                });
+                this.setState({ selectedRiverCards: [] });
+              }}
+            >
+              Submit five crossing cards / 提交五张过河牌
+            </button>
+          </>
+        );
+      } else if (
+        riverCrossing.stage === "SelectingReturnCards" &&
+        playerState !== undefined &&
+        partnerState?.decision === true &&
+        !playerState.return_cards_submitted
+      ) {
+        actionUI = (
+          <>
+            <p>
+              Your partner sent you these cards. Select exactly five cards to
+              return. Return selections are exchanged simultaneously. /
+              这是对家给你的牌。请从现在的手牌中选择正好五张归还；双方都提交后才会同时还牌。
+            </p>
+            {playerState.received_crossing_cards.length > 0 ? (
+              <LabeledPlay
+                className="kitty"
+                trump={this.props.state.trump}
+                cards={playerState.received_crossing_cards}
+                label="Cards received / 收到的过河牌"
+              />
+            ) : null}
+            <Cards
+              hands={this.props.state.hands}
+              playerId={playerId}
+              selectedCards={this.state.selectedRiverCards}
+              onSelect={(selectedRiverCards) =>
+                this.setState({ selectedRiverCards })
+              }
+              trump={this.props.state.trump}
+            />
+            <button
+              className="big"
+              disabled={this.state.selectedRiverCards.length !== 5}
+              onClick={() => {
+                (window as any).send({
+                  Action: {
+                    SubmitRiverReturnCards: this.state.selectedRiverCards,
+                  },
+                });
+                this.setState({ selectedRiverCards: [] });
+              }}
+            >
+              Submit five return cards / 提交五张还牌
+            </button>
+          </>
+        );
+      }
+
+      return (
+        <div>
+          <Header
+            gameMode={this.props.state.game_mode}
+            chatLink={this.props.state.propagated.chat_link}
+          />
+          <Players
+            players={this.props.state.propagated.players}
+            observers={this.props.state.propagated.observers}
+            landlord={this.props.state.landlord}
+            next={this.props.state.landlord}
+            name={this.props.name}
+            riverCrossingInitiators={riverCrossingInitiators}
+          />
+          <RiverCrossingNotice
+            players={this.props.state.propagated.players}
+            initiators={riverCrossingInitiators}
+          />
+          <Trump trump={this.props.state.trump} />
+          <h2>Five-trump river crossing / 五主过河</h2>
+          {actionUI}
+        </div>
+      );
+    }
+
+    const kittyTheft = this.props.state.kitty_theft;
+    const kittyTheftStage = kittyTheft?.stage ?? "Disabled";
+    const currentKittyTheftPlayer = kittyTheft?.current_player ?? null;
+    const activeKittyTheftPlayer =
+      kittyTheftStage === "Waiting"
+        ? currentKittyTheftPlayer
+        : this.props.state.exchanger;
+    const currentKittyTheftPlayerName =
+      this.props.state.propagated.players.find(
+        (player) => player.id === activeKittyTheftPlayer,
+      )?.name ?? "another player";
     const nextPlayer =
-      kittyTheftEnabled &&
-      !this.props.state.finalized &&
-      this.props.state.exchanger !== null
-        ? this.props.state.exchanger
-        : this.props.state.landlord;
+      kittyTheftStage === "Waiting" && currentKittyTheftPlayer !== null
+        ? currentKittyTheftPlayer
+        : kittyTheftStage === "Exchanging" &&
+            this.props.state.exchanger !== null
+          ? this.props.state.exchanger
+          : this.props.state.landlord;
+    const kittyTheftComplete =
+      !kittyTheftEnabled ||
+      this.props.state.autobid !== null ||
+      kittyTheftStage === "Disabled" ||
+      kittyTheftStage === "Complete";
 
     const exchangeUI =
       isExchanger && !this.props.state.finalized ? (
@@ -209,15 +409,12 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
         </>
       ) : null;
 
-    const lastBid = this.props.state.bids![this.props.state.bids!.length - 1];
     const startGame = (
       <button
         onClick={this.startGame}
         disabled={
           this.props.state.kitty.length !== this.props.state.kitty_size ||
-          (kittyTheftEnabled &&
-            !this.props.state.finalized &&
-            this.props.state.autobid === null)
+          !kittyTheftComplete
         }
         className="big"
       >
@@ -228,7 +425,8 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
       kittyTheftEnabled &&
       this.props.state.finalized &&
       this.props.state.autobid === null &&
-      (!isExchanger || lastBid.epoch! + 1 !== this.props.state.epoch) ? (
+      kittyTheftStage === "Waiting" &&
+      currentKittyTheftPlayer === playerId ? (
         <>
           <BidArea
             bids={this.props.state.bids!}
@@ -245,27 +443,17 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
             jokerBidPolicy={this.props.state.propagated.joker_bid_policy!}
             numDecks={this.props.state.num_decks}
             header={
-              <h2>Bids (round {this.props.state.epoch! + 1} of bidding)</h2>
+              <h2>
+                Your turn to decide whether to steal the bottom /
+                轮到你决定是否炒底
+              </h2>
             }
             suffixButtons={
-              <>
-                <button
-                  onClick={this.pickUpKitty}
-                  disabled={
-                    lastBid.id !== playerId ||
-                    lastBid.epoch !== this.props.state.epoch
-                  }
-                  className="big"
-                >
-                  Pick up cards from the bottom
-                </button>
-                {isLandlord ? startGame : null}
-              </>
+              <button onClick={this.declineKittyTheft} className="big">
+                Decline / 放弃炒底
+              </button>
             }
-            bidTakeBacksEnabled={
-              this.props.state.propagated.bid_takeback_policy ===
-              "AllowBidTakeback"
-            }
+            bidTakeBacksEnabled={false}
           />
           <LabeledPlay
             className="kitty"
@@ -315,7 +503,7 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
           players={this.props.state.propagated.players}
           observers={this.props.state.propagated.observers}
           landlord={this.props.state.landlord}
-          next={this.props.state.landlord}
+          next={nextPlayer}
           name={this.props.name}
         />
         <Trump trump={this.props.state.trump} />
@@ -337,11 +525,17 @@ class Exchange extends React.Component<IExchangeProps, IExchangeState> {
               playerId={playerId}
               trump={this.props.state.trump}
             />
-            <p>Waiting...</p>
+            <p role="status" aria-live="polite">
+              {kittyTheftStage === "Waiting"
+                ? `Waiting for ${currentKittyTheftPlayerName} to decide whether to steal the bottom... / 正在等待 ${currentKittyTheftPlayerName} 决定是否炒底……`
+                : kittyTheftStage === "Exchanging"
+                  ? `Waiting for ${currentKittyTheftPlayerName} to finish exchanging cards... / 正在等待埋底完成……`
+                  : "Waiting..."}
+            </p>
           </>
         ) : null}
         {playerId !== nextPlayer && <BeepButton />}
-        {isLandlord && bidUI === null ? startGame : null}
+        {isLandlord && bidUI === null && kittyTheftComplete ? startGame : null}
         {bidUI}
       </div>
     );

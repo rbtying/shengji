@@ -10,7 +10,6 @@ export interface Settings {
   fourColor: boolean;
   darkMode: boolean;
   showCardLabels: boolean;
-  showLastTrick: boolean;
   beepOnTurn: boolean;
   reverseCardOrder: boolean;
   unsetAutoPlayWhenWinnerChanges: boolean;
@@ -44,8 +43,6 @@ const darkMode: State<boolean> = booleanLocalStorageState("dark_mode");
 const svgCards: State<boolean> = booleanLocalStorageState("svg_cards");
 const showCardLabels: State<boolean> =
   booleanLocalStorageState("show_card_labels");
-const showLastTrick: State<boolean> =
-  booleanLocalStorageState("show_last_trick");
 const beepOnTurn: State<boolean> = booleanLocalStorageState("beep_on_turn");
 const reverseCardOrder: State<boolean> =
   booleanLocalStorageState("reverse_card_order");
@@ -95,7 +92,6 @@ const settings: State<Settings> = combineState({
   fourColor,
   darkMode,
   showCardLabels,
-  showLastTrick,
   beepOnTurn,
   reverseCardOrder,
   unsetAutoPlayWhenWinnerChanges,
