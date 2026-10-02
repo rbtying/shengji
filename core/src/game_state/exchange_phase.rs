@@ -310,9 +310,9 @@ impl ExchangePhase {
     }
 
     fn winning_bid_is_unbeatable(&self) -> bool {
-        self.bids.last().is_some_and(|bid| {
-            bid.card == Card::BigJoker && bid.count == self.num_decks
-        })
+        self.bids
+            .last()
+            .is_some_and(|bid| bid.card == Card::BigJoker && bid.count == self.num_decks)
     }
 
     fn player_after(&self, id: PlayerID) -> Result<PlayerID, Error> {
