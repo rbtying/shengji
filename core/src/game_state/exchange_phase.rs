@@ -297,9 +297,22 @@ impl ExchangePhase {
         }
         self.finalized = true;
         if self.kitty_theft.stage == KittyTheftStage::Exchanging {
-            self.start_kitty_theft_round()?;
+            if self.winning_bid_is_unbeatable() {
+                self.kitty_theft = KittyTheftState {
+                    stage: KittyTheftStage::Complete,
+                    ..KittyTheftState::default()
+                };
+            } else {
+                self.start_kitty_theft_round()?;
+            }
         }
         Ok(())
+    }
+
+    fn winning_bid_is_unbeatable(&self) -> bool {
+        self.bids.last().is_some_and(|bid| {
+            bid.card == Card::BigJoker && bid.count == self.num_decks
+        })
     }
 
     fn player_after(&self, id: PlayerID) -> Result<PlayerID, Error> {

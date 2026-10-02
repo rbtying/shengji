@@ -900,15 +900,49 @@ mod tests {
         assert!(exchange.bid(p2, Card::BigJoker, 2).unwrap());
         assert_eq!(exchange.next_player().unwrap(), p2);
         exchange.finalize(p2).unwrap();
-        assert_eq!(exchange.next_player().unwrap(), p3);
+        assert_eq!(exchange.next_player().unwrap(), p1);
         assert!(!exchange.bid(p1, cards::H_2, 2).unwrap());
 
-        // Once every other player passes, the landlord may begin play.
-        exchange.decline_kitty_theft(p3).unwrap();
-        exchange.decline_kitty_theft(p4).unwrap();
-        exchange.decline_kitty_theft(p1).unwrap();
-        assert_eq!(exchange.next_player().unwrap(), p1);
+        // A bid using every big joker is unbeatable, so the remaining players
+        // do not need to decline kitty theft individually.
+        assert!(exchange.decline_kitty_theft(p3).is_err());
         exchange.advance(p1).unwrap();
+    }
+
+    #[test]
+    fn unbeatable_initial_bid_skips_kitty_theft_decisions() {
+        let mut init = InitializePhase::new();
+        let p1 = init.add_player("p1".into()).unwrap().0;
+        let p2 = init.add_player("p2".into()).unwrap().0;
+        let p3 = init.add_player("p3".into()).unwrap().0;
+        let p4 = init.add_player("p4".into()).unwrap().0;
+        init.set_kitty_theft_policy(KittyTheftPolicy::AllowKittyTheft)
+            .unwrap();
+        let mut draw = init.start(p1).unwrap();
+        draw.cut_deck(draw.next_player().unwrap(), 0).unwrap();
+        *draw.deck_mut() = vec![
+            cards::S_2,
+            cards::H_2,
+            Card::BigJoker,
+            cards::D_2,
+            cards::S_2,
+            cards::H_2,
+            Card::BigJoker,
+            cards::D_2,
+        ];
+        *draw.position_mut() = 0;
+
+        for player in [p1, p2, p3, p4, p1, p2, p3, p4] {
+            draw.draw_card(player).unwrap();
+        }
+
+        assert!(draw.bid(p2, Card::BigJoker, 2));
+        let mut exchange = draw.advance(p2).unwrap();
+        exchange.finalize(p2).unwrap();
+
+        assert_eq!(exchange.next_player().unwrap(), p2);
+        assert!(exchange.decline_kitty_theft(p3).is_err());
+        exchange.advance(p2).unwrap();
     }
 
     #[test]
