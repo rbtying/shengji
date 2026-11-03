@@ -335,7 +335,7 @@ mod tests {
             )
             .unwrap(),
             serde_json::from_str::<serde_json::Value>(CARDS_JSON_FROM_FILE).unwrap(),
-            "Run `yarn download-cards-json` with the backend running to sync the generated cards.json file"
+            "Run `pnpm download-cards-json` with the backend running to sync the generated cards.json file"
         );
     }
 }

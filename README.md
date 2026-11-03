@@ -7,8 +7,11 @@ I figured an online version would be worthwhile.
 
 # Usage:
 
+The frontend uses [pnpm](https://pnpm.io) 12. Install it with `npm install -g pnpm@12`;
+any pnpm 12 switches itself to the exact version pinned in `frontend/package.json`.
+
 ```
-cd frontend && yarn build && cd .. && cd backend && cargo run
+cd frontend && pnpm install && pnpm build && cd .. && cd backend && cargo run
 ```
 
 The server is a self-contained static binary and does not terminate TLS. It
@@ -23,16 +26,16 @@ with `nginx`).
 # Development
 
 ```
-cd frontend && yarn watch
+cd frontend && pnpm watch
 cd backend && cargo run --features dynamic
 ```
 
 ## Syncing types from Rust to Typescript
 
-There are shared types in the Rust backend and the Typescript frontend; the `frontend/json-schema-bin/src/main.rs` file dumps the Rust types to JSON Schema, and the `yarn types` command will generate the Typescript types.
+There are shared types in the Rust backend and the Typescript frontend; the `frontend/json-schema-bin/src/main.rs` file dumps the Rust types to JSON Schema, and the `pnpm types` command will generate the Typescript types.
 
 ```
-yarn types && yarn prettier --write && yarn lint --fix
+pnpm types && pnpm prettier --write && pnpm lint --fix
 ```
 
 ## Generating JSON
@@ -40,7 +43,7 @@ A mapping of card data is generated from the server. It's checked in at
 `src/generated/cards.json`. To update it, start up the server and run
 
 ```
-yarn download-cards-json
+pnpm download-cards-json
 ```
 
 ## Prettier
@@ -48,17 +51,17 @@ To format frontend code:
 
 ```
 # Dry-run/check
-yarn prettier --check
+pnpm prettier --check
 
 # Fix files, will overwrite files
-yarn prettier --write
+pnpm prettier --write
 ```
 
 ## Lint
 To run tslint:
 
 ```
-cd frontend && yarn lint
+cd frontend && pnpm lint
 ```
 
 And clippy:
@@ -71,7 +74,7 @@ To run tests:
 
 ### Frontend:
 ```
-cd frontend && yarn test
+cd frontend && pnpm test
 ```
 
 ### Backend:

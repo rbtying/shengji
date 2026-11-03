@@ -14,11 +14,13 @@ WORKDIR /app
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --target=wasm32-unknown-unknown -p shengji-wasm
 
-# Download Yarn dependencies
+# Download frontend dependencies
 FROM wasmbase as frontend-deps-fetch
-COPY frontend/package.json ./
-COPY frontend/yarn.lock ./
-RUN yarn install
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/pnpm-lock.yaml ./
+# Installed here rather than in the build image so it tracks package.json's packageManager
+RUN npm install -g "$(node -p "require('./package.json').packageManager")"
+RUN pnpm install --frozen-lockfile
 
 # Actually build the frontend
 FROM frontend-deps-fetch as frontend-builder
@@ -37,7 +39,7 @@ COPY backend/src/main.rs ./backend/src/main.rs
 COPY storage ./storage
 COPY wasm-rpc-impl ./wasm-rpc-impl
 WORKDIR /app/frontend
-RUN yarn build
+RUN pnpm build
 
 # Create a workspace recipe.json to pre-fetch and pre-compile dependencies, but
 # without shengji-wasm because this is the backend

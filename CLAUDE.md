@@ -8,29 +8,36 @@ Shengji is an online implementation of the Chinese trick-taking card game 升级
 
 ## Commands
 
+### Setup
+```bash
+# Frontend uses pnpm 12; any pnpm 12 switches to the version pinned in frontend/package.json
+npm install -g pnpm@12
+cd frontend && pnpm install
+```
+
 ### Development
 ```bash
 # Run frontend in development mode with hot reloading
-cd frontend && yarn watch
+cd frontend && pnpm watch
 
 # Run backend in development mode
 cd backend && cargo run --features dynamic
 
 # Full development setup (run in separate terminals)
-cd frontend && yarn watch
+cd frontend && pnpm watch
 cd backend && cargo run --features dynamic
 ```
 
 ### Building
 ```bash
 # Build production frontend
-cd frontend && yarn build
+cd frontend && pnpm build
 
 # Build release backend
 cargo build --release
 
 # Full production build
-cd frontend && yarn build && cd ../backend && cargo run
+cd frontend && pnpm build && cd ../backend && cargo run
 ```
 
 ### Testing
@@ -42,28 +49,28 @@ cargo test --all
 cargo test test_name
 
 # Run frontend tests
-cd frontend && yarn test
+cd frontend && pnpm test
 
 # Run frontend tests in watch mode
-cd frontend && yarn test --watch
+cd frontend && pnpm test --watch
 ```
 
 ### Code Quality
 ```bash
 # Lint TypeScript
-cd frontend && yarn lint
+cd frontend && pnpm lint
 
 # Fix TypeScript lint issues
-cd frontend && yarn lint --fix
+cd frontend && pnpm lint --fix
 
 # Lint Rust
 cargo clippy
 
 # Format TypeScript
-cd frontend && yarn prettier --write
+cd frontend && pnpm prettier --write
 
 # Check TypeScript formatting
-cd frontend && yarn prettier --check
+cd frontend && pnpm prettier --check
 
 # Format Rust
 cargo fmt --all
@@ -75,7 +82,7 @@ cargo fmt --all -- --check
 ### Type Generation
 ```bash
 # Generate TypeScript types from Rust schemas (run from frontend directory)
-cd frontend && yarn types && yarn prettier --write && yarn lint --fix
+cd frontend && pnpm types && pnpm prettier --write && pnpm lint --fix
 ```
 
 ## Architecture
@@ -112,7 +119,7 @@ The project maintains type safety between Rust and TypeScript by:
 ### When modifying game mechanics:
 1. Update logic in `mechanics/src/`
 2. If changing message types, update `core/src/message.rs`
-3. Regenerate TypeScript types with `yarn types`
+3. Regenerate TypeScript types with `pnpm types`
 4. Update frontend components to handle new mechanics
 
 ### When adding new features:
@@ -138,5 +145,5 @@ cargo fmt --all && cargo clippy
 
 **Frontend (`.tsx`/`.ts`):**
 ```bash
-cd frontend && yarn lint --fix && yarn prettier --write
+cd frontend && pnpm lint --fix && pnpm prettier --write
 ```

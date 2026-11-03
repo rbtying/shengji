@@ -1,6 +1,6 @@
 ARG PLATFORM=$BUILDPLATFORM
 
-FROM --platform=$PLATFORM messense/rust-musl-cross:x86_64-musl as amd64
+FROM --platform=$PLATFORM messense/rust-musl-cross:x86_64-musl AS amd64
 RUN cargo install wasm-opt --target=x86_64-unknown-linux-musl
 RUN cp /root/.cargo/bin/wasm-opt /
 RUN cargo install wasm-pack --target=x86_64-unknown-linux-musl
@@ -8,7 +8,7 @@ RUN cp /root/.cargo/bin/wasm-pack /
 RUN cargo install cargo-chef --target=x86_64-unknown-linux-musl
 RUN cp /root/.cargo/bin/cargo-chef /
 
-FROM --platform=$PLATFORM messense/rust-musl-cross:aarch64-musl as arm64
+FROM --platform=$PLATFORM messense/rust-musl-cross:aarch64-musl AS arm64
 RUN cargo install wasm-opt --target=aarch64-unknown-linux-musl
 RUN cp /root/.cargo/bin/wasm-opt /
 RUN cargo install wasm-pack --target=aarch64-unknown-linux-musl
@@ -16,7 +16,7 @@ RUN cp /root/.cargo/bin/wasm-pack /
 RUN cargo install cargo-chef --target=aarch64-unknown-linux-musl
 RUN cp /root/.cargo/bin/cargo-chef /
 
-FROM node:lts-slim as base
+FROM node:lts-slim AS base
 RUN apt-get update && apt-get -y install curl build-essential libssl-dev pkg-config
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
@@ -44,7 +44,6 @@ RUN case "$TARGETPLATFORM" in \
   *) exit 1 ;; \
 esac
 ENV WASM_PACK_PATH="/wasm-pack"
-RUN yarn global add rimraf webpack webpack-cli
 COPY --from=amd64 /cargo-chef /cargo-chef.x86_64
 COPY --from=arm64 /cargo-chef /cargo-chef.aarch64
 RUN case "$TARGETPLATFORM" in \
