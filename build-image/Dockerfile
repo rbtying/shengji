@@ -18,9 +18,6 @@ RUN cp /root/.cargo/bin/cargo-chef /
 
 FROM node:lts-slim AS base
 RUN apt-get update && apt-get -y install curl build-essential libssl-dev pkg-config
-# Node 24+ images no longer ship yarn as a binary; enable Corepack to provide
-# the yarn shim used by the frontend build.
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -47,7 +44,6 @@ RUN case "$TARGETPLATFORM" in \
   *) exit 1 ;; \
 esac
 ENV WASM_PACK_PATH="/wasm-pack"
-RUN yarn global add rimraf webpack webpack-cli
 COPY --from=amd64 /cargo-chef /cargo-chef.x86_64
 COPY --from=arm64 /cargo-chef /cargo-chef.aarch64
 RUN case "$TARGETPLATFORM" in \
