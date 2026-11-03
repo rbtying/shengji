@@ -1,6 +1,6 @@
 ARG PLATFORM=$BUILDPLATFORM
 
-FROM --platform=$PLATFORM messense/rust-musl-cross:x86_64-musl as amd64
+FROM --platform=$PLATFORM messense/rust-musl-cross:x86_64-musl AS amd64
 RUN cargo install wasm-opt --target=x86_64-unknown-linux-musl
 RUN cp /root/.cargo/bin/wasm-opt /
 RUN cargo install wasm-pack --target=x86_64-unknown-linux-musl
@@ -8,7 +8,7 @@ RUN cp /root/.cargo/bin/wasm-pack /
 RUN cargo install cargo-chef --target=x86_64-unknown-linux-musl
 RUN cp /root/.cargo/bin/cargo-chef /
 
-FROM --platform=$PLATFORM messense/rust-musl-cross:aarch64-musl as arm64
+FROM --platform=$PLATFORM messense/rust-musl-cross:aarch64-musl AS arm64
 RUN cargo install wasm-opt --target=aarch64-unknown-linux-musl
 RUN cp /root/.cargo/bin/wasm-opt /
 RUN cargo install wasm-pack --target=aarch64-unknown-linux-musl
@@ -16,8 +16,11 @@ RUN cp /root/.cargo/bin/wasm-pack /
 RUN cargo install cargo-chef --target=aarch64-unknown-linux-musl
 RUN cp /root/.cargo/bin/cargo-chef /
 
-FROM node:lts-slim as base
+FROM node:lts-slim AS base
 RUN apt-get update && apt-get -y install curl build-essential libssl-dev pkg-config
+# Node 24+ images no longer ship yarn as a binary; enable Corepack to provide
+# the yarn shim used by the frontend build.
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 ENV PATH="/root/.cargo/bin:${PATH}"
