@@ -194,6 +194,7 @@ const Play = (props: IProps): JSX.Element => {
           hands: playPhase.hands,
           cards: selected,
           trick_draw_policy: playPhase.propagated.trick_draw_policy!,
+          compound_formats: playPhase.propagated.compound_formats ?? {},
         })
         .then((playable) => {
           // In order to play the first trick, the grouping must be disambiguated!
